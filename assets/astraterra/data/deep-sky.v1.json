@@ -1,0 +1,322 @@
+[
+  {
+    "id": "M45",
+    "displayName": "Pleiades reflection nebula",
+    "rightAscensionDeg": 56.75,
+    "declinationDeg": 24.1167,
+    "angularSizeDeg": 2.1,
+    "brightness": 0.58,
+    "tintR": 0.62,
+    "tintG": 0.78,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/pleiades",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M42",
+    "displayName": "Orion Nebula",
+    "rightAscensionDeg": 83.8221,
+    "declinationDeg": -5.3911,
+    "angularSizeDeg": 1.2,
+    "brightness": 0.82,
+    "tintR": 0.72,
+    "tintG": 0.9,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m42",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M8",
+    "displayName": "Lagoon Nebula",
+    "rightAscensionDeg": 270.925,
+    "declinationDeg": -24.38,
+    "angularSizeDeg": 1.5,
+    "brightness": 0.62,
+    "tintR": 1.0,
+    "tintG": 0.68,
+    "tintB": 0.72,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m8",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas1",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M31",
+    "displayName": "Andromeda Galaxy",
+    "rightAscensionDeg": 10.6847,
+    "declinationDeg": 41.269,
+    "angularSizeDeg": 3.0,
+    "brightness": 0.45,
+    "tintR": 0.86,
+    "tintG": 0.82,
+    "tintB": 0.74,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m31",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas2",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC7000",
+    "displayName": "North America Nebula",
+    "rightAscensionDeg": 312.75,
+    "declinationDeg": 44.33,
+    "angularSizeDeg": 2.0,
+    "brightness": 0.42,
+    "tintR": 1.0,
+    "tintG": 0.62,
+    "tintB": 0.66,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n7000",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas3",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M16",
+    "displayName": "Eagle Nebula",
+    "rightAscensionDeg": 274.7354,
+    "declinationDeg": -13.8064,
+    "angularSizeDeg": 1.868,
+    "brightness": 0.52,
+    "tintR": 1.0,
+    "tintG": 0.76,
+    "tintB": 0.72,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m16",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M17",
+    "displayName": "Omega Nebula",
+    "rightAscensionDeg": 275.1968,
+    "declinationDeg": -16.1241,
+    "angularSizeDeg": 0.946,
+    "brightness": 0.58,
+    "tintR": 1.0,
+    "tintG": 0.78,
+    "tintB": 0.7,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m17",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M20",
+    "displayName": "Trifid Nebula",
+    "rightAscensionDeg": 270.5993,
+    "declinationDeg": -22.9744,
+    "angularSizeDeg": 0.605,
+    "brightness": 0.54,
+    "tintR": 0.85,
+    "tintG": 0.72,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m20",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M27",
+    "displayName": "Dumbbell Nebula",
+    "rightAscensionDeg": 299.901,
+    "declinationDeg": 22.7216,
+    "angularSizeDeg": 0.154,
+    "brightness": 0.45,
+    "tintR": 0.72,
+    "tintG": 0.95,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m27dumont",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas1",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M57",
+    "displayName": "Ring Nebula",
+    "rightAscensionDeg": 283.3957,
+    "declinationDeg": 33.0281,
+    "angularSizeDeg": 0.1,
+    "brightness": 0.42,
+    "tintR": 0.75,
+    "tintG": 1.0,
+    "tintB": 0.85,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m57dumont",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas2",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "IC434",
+    "displayName": "Horsehead Nebula Region",
+    "rightAscensionDeg": 84.706,
+    "declinationDeg": -2.5456,
+    "angularSizeDeg": 2.481,
+    "brightness": 0.5,
+    "tintR": 1.0,
+    "tintG": 0.58,
+    "tintB": 0.55,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/ic434",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC281",
+    "displayName": "Pacman Nebula",
+    "rightAscensionDeg": 13.1364,
+    "declinationDeg": 56.6973,
+    "angularSizeDeg": 1.714,
+    "brightness": 0.48,
+    "tintR": 1.0,
+    "tintG": 0.62,
+    "tintB": 0.66,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n281",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas1",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC2359",
+    "displayName": "Thor's Helmet Nebula",
+    "rightAscensionDeg": 109.6414,
+    "declinationDeg": -13.1962,
+    "angularSizeDeg": 0.543,
+    "brightness": 0.44,
+    "tintR": 0.75,
+    "tintG": 0.92,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n2359",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas2",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC7635",
+    "displayName": "Bubble Nebula",
+    "rightAscensionDeg": 350.164,
+    "declinationDeg": 61.1943,
+    "angularSizeDeg": 1.676,
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 0.66,
+    "tintB": 0.72,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n7635",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas3",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "IC1805",
+    "displayName": "Heart Nebula",
+    "rightAscensionDeg": 38.4907,
+    "declinationDeg": 61.1244,
+    "angularSizeDeg": 6.768,
+    "brightness": 0.38,
+    "tintR": 1.0,
+    "tintG": 0.55,
+    "tintB": 0.62,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/ic1805",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "IC1848",
+    "displayName": "Soul Nebula",
+    "rightAscensionDeg": 44.9301,
+    "declinationDeg": 61.0653,
+    "angularSizeDeg": 6.861,
+    "brightness": 0.36,
+    "tintR": 1.0,
+    "tintG": 0.58,
+    "tintB": 0.66,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/ic1848",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC6888",
+    "displayName": "Crescent Nebula",
+    "rightAscensionDeg": 303.0481,
+    "declinationDeg": 38.3372,
+    "angularSizeDeg": 0.379,
+    "brightness": 0.42,
+    "tintR": 1.0,
+    "tintG": 0.66,
+    "tintB": 0.72,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n6888",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas3",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC1499",
+    "displayName": "California Nebula",
+    "rightAscensionDeg": 60.1726,
+    "declinationDeg": 36.1927,
+    "angularSizeDeg": 4.011,
+    "brightness": 0.4,
+    "tintR": 1.0,
+    "tintG": 0.5,
+    "tintB": 0.55,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n1499",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC2244",
+    "displayName": "Rosette Nebula",
+    "rightAscensionDeg": 98.0333,
+    "declinationDeg": 4.9391,
+    "angularSizeDeg": 2.015,
+    "brightness": 0.5,
+    "tintR": 1.0,
+    "tintG": 0.62,
+    "tintB": 0.68,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n2244",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/gas1",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC3372",
+    "displayName": "Carina Nebula",
+    "rightAscensionDeg": 160.9291,
+    "declinationDeg": -59.8211,
+    "angularSizeDeg": 6.17,
+    "brightness": 0.5,
+    "tintR": 0.95,
+    "tintG": 0.75,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/etaCarinae",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky/local-fallback/nebula",
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "item-astraterra-brasstelescope": "Brass Telescope",
+  "astraterra:item-brasstelescope": "Brass Telescope",
+  "itemdesc-astraterra-brasstelescope": "A handheld telescope for observing fixed stars.",
+  "astraterra:itemdesc-brasstelescope": "A handheld telescope for observing fixed stars.",
+  "item-astraterra-precisiontelescope": "Precision Telescope",
+  "astraterra:item-precisiontelescope": "Precision Telescope",
+  "itemdesc-astraterra-precisiontelescope": "A finely tuned telescope with ten stronger zoom levels for careful stargazing.",
+  "astraterra:itemdesc-precisiontelescope": "A finely tuned telescope with ten stronger zoom levels for careful stargazing.",
+  "item-astraterra-sextant": "Sextant",
+  "astraterra:item-sextant": "Sextant",
+  "itemdesc-astraterra-sextant": "Measures a star's angle above the horizon.",
+  "astraterra:itemdesc-sextant": "Measures a star's angle above the horizon.",
+  "astraterra:cmd-stars": "Inspect and manage AstraTerra constellations.",
+  "astraterra:unnamed-constellation": "Unnamed Constellation",
+  "astraterra:hud-mode-observe": "Observe",
+  "astraterra:hud-mode-draw": "Draw",
+  "astraterra:hud-mode-inspect": "Inspect",
+  "astraterra:hud-mode-remove-segment": "Remove Segment",
+  "astraterra:hud-zoom": "Zoom {0}/5"
+}

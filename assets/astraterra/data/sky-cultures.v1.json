@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "skyCultureAssetPaths": [
+    "astraterra:data/sky-cultures/modern-iau.constellations.v1.json"
+  ]
+}

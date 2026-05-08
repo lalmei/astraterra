@@ -1,0 +1,10 @@
+:root {
+  --md-primary-fg-color: #3f4f8f;
+  --md-accent-fg-color: #b7791f;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  letter-spacing: 0;
+}

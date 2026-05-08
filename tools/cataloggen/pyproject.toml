@@ -1,0 +1,8 @@
+[project]
+name = "cataloggen"
+version = "0.1.0"
+description = "Developer-only AstraTerra star catalog generation tools."
+requires-python = ">=3.11"
+
+[project.scripts]
+cataloggen = "cataloggen.main:main"

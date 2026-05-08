@@ -1,0 +1,99 @@
+# Third-Party Notices
+
+## Spyglass
+
+AstraTerra's Brass Telescope item model is adapted from the Spyglass Vintage Story mod:
+
+- Repository: https://github.com/fuami/Spyglass
+- Copyright (c) 2021 Fuami
+- License: MIT
+
+MIT License
+
+Copyright (c) 2021 Fuami
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Realistic Surveying
+
+AstraTerra's Sextant item model transforms and crafting recipe are adapted from the user's downloaded Realistic Surveying package:
+
+- Mod: Realistic Surveying
+- Mod ID: `realisticsurveying`
+- Version: 0.8.1
+- Author: Onions
+- Source package: `~/Downloads/realisticsurveying_0`
+- License: not declared in the local package metadata.
+
+## Stellarium Modern IAU Sky Culture
+
+AstraTerra's Modern IAU constellation line asset is adapted from Stellarium's `modern_iau` sky culture:
+
+- Repository: https://github.com/Stellarium/stellarium
+- Source path: `skycultures/modern_iau/index.json`
+- Runtime asset: `assets/astraterra/data/sky-cultures/modern-iau.constellations.v1.json`
+- Copyright: Stellarium contributors
+- License: CC BY-SA 4.0
+
+The adapted asset keeps the HIP-number constellation figure polylines and selected metadata needed by AstraTerra. IAU constellations are officially defined by boundaries; stick-figure line sets are conventional.
+
+## Stellarium Default Nebula Textures
+
+AstraTerra includes selected low-resolution deep-sky textures from Stellarium's default nebula set for telescope-only nebula rendering:
+
+- Repository: https://github.com/Stellarium/stellarium
+- Source directory: `nebulae/default`
+- Runtime directory: `assets/astraterra/textures/environment/deep-sky/stellarium`
+- Texture metadata source: `nebulae/default/textures.json`
+- License/project: Stellarium is GPL-2.0-or-later; individual image credits are retained below where listed by Stellarium metadata.
+
+Included texture credits from Stellarium `textures.json`:
+
+- `pleiades.png`: HG731GZ
+- `m42.png`: HG731GZ
+- `m8.png`: Dylan O'Donnell
+- `m31.png`: LEE and HG731GZ
+- `n7000.png`: Adam Block/Steward Observatory/University of Arizona
+- `m16.png`: Sun Gang
+- `m17.png`: Dylan O'Donnell
+- `m20.png`: Hewholooks
+- `m27dumont.png`: Stephane Dumont
+- `m57dumont.png`: Stephane Dumont
+- `ic434.png`: Manuel Peitsch, post-processing: Sun Shuwei
+- `n281.png`: Hewholooks
+- `n2359.png`: Carole Pope
+- `n7635.png`: K Bahr, post-processing: Sun Shuwei
+- `ic1805.png`: Giuseppe Donatiello, post-processing: Sun Shuwei
+- `ic1848.png`: Giuseppe Donatiello, post-processing: Sun Shuwei
+- `n6888.png`: Jschulman555
+- `n1499.png`: Zhao Jingna
+- `n2244.png`: Keesscherer
+- `etaCarinae.png`: Harel Boren
+
+## reference sky implementation Local Fallback Textures
+
+AstraTerra includes local fallback textures copied from the user's downloaded reference sky implementation package at `~/Downloads/reference-package_0-3`:
+
+- Mod: reference sky implementation
+- Author: LadyLioness
+- Runtime directory: `assets/astraterra/textures/environment/deep-sky/local-fallback`
+- Source files: `assets/reference-sky/textures/environment/nebula.png`, `gas1.png`, `gas2.png`, `gas3.png`
+- License: not declared in the local package metadata.
+
+These textures are used only as fallbacks when the preferred Stellarium texture for a deep-sky object cannot be loaded.

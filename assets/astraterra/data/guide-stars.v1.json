@@ -1,0 +1,238 @@
+[
+  {
+    "iauCode": "And",
+    "displayName": "Andromeda",
+    "hipIds": [
+      677,
+      5447,
+      9640
+    ]
+  },
+  {
+    "iauCode": "Aqr",
+    "displayName": "Aquarius",
+    "hipIds": [
+      106278,
+      109074,
+      110003,
+      110395,
+      111497
+    ]
+  },
+  {
+    "iauCode": "Ari",
+    "displayName": "Aries",
+    "hipIds": [
+      8832,
+      8903,
+      9884,
+      14838
+    ]
+  },
+  {
+    "iauCode": "Cap",
+    "displayName": "Capricornus",
+    "hipIds": [
+      100064,
+      100345,
+      104139,
+      106985,
+      107556
+    ]
+  },
+  {
+    "iauCode": "CMa",
+    "displayName": "Canis Major",
+    "hipIds": [
+      32349,
+      30324,
+      33579,
+      34444
+    ]
+  },
+  {
+    "iauCode": "Cas",
+    "displayName": "Cassiopeia",
+    "hipIds": [
+      746,
+      3179,
+      4427,
+      6686,
+      8886
+    ]
+  },
+  {
+    "iauCode": "Cen",
+    "displayName": "Centaurus",
+    "hipIds": [
+      68702,
+      68933,
+      71683
+    ]
+  },
+  {
+    "iauCode": "Cnc",
+    "displayName": "Cancer",
+    "hipIds": [
+      40526,
+      42911,
+      43103,
+      44066
+    ]
+  },
+  {
+    "iauCode": "Cru",
+    "displayName": "Crux",
+    "hipIds": [
+      59747,
+      60718,
+      61084,
+      62434
+    ]
+  },
+  {
+    "iauCode": "Cyg",
+    "displayName": "Cygnus",
+    "hipIds": [
+      95947,
+      97165,
+      100453,
+      102098,
+      102488
+    ]
+  },
+  {
+    "iauCode": "Gem",
+    "displayName": "Gemini",
+    "hipIds": [
+      31681,
+      36850,
+      37826
+    ]
+  },
+  {
+    "iauCode": "Leo",
+    "displayName": "Leo",
+    "hipIds": [
+      49669,
+      50583,
+      54872,
+      57632
+    ]
+  },
+  {
+    "iauCode": "Lib",
+    "displayName": "Libra",
+    "hipIds": [
+      72622,
+      74785,
+      76333,
+      77853
+    ]
+  },
+  {
+    "iauCode": "Lyr",
+    "displayName": "Lyra",
+    "hipIds": [
+      91262,
+      92420,
+      93194
+    ]
+  },
+  {
+    "iauCode": "Ori",
+    "displayName": "Orion",
+    "hipIds": [
+      24436,
+      25336,
+      25930,
+      26311,
+      26727,
+      27366,
+      27989
+    ]
+  },
+  {
+    "iauCode": "Psc",
+    "displayName": "Pisces",
+    "hipIds": [
+      7097,
+      8198,
+      9487,
+      11484,
+      118268
+    ]
+  },
+  {
+    "iauCode": "Sgr",
+    "displayName": "Sagittarius",
+    "hipIds": [
+      88635,
+      89931,
+      90185,
+      90496,
+      92855,
+      93506,
+      95347
+    ]
+  },
+  {
+    "iauCode": "Sco",
+    "displayName": "Scorpius",
+    "hipIds": [
+      78265,
+      78401,
+      78820,
+      80763,
+      85927,
+      86228
+    ]
+  },
+  {
+    "iauCode": "Tau",
+    "displayName": "Taurus",
+    "hipIds": [
+      17702,
+      21421,
+      25428
+    ]
+  },
+  {
+    "iauCode": "UMa",
+    "displayName": "Ursa Major",
+    "hipIds": [
+      53910,
+      54061,
+      58001,
+      59774,
+      62956,
+      65378,
+      67301
+    ]
+  },
+  {
+    "iauCode": "UMi",
+    "displayName": "Ursa Minor",
+    "hipIds": [
+      11767,
+      72607,
+      75097,
+      77055,
+      79822,
+      82080,
+      85822
+    ]
+  },
+  {
+    "iauCode": "Vir",
+    "displayName": "Virgo",
+    "hipIds": [
+      57757,
+      60129,
+      61941,
+      63090,
+      63608,
+      65474
+    ]
+  }
+]

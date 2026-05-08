@@ -1,0 +1,55 @@
+{
+  "code": "precisiontelescope",
+  "class": "AstraTerra.Items.ItemPrecisionTelescope",
+  "attributes": {
+    "displaycaseable": true,
+    "shelvable": true,
+    "groundStorageTransform": {
+      "translation": { "x": -0.015, "y": -0.46, "z": -0.1 },
+      "rotation": { "x": 0, "y": 45, "z": 1.5 },
+      "scale": 0.95
+    },
+    "rackable": true
+  },
+  "shape": { "base": "item/brass-telescope" },
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": { "layout": "Quadrants" }
+    }
+  ],
+  "heldPriorityInteract": true,
+  "heldTpHitAnimation": "breaktool",
+  "creativeinventory": {
+    "general": ["*"],
+    "items": ["*"],
+    "tools": ["*"]
+  },
+  "textures": {
+    "glass": { "base": "game:item/resource/ungraded/clearquartz" },
+    "metal": { "base": "game:block/metal/ingot/brass" }
+  },
+  "fpHandTransform": {
+    "translation": { "x": 0.0468, "y": -0.5, "z": 0 },
+    "rotation": { "x": -161, "y": 20, "z": 90 },
+    "scale": 2.5
+  },
+  "guiTransform": {
+    "rotate": false,
+    "translation": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": -77, "y": 47, "z": -151 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.55 },
+    "scale": 2.4
+  },
+  "groundTransform": {
+    "translation": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.45, "z": 0.5 },
+    "scale": 3.6
+  },
+  "tpHandTransform": {
+    "translation": { "x": -0.4, "y": -0.5, "z": -0.64 },
+    "rotation": { "x": 90, "y": -174, "z": 0 },
+    "scale": 0.8
+  }
+}

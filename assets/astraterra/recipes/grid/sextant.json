@@ -1,0 +1,12 @@
+{
+  "ingredientPattern": "PGP,NS_",
+  "ingredients": {
+    "P": { "type": "item", "code": "game:metalplate-brass" },
+    "G": { "type": "block", "code": "game:glass-plain" },
+    "N": { "type": "item", "code": "game:metalnailsandstrips-{metal}" },
+    "S": { "type": "item", "code": "game:metalbit-silver" }
+  },
+  "width": 3,
+  "height": 2,
+  "output": { "type": "item", "code": "astraterra:sextant", "quantity": 1 }
+}

@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+env:
+  VINTAGE_STORY_VERSION: 1.22.2
+  VINTAGE_STORY_ARCHIVE_URL: https://cdn.vintagestory.at/gamefiles/stable/vs_client_linux-x64_1.22.2.tar.gz
+
+jobs:
+  build:
+    name: Test, Build, and Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Cache Vintage Story client
+        uses: actions/cache@v4
+        with:
+          path: .vintagestory
+          key: vintagestory-${{ runner.os }}-${{ env.VINTAGE_STORY_VERSION }}
+
+      - name: Install Vintage Story references
+        shell: bash
+        run: |
+          if [[ ! -d "$GITHUB_WORKSPACE/.vintagestory" ]] || ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | grep -q .; then
+            mkdir -p "$GITHUB_WORKSPACE/.vintagestory" "$RUNNER_TEMP/vintagestory"
+            curl -fL "$VINTAGE_STORY_ARCHIVE_URL" -o "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz"
+            tar -xzf "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz" -C "$GITHUB_WORKSPACE/.vintagestory"
+          fi
+
+          vintagestory_api="$(find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | head -n 1)"
+          if [[ -z "$vintagestory_api" ]]; then
+            echo "Could not find VintagestoryAPI.dll after extracting Vintage Story." >&2
+            exit 1
+          fi
+
+          echo "VINTAGE_STORY=$(dirname "$vintagestory_api")" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        run: make test
+
+      - name: Build mod
+        run: make build
+
+      - name: Package mod
+        run: make package
+
+      - name: Build docs
+        run: make docs-build
+
+      - name: Upload mod package
+        uses: actions/upload-artifact@v4
+        with:
+          name: astraterra-mod-package
+          path: dist/*.zip
+          if-no-files-found: error

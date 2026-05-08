@@ -1,0 +1,12 @@
+{
+  "ingredientPattern": " GM, BG, W ",
+  "ingredients": {
+    "G": { "type": "block", "code": "game:glass-plain" },
+    "M": { "type": "item", "code": "game:ingot-brass" },
+    "B": { "type": "item", "code": "game:metalplate-brass" },
+    "W": { "type": "item", "code": "game:stick" }
+  },
+  "width": 3,
+  "height": 3,
+  "output": { "type": "item", "code": "astraterra:brasstelescope", "quantity": 1 }
+}
