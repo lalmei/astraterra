@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches:
       - main
@@ -14,7 +15,12 @@ env:
 jobs:
   build:
     name: Test, Build, and Package
-    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.user.login == 'lalmei' ||
+      contains(github.event.pull_request.labels.*.name, 'run-local-ci')
+    runs-on: [self-hosted, macOS, astraterra-local]
+    environment: local-ci
 
     steps:
       - name: Check out repository

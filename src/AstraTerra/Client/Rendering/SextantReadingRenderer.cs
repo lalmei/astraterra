@@ -41,7 +41,7 @@ public sealed class SextantReadingRenderer : IRenderer
             return;
         }
 
-        if (stage != EnumRenderStage.Ortho || !SextantReadingState.IsReading)
+        if (stage != EnumRenderStage.Ortho || !IsReadingSextant())
         {
             return;
         }
@@ -122,6 +122,24 @@ public sealed class SextantReadingRenderer : IRenderer
         }
 
         return closest;
+    }
+
+    private bool IsReadingSextant()
+    {
+        if (!IsActiveHeldSextant())
+        {
+            return false;
+        }
+
+        return SextantReadingState.IsReading || api.World.Player.Entity.Controls.RightMouseDown;
+    }
+
+    private bool IsActiveHeldSextant()
+    {
+        var stack = api.World.Player.InventoryManager.ActiveHotbarSlot?.Itemstack;
+        var code = stack?.Collectible?.Code;
+        return string.Equals(code?.Domain, "astraterra", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(code?.Path, "sextant", StringComparison.OrdinalIgnoreCase);
     }
 
     private void RenderReading(string text)
