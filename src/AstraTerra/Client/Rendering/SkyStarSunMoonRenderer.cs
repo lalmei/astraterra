@@ -26,6 +26,8 @@ public static class SkyStarSunMoonRenderer
     private const float MinimumStarPixelSize = 7.0f;
     private const float StarPixelScale = 1.0f;
     private const float MaximumStarPixelSize = 24.0f;
+    private const double MinimumSkyRenderDarkness = 0.10;
+    private const float MinimumStarAlpha = 0.035f;
     private const float SkyDistance = 40.0f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
     private const float StarGlowSizeRange = 1.5f;
@@ -102,6 +104,11 @@ public static class SkyStarSunMoonRenderer
             : "AstraTerra daylight star override disabled. Stars now follow normal daylight visibility.";
     }
 
+    public static bool ShouldRenderForDarkness(double naturalDarkness, bool forceDaylight)
+    {
+        return forceDaylight || naturalDarkness > MinimumSkyRenderDarkness;
+    }
+
     public static void Postfix(SystemRenderSunMoon __instance, float dt)
     {
         if (renderingDisabledAfterFailure)
@@ -137,7 +144,7 @@ public static class SkyStarSunMoonRenderer
         var calendar = api.World.Calendar;
         var naturalDarkness = 1.0 - calendar.DayLightStrength;
         var renderDarkness = forceDaylightStars ? 1.0 : naturalDarkness;
-        if (!forceDaylightStars && naturalDarkness <= 0.02)
+        if (!ShouldRenderForDarkness(naturalDarkness, forceDaylightStars))
         {
             LogSkyStep(dt, "skipped daylight: daylight={0:0.00}; darkness={1:0.00}", calendar.DayLightStrength, naturalDarkness);
             return;
@@ -159,12 +166,14 @@ public static class SkyStarSunMoonRenderer
             longitude);
         var brightnessBias = config.StarBrightnessBias * (float)renderDarkness;
         var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias);
-        if (visibleStars.Count == 0)
+        var drawableStars = FilterDrawableStars(visibleStars);
+        if (drawableStars.Count == 0)
         {
             LogSkyStep(
                 dt,
-                "skipped no visible stars: catalog={0}; latitude={1:0.0}; localSidereal={2:0.0}; brightnessBias={3:0.00}",
+                "skipped no drawable stars: catalog={0}; visible={1}; latitude={2:0.0}; localSidereal={3:0.0}; brightnessBias={4:0.00}",
                 catalog.Stars.Count,
+                visibleStars.Count,
                 latitude,
                 localSiderealAngle,
                 brightnessBias);
@@ -175,7 +184,7 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<SkyConstellationDot> constellationDots = Array.Empty<SkyConstellationDot>();
         if (journal is not null)
         {
-            var visibleStarMap = visibleStars.ToDictionary(star => star.Hip);
+            var visibleStarMap = drawableStars.ToDictionary(star => star.Hip);
             var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
             constellationDots = ConstellationRenderModel.BuildSkyDots(constellationSegments, ConstellationDotSpacingDeg);
         }
@@ -211,7 +220,7 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        RenderSky(api, visibleStars, visibleDeepSkyObjects, constellationDots, quadModel, imageSize, dt, calendar.DayLightStrength, playerPos.Yaw, playerPos.Pitch, forceDaylightStars);
+        RenderSky(api, drawableStars, visibleDeepSkyObjects, constellationDots, quadModel, imageSize, dt, calendar.DayLightStrength, playerPos.Yaw, playerPos.Pitch, forceDaylightStars);
     }
 
     private static void RenderSky(
@@ -235,6 +244,7 @@ public static class SkyStarSunMoonRenderer
         var drawnCount = 0;
         var smallestDrawnSize = double.MaxValue;
         var largestDrawnSize = 0.0;
+        var modelMatrixBuffer = new float[16];
 
         render.GlToggleBlend(true, EnumBlendMode.Glow);
         render.GlDisableCullFace();
@@ -265,7 +275,7 @@ public static class SkyStarSunMoonRenderer
                 var textureId = ResolveDeepSkyTexture(clientApi, deepSkyObject);
                 if (textureId != 0)
                 {
-                    RenderDeepSkyQuad(clientApi, shader, quadModel, deepSkyObject, imageSize, textureId);
+                    RenderDeepSkyQuad(clientApi, shader, quadModel, deepSkyObject, imageSize, textureId, modelMatrixBuffer);
                 }
             }
 
@@ -273,7 +283,7 @@ public static class SkyStarSunMoonRenderer
             {
                 foreach (var dot in constellationDots)
                 {
-                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize);
+                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer);
                 }
             }
 
@@ -289,10 +299,10 @@ public static class SkyStarSunMoonRenderer
                 {
                     var glowSize = size * (1.0f + (StarGlowSizeRange * alpha));
                     var glowTint = new Vec4f(tint.R, tint.G, tint.B, outerAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, star, glowSize, imageSize, brightStarTextureId, glowTint);
+                    RenderStarQuad(clientApi, shader, quadModel, star, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
                 }
 
-                RenderStarQuad(clientApi, shader, quadModel, star, size, imageSize, textureId, tint);
+                RenderStarQuad(clientApi, shader, quadModel, star, size, imageSize, textureId, tint, modelMatrixBuffer);
 
                 drawnCount++;
                 smallestDrawnSize = Math.Min(smallestDrawnSize, size);
@@ -346,7 +356,8 @@ public static class SkyStarSunMoonRenderer
         float sizePixels,
         int imageSize,
         int textureId,
-        Vec4f tint)
+        Vec4f tint,
+        float[] modelMatrixBuffer)
     {
         var modelMatrix = BuildModelMatrix(clientApi, star, sizePixels, imageSize);
 
@@ -354,7 +365,8 @@ public static class SkyStarSunMoonRenderer
         shader.RgbaTint = tint;
         shader.RgbaLightIn = new Vec4f(tint.R, tint.G, tint.B, 1f);
         shader.Tex2D = textureId;
-        ((IShaderProgram)shader).UniformMatrix("modelMatrix", ToFloatArray(modelMatrix));
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         clientApi.Render.RenderMesh(quadModel);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
@@ -364,7 +376,8 @@ public static class SkyStarSunMoonRenderer
         IStandardShaderProgram shader,
         MeshRef quadModel,
         SkyConstellationDot dot,
-        int imageSize)
+        int imageSize,
+        float[] modelMatrixBuffer)
     {
         var modelMatrix = BuildSkyBillboardMatrix(
             clientApi,
@@ -378,7 +391,8 @@ public static class SkyStarSunMoonRenderer
         shader.RgbaTint = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, dot.Tint.A);
         shader.RgbaLightIn = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, 1f);
         shader.Tex2D = constellationDotTextureId;
-        ((IShaderProgram)shader).UniformMatrix("modelMatrix", ToFloatArray(modelMatrix));
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         clientApi.Render.RenderMesh(quadModel);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
@@ -389,7 +403,8 @@ public static class SkyStarSunMoonRenderer
         MeshRef quadModel,
         RenderedDeepSkyObject deepSkyObject,
         int imageSize,
-        int textureId)
+        int textureId,
+        float[] modelMatrixBuffer)
     {
         var modelMatrix = BuildSkyBillboardMatrix(
             clientApi,
@@ -409,7 +424,8 @@ public static class SkyStarSunMoonRenderer
         shader.RgbaTint = tint;
         shader.RgbaLightIn = new Vec4f(tint.R, tint.G, tint.B, 1f);
         shader.Tex2D = textureId;
-        ((IShaderProgram)shader).UniformMatrix("modelMatrix", ToFloatArray(modelMatrix));
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         clientApi.Render.RenderMesh(quadModel);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
@@ -514,6 +530,20 @@ public static class SkyStarSunMoonRenderer
         var blockPos = entity.Pos.AsBlockPos;
         var eyeY = entity.Pos.InternalY + entity.LocalEyePos.Y;
         return clientApi.World.BlockAccessor.GetRainMapHeightAt(blockPos) <= eyeY;
+    }
+
+    private static IReadOnlyList<RenderedStar> FilterDrawableStars(IReadOnlyList<RenderedStar> visibleStars)
+    {
+        var drawableStars = new List<RenderedStar>(visibleStars.Count);
+        foreach (var star in visibleStars)
+        {
+            if (star.Brightness >= MinimumStarAlpha)
+            {
+                drawableStars.Add(star);
+            }
+        }
+
+        return drawableStars;
     }
 
     private static void EnsureStarTextures(ICoreClientAPI clientApi)
@@ -624,15 +654,24 @@ public static class SkyStarSunMoonRenderer
             alpha);
     }
 
-    private static float[] ToFloatArray(Matrix4 matrix)
+    private static void CopyToFloatArray(Matrix4 matrix, float[] target)
     {
-        return
-        [
-            matrix.M11, matrix.M12, matrix.M13, matrix.M14,
-            matrix.M21, matrix.M22, matrix.M23, matrix.M24,
-            matrix.M31, matrix.M32, matrix.M33, matrix.M34,
-            matrix.M41, matrix.M42, matrix.M43, matrix.M44
-        ];
+        target[0] = matrix.M11;
+        target[1] = matrix.M12;
+        target[2] = matrix.M13;
+        target[3] = matrix.M14;
+        target[4] = matrix.M21;
+        target[5] = matrix.M22;
+        target[6] = matrix.M23;
+        target[7] = matrix.M24;
+        target[8] = matrix.M31;
+        target[9] = matrix.M32;
+        target[10] = matrix.M33;
+        target[11] = matrix.M34;
+        target[12] = matrix.M41;
+        target[13] = matrix.M42;
+        target[14] = matrix.M43;
+        target[15] = matrix.M44;
     }
 
     private static double ToDegrees(double radians)

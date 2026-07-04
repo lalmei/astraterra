@@ -83,7 +83,20 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("GLDisableDepthTest()", renderer);
         Assert.Contains("ConstellationRenderModel.BuildSkyDots", renderer);
         Assert.Contains("ConstellationDotTexturePath", renderer);
+        Assert.Contains("MinimumSkyRenderDarkness", renderer);
+        Assert.Contains("MinimumStarAlpha", renderer);
+        Assert.Contains("ShouldRenderForDarkness(naturalDarkness, forceDaylightStars)", renderer);
         Assert.Contains("AstraTerra disabled sky rendering after an unexpected error", renderer);
+    }
+
+    [Fact]
+    public void Sky_Renderer_Reuses_Model_Matrix_Buffer_Per_Frame()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("var modelMatrixBuffer = new float[16];", renderer);
+        Assert.Contains("CopyToFloatArray(modelMatrix, modelMatrixBuffer)", renderer);
+        Assert.DoesNotContain("ToFloatArray(modelMatrix)", renderer);
     }
 
     [Fact]
