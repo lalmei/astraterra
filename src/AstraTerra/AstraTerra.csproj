@@ -25,6 +25,10 @@
       <HintPath>$(VintageStoryPath)/Lib/OpenTK.Mathematics.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>$(VintageStoryPath)/Lib/protobuf-net.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

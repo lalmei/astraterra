@@ -14,41 +14,34 @@ namespace AstraTerra.Client.Rendering;
 public sealed class ConstellationOverlayRenderer : IRenderer
 {
     private const double SkyProjectionDistance = 40.0;
-    private const double OcclusionRayDistance = 192.0;
-    private const float LineDotSpacing = 5.0f;
-    private const float LineDotSize = 4.5f;
-    private const float EndpointDotSize = 8.0f;
+    private const float LineDotSpacing = 6.0f;
+    private const float LineDotSize = 3.2f;
     private const float GuidePickRadius = 26.0f;
     private const float GuideTargetDotSize = 13.0f;
-    private static readonly Vec4f SegmentTint = new(0.55f, 0.85f, 1.0f, 0.82f);
-    private static readonly Vec4f EndpointTint = new(0.85f, 0.95f, 1.0f, 0.92f);
-    private static readonly Vec4f HoverGuideTint = new(0.95f, 1.0f, 0.75f, 0.95f);
-    private static readonly Vec4f DragGuideTint = new(1.0f, 0.86f, 0.48f, 0.95f);
-    private static readonly Vec4f PreviewSegmentTint = new(1.0f, 0.86f, 0.48f, 0.86f);
+    private static readonly Vec4f HoverGuideTint = new(0.976f, 0.886f, 0.686f, 0.78f);
+    private static readonly Vec4f DragGuideTint = new(0.980f, 0.702f, 0.529f, 0.78f);
+    private static readonly Vec4f PreviewSegmentTint = new(0.980f, 0.702f, 0.529f, 0.56f);
 
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
     private readonly StarCatalog catalog;
-    private readonly ConstellationJournal journal;
-    private readonly Action? onJournalChanged;
+    private readonly ConstellationBookClient bookClient;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
-    private IReadOnlyList<RenderedStar> guideOverlayStars = [];
     private IReadOnlyList<ProjectedGuideStar> projectedGuideStars = [];
-    private readonly Dictionary<int, bool> occludedGuideStars = new();
     private LoadedTexture pixelTexture;
+    private bool renderingDisabledAfterFailure;
     private int? hoveredGuideHipId;
     private int? drawStartHipId;
     private int? drawHoverHipId;
     private IReadOnlyList<RenderedScreenSegment> screenSegments = [];
 
-    public ConstellationOverlayRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog catalog, ConstellationJournal journal, Action? onJournalChanged = null)
+    public ConstellationOverlayRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog catalog, ConstellationBookClient bookClient)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
-        this.journal = journal;
-        this.onJournalChanged = onJournalChanged;
+        this.bookClient = bookClient;
         pixelTexture = new LoadedTexture(api)
         {
             Width = 1,
@@ -131,8 +124,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         drawHoverHipId = guide?.Hip ?? drawHoverHipId;
         if (drawStartHipId is int start && drawHoverHipId is int end && start != end)
         {
-            journal.AddEdgeAndMerge(start, end);
-            onJournalChanged?.Invoke();
+            bookClient.SendAddEdge(start, end);
             args.Handled = true;
         }
 
@@ -141,6 +133,25 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     }
 
     public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
+    {
+        if (renderingDisabledAfterFailure)
+        {
+            return;
+        }
+
+        try
+        {
+            OnRenderFrameCore(stage);
+        }
+        catch (Exception exception)
+        {
+            renderingDisabledAfterFailure = true;
+            ClearInteractionTargets();
+            api.Logger.Warning("AstraTerra disabled constellation overlay rendering after an unexpected error: {0}", exception);
+        }
+    }
+
+    private void OnRenderFrameCore(EnumRenderStage stage)
     {
         if (stage == EnumRenderStage.Opaque)
         {
@@ -155,7 +166,10 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         var calendar = api.World.Calendar;
         var darkness = 1.0 - calendar.DayLightStrength;
-        if ((!SkyStarSunMoonRenderer.ForceDaylightStars && darkness <= 0.02) || cachedViewMatrix is null || cachedProjectionMatrix is null)
+        if ((!SkyStarSunMoonRenderer.ForceDaylightStars && darkness <= 0.02) ||
+            cachedViewMatrix is null ||
+            cachedProjectionMatrix is null ||
+            !TelescopeScopeState.IsScoped)
         {
             ClearInteractionTargets();
             return;
@@ -168,6 +182,14 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
+        if (!bookClient.HasLeftHandJournalBook())
+        {
+            ClearInteractionTargets();
+            return;
+        }
+
+        var journal = bookClient.ReadCurrentJournalOrEmpty();
+
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
@@ -175,43 +197,40 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             Math.Max(1, calendar.DaysPerYear),
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
-        guideOverlayStars = BuildGuideOverlay(catalog.Stars, latitude, localSiderealAngle, config);
 
         var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength));
-        occludedGuideStars.Clear();
         projectedGuideStars = ProjectGuideStars(visibleStars.Where(star => star.IsGuideStar));
         var visibleStarMap = visibleStars.ToDictionary(star => star.Hip);
-        var segments = ConstellationOverlayModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
+        var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
         var nextScreenSegments = new List<RenderedScreenSegment>();
+
+        foreach (var segment in segments)
+        {
+            if (!TryProject(segment.Start, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var startX, out var startY) ||
+                !TryProject(segment.End, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var endX, out var endY))
+            {
+                continue;
+            }
+
+            nextScreenSegments.Add(new RenderedScreenSegment(segment.ConstellationId, segment.StartHip, segment.EndHip, startX, startY, endX, endY));
+        }
+
+        screenSegments = nextScreenSegments;
 
         EnsurePixelTexture();
         if (pixelTexture.TextureId == 0)
         {
-            ClearInteractionTargets();
             return;
         }
 
-        api.Render.GlToggleBlend(true, EnumBlendMode.Glow);
+        api.Render.GlToggleBlend(true, EnumBlendMode.Standard);
         try
         {
-            foreach (var segment in segments)
-            {
-                if (!TryProject(segment.Start, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var startX, out var startY) ||
-                    !TryProject(segment.End, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var endX, out var endY))
-                {
-                    continue;
-                }
-
-                nextScreenSegments.Add(new RenderedScreenSegment(segment.ConstellationId, segment.StartHip, segment.EndHip, startX, startY, endX, endY));
-                DrawSegment(segment.Start, segment.End, startX, startY, endX, endY);
-            }
-
-            screenSegments = nextScreenSegments;
             DrawTelescopeDrawingFeedback();
         }
         finally
         {
-            api.Render.GlToggleBlend(false, EnumBlendMode.Glow);
+            api.Render.GlToggleBlend(false, EnumBlendMode.Standard);
         }
     }
 
@@ -257,38 +276,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         }
     }
 
-    private void DrawSegment(RenderedStar start, RenderedStar end, float startX, float startY, float endX, float endY)
-    {
-        DrawSegment(
-            startX,
-            startY,
-            endX,
-            endY,
-            SegmentTint,
-            EndpointTint,
-            (t) =>
-            {
-                var x = Lerp(start.DirectionX, end.DirectionX, t);
-                var y = Lerp(start.DirectionY, end.DirectionY, t);
-                var z = Lerp(start.DirectionZ, end.DirectionZ, t);
-                return !IsSkyDirectionOccluded(x, y, z);
-            });
-    }
-
-    private void DrawSegment(float startX, float startY, float endX, float endY, Vec4f? tintOverride = null)
-    {
-        var tint = tintOverride ?? SegmentTint;
-        DrawSegment(startX, startY, endX, endY, tint, tintOverride ?? EndpointTint, _ => true);
-    }
-
-    private void DrawSegment(
-        float startX,
-        float startY,
-        float endX,
-        float endY,
-        Vec4f tint,
-        Vec4f endpointTint,
-        System.Func<float, bool> shouldDrawAt)
+    private void DrawSegment(float startX, float startY, float endX, float endY, Vec4f tint)
     {
         var dx = endX - startX;
         var dy = endY - startY;
@@ -298,24 +286,9 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         for (var i = 0; i <= steps; i++)
         {
             var t = i / (float)steps;
-            if (!shouldDrawAt(t))
-            {
-                continue;
-            }
-
             var x = startX + (dx * t);
             var y = startY + (dy * t);
             api.Render.Render2DTexture(pixelTexture.TextureId, x - (LineDotSize / 2f), y - (LineDotSize / 2f), LineDotSize, LineDotSize, 760f, tint);
-        }
-
-        if (shouldDrawAt(0f))
-        {
-            api.Render.Render2DTexture(pixelTexture.TextureId, startX - (EndpointDotSize / 2f), startY - (EndpointDotSize / 2f), EndpointDotSize, EndpointDotSize, 761f, endpointTint);
-        }
-
-        if (shouldDrawAt(1f))
-        {
-            api.Render.Render2DTexture(pixelTexture.TextureId, endX - (EndpointDotSize / 2f), endY - (EndpointDotSize / 2f), EndpointDotSize, EndpointDotSize, 761f, endpointTint);
         }
     }
 
@@ -370,7 +343,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         return stars.Select(star =>
             {
                 var projected = TryProject(star, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y);
-                return projected && !IsGuideStarOccluded(star) ? new ProjectedGuideStar(star.Hip, x, y) : (ProjectedGuideStar?)null;
+                return projected ? new ProjectedGuideStar(star.Hip, x, y) : (ProjectedGuideStar?)null;
             })
             .Where(star => star is not null)
             .Select(star => star!.Value)
@@ -393,6 +366,12 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
+        if (!bookClient.CanMutate(out var message))
+        {
+            api.ShowChatMessage(message);
+            return;
+        }
+
         drawStartHipId = guide.Value.Hip;
         drawHoverHipId = null;
         hoveredGuideHipId = guide.Value.Hip;
@@ -402,9 +381,10 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private void OpenNameDialog(MouseEvent args)
     {
         var segment = PickSegment(args.X, args.Y);
+        var journal = bookClient.ReadCurrentJournal();
         var record = segment is null
             ? null
-            : journal.Constellations.FirstOrDefault(constellation => constellation.Id == segment.Value.ConstellationId);
+            : journal?.Constellations.FirstOrDefault(constellation => constellation.Id == segment.Value.ConstellationId);
         if (record is null)
         {
             return;
@@ -422,21 +402,25 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
-        journal.RemoveEdgeAndSplit(segment.Value.ConstellationId, segment.Value.StartHip, segment.Value.EndHip);
-        onJournalChanged?.Invoke();
+        if (!bookClient.CanMutate(out var message))
+        {
+            api.ShowChatMessage(message);
+            return;
+        }
+
+        bookClient.SendRemoveEdge(segment.Value.ConstellationId, segment.Value.StartHip, segment.Value.EndHip);
         args.Handled = true;
     }
 
     private void RenameConstellation(int constellationId, string? name)
     {
-        var record = journal.Constellations.FirstOrDefault(constellation => constellation.Id == constellationId);
-        if (record is null)
+        if (!bookClient.CanMutate(out var message))
         {
+            api.ShowChatMessage(message);
             return;
         }
 
-        journal.Replace(record with { Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim() });
-        onJournalChanged?.Invoke();
+        bookClient.SendRename(constellationId, name);
     }
 
     private ProjectedGuideStar? PickGuideStar(float mouseX, float mouseY)
@@ -517,51 +501,6 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             directionX * SkyProjectionDistance,
             y,
             directionZ * SkyProjectionDistance);
-    }
-
-    private bool IsGuideStarOccluded(RenderedStar star)
-    {
-        if (!occludedGuideStars.TryGetValue(star.Hip, out var occluded))
-        {
-            occluded = IsSkyDirectionOccluded(star.DirectionX, star.DirectionY, star.DirectionZ);
-            occludedGuideStars[star.Hip] = occluded;
-        }
-
-        return occluded;
-    }
-
-    private bool IsSkyDirectionOccluded(double directionX, double directionY, double directionZ)
-    {
-        var length = Math.Sqrt((directionX * directionX) + (directionY * directionY) + (directionZ * directionZ));
-        if (length <= 0.000001)
-        {
-            return true;
-        }
-
-        var entity = api.World.Player.Entity;
-        var eye = new Vec3d(entity.Pos.X, entity.Pos.InternalY + entity.LocalEyePos.Y, entity.Pos.Z);
-        var scale = OcclusionRayDistance / length;
-        var target = new Vec3d(
-            eye.X + (directionX * scale),
-            eye.Y + (directionY * scale),
-            eye.Z + (directionZ * scale));
-#pragma warning disable CS8600
-        BlockSelection blockSelection = null;
-        EntitySelection entitySelection = null;
-        api.World.RayTraceForSelection(
-            eye,
-            target,
-            ref blockSelection,
-            ref entitySelection,
-            (pos, block) => true,
-            _ => false);
-#pragma warning restore CS8600
-        return blockSelection is not null;
-    }
-
-    private static double Lerp(double start, double end, float t)
-    {
-        return start + ((end - start) * t);
     }
 
     private static double DistanceToSegmentSquared(float x, float y, float startX, float startY, float endX, float endY)

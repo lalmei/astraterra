@@ -79,16 +79,8 @@ public sealed class TelescopeScopeRenderer : IRenderer
 
     public void Dispose()
     {
-        if (maskTexture.TextureId != 0)
-        {
-            api.Render.GLDeleteTexture(maskTexture.TextureId);
-            maskTexture.TextureId = 0;
-        }
-
-        if (titleTexture is not null)
-        {
-            DeleteTitleTexture();
-        }
+        DeleteTexture(maskTexture);
+        DeleteTexture(titleTexture);
     }
 
     private void EnsureMaskTexture(int frameWidth, int frameHeight, float scopeX, float scopeY, float scopeSize)
@@ -137,15 +129,29 @@ public sealed class TelescopeScopeRenderer : IRenderer
 
     private void DeleteTitleTexture()
     {
-        if (titleTexture is not null && titleTexture.TextureId != 0)
+        DeleteTexture(titleTexture);
+    }
+
+    private void DeleteTexture(LoadedTexture? texture)
+    {
+        if (texture is null)
         {
-            api.Render.GLDeleteTexture(titleTexture.TextureId);
+            return;
         }
 
-        if (titleTexture is not null)
+        if (texture.TextureId != 0)
         {
-            titleTexture.TextureId = 0;
+            try
+            {
+                api.Render.GLDeleteTexture(texture.TextureId);
+            }
+            catch (Exception exception)
+            {
+                api.Logger.Warning("AstraTerra could not delete telescope texture during cleanup: {0}", exception.Message);
+            }
         }
+
+        texture.TextureId = 0;
     }
 
     private static Vec4f GetRimTint(ObservationMode mode) => mode switch

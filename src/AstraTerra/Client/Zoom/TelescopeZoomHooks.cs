@@ -12,6 +12,11 @@ public static class TelescopeZoomHooks
         Api = api;
     }
 
+    public static void Reset()
+    {
+        Api = null;
+    }
+
     public static float AdjustFov(float fov)
     {
         return TelescopeScopeState.IsScoped ? fov * TelescopeScopeState.GetFovMultiplier() : fov;

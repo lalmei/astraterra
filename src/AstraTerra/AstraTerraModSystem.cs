@@ -18,6 +18,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private TelescopeZoomPatcher? telescopeZoomPatcher;
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
+    private ConstellationBookClient? constellationBookClient;
 
     public override void Start(ICoreAPI api)
     {
@@ -70,6 +71,7 @@ public sealed class AstraTerraModSystem : ModSystem
 
     public override void StartClientSide(ICoreClientAPI api)
     {
+        SkyStarSunMoonRenderer.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
@@ -79,31 +81,35 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Logger.Event("AstraTerra startup step: observation input registered: mouseWheelZoom=true");
         var store = new ConstellationJournalStore(api.GetOrCreateDataPath("AstraTerra"));
         var worldIdentifier = api.World.SavegameIdentifier;
-        var journal = store.Load(worldIdentifier);
+        var legacyJournal = store.LoadUnmigrated(worldIdentifier);
         api.Logger.Event(
-            "AstraTerra startup step: constellation journal loaded: world={0}; records={1}",
+            "AstraTerra startup step: legacy constellation journal loaded: world={0}; records={1}; migrated={2}",
             worldIdentifier,
-            journal.Constellations.Count);
-        new StarsClientCommands(new StarsCommandService(
-            journal,
-            () => store.Save(worldIdentifier, journal),
-            catalog,
-            latitudeProvider: () => LatitudeMapper.MapGameLatitude(
-                api.World.Player.Entity.Pos.Z,
-                api.World.Calendar.OnGetLatitude is null ? null : z => api.World.Calendar.OnGetLatitude(z)),
-            latitudeWrapCycleProvider: () => LatitudeMapper.GetWorldLatitudeWrapCycle(api.World.Player.Entity.Pos.Z, api.World.DefaultSpawnPosition.Z),
-            siderealAngleProvider: () =>
-            {
-                var calendar = api.World.Calendar;
-                var position = api.World.Player.Entity.Pos;
-                var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
-                return CelestialMath.GetVanillaAlignedLocalSiderealAngle(
-                    calendar.TotalDays,
-                    Math.Max(1, calendar.DaysPerYear),
-                    Math.Max(1.0, calendar.HoursPerDay),
-                    longitude);
-            },
-            dayOfYearProvider: () => api.World.Calendar.DayOfYear)).Register(api);
+            legacyJournal.Constellations.Count,
+            store.IsMigrated(worldIdentifier));
+        constellationBookClient = new ConstellationBookClient(api, legacyJournal, () => store.MarkMigrated(worldIdentifier));
+        constellationBookClient.Register();
+        new StarsClientCommands(
+            journal => new StarsCommandService(
+                journal,
+                catalog: catalog,
+                latitudeProvider: () => LatitudeMapper.MapGameLatitude(
+                    api.World.Player.Entity.Pos.Z,
+                    api.World.Calendar.OnGetLatitude is null ? null : z => api.World.Calendar.OnGetLatitude(z)),
+                latitudeWrapCycleProvider: () => LatitudeMapper.GetWorldLatitudeWrapCycle(api.World.Player.Entity.Pos.Z, api.World.DefaultSpawnPosition.Z),
+                siderealAngleProvider: () =>
+                {
+                    var calendar = api.World.Calendar;
+                    var position = api.World.Player.Entity.Pos;
+                    var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
+                    return CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+                        calendar.TotalDays,
+                        Math.Max(1, calendar.DaysPerYear),
+                        Math.Max(1.0, calendar.HoursPerDay),
+                        longitude);
+                },
+                dayOfYearProvider: () => api.World.Calendar.DayOfYear),
+            constellationBookClient).Register(api);
         api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars");
 
         if (catalog is null)
@@ -113,7 +119,7 @@ public sealed class AstraTerraModSystem : ModSystem
         }
 
         SkyStarSunMoonRenderer.Initialize(api, config, catalog);
-        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, journal, () => store.Save(worldIdentifier, journal));
+        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient);
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
         api.Event.MouseDown += constellationOverlayRenderer.OnMouseDown;
@@ -133,12 +139,14 @@ public sealed class AstraTerraModSystem : ModSystem
 
     public override void StartServerSide(ICoreServerAPI api)
     {
+        new ConstellationBookServer(() => catalog).Register(api);
         new StarsServerCommands(() => catalog).Register(api);
     }
 
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
+        SkyStarSunMoonRenderer.Reset();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;

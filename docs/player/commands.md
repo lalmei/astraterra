@@ -12,7 +12,7 @@ AstraTerra uses the `.stars` command group.
 .stars delete <id|selected>
 ```
 
-Use `.stars list` to see saved constellations. Use `.stars info selected` after drawing or selecting a constellation to see its star count, segment count, best visibility window, season summary, and current state.
+Use `.stars list` to see constellations in the book held in your left hand. Use `.stars info selected` after drawing or selecting a constellation to see its star count, segment count, best visibility window, season summary, and current state. Mutating commands require ink and quill in your inventory.
 
 ## Authored Constellations
 
@@ -29,7 +29,7 @@ Examples:
 .stars build modern_iau:Vir
 ```
 
-The current authored set includes all 88 Modern IAU constellations. Built constellations are saved into the same local journal as hand-drawn constellations.
+The current authored set includes all 88 Modern IAU constellations. Built constellations are saved into the held constellation book like hand-drawn constellations.
 
 ## Recovery And Debug Commands
 

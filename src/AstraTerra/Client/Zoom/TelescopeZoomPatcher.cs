@@ -16,5 +16,6 @@ public sealed class TelescopeZoomPatcher
     public void Stop()
     {
         harmony.UnpatchAll(harmony.Id);
+        TelescopeZoomHooks.Reset();
     }
 }

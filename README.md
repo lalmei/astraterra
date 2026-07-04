@@ -2,7 +2,7 @@
 
 AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story 1.22.2, with latitude-aware seasons, craftable telescopes, authored constellation lines, deep-sky sights, a sextant readout, and a client-local constellation journal.
 
-![](./docs/constellation.png)
+![](docs/constellation.png)
 
 ## Docs
 

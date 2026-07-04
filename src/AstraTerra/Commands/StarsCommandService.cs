@@ -195,6 +195,8 @@ public sealed class StarsCommandService
             selectedConstellationId: selectedId);
     }
 
+    public int? ResolveId(string target) => Resolve(target)?.Id;
+
     private ConstellationRecord? Resolve(string target)
     {
         if (string.Equals(target, "selected", StringComparison.OrdinalIgnoreCase) && selectedId is { } id)

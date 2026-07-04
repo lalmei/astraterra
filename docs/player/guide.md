@@ -47,12 +47,11 @@ The telescope overlay can still open when those conditions are not met, but draw
 
 ## Constellation Visibility
 
-Right now, once you create a constellation it will be visible in the sky, barring blocks.
-Will work on clouds next, then have be based on catalog
+Constellations are visible only while you hold their written AstraTerra constellation book in your left hand. A written book is portable: another player can hold the same book to see and use the same saved constellations.
 
 ## Constellation Journal
 
-Saved constellations are stored locally for the current world. You can draw unnamed constellations, rename them later, delete them, and ask for seasonal information through `.stars info`.
+Saved constellations are written into a blank normal book held in your left hand. You also need ink and quill in your inventory to create, add, remove, rename, or build constellations. Once AstraTerra writes the first constellation into the book, vanilla book editing is locked, but AstraTerra can still update the constellation journal.
 
 AstraTerra includes authored Modern IAU constellation line data. These are normal journal entries once built with commands, so you can inspect, rename, or delete them like hand-drawn constellations.
 
@@ -60,8 +59,9 @@ AstraTerra includes authored Modern IAU constellation line data. These are norma
 
 1. Craft or spawn a Brass Telescope.
 2. Wait for a dark, clear night with open sky overhead.
-3. Hold right click to scope in.
-4. Middle click to switch to Draw mode.
-5. Drag between visible guide stars to create a constellation segment.
-6. Run `.stars list` and `.stars info selected` to inspect the saved constellation.
-7. Use the Sextant on a visible star to read its angle above the horizon.
+3. Put a blank normal book in your left hand and keep ink and quill in your inventory.
+4. Hold right click with the telescope to scope in.
+5. Middle click to switch to Draw mode.
+6. Drag between visible guide stars to create a constellation segment.
+7. Run `.stars list` and `.stars info selected` to inspect the saved constellation.
+8. Use the Sextant on a visible star to read its angle above the horizon.

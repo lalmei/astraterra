@@ -20,6 +20,11 @@ public sealed class ConstellationJournalStore
         return ConstellationPersistence.Deserialize(File.ReadAllText(path));
     }
 
+    public ConstellationJournal LoadUnmigrated(string worldIdentifier)
+    {
+        return IsMigrated(worldIdentifier) ? new ConstellationJournal() : Load(worldIdentifier);
+    }
+
     public void Save(string worldIdentifier, ConstellationJournal journal)
     {
         var path = ResolvePath(worldIdentifier);
@@ -27,8 +32,34 @@ public sealed class ConstellationJournalStore
         File.WriteAllText(path, ConstellationPersistence.Serialize(journal));
     }
 
+    public bool IsMigrated(string worldIdentifier)
+        => File.Exists(ResolveMigratedMarkerPath(worldIdentifier));
+
+    public void MarkMigrated(string worldIdentifier)
+    {
+        var path = ResolvePath(worldIdentifier);
+        var backupPath = ResolveMigratedBackupPath(worldIdentifier);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        if (File.Exists(path) && !File.Exists(backupPath))
+        {
+            File.Copy(path, backupPath);
+        }
+
+        File.WriteAllText(ResolveMigratedMarkerPath(worldIdentifier), DateTimeOffset.UtcNow.ToString("O"));
+    }
+
     public string ResolvePath(string worldIdentifier)
     {
         return Path.Combine(rootDirectory, $"{WorldStorageKeyResolver.Resolve(worldIdentifier)}.constellations.v1.json");
+    }
+
+    public string ResolveMigratedBackupPath(string worldIdentifier)
+    {
+        return Path.Combine(rootDirectory, $"{WorldStorageKeyResolver.Resolve(worldIdentifier)}.constellations.v1.migrated-backup.json");
+    }
+
+    public string ResolveMigratedMarkerPath(string worldIdentifier)
+    {
+        return Path.Combine(rootDirectory, $"{WorldStorageKeyResolver.Resolve(worldIdentifier)}.constellations.v1.migrated");
     }
 }

@@ -60,10 +60,12 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra startup step: astronomy catalog loaded", modSystem);
         Assert.Contains("AstraTerra startup step: telescope zoom patched", modSystem);
         Assert.Contains("AstraTerra startup step: observation input registered", modSystem);
-        Assert.Contains("AstraTerra startup step: constellation journal loaded", modSystem);
+        Assert.Contains("AstraTerra startup step: legacy constellation journal loaded", modSystem);
         Assert.Contains("AstraTerra startup step: client commands registered", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers registered", modSystem);
         Assert.Contains("AstraTerraOverlayMatrixCapture", modSystem);
+        Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
+        Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);
     }
 
@@ -76,6 +78,22 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("\"quadModelRef\"", renderer);
         Assert.Contains("GlToggleBlend(true, EnumBlendMode.Glow)", renderer);
         Assert.Contains("GLDisableDepthTest()", renderer);
+        Assert.Contains("ConstellationRenderModel.BuildSkyDots", renderer);
+        Assert.Contains("ConstellationDotTexturePath", renderer);
+        Assert.Contains("AstraTerra disabled sky rendering after an unexpected error", renderer);
+    }
+
+    [Fact]
+    public void Sky_Renderer_Reset_Clears_Static_Session_State_In_Source()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("public static void Reset()", renderer);
+        Assert.Contains("api = null;", renderer);
+        Assert.Contains("config = null;", renderer);
+        Assert.Contains("catalog = null;", renderer);
+        Assert.Contains("forceDaylightStars = false;", renderer);
+        Assert.Contains("renderingDisabledAfterFailure = false;", renderer);
     }
 
     [Fact]
