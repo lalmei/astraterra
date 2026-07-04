@@ -1,6 +1,7 @@
 using System.Reflection;
 using AstraTerra.Astronomy;
 using AstraTerra.Config;
+using AstraTerra.Constellations;
 using AstraTerra.Observation;
 using HarmonyLib;
 using OpenTK.Mathematics;
@@ -19,6 +20,7 @@ public static class SkyStarSunMoonRenderer
     private const string FaintStarTexturePath = "astraterra:environment/star-dog-crisp";
     private const string TelescopeStarTexturePath = "astraterra:environment/star-rays-12-smooth";
     private const string TelescopeFaintStarTexturePath = "astraterra:environment/star-dog-crisp";
+    private const string ConstellationDotTexturePath = "astraterra:environment/star-pixel";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
     private const float MinimumStarPixelSize = 7.0f;
@@ -29,6 +31,8 @@ public static class SkyStarSunMoonRenderer
     private const float StarGlowSizeRange = 1.5f;
     private const float StarGlowMaxAlpha = 0.35f;
     private const float DeepSkyBrightnessScale = 0.42f;
+    private const double ConstellationDotSpacingDeg = 0.65;
+    private const float ConstellationDotAngularSizeDeg = 0.14f;
     private const double FaintStarMagnitudeThreshold = 2.5;
 
     private static ICoreClientAPI? api;
@@ -40,11 +44,14 @@ public static class SkyStarSunMoonRenderer
     private static bool faintStarTextureLoadFailed;
     private static bool telescopeStarTextureLoadFailed;
     private static bool telescopeFaintStarTextureLoadFailed;
+    private static bool constellationDotTextureLoadFailed;
     private static bool forceDaylightStars;
+    private static bool renderingDisabledAfterFailure;
     private static int starTextureId;
     private static int faintStarTextureId;
     private static int telescopeStarTextureId;
     private static int telescopeFaintStarTextureId;
+    private static int constellationDotTextureId;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
@@ -52,6 +59,7 @@ public static class SkyStarSunMoonRenderer
 
     public static void Initialize(ICoreClientAPI clientApi, AstraTerraConfig loadedConfig, StarCatalog loadedCatalog)
     {
+        Reset();
         api = clientApi;
         config = loadedConfig;
         catalog = loadedCatalog;
@@ -60,6 +68,29 @@ public static class SkyStarSunMoonRenderer
             MinimumStarPixelSize,
             MaximumStarPixelSize,
             StarAngularSizePerPixelDeg);
+    }
+
+    public static void Reset()
+    {
+        api = null;
+        config = null;
+        catalog = null;
+        secondsSinceLastLog = 0;
+        secondsSinceLastSkipLog = 0;
+        starTextureLoadFailed = false;
+        faintStarTextureLoadFailed = false;
+        telescopeStarTextureLoadFailed = false;
+        telescopeFaintStarTextureLoadFailed = false;
+        constellationDotTextureLoadFailed = false;
+        forceDaylightStars = false;
+        renderingDisabledAfterFailure = false;
+        starTextureId = 0;
+        faintStarTextureId = 0;
+        telescopeStarTextureId = 0;
+        telescopeFaintStarTextureId = 0;
+        constellationDotTextureId = 0;
+        DeepSkyTextureIds.Clear();
+        FailedDeepSkyTexturePaths.Clear();
     }
 
     public static string SetForceDaylightStars(bool enabled)
@@ -72,6 +103,31 @@ public static class SkyStarSunMoonRenderer
     }
 
     public static void Postfix(SystemRenderSunMoon __instance, float dt)
+    {
+        if (renderingDisabledAfterFailure)
+        {
+            return;
+        }
+
+        try
+        {
+            PostfixCore(__instance, dt);
+        }
+        catch (Exception exception)
+        {
+            renderingDisabledAfterFailure = true;
+            try
+            {
+                api?.Logger.Warning("AstraTerra disabled sky rendering after an unexpected error: {0}", exception);
+            }
+            catch
+            {
+                // Avoid surfacing cleanup/logging failures back into Vintage Story's render loop.
+            }
+        }
+    }
+
+    private static void PostfixCore(SystemRenderSunMoon __instance, float dt)
     {
         if (api is null || config is null || catalog is null)
         {
@@ -115,6 +171,15 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
+        var journal = ConstellationBookService.ReadJournal(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        IReadOnlyList<SkyConstellationDot> constellationDots = Array.Empty<SkyConstellationDot>();
+        if (journal is not null)
+        {
+            var visibleStarMap = visibleStars.ToDictionary(star => star.Hip);
+            var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
+            constellationDots = ConstellationRenderModel.BuildSkyDots(constellationSegments, ConstellationDotSpacingDeg);
+        }
+
         EnsureStarTextures(api);
         if (starTextureId == 0 || faintStarTextureId == 0 || telescopeStarTextureId == 0 || telescopeFaintStarTextureId == 0)
         {
@@ -132,6 +197,8 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
+        EnsureConstellationDotTexture(api);
+
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects = TelescopeScopeState.IsScoped
             ? DeepSkyRenderModel.ProjectVisibleObjects(catalog.DeepSkyObjects, latitude, localSiderealAngle, brightnessBias)
             : Array.Empty<RenderedDeepSkyObject>();
@@ -144,13 +211,14 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        RenderSky(api, visibleStars, visibleDeepSkyObjects, quadModel, imageSize, dt, calendar.DayLightStrength, playerPos.Yaw, playerPos.Pitch, forceDaylightStars);
+        RenderSky(api, visibleStars, visibleDeepSkyObjects, constellationDots, quadModel, imageSize, dt, calendar.DayLightStrength, playerPos.Yaw, playerPos.Pitch, forceDaylightStars);
     }
 
     private static void RenderSky(
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedStar> visibleStars,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
+        IReadOnlyList<SkyConstellationDot> constellationDots,
         MeshRef quadModel,
         int imageSize,
         float deltaTime,
@@ -201,6 +269,14 @@ public static class SkyStarSunMoonRenderer
                 }
             }
 
+            if (constellationDotTextureId != 0)
+            {
+                foreach (var dot in constellationDots)
+                {
+                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize);
+                }
+            }
+
             foreach (var star in visibleStars)
             {
                 var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
@@ -237,9 +313,10 @@ public static class SkyStarSunMoonRenderer
         {
             secondsSinceLastLog = 0;
             clientApi.Logger.Notification(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; drawn={1}; daylight={2:0.00}; forceDaylight={3}; azimuth={4:0.0}; altitude={5:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; drawn={1}; constellationDots={2}; daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
+                constellationDots.Count,
                 daylight,
                 forceDaylight,
                 CelestialMath.NormalizeDegrees(ToDegrees(yaw)),
@@ -277,6 +354,30 @@ public static class SkyStarSunMoonRenderer
         shader.RgbaTint = tint;
         shader.RgbaLightIn = new Vec4f(tint.R, tint.G, tint.B, 1f);
         shader.Tex2D = textureId;
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", ToFloatArray(modelMatrix));
+        clientApi.Render.RenderMesh(quadModel);
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+    }
+
+    private static void RenderConstellationDot(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        MeshRef quadModel,
+        SkyConstellationDot dot,
+        int imageSize)
+    {
+        var modelMatrix = BuildSkyBillboardMatrix(
+            clientApi,
+            dot.DirectionX,
+            dot.DirectionY,
+            dot.DirectionZ,
+            ConstellationDotAngularSizeDeg,
+            imageSize);
+
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+        shader.RgbaTint = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, dot.Tint.A);
+        shader.RgbaLightIn = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, 1f);
+        shader.Tex2D = constellationDotTextureId;
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", ToFloatArray(modelMatrix));
         clientApi.Render.RenderMesh(quadModel);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
@@ -421,6 +522,11 @@ public static class SkyStarSunMoonRenderer
         EnsureStarTexture(clientApi, FaintStarTexturePath, ref faintStarTextureId, ref faintStarTextureLoadFailed);
         EnsureStarTexture(clientApi, TelescopeStarTexturePath, ref telescopeStarTextureId, ref telescopeStarTextureLoadFailed);
         EnsureStarTexture(clientApi, TelescopeFaintStarTexturePath, ref telescopeFaintStarTextureId, ref telescopeFaintStarTextureLoadFailed);
+    }
+
+    private static void EnsureConstellationDotTexture(ICoreClientAPI clientApi)
+    {
+        EnsureStarTexture(clientApi, ConstellationDotTexturePath, ref constellationDotTextureId, ref constellationDotTextureLoadFailed);
     }
 
     private static void EnsureStarTexture(ICoreClientAPI clientApi, string texturePath, ref int textureId, ref bool loadFailed)

@@ -14,12 +14,13 @@
 - Confirm telescope and sextant items use visible non-placeholder models/textures.
 - Hold right click with the Brass Telescope and confirm normal item interaction is suppressed while scoped.
 - Confirm the fixed-star sky is visible at night and does not crash with the generated catalog.
-- Use `.stars list` before drawing; expected result: no saved constellations.
-- Scope with the Brass Telescope, switch to Draw mode, and drag from one guide star to another; expected result: a pale blue constellation segment is created and saved.
+- Put a blank normal book in the left hand and keep ink and quill in inventory.
+- Use `.stars list` before drawing; expected result: no saved constellations for the held book.
+- Scope with the Brass Telescope, switch to Draw mode, and drag from one guide star to another; expected result: a constellation segment is written into the held book and the naming dialog opens.
 - Build a known authored sky-culture constellation with `.stars build Ori`.
 - Run `.stars list` and `.stars info selected`.
 - Confirm `.stars info` includes ID, star count, segment count, month window, season summary, and state.
-- If the constellation state is not `below horizon`, look toward its stars and confirm saved segments render as pale blue overlay lines with brighter endpoint dots.
+- If the constellation state is not `below horizon`, look toward its stars while holding the written book in the left hand and confirm saved segments render in the sky.
 - Rename and delete the constellation with `.stars name <id> <text>` and `.stars delete <id>`.
 - Hold right click with the Sextant, center a visible star, and confirm the on-screen angle above horizon updates.
 
