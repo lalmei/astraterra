@@ -1,0 +1,39 @@
+{
+  "code": "calibrated-astrolabe",
+  "class": "AstraTerra.Items.ItemAstrolabe",
+  "attributes": {
+    "displaycaseable": true,
+    "shelvable": true
+  },
+  "shape": { "base": "game:block/clutter/astrolabe" },
+  "maxstacksize": 1,
+  "heldPriorityInteract": true,
+  "heldTpHitAnimation": "breaktool",
+  "creativeinventory": {
+    "general": ["*"],
+    "items": ["*"],
+    "tools": ["*"]
+  },
+  "materialDensity": 900,
+  "fpHandTransform": {
+    "translation": { "x": -0.6, "y": 0.15, "z": 0.8 },
+    "rotation": { "x": -2, "y": -53, "z": 90 },
+    "scale": 1.48
+  },
+  "guiTransform": {
+    "rotation": { "x": -42, "y": -45, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.1, "z": 0.5 },
+    "scale": 2.33
+  },
+  "tpHandTransform": {
+    "translation": { "x": -1, "y": -1.15, "z": -1.45 },
+    "rotation": { "x": -85, "y": -90, "z": -6 },
+    "scale": 0.52
+  },
+  "groundTransform": {
+    "translation": { "x": 0, "y": 0.33, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.5 },
+    "scale": 3.45
+  }
+}

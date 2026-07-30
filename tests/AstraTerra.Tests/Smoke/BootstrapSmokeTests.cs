@@ -64,6 +64,8 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra startup step: client commands registered", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers registered", modSystem);
         Assert.Contains("AstraTerraOverlayMatrixCapture", modSystem);
+        Assert.Contains("AstraTerraAstrolabePlanner", modSystem);
+        Assert.Contains("AstraTerra.Items.ItemAstrolabe", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);

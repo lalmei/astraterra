@@ -8,6 +8,7 @@ AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for stronger zoom.
 - Use the Sextant to read the angle of a visible star above the horizon.
+- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear.
 - Build authored Modern IAU constellations with commands when you want known star patterns in your journal.
 
 ## Items
@@ -34,6 +35,18 @@ Hold right click with the Sextant and align the center of the screen with a visi
 
 If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead.
 
+### Calibrated Astrolabe
+
+Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to calibrate it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
+
+The readout shows the selected constellation's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
+
+- Middle click to select the next constellation in the held book.
+- Scroll to forecast one hour at a time.
+- Sneak and scroll to forecast seven days at a time.
+
+Forecasting spans one world year and uses that world's configured year and day lengths. Releasing right click returns the forecast to the current time.
+
 ## Observation Conditions
 
 Astronomy interaction works best when:
@@ -44,6 +57,8 @@ Astronomy interaction works best when:
 - the player is looking at visible stars.
 
 The telescope overlay can still open when those conditions are not met, but drawing and star-specific readouts may be unavailable.
+
+The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected constellation is below the horizon.
 
 ## Constellation Visibility
 
@@ -65,3 +80,4 @@ AstraTerra includes authored Modern IAU constellation line data. These are norma
 6. Drag between visible guide stars to create a constellation segment.
 7. Run `.stars list` and `.stars info selected` to inspect the saved constellation.
 8. Use the Sextant on a visible star to read its angle above the horizon.
+9. Hold a Calibrated Astrolabe with the written constellation book in your left hand and forecast the constellation's next transit.
