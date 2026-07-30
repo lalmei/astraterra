@@ -10,6 +10,7 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 - Make the sky respond to local latitude and seasonal progression.
 - Provide handheld telescope observation with zoom, drawing, inspection, and removal modes.
 - Provide a sextant readout for a star's angle above the horizon.
+- Turn a recovered vanilla astrolabe into a planner for recorded constellations across time and latitude.
 - Let players save, name, inspect, and delete local per-world constellations.
 - Ship reproducible committed catalog assets and a developer-only generation pipeline.
 
@@ -34,7 +35,7 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 - Multiplayer constellation sync.
 - Catalog import/export.
 - Moving bodies and event objects.
-- Atlas/book/table item for browsing saved constellations.
+- Graphical rotating rete and placed tabletop astrolabe interface.
 - Sharing constellation catalogs with other players.
 - Tapestry or decorative constellation output.
 - More accessibility options and UI polish.

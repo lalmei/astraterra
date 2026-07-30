@@ -2,7 +2,7 @@
 
 ## Runtime Systems
 
-`Astronomy/` contains the pure sky model: latitude mapping, sidereal time, altitude classification, star projection, sky-culture loading, and seasonal constellation summaries. Keep this code testable outside the Vintage Story runtime when possible.
+`Astronomy/` contains the pure sky model: latitude mapping, sidereal time, horizontal-coordinate classification, star projection, astrolabe planning, sky-culture loading, and seasonal constellation summaries. Keep this code testable outside the Vintage Story runtime when possible.
 
 `Client/Rendering/` owns visual presentation. The active starfield renders as 3D billboards around the vanilla sun/moon pass. Orthographic renderers handle telescope overlay, constellation line overlays, and sextant readouts.
 

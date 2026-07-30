@@ -40,24 +40,23 @@ public static class StarRenderModel
         double horizonFadeBandDeg = 10.0,
         double visualHorizonCutoffDeg = -15.0)
     {
-        var altitude = CelestialMath.ClassifyAltitudeDeg(star.RightAscensionDeg, star.DeclinationDeg, latitudeDeg, localSiderealDeg);
-        if (altitude <= visualHorizonCutoffDeg)
+        var coordinates = CelestialMath.GetHorizontalCoordinates(star.RightAscensionDeg, star.DeclinationDeg, latitudeDeg, localSiderealDeg);
+        if (coordinates.AltitudeDeg <= visualHorizonCutoffDeg)
         {
             return null;
         }
 
-        var azimuth = CalculateAzimuthDeg(star.RightAscensionDeg, star.DeclinationDeg, latitudeDeg, localSiderealDeg);
         var fadeStart = Math.Min(visualHorizonCutoffDeg, horizonFadeBandDeg - 0.001);
-        var horizonFactor = Math.Clamp((altitude - fadeStart) / (horizonFadeBandDeg - fadeStart), 0.0, 1.0);
+        var horizonFactor = Math.Clamp((coordinates.AltitudeDeg - fadeStart) / (horizonFadeBandDeg - fadeStart), 0.0, 1.0);
         var brightness = Math.Clamp(StarBrightnessFromMagnitude(star.VisualMagnitude) * brightnessBias * horizonFactor, 0.0, 1.0);
-        var (directionX, directionY, directionZ) = CalculateDirection(azimuth, altitude);
+        var (directionX, directionY, directionZ) = CalculateDirection(coordinates.AzimuthDeg, coordinates.AltitudeDeg);
         var size = CalculateSize(star.VisualMagnitude, brightnessBias);
 
         return new RenderedStar(
             star.Hip,
             star.VisualMagnitude,
-            azimuth,
-            altitude,
+            coordinates.AzimuthDeg,
+            coordinates.AltitudeDeg,
             brightness,
             EstimateColorTemperature(star.BvColorIndex),
             star.IsGuideStar,
@@ -65,16 +64,6 @@ public static class StarRenderModel
             directionY,
             directionZ,
             size);
-    }
-
-    private static double CalculateAzimuthDeg(double rightAscensionDeg, double declinationDeg, double latitudeDeg, double localSiderealDeg)
-    {
-        var hourAngle = ToRadians(CelestialMath.NormalizeDegrees(localSiderealDeg - rightAscensionDeg));
-        var declination = ToRadians(declinationDeg);
-        var latitude = ToRadians(latitudeDeg);
-        var y = -Math.Sin(hourAngle);
-        var x = Math.Tan(declination) * Math.Cos(latitude) - Math.Sin(latitude) * Math.Cos(hourAngle);
-        return CelestialMath.NormalizeDegrees(ToDegrees(Math.Atan2(y, x)));
     }
 
     private static (double X, double Y, double Z) CalculateDirection(double azimuthDeg, double altitudeDeg)
@@ -114,6 +103,4 @@ public static class StarRenderModel
     }
 
     private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
-
-    private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 }

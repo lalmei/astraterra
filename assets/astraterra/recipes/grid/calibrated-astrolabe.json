@@ -1,0 +1,21 @@
+{
+  "ingredientPattern": "AP",
+  "ingredients": {
+    "A": {
+      "type": "block",
+      "code": "game:clutter",
+      "attributes": { "type": "astrolabe" }
+    },
+    "P": {
+      "type": "item",
+      "code": "game:metalplate-brass"
+    }
+  },
+  "width": 2,
+  "height": 1,
+  "output": {
+    "type": "item",
+    "code": "astraterra:calibrated-astrolabe",
+    "quantity": 1
+  }
+}

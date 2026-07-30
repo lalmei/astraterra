@@ -41,22 +41,21 @@ public static class DeepSkyRenderModel
         double horizonFadeBandDeg = 12.0,
         double visualHorizonCutoffDeg = -8.0)
     {
-        var altitude = CelestialMath.ClassifyAltitudeDeg(entry.RightAscensionDeg, entry.DeclinationDeg, latitudeDeg, localSiderealDeg);
-        if (altitude <= visualHorizonCutoffDeg)
+        var coordinates = CelestialMath.GetHorizontalCoordinates(entry.RightAscensionDeg, entry.DeclinationDeg, latitudeDeg, localSiderealDeg);
+        if (coordinates.AltitudeDeg <= visualHorizonCutoffDeg)
         {
             return null;
         }
 
         var fadeStart = Math.Min(visualHorizonCutoffDeg, horizonFadeBandDeg - 0.001);
-        var horizonFactor = Math.Clamp((altitude - fadeStart) / (horizonFadeBandDeg - fadeStart), 0.0, 1.0);
+        var horizonFactor = Math.Clamp((coordinates.AltitudeDeg - fadeStart) / (horizonFadeBandDeg - fadeStart), 0.0, 1.0);
         var brightness = Math.Clamp(entry.Brightness * brightnessBias * horizonFactor, 0.0, 1.0);
         if (brightness <= 0.001)
         {
             return null;
         }
 
-        var azimuth = CalculateAzimuthDeg(entry.RightAscensionDeg, entry.DeclinationDeg, latitudeDeg, localSiderealDeg);
-        var (directionX, directionY, directionZ) = CalculateDirection(azimuth, altitude);
+        var (directionX, directionY, directionZ) = CalculateDirection(coordinates.AzimuthDeg, coordinates.AltitudeDeg);
         return new RenderedDeepSkyObject(
             entry.Id,
             entry.DisplayName,
@@ -80,16 +79,6 @@ public static class DeepSkyRenderModel
             .ToList();
     }
 
-    private static double CalculateAzimuthDeg(double rightAscensionDeg, double declinationDeg, double latitudeDeg, double localSiderealDeg)
-    {
-        var hourAngle = ToRadians(CelestialMath.NormalizeDegrees(localSiderealDeg - rightAscensionDeg));
-        var declination = ToRadians(declinationDeg);
-        var latitude = ToRadians(latitudeDeg);
-        var y = -Math.Sin(hourAngle);
-        var x = Math.Tan(declination) * Math.Cos(latitude) - Math.Sin(latitude) * Math.Cos(hourAngle);
-        return CelestialMath.NormalizeDegrees(ToDegrees(Math.Atan2(y, x)));
-    }
-
     private static (double X, double Y, double Z) CalculateDirection(double azimuthDeg, double altitudeDeg)
     {
         var azimuth = ToRadians(azimuthDeg);
@@ -103,6 +92,4 @@ public static class DeepSkyRenderModel
     }
 
     private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
-
-    private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 }

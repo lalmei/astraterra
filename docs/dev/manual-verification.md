@@ -5,7 +5,7 @@
 - Build and deploy release output: `make deploy`.
 - Load AstraTerra in Vintage Story 1.22.2 with the mod enabled.
 - Create or open a test world.
-- Spawn or craft the Brass Telescope, Precision Telescope, and Sextant.
+- Spawn or craft the Brass Telescope, Precision Telescope, Sextant, and Calibrated Astrolabe.
 - Set time/weather as needed so the sky is dark and clear.
 - For daytime sky checks, run `.stars daylight-stars on`; turn it back off with `.stars daylight-stars off` before normal play validation.
 
@@ -23,6 +23,12 @@
 - If the constellation state is not `below horizon`, look toward its stars while holding the written book in the left hand and confirm saved segments render in the sky.
 - Rename and delete the constellation with `.stars name <id> <text>` and `.stars delete <id>`.
 - Hold right click with the Sextant, center a visible star, and confirm the on-screen angle above horizon updates.
+- Hold the written constellation book in the left hand and the Calibrated Astrolabe in the main hand.
+- Hold right click and confirm the astrolabe shows latitude, world day, compass direction, altitude, motion state, and time until transit for a recorded constellation.
+- Middle click and confirm the astrolabe cycles through only the constellations in the held book.
+- Scroll and confirm the forecast moves by one hour; sneak-scroll and confirm it moves by seven days, never earlier than now or later than one world year.
+- Repeat the astrolabe check indoors or during daylight and confirm planning remains available.
+- At a high latitude, confirm the astrolabe distinguishes a circumpolar constellation from one that never rises.
 
 ## Authored Constellation Build
 

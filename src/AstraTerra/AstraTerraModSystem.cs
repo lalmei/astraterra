@@ -5,6 +5,7 @@ using AstraTerra.Commands;
 using AstraTerra.Config;
 using AstraTerra.Constellations;
 using AstraTerra.Items;
+using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -19,6 +20,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
+    private AstrolabePlannerRenderer? astrolabePlannerRenderer;
 
     public override void Start(ICoreAPI api)
     {
@@ -26,9 +28,11 @@ public sealed class AstraTerraModSystem : ModSystem
         api.RegisterItemClass("AstraTerra.Items.ItemBrassTelescope", typeof(ItemBrassTelescope));
         api.RegisterItemClass("AstraTerra.Items.ItemPrecisionTelescope", typeof(ItemPrecisionTelescope));
         api.RegisterItemClass("AstraTerra.Items.ItemSextant", typeof(ItemSextant));
+        api.RegisterItemClass("AstraTerra.Items.ItemAstrolabe", typeof(ItemAstrolabe));
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemBrassTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemPrecisionTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSextant");
+        api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemAstrolabe");
     }
 
     public override void AssetsLoaded(ICoreAPI api)
@@ -72,6 +76,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void StartClientSide(ICoreClientAPI api)
     {
         SkyStarSunMoonRenderer.Reset();
+        AstrolabeReadingState.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
@@ -129,8 +134,11 @@ public sealed class AstraTerraModSystem : ModSystem
         var sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
+        astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient);
+        api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
+        api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
         api.Logger.Event(
-            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}",
+            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}",
             catalog.Stars.Count,
             catalog.GuideGroups.Count,
             catalog.SkyCultures.Count,
@@ -147,22 +155,47 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         telescopeZoomPatcher?.Stop();
         SkyStarSunMoonRenderer.Reset();
+        AstrolabeReadingState.Reset();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;
             clientApi.Event.MouseMove -= constellationOverlayRenderer.OnMouseMove;
             clientApi.Event.MouseUp -= constellationOverlayRenderer.OnMouseUp;
         }
+
+        if (clientApi is not null)
+        {
+            clientApi.Event.MouseWheelMove -= OnMouseWheelMove;
+        }
+
+        if (clientApi is not null && astrolabePlannerRenderer is not null)
+        {
+            clientApi.Event.MouseDown -= astrolabePlannerRenderer.OnMouseDown;
+        }
     }
 
-    private static void OnMouseWheelMove(MouseWheelEventArgs args)
+    private void OnMouseWheelMove(MouseWheelEventArgs args)
     {
-        if (!Observation.TelescopeScopeState.IsScoped)
+        if (TelescopeScopeState.IsScoped)
+        {
+            TelescopeScopeState.ScrollZoom(args.delta > 0 ? 1 : -1);
+            args.SetHandled(true);
+            return;
+        }
+
+        if (!AstrolabeReadingState.IsReading || clientApi is null)
         {
             return;
         }
 
-        Observation.TelescopeScopeState.ScrollZoom(args.delta > 0 ? 1 : -1);
+        var calendar = clientApi.World.Calendar;
+        var hoursPerDay = Math.Max(1.0, calendar.HoursPerDay);
+        var stepHours = clientApi.World.Player.Entity.Controls.Sneak
+            ? hoursPerDay * 7.0
+            : 1.0;
+        AstrolabeReadingState.AdjustForecastHours(
+            args.delta > 0 ? stepHours : -stepHours,
+            Math.Max(1, calendar.DaysPerYear) * hoursPerDay);
         args.SetHandled(true);
     }
 }
