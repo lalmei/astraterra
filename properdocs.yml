@@ -4,9 +4,12 @@ repo_url: https://github.com/lalmei/astra_terra
 repo_name: lalmei/astra_terra
 docs_dir: docs
 site_dir: site
+exclude_docs: |
+  README.md
+  dev/README.md
 
 theme:
-  name: material
+  name: materialx
   language: en
   features:
     - navigation.sections

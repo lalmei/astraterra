@@ -54,10 +54,10 @@ run:
 deploy-run: deploy run
 
 docs-build:
-	@uv run --with zensical --with mkdocs-material zensical build -f mkdocs.yml --strict
+	@uv run --with-requirements docs/requirements.txt properdocs build -f properdocs.yml --strict
 
 docs-serve:
-	@uv run --with zensical --with mkdocs-material zensical serve -f mkdocs.yml
+	@uv run --with-requirements docs/requirements.txt properdocs serve -f properdocs.yml
 
 bump-version: bump-version-files deploy
 
