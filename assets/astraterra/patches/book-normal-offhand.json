@@ -1,0 +1,10 @@
+[
+  {
+    "file": "game:itemtypes/lore/book",
+    "op": "add",
+    "path": "/storageFlagsByType",
+    "value": {
+      "book-normal-*": 257
+    }
+  }
+]
