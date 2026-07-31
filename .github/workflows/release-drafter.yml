@@ -1,0 +1,32 @@
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update_release_draft:
+    name: Update release draft
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Read mod version
+        id: mod_version
+        shell: bash
+        run: |
+          version="$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' modinfo.json)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Update release draft
+        uses: release-drafter/release-drafter@v7
+        with:
+          version: ${{ steps.mod_version.outputs.version }}
