@@ -1,7 +1,8 @@
 site_name: AstraTerra
 site_description: Player and developer documentation for the AstraTerra Vintage Story mod.
-repo_url: https://github.com/lalmei/astra_terra
-repo_name: lalmei/astra_terra
+site_url: https://lalmei.github.io/astraterra/
+repo_url: https://github.com/lalmei/astraterra
+repo_name: lalmei/astraterra
 docs_dir: docs
 site_dir: site
 exclude_docs: |
