@@ -65,6 +65,7 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra startup step: client renderers registered", modSystem);
         Assert.Contains("AstraTerraOverlayMatrixCapture", modSystem);
         Assert.Contains("AstraTerraAstrolabePlanner", modSystem);
+        Assert.Contains("AstraTerraSkyCoordinateGrid", modSystem);
         Assert.Contains("AstraTerra.Items.ItemAstrolabe", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog)", modSystem);
@@ -109,6 +110,7 @@ public sealed class BootstrapSmokeTests
     {
         var props = typeof(AstraTerraConfig).GetProperties().Select(p => p.Name).ToHashSet();
 
+        Assert.Contains("SkyGridMode", props);
         Assert.Contains("StarBrightnessBias", props);
         Assert.Contains("GuideStarHighlightStrength", props);
         Assert.Contains("SelectionSnapRadiusDeg", props);

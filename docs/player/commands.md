@@ -39,6 +39,12 @@ The current authored set includes all 88 Modern IAU constellations. Built conste
 .stars goto-lat <degrees>
 .stars daylight-stars on
 .stars daylight-stars off
+.stars sky-grid none
+.stars sky-grid horizontal
+.stars sky-grid equatorial
+.stars sky-grid both
 ```
 
 `connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics. `goto-lat` helps test different sky latitudes in the current world. `daylight-stars` is intended for testing and should be turned off for normal play.
+
+`sky-grid` projects debug coordinate lines over the visible sky and saves the choice in `ModConfig/astraterra.json`. `horizontal` draws the observer-local altitude-azimuth grid in cyan. `equatorial` draws the right-ascension/declination grid in rose and rotates it with local sidereal time. `both` overlays the two systems; `none` is the default and disables the grids.
