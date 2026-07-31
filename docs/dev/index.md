@@ -25,7 +25,7 @@ make docs-build
 make docs-serve
 ```
 
-The documentation site uses MkDocs Material-compatible configuration and builds through Zensical.
+The documentation site builds with ProperDocs and the MaterialX theme. The configuration lives in `properdocs.yml`, and the docs toolchain is pinned in `docs/requirements.txt`.
 
 ## Repository Layout
 
