@@ -2,6 +2,29 @@
 
 AstraTerra turns Vintage Story's night sky into an Earth-focused starfield with telescope observation, constellation journaling, deep-sky sights, and a sextant readout.
 
+<div class="astraterra-feature-grid">
+  <a href="player/guide/#constellation-journal">
+    <img src="assets/icons/star-chart.png" alt="Pixel-art star chart">
+    <span>Chart the sky</span>
+  </a>
+  <a href="player/guide/#constellation-journal">
+    <img src="assets/icons/constellation-journal.png" alt="Pixel-art astronomy journal">
+    <span>Keep a journal</span>
+  </a>
+  <a href="player/guide/#brass-telescope">
+    <img src="assets/icons/telescope.png" alt="Pixel-art brass telescope">
+    <span>Observe</span>
+  </a>
+  <a href="player/guide/#calibrated-astrolabe">
+    <img src="assets/icons/astrolabe.png" alt="Pixel-art brass astrolabe">
+    <span>Forecast</span>
+  </a>
+  <a href="player/guide/#constellation-visibility">
+    <img src="assets/icons/constellation.png" alt="Pixel-art connected constellation">
+    <span>Connect the stars</span>
+  </a>
+</div>
+
 ## Player Docs
 
 - [Player Guide](player/guide.md): what AstraTerra adds and how to use its instruments.
