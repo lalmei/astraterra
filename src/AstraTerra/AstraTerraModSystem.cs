@@ -21,6 +21,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
+    private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
 
     public override void Start(ICoreAPI api)
     {
@@ -41,7 +42,8 @@ public sealed class AstraTerraModSystem : ModSystem
         {
             config = AstraTerraConfigLoader.Load(clientApi);
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: starBrightnessBias={0:0.00}; showMinimalHud={1}; showReticle={2}; debugGuideStarEmphasis={3}",
+                "AstraTerra startup step: config loaded: skyGridMode={0}; starBrightnessBias={1:0.00}; showMinimalHud={2}; showReticle={3}; debugGuideStarEmphasis={4}",
+                config.SkyGridMode,
                 config.StarBrightnessBias,
                 config.ShowMinimalHud,
                 config.ShowReticle,
@@ -114,12 +116,16 @@ public sealed class AstraTerraModSystem : ModSystem
                         longitude);
                 },
                 dayOfYearProvider: () => api.World.Calendar.DayOfYear),
-            constellationBookClient).Register(api);
-        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars");
+            constellationBookClient,
+            config).Register(api);
+        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/sky-grid");
+
+        skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
+        api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
 
         if (catalog is null)
         {
-            api.Logger.Event("AstraTerra startup step: client renderers skipped: astronomy catalog was not loaded");
+            api.Logger.Event("AstraTerra startup step: client renderers skipped: catalog-dependent astronomy renderers were not registered; sky coordinate grid remains available");
             return;
         }
 
@@ -138,7 +144,7 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
         api.Logger.Event(
-            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}",
+            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; skyGrid=AstraTerraSkyCoordinateGrid; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}",
             catalog.Stars.Count,
             catalog.GuideGroups.Count,
             catalog.SkyCultures.Count,
@@ -156,6 +162,7 @@ public sealed class AstraTerraModSystem : ModSystem
         telescopeZoomPatcher?.Stop();
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
+        skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;

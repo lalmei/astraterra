@@ -63,6 +63,7 @@
 ## Result Log
 
 - Equator: pass in manual in-game check; starfield and authored constellation orientation looked correct.
+- Coordinate grids: use `.stars sky-grid horizontal` and confirm the cyan horizon stays at altitude 0° while its cardinal meridians meet at the zenith. Use `equatorial` and confirm the rose celestial equator and hour circles rotate with time while remaining aligned with catalog stars. Use `both` to compare the frames, then restore `none`.
 - Mid-latitude north: not run in this automated pass.
 - Mid-latitude south: not run in this automated pass.
 - Near-polar: not run in this automated pass.

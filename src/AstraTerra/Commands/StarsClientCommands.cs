@@ -1,4 +1,5 @@
 using AstraTerra.Client.Rendering;
+using AstraTerra.Config;
 using AstraTerra.Constellations;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -9,14 +10,17 @@ public sealed class StarsClientCommands
 {
     private readonly System.Func<ConstellationJournal, StarsCommandService> serviceFactory;
     private readonly ConstellationBookClient bookClient;
+    private readonly AstraTerraConfig config;
     private int? selectedId;
 
     public StarsClientCommands(
         System.Func<ConstellationJournal, StarsCommandService> serviceFactory,
-        ConstellationBookClient bookClient)
+        ConstellationBookClient bookClient,
+        AstraTerraConfig config)
     {
         this.serviceFactory = serviceFactory;
         this.bookClient = bookClient;
+        this.config = config;
     }
 
     public void Register(ICoreClientAPI api)
@@ -61,6 +65,10 @@ public sealed class StarsClientCommands
             .BeginSubCommand("daylight-stars")
                 .WithArgs(api.ChatCommands.Parsers.Word("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetDaylightStars(GetStringArg(args, 0))))
+            .EndSubCommand()
+            .BeginSubCommand("sky-grid")
+                .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
+                .HandleWith(args => TextCommandResult.Success(SetSkyGridMode(api, GetStringArg(args, 0))))
             .EndSubCommand();
     }
 
@@ -196,6 +204,26 @@ public sealed class StarsClientCommands
         return TryParseToggle(value, out var enabled)
             ? SkyStarSunMoonRenderer.SetForceDaylightStars(enabled)
             : "Usage: .stars daylight-stars on|off";
+    }
+
+    private string SetSkyGridMode(ICoreClientAPI api, string value)
+    {
+        if (!SkyGridModeParser.TryParse(value, out var mode))
+        {
+            return "Usage: .stars sky-grid none|horizontal|equatorial|both";
+        }
+
+        config.SkyGridMode = SkyGridModeParser.ToConfigValue(mode);
+        AstraTerraConfigLoader.Store(api, config);
+        api.Logger.Notification("AstraTerra sky coordinate grid changed: mode={0}", config.SkyGridMode);
+
+        return mode switch
+        {
+            SkyGridMode.Horizontal => "Sky grid set to horizontal (altitude-azimuth, cyan).",
+            SkyGridMode.Equatorial => "Sky grid set to equatorial (right ascension-declination, rose).",
+            SkyGridMode.Both => "Sky grids set to both: horizontal is cyan; equatorial is rose.",
+            _ => "Sky coordinate grids disabled."
+        };
     }
 
     private static bool TryParseToggle(string value, out bool enabled)
