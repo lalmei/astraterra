@@ -119,10 +119,32 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Vanilla_Starfield_Assets_Are_Not_Overridden()
+    {
+        var vanillaFaces = new[]
+        {
+            "stars-bg.png",
+            "stars-dn.png",
+            "stars-ft.png",
+            "stars-lf.png",
+            "stars-rt.png",
+            "stars-up.png"
+        };
+
+        foreach (var face in vanillaFaces)
+        {
+            Assert.False(
+                File.Exists(Path.Combine(RepositoryRoot, "assets/game/textures/environment", face)),
+                $"AstraTerra must not shadow vanilla starfield face {face}.");
+        }
+    }
+
+    [Fact]
     public void Config_Class_Uses_The_Agreed_V1_Fields()
     {
         var props = typeof(AstraTerraConfig).GetProperties().Select(p => p.Name).ToHashSet();
 
+        Assert.Contains("StarfieldMode", props);
         Assert.Contains("SkyGridMode", props);
         Assert.Contains("StarBrightnessBias", props);
         Assert.Contains("GuideStarHighlightStrength", props);

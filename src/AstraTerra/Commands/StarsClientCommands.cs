@@ -66,6 +66,10 @@ public sealed class StarsClientCommands
                 .WithArgs(api.ChatCommands.Parsers.Word("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetDaylightStars(GetStringArg(args, 0))))
             .EndSubCommand()
+            .BeginSubCommand("starfield")
+                .WithArgs(api.ChatCommands.Parsers.Word("astraterra|both|vanilla"))
+                .HandleWith(args => TextCommandResult.Success(SetStarfieldMode(api, GetStringArg(args, 0))))
+            .EndSubCommand()
             .BeginSubCommand("sky-grid")
                 .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
                 .HandleWith(args => TextCommandResult.Success(SetSkyGridMode(api, GetStringArg(args, 0))))
@@ -204,6 +208,25 @@ public sealed class StarsClientCommands
         return TryParseToggle(value, out var enabled)
             ? SkyStarSunMoonRenderer.SetForceDaylightStars(enabled)
             : "Usage: .stars daylight-stars on|off";
+    }
+
+    private string SetStarfieldMode(ICoreClientAPI api, string value)
+    {
+        if (!StarfieldModeParser.TryParse(value, out var mode))
+        {
+            return "Usage: .stars starfield astraterra|both|vanilla";
+        }
+
+        config.StarfieldMode = StarfieldModeParser.ToConfigValue(mode);
+        AstraTerraConfigLoader.Store(api, config);
+        api.Logger.Notification("AstraTerra starfield mode changed: mode={0}", config.StarfieldMode);
+
+        return mode switch
+        {
+            StarfieldMode.Both => "Starfield mode set to both: showing AstraTerra and vanilla stars.",
+            StarfieldMode.Vanilla => "Starfield mode set to vanilla: showing only Vintage Story stars.",
+            _ => "Starfield mode set to astraterra: showing only AstraTerra stars."
+        };
     }
 
     private string SetSkyGridMode(ICoreClientAPI api, string value)

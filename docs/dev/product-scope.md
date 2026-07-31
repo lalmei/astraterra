@@ -6,7 +6,7 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 
 ## Goals
 
-- Replace the default night starfield with an Earth-based fixed-star sky.
+- Replace the default night starfield with an Earth-based fixed-star sky by default, with comparison modes for the combined and vanilla-only skies.
 - Make the sky respond to local latitude and seasonal progression.
 - Provide handheld telescope observation with zoom, drawing, inspection, and removal modes.
 - Provide a sextant readout for a star's angle above the horizon.

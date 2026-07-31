@@ -4,7 +4,7 @@
   "name": "AstraTerra",
   "authors": ["lalmei"],
   "description": "Turns the night sky into an Earth-inspired starfield with latitude-aware seasons, craftable telescopes, authored constellation lines, deep-sky sights, and a client-local journal for naming and revisiting your own constellations.",
-  "version": "0.1.45",
+  "version": "0.1.49",
   "dependencies": {
     "game": "1.22.2"
   }

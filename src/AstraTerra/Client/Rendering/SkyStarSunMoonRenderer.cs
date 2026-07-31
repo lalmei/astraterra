@@ -58,6 +58,8 @@ public static class SkyStarSunMoonRenderer
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
     public static bool ForceDaylightStars => forceDaylightStars;
+    public static bool ShouldRenderVanillaStarfield
+        => config is null || StarfieldModeParser.ShowsVanilla(config.GetStarfieldMode());
 
     public static void Initialize(ICoreClientAPI clientApi, AstraTerraConfig loadedConfig, StarCatalog loadedCatalog)
     {
@@ -137,6 +139,11 @@ public static class SkyStarSunMoonRenderer
     private static void PostfixCore(SystemRenderSunMoon __instance, float dt)
     {
         if (api is null || config is null || catalog is null)
+        {
+            return;
+        }
+
+        if (!StarfieldModeParser.ShowsAstraTerra(config.GetStarfieldMode()))
         {
             return;
         }
