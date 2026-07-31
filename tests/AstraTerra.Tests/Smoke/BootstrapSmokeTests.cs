@@ -73,6 +73,18 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Telescope_Scope_Renderer_Uses_Telescope_Specific_Raster_Overlays()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/TelescopeScopeRenderer.cs"));
+
+        Assert.Contains("textures/gui/telescope-scope.png", renderer);
+        Assert.Contains("textures/gui/telescope-scope-precision.png", renderer);
+        Assert.Contains("TelescopeScopeState.MaxZoomStep > TelescopeObservationState.MaxZoomStep", renderer);
+        Assert.Contains("Precision Telescope scoped view", renderer);
+        Assert.DoesNotContain("GetRimTint", renderer);
+    }
+
+    [Fact]
     public void Sky_Renderer_Uses_Reference_Sky_Style_SunMoon_Postfix()
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));

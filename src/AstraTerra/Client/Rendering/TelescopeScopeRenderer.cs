@@ -8,18 +8,17 @@ namespace AstraTerra.Client.Rendering;
 
 public sealed class TelescopeScopeRenderer : IRenderer
 {
-    private const string ScopeTitle = "Brass Telescope scoped view";
+    private const string BrassScopeTitle = "Brass Telescope scoped view";
+    private const string PrecisionScopeTitle = "Precision Telescope scoped view";
+    private const string BrassScopeTexturePath = "textures/gui/telescope-scope.png";
+    private const string PrecisionScopeTexturePath = "textures/gui/telescope-scope-precision.png";
     private const int TransparentRgba = 0x00000000;
-    private const float ScopeOpacity = 0.92f;
     private const float ScopeClearRadiusFactor = 0.90f;
     private const float TitleTopMargin = 18.0f;
-    private static readonly Vec4f ObserveRimTint = new(0.85f, 0.90f, 1.0f, 0.18f);
-    private static readonly Vec4f DrawRimTint = new(0.45f, 0.78f, 1.0f, 0.36f);
-    private static readonly Vec4f InspectRimTint = new(0.45f, 1.0f, 0.62f, 0.36f);
-    private static readonly Vec4f RemoveSegmentRimTint = new(1.0f, 0.28f, 0.22f, 0.42f);
 
     private readonly ICoreClientAPI api;
-    private int textureId;
+    private int brassTextureId;
+    private int precisionTextureId;
     private LoadedTexture maskTexture;
     private LoadedTexture? titleTexture;
     private int maskFrameWidth;
@@ -28,6 +27,7 @@ public sealed class TelescopeScopeRenderer : IRenderer
     private float maskScopeY;
     private float maskScopeSize;
     private ObservationMode? titleMode;
+    private bool? titleUsesPrecisionScope;
 
     public TelescopeScopeRenderer(ICoreClientAPI api)
     {
@@ -50,9 +50,8 @@ public sealed class TelescopeScopeRenderer : IRenderer
             return;
         }
 
-        textureId = textureId == 0
-            ? api.Render.GetOrLoadTexture(new AssetLocation("astraterra", "textures/gui/telescope-scope.png"))
-            : textureId;
+        var usesPrecisionScope = TelescopeScopeState.MaxZoomStep > TelescopeObservationState.MaxZoomStep;
+        var textureId = GetScopeTextureId(usesPrecisionScope);
 
         if (textureId == 0)
         {
@@ -72,9 +71,8 @@ public sealed class TelescopeScopeRenderer : IRenderer
         }
 
         var mode = TelescopeScopeState.Mode;
-        api.Render.Render2DTexture(textureId, x, y, size, size, 999f, new Vec4f(1f, 1f, 1f, ScopeOpacity));
-        api.Render.Render2DTexture(textureId, x, y, size, size, 1000f, GetRimTint(mode));
-        RenderTitle(frameWidth, mode);
+        api.Render.Render2DTexture(textureId, x, y, size, size, 999f, new Vec4f(1f, 1f, 1f, 1f));
+        RenderTitle(frameWidth, mode, usesPrecisionScope);
     }
 
     public void Dispose()
@@ -106,16 +104,34 @@ public sealed class TelescopeScopeRenderer : IRenderer
         maskScopeSize = scopeSize;
     }
 
-    private void RenderTitle(int frameWidth, ObservationMode mode)
+    private int GetScopeTextureId(bool usesPrecisionScope)
     {
-        if (titleTexture is null || titleMode != mode)
+        if (usesPrecisionScope)
+        {
+            precisionTextureId = precisionTextureId == 0
+                ? api.Render.GetOrLoadTexture(new AssetLocation("astraterra", PrecisionScopeTexturePath))
+                : precisionTextureId;
+            return precisionTextureId;
+        }
+
+        brassTextureId = brassTextureId == 0
+            ? api.Render.GetOrLoadTexture(new AssetLocation("astraterra", BrassScopeTexturePath))
+            : brassTextureId;
+        return brassTextureId;
+    }
+
+    private void RenderTitle(int frameWidth, ObservationMode mode, bool usesPrecisionScope)
+    {
+        if (titleTexture is null || titleMode != mode || titleUsesPrecisionScope != usesPrecisionScope)
         {
             DeleteTitleTexture();
+            var scopeTitle = usesPrecisionScope ? PrecisionScopeTitle : BrassScopeTitle;
             titleTexture = api.Gui.TextTexture.GenTextTexture(
-                $"{ScopeTitle} - {FormatMode(mode)}",
+                $"{scopeTitle} - {FormatMode(mode)}",
                 new CairoFont(18, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
                 null);
             titleMode = mode;
+            titleUsesPrecisionScope = usesPrecisionScope;
         }
 
         if (titleTexture.TextureId == 0)
@@ -153,14 +169,6 @@ public sealed class TelescopeScopeRenderer : IRenderer
 
         texture.TextureId = 0;
     }
-
-    private static Vec4f GetRimTint(ObservationMode mode) => mode switch
-    {
-        ObservationMode.Draw => DrawRimTint,
-        ObservationMode.Inspect => InspectRimTint,
-        ObservationMode.RemoveSegment => RemoveSegmentRimTint,
-        _ => ObserveRimTint
-    };
 
     private static string FormatMode(ObservationMode mode) => mode switch
     {
