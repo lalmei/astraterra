@@ -24,18 +24,18 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v8.3.2
 
       - name: Cache Vintage Story client
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .vintagestory
           key: vintagestory-${{ runner.os }}-${{ env.VINTAGE_STORY_VERSION }}
@@ -70,7 +70,7 @@ jobs:
         run: make docs-build
 
       - name: Upload mod package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: astraterra-mod-package
           path: dist/*.zip
