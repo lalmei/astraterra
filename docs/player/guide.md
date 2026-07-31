@@ -60,6 +60,16 @@ The telescope overlay can still open when those conditions are not met, but draw
 
 The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected constellation is below the horizon.
 
+## Starfield Comparison Modes
+
+Use `.stars starfield astraterra|both|vanilla` to switch the visible starfield immediately:
+
+- `astraterra` shows only AstraTerra's Earth-based star catalog and is the default.
+- `both` overlays AstraTerra and Vintage Story stars for direct alignment comparison.
+- `vanilla` shows only Vintage Story's original cubemap starfield.
+
+The selected value is saved as `StarfieldMode` in `ModConfig/astraterra.json` and persists across restarts. AstraTerra leaves Vintage Story's original star textures untouched and controls the two render passes at runtime.
+
 ## Constellation Visibility
 
 Constellations are visible only while you hold their written AstraTerra constellation book in your left hand. A written book is portable: another player can hold the same book to see and use the same saved constellations.

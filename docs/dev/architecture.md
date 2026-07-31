@@ -4,7 +4,7 @@
 
 `Astronomy/` contains the pure sky model: latitude mapping, sidereal time, horizontal-coordinate classification, star projection, astrolabe planning, sky-culture loading, and seasonal constellation summaries. Keep this code testable outside the Vintage Story runtime when possible.
 
-`Client/Rendering/` owns visual presentation. The active starfield renders as 3D billboards around the vanilla sun/moon pass. Orthographic renderers handle telescope overlay, constellation line overlays, and sextant readouts.
+`Client/Rendering/` owns visual presentation. The AstraTerra starfield renders as 3D billboards around the vanilla sun/moon pass. A Harmony prefix on Vintage Story's night-sky pass selects AstraTerra-only, combined, or vanilla-only rendering without shadowing the game's cubemap assets. Orthographic renderers handle telescope overlay, constellation line overlays, and sextant readouts.
 
 `Client/Observation/` owns observation mode state. Telescope behavior uses a small shared state object so item interaction, zoom hooks, and renderers agree on scoped mode and zoom.
 
@@ -37,6 +37,7 @@ Runtime catalog assets are versioned by filename. Sky-culture files are register
 AstraTerra follows the reference sky implementation-style sun/moon render pass:
 
 - patch `SystemRenderSunMoon.OnRenderFrame3D`,
+- conditionally allow `SystemRenderNightSky.OnRenderFrame3D` according to `StarfieldMode`,
 - render star quads as 3D billboards with `StandardShader`,
 - use close sky placement distance around `40f`,
 - disable depth test/culling during the star pass,

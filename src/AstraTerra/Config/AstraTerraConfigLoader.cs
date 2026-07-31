@@ -9,6 +9,15 @@ public static class AstraTerraConfigLoader
     public static AstraTerraConfig Load(ICoreClientAPI api)
     {
         var config = api.LoadModConfig<AstraTerraConfig>(ConfigName) ?? new AstraTerraConfig();
+        if (!StarfieldModeParser.TryParse(config.StarfieldMode, out var starfieldMode))
+        {
+            api.Logger.Warning(
+                "AstraTerra config has unknown starfield mode '{0}'; using '{1}'.",
+                config.StarfieldMode,
+                StarfieldModeParser.AstraTerraValue);
+        }
+
+        config.StarfieldMode = StarfieldModeParser.ToConfigValue(starfieldMode);
         if (!SkyGridModeParser.TryParse(config.SkyGridMode, out var skyGridMode))
         {
             api.Logger.Warning(

@@ -42,7 +42,8 @@ public sealed class AstraTerraModSystem : ModSystem
         {
             config = AstraTerraConfigLoader.Load(clientApi);
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: skyGridMode={0}; starBrightnessBias={1:0.00}; showMinimalHud={2}; showReticle={3}; debugGuideStarEmphasis={4}",
+                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}",
+                config.StarfieldMode,
                 config.SkyGridMode,
                 config.StarBrightnessBias,
                 config.ShowMinimalHud,
@@ -118,7 +119,7 @@ public sealed class AstraTerraModSystem : ModSystem
                 dayOfYearProvider: () => api.World.Calendar.DayOfYear),
             constellationBookClient,
             config).Register(api);
-        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/sky-grid");
+        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/starfield/sky-grid");
 
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
