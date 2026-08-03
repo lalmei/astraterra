@@ -62,7 +62,10 @@ public sealed class SkyCoordinateGridRenderer : IRenderer
 
     private void RenderGrid()
     {
-        var mode = SkyGridDisplayPolicy.Resolve(config.GetSkyGridMode(), IsReadingSextant());
+        var mode = SkyGridDisplayPolicy.Resolve(
+            config.GetSkyGridMode(),
+            IsReadingSextant(),
+            SextantReadingState.GridMode);
         if (mode == SkyGridMode.None)
         {
             DisposeMesh();

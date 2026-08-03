@@ -21,6 +21,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
+    private SextantReadingRenderer? sextantReadingRenderer;
     private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
 
     public override void Start(ICoreAPI api)
@@ -80,6 +81,7 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
+        SextantReadingState.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
@@ -138,9 +140,10 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Event.MouseMove += constellationOverlayRenderer.OnMouseMove;
         api.Event.MouseUp += constellationOverlayRenderer.OnMouseUp;
         api.Event.RegisterRenderer(new TelescopeScopeRenderer(api), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
-        var sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
+        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
+        api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
         astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient);
         api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
@@ -163,6 +166,7 @@ public sealed class AstraTerraModSystem : ModSystem
         telescopeZoomPatcher?.Stop();
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
+        SextantReadingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
@@ -179,6 +183,11 @@ public sealed class AstraTerraModSystem : ModSystem
         if (clientApi is not null && astrolabePlannerRenderer is not null)
         {
             clientApi.Event.MouseDown -= astrolabePlannerRenderer.OnMouseDown;
+        }
+
+        if (clientApi is not null && sextantReadingRenderer is not null)
+        {
+            clientApi.Event.MouseDown -= sextantReadingRenderer.OnMouseDown;
         }
     }
 

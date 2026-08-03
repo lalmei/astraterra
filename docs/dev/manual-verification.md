@@ -22,7 +22,7 @@
 - Confirm `.stars info` includes ID, star count, segment count, month window, season summary, and state.
 - If the constellation state is not `below horizon`, look toward its stars while holding the written book in the left hand and confirm saved segments render in the sky.
 - Rename and delete the constellation with `.stars name <id> <text>` and `.stars delete <id>`.
-- Set `.stars sky-grid none`, hold right click with the Sextant, and confirm both the cyan horizontal grid and rose equatorial grid appear while the on-screen angle above horizon updates for a centered visible star. Release right click and confirm both grids disappear again.
+- Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - Hold the written constellation book in the left hand and the Calibrated Astrolabe in the main hand.
 - Hold right click and confirm the astrolabe shows latitude, world day, compass direction, altitude, motion state, and time until transit for a recorded constellation.
 - Middle click and confirm the astrolabe cycles through only the constellations in the held book.
