@@ -44,7 +44,7 @@ AstraTerra follows the reference sky implementation-style sun/moon render pass:
 - use additive/glow blending,
 - keep orthographic rendering for overlays and labels.
 
-Brightness is intentionally game-readable rather than physically faithful. Magnitude affects relative brightness, but faint visible stars keep a readable floor.
+Brightness is intentionally game-readable rather than physically faithful. Magnitude affects relative brightness, but faint visible stars keep a readable floor. Star cores use compact, vanilla-like apparent diameters; only brighter stars receive a restrained outer glow.
 
 ## Test Rules
 
