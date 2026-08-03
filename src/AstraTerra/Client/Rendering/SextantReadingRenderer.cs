@@ -33,6 +33,18 @@ public sealed class SextantReadingRenderer : IRenderer
 
     public int RenderRange => 9999;
 
+    public void OnMouseDown(MouseEvent args)
+    {
+        if (!IsReadingSextant() || args.Button != EnumMouseButton.Middle)
+        {
+            return;
+        }
+
+        var mode = SextantReadingState.CycleGridMode();
+        api.ShowChatMessage($"Sextant display: {FormatGridMode(mode)}");
+        args.Handled = true;
+    }
+
     public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
     {
         if (stage == EnumRenderStage.Opaque)
@@ -141,6 +153,15 @@ public sealed class SextantReadingRenderer : IRenderer
         return string.Equals(code?.Domain, "astraterra", StringComparison.OrdinalIgnoreCase)
             && string.Equals(code?.Path, "sextant", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static string FormatGridMode(SkyGridMode mode)
+        => mode switch
+        {
+            SkyGridMode.Equatorial => "equatorial grid (right ascension/declination)",
+            SkyGridMode.Horizontal => "azimuthal grid (altitude/azimuth)",
+            SkyGridMode.Both => "both sky grids",
+            _ => "angle only"
+        };
 
     private void RenderReading(string text)
     {

@@ -31,7 +31,7 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 ### Sextant
 
-Hold right click with the Sextant and align the center of the screen with a visible star. While the Sextant is in use, the cyan altitude-azimuth grid and rose right-ascension/declination grid appear, and the on-screen readout displays the targeted star's angle above the horizon in degrees. Releasing right click restores the grid mode selected with `.stars sky-grid`.
+Hold right click with the Sextant and align the center of the screen with a visible star. The on-screen readout displays the targeted star's angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
 If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead.
 

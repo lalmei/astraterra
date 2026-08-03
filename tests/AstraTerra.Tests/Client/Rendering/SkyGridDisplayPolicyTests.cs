@@ -11,9 +11,11 @@ public sealed class SkyGridDisplayPolicyTests
     [InlineData(SkyGridMode.Horizontal)]
     [InlineData(SkyGridMode.Equatorial)]
     [InlineData(SkyGridMode.Both)]
-    public void Resolve_Shows_Both_Grids_While_Sextant_Is_In_Use(SkyGridMode configuredMode)
+    public void Resolve_Uses_Sextant_Mode_While_Sextant_Is_In_Use(SkyGridMode sextantMode)
     {
-        Assert.Equal(SkyGridMode.Both, SkyGridDisplayPolicy.Resolve(configuredMode, sextantInUse: true));
+        Assert.Equal(
+            sextantMode,
+            SkyGridDisplayPolicy.Resolve(SkyGridMode.Both, sextantInUse: true, sextantMode));
     }
 
     [Theory]
@@ -23,6 +25,8 @@ public sealed class SkyGridDisplayPolicyTests
     [InlineData(SkyGridMode.Both)]
     public void Resolve_Restores_Configured_Mode_When_Sextant_Is_Released(SkyGridMode configuredMode)
     {
-        Assert.Equal(configuredMode, SkyGridDisplayPolicy.Resolve(configuredMode, sextantInUse: false));
+        Assert.Equal(
+            configuredMode,
+            SkyGridDisplayPolicy.Resolve(configuredMode, sextantInUse: false, SkyGridMode.None));
     }
 }
