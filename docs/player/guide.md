@@ -31,7 +31,7 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 ### Sextant
 
-Hold right click with the Sextant and align the center of the screen with a visible star. The on-screen readout displays the targeted star's angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
+Hold right click with the Sextant and align the center of the screen with a visible star. The top-center readout displays the targeted star's angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
 If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead.
 
@@ -39,7 +39,7 @@ If no readable star is near the center, the readout asks you to align with a sta
 
 Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to calibrate it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
 
-The readout shows the selected constellation's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
+The top-center readout shows the selected constellation's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
 
 - Middle click to select the next constellation in the held book.
 - Scroll to forecast one hour at a time.

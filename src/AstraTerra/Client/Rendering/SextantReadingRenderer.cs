@@ -12,7 +12,7 @@ public sealed class SextantReadingRenderer : IRenderer
 {
     private const double SkyProjectionDistance = 40.0;
     private const double TargetRadiusPixels = 44.0;
-    private const float ReadingBottomOffset = 124.0f;
+    private const float ReadingTopOffset = 64.0f;
 
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
@@ -181,8 +181,7 @@ public sealed class SextantReadingRenderer : IRenderer
         }
 
         var x = (api.Render.FrameWidth - readingTexture.Width) / 2f;
-        var y = api.Render.FrameHeight - ReadingBottomOffset;
-        api.Render.Render2DLoadedTexture(readingTexture, x, y, 1001f);
+        api.Render.Render2DLoadedTexture(readingTexture, x, ReadingTopOffset, 1001f);
     }
 
     private void DeleteReadingTexture()

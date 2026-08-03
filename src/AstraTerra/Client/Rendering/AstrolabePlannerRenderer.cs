@@ -10,9 +10,9 @@ namespace AstraTerra.Client.Rendering;
 
 public sealed class AstrolabePlannerRenderer : IRenderer
 {
-    private const float TitleBottomOffset = 178.0f;
-    private const float ReadingBottomOffset = 140.0f;
-    private const float HelpBottomOffset = 104.0f;
+    private const float TitleTopOffset = 48.0f;
+    private const float ReadingTopOffset = 86.0f;
+    private const float HelpTopOffset = 124.0f;
 
     private readonly ICoreClientAPI api;
     private readonly StarCatalog catalog;
@@ -148,19 +148,19 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             ref titleText,
             title,
             new CairoFont(20, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
-            TitleBottomOffset);
+            TitleTopOffset);
         RenderLine(
             ref readingTexture,
             ref readingText,
             reading,
             new CairoFont(22, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
-            ReadingBottomOffset);
+            ReadingTopOffset);
         RenderLine(
             ref helpTexture,
             ref helpText,
             help,
             new CairoFont(15, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
-            HelpBottomOffset);
+            HelpTopOffset);
     }
 
     private void RenderLine(
@@ -168,7 +168,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         ref string? cachedText,
         string text,
         CairoFont font,
-        float bottomOffset)
+        float topOffset)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -191,8 +191,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         }
 
         var x = (api.Render.FrameWidth - texture.Width) / 2f;
-        var y = api.Render.FrameHeight - bottomOffset;
-        api.Render.Render2DLoadedTexture(texture, x, y, 1001f);
+        api.Render.Render2DLoadedTexture(texture, x, topOffset, 1001f);
     }
 
     private void DeleteTexture(LoadedTexture? texture)
