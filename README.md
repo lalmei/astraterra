@@ -1,8 +1,28 @@
 # AstraTerra
 
-AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story 1.22.2, with latitude-aware seasons, craftable telescopes, authored constellation lines, deep-sky sights, a sextant readout, a calibrated astrolabe planner, and a client-local constellation journal.
+AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story 1.22.2. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again.
 
-![](docs/constellation.png)
+## Features
+
+### An Earth-focused night sky
+
+![AstraTerra's compact, magnitude-scaled stars over a Vintage Story landscape](docs/screenshots/night-sky.jpg)
+
+A catalog of 3,000 stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Deep-sky objects reward careful telescope observation.
+
+### Measure the sky with a Sextant
+
+Hold right click and sight a star to read its angle above the horizon. While sighting, middle click cycles through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. The selected overlay lasts for the game session without changing the saved debug-grid preference.
+
+### Plan observations with a Calibrated Astrolabe
+
+Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.
+
+### Observe and record constellations
+
+![The Brass Telescope scoped view with a recorded constellation](docs/constellation.png)
+
+The Brass Telescope provides a scoped observation view with several zoom levels. Draw between guide stars, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.
 
 ## Docs
 
