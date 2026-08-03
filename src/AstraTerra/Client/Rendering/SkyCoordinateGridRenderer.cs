@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Config;
+using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -61,7 +62,7 @@ public sealed class SkyCoordinateGridRenderer : IRenderer
 
     private void RenderGrid()
     {
-        var mode = config.GetSkyGridMode();
+        var mode = SkyGridDisplayPolicy.Resolve(config.GetSkyGridMode(), IsReadingSextant());
         if (mode == SkyGridMode.None)
         {
             DisposeMesh();
@@ -198,6 +199,17 @@ public sealed class SkyCoordinateGridRenderer : IRenderer
         var blockPos = entity.Pos.AsBlockPos;
         var eyeY = entity.Pos.InternalY + entity.LocalEyePos.Y;
         return api.World.BlockAccessor.GetRainMapHeightAt(blockPos) <= eyeY;
+    }
+
+    private bool IsReadingSextant()
+    {
+        var stack = api.World.Player.InventoryManager.ActiveHotbarSlot?.Itemstack;
+        var code = stack?.Collectible?.Code;
+        var isActiveHeldSextant = string.Equals(code?.Domain, "astraterra", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(code?.Path, "sextant", StringComparison.OrdinalIgnoreCase);
+
+        return isActiveHeldSextant
+            && (SextantReadingState.IsReading || api.World.Player.Entity.Controls.RightMouseDown);
     }
 
     private void DisposeMesh()
