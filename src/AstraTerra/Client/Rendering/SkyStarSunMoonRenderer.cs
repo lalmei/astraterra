@@ -23,14 +23,10 @@ public static class SkyStarSunMoonRenderer
     private const string ConstellationDotTexturePath = "astraterra:environment/star-pixel";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-    private const float MinimumStarPixelSize = 7.0f;
-    private const float StarPixelScale = 1.0f;
-    private const float MaximumStarPixelSize = 24.0f;
     private const double MinimumSkyRenderDarkness = 0.10;
     private const float MinimumStarAlpha = 0.035f;
     private const float SkyDistance = 40.0f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
-    private const float StarGlowSizeRange = 1.5f;
     private const float StarGlowMaxAlpha = 0.35f;
     private const float DeepSkyBrightnessScale = 0.42f;
     private const double ConstellationDotSpacingDeg = 0.65;
@@ -69,8 +65,8 @@ public static class SkyStarSunMoonRenderer
         catalog = loadedCatalog;
         clientApi.Logger.Notification(
             "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px",
-            MinimumStarPixelSize,
-            MaximumStarPixelSize,
+            StarBillboardSizing.MinimumCoreDiameterPixels,
+            StarBillboardSizing.MaximumCoreDiameterPixels,
             StarAngularSizePerPixelDeg);
     }
 
@@ -298,13 +294,13 @@ public static class SkyStarSunMoonRenderer
             {
                 var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
                 var textureId = isFaint ? dimStarTextureId : brightStarTextureId;
-                var size = (float)Math.Clamp(star.Size * StarPixelScale, MinimumStarPixelSize, MaximumStarPixelSize);
+                var size = StarBillboardSizing.CalculateCoreDiameterPixels(star.Size);
                 var alpha = (float)Math.Clamp(star.Brightness, 0.0, 1.0);
                 var tint = ColorFromTemperature(star.ColorTemperatureK, alpha);
                 var outerAlpha = StarGlowMaxAlpha * alpha * alpha;
                 if (!isFaint && outerAlpha > 0.005f)
                 {
-                    var glowSize = size * (1.0f + (StarGlowSizeRange * alpha));
+                    var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(size, alpha);
                     var glowTint = new Vec4f(tint.R, tint.G, tint.B, outerAlpha);
                     RenderStarQuad(clientApi, shader, quadModel, star, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
                 }
@@ -346,9 +342,9 @@ public static class SkyStarSunMoonRenderer
             }
             clientApi.Logger.Notification(
                 "AstraTerra sky size: minConfigured={0:0.0}px; scale={1:0.0}; maxConfigured={2:0.0}px; drawnSizeRange={3:0.0}-{4:0.0}px; telescopeSprites={5}",
-                MinimumStarPixelSize,
-                StarPixelScale,
-                MaximumStarPixelSize,
+                StarBillboardSizing.MinimumCoreDiameterPixels,
+                StarBillboardSizing.ProjectedSizeScale,
+                StarBillboardSizing.MaximumCoreDiameterPixels,
                 drawnCount == 0 ? 0 : smallestDrawnSize,
                 largestDrawnSize,
                 useTelescopeSprites);
