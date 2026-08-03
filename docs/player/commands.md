@@ -56,4 +56,4 @@ The current authored set includes all 88 Modern IAU constellations. Built conste
 - `both` shows AstraTerra and the original Vintage Story cubemap together for alignment comparisons.
 - `vanilla` shows only the original Vintage Story starfield.
 
-`sky-grid` projects debug coordinate lines over the visible sky and saves the choice in `ModConfig/astraterra.json`. `horizontal` draws the observer-local altitude-azimuth grid in cyan. `equatorial` draws the right-ascension/declination grid in rose and rotates it with local sidereal time. `both` overlays the two systems; `none` is the default and disables the grids.
+`sky-grid` projects debug coordinate lines over the visible sky and saves the choice in `ModConfig/astraterra.json`. `horizontal` draws the observer-local altitude-azimuth grid in cyan. `equatorial` draws the right-ascension/declination grid in rose and rotates it with local sidereal time. `both` overlays the two systems; `none` is the default and disables the grids when the Sextant is not in use. Holding right click with the Sextant temporarily displays both grids without changing the saved mode.
