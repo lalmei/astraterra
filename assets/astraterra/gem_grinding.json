@@ -1,0 +1,122 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": true,
+    "backdrops": [],
+    "attachments": []
+  },
+  "textures": {
+    "rubble": "block/stone/rubble",
+    "granite1": "block/stone/rock/granite1",
+    "quartz": "item/resource/ungraded/quartz"
+  },
+  "elements": [
+    {
+      "name": "origin",
+      "from":[8.0,0.0,8.0],
+      "to":[8.0,0.0,8.0],
+      "faces": {},
+      "rotationOrigin":[8.0,0.0,8.0],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "body",
+          "from":[-5.0,0.0,-7.0],
+          "to":[5.0,2.0,7.0],
+          "faces": {
+            "north": {
+              "texture": "#granite1",
+              "uv":[0.0,14.0,10.0,16.0]
+            },
+            "east": {
+              "texture": "#granite1",
+              "uv":[1.0,11.0,15.0,13.0]
+            },
+            "south": {
+              "texture": "#granite1",
+              "uv":[5.0,7.0,15.0,9.0]
+            },
+            "west": {
+              "texture": "#granite1",
+              "uv":[1.0,14.0,15.0,16.0]
+            },
+            "up": {
+              "texture": "#granite1",
+              "uv":[0.0,0.0,10.0,14.0]
+            },
+            "down": {
+              "texture": "#granite1",
+              "uv":[10.0,0.0,20.0,14.0]
+            }
+          },
+          "rotationOrigin":[0.0,0.0,0.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [
+            {
+              "name": "stone",
+              "from":[0.5,2.0,1.0],
+              "to":[9.5,5.0,8.0],
+              "faces": {
+                "north": {
+                  "texture": "#quartz",
+                  "uv":[0.0,7.0,9.0,10.0]
+                },
+                "east": {
+                  "texture": "#quartz",
+                  "uv":[9.0,7.0,16.0,10.0]
+                },
+                "south": {
+                  "texture": "#quartz",
+                  "uv":[5.0,4.0,14.0,7.0]
+                },
+                "west": {
+                  "texture": "#quartz",
+                  "uv":[7.0,7.0,14.0,10.0]
+                },
+                "up": {
+                  "texture": "#quartz",
+                  "uv":[0.5,0.5,9.5,7.5]
+                },
+                "down": {
+                  "texture": "#quartz",
+                  "uv":[9.0,0.0,18.0,7.0]
+                }
+              },
+              "rotationOrigin":[4.5,2.0,4.0],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [],
+              "autoUnwrap": false,
+              "uv":[0.0,0.0]
+            }
+          ],
+          "autoUnwrap": false,
+          "uv":[0.0,0.0]
+        }
+      ],
+      "uv":[0.0,0.0]
+    }
+  ],
+  "animations": [],
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "rubble": [
+      16,
+      16
+    ],
+    "granite1": [
+      16,
+      16
+    ],
+    "quartz": [
+      16,
+      16
+    ]
+  }
+}
