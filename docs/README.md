@@ -6,6 +6,7 @@ The docs are split by audience.
 
 - [Player Guide](player/guide.md): what AstraTerra adds and how to use the telescope, sextant, and star commands.
 - [Command Reference](player/commands.md): player-facing `.stars` commands.
+- [Constellation Build Cheat Sheet](player/constellation-cheat-sheet.md): copyable `.stars build` commands for all 88 Modern IAU constellations.
 
 ## Developer Docs
 

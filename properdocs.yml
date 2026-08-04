@@ -59,6 +59,7 @@ nav:
   - Player:
       - Guide: player/guide.md
       - Commands: player/commands.md
+      - Constellation Build Cheat Sheet: player/constellation-cheat-sheet.md
   - Developer:
       - Guide: dev/index.md
       - Architecture: dev/architecture.md
