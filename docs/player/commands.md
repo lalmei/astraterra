@@ -31,6 +31,8 @@ Examples:
 
 The current authored set includes all 88 Modern IAU constellations. Built constellations are saved into the held constellation book like hand-drawn constellations.
 
+See the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) for every supported code and a copyable command list.
+
 ## Recovery And Debug Commands
 
 ```text

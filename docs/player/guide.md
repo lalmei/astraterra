@@ -80,6 +80,8 @@ Saved constellations are written into a blank normal book held in your left hand
 
 AstraTerra includes authored Modern IAU constellation line data. These are normal journal entries once built with commands, so you can inspect, rename, or delete them like hand-drawn constellations.
 
+Use the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) to find the three-letter code for any of the 88 included patterns.
+
 ## Quick Start
 
 1. Craft or spawn a Brass Telescope.
