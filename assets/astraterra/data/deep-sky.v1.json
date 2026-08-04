@@ -438,5 +438,635 @@
       "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
+  },
+  {
+    "id": "M1",
+    "displayName": "Crab Nebula",
+    "rightAscensionDeg": 83.6296,
+    "declinationDeg": 22.0181,
+    "angularSizeDeg": 0.1916,
+    "worldCoords": [
+      { "rightAscensionDeg": 83.697, "declinationDeg": 21.9454 },
+      { "rightAscensionDeg": 83.551, "declinationDeg": 21.9559 },
+      { "rightAscensionDeg": 83.5621, "declinationDeg": 22.0906 },
+      { "rightAscensionDeg": 83.7082, "declinationDeg": 22.0803 }
+    ],
+    "brightness": 0.49,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m1dumont",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M2",
+    "displayName": "Messier 2 globular cluster",
+    "rightAscensionDeg": 323.3595,
+    "declinationDeg": -0.8394,
+    "angularSizeDeg": 0.3953,
+    "worldCoords": [
+      { "rightAscensionDeg": 323.4989, "declinationDeg": -0.9794 },
+      { "rightAscensionDeg": 323.22, "declinationDeg": -0.9794 },
+      { "rightAscensionDeg": 323.2201, "declinationDeg": -0.6994 },
+      { "rightAscensionDeg": 323.499, "declinationDeg": -0.6994 }
+    ],
+    "brightness": 0.41,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m2",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M3",
+    "displayName": "Messier 3 globular cluster",
+    "rightAscensionDeg": 205.5504,
+    "declinationDeg": 28.377,
+    "angularSizeDeg": 0.6313,
+    "worldCoords": [
+      { "rightAscensionDeg": 205.8042, "declinationDeg": 28.154 },
+      { "rightAscensionDeg": 205.2979, "declinationDeg": 28.1532 },
+      { "rightAscensionDeg": 205.2956, "declinationDeg": 28.5993 },
+      { "rightAscensionDeg": 205.8037, "declinationDeg": 28.6005 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m3",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M4",
+    "displayName": "Messier 4 globular cluster",
+    "rightAscensionDeg": 245.9053,
+    "declinationDeg": -26.5341,
+    "angularSizeDeg": 1.0135,
+    "worldCoords": [
+      { "rightAscensionDeg": 246.3099, "declinationDeg": -26.8894 },
+      { "rightAscensionDeg": 245.5092, "declinationDeg": -26.8946 },
+      { "rightAscensionDeg": 245.503, "declinationDeg": -26.1781 },
+      { "rightAscensionDeg": 246.2991, "declinationDeg": -26.1719 }
+    ],
+    "brightness": 0.44,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m4",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M5",
+    "displayName": "Messier 5 globular cluster",
+    "rightAscensionDeg": 229.6397,
+    "declinationDeg": 2.0763,
+    "angularSizeDeg": 0.7279,
+    "worldCoords": [
+      { "rightAscensionDeg": 229.8962, "declinationDeg": 1.818 },
+      { "rightAscensionDeg": 229.3815, "declinationDeg": 1.8198 },
+      { "rightAscensionDeg": 229.3832, "declinationDeg": 2.3343 },
+      { "rightAscensionDeg": 229.898, "declinationDeg": 2.333 }
+    ],
+    "brightness": 0.42,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m5",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M6",
+    "displayName": "Butterfly Cluster",
+    "rightAscensionDeg": 265.058,
+    "declinationDeg": -32.275,
+    "angularSizeDeg": 0.671,
+    "worldCoords": [
+      { "rightAscensionDeg": -94.6498, "declinationDeg": -32.5023 },
+      { "rightAscensionDeg": -95.212, "declinationDeg": -32.5211 },
+      { "rightAscensionDeg": -95.2327, "declinationDeg": -32.047 },
+      { "rightAscensionDeg": -94.6735, "declinationDeg": -32.0283 }
+    ],
+    "brightness": 0.51,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m6",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M7",
+    "displayName": "Ptolemy Cluster",
+    "rightAscensionDeg": 268.4716,
+    "declinationDeg": -34.7938,
+    "angularSizeDeg": 0.7574,
+    "worldCoords": [
+      { "rightAscensionDeg": 268.7988, "declinationDeg": -35.0611 },
+      { "rightAscensionDeg": 268.1445, "declinationDeg": -35.0608 },
+      { "rightAscensionDeg": 268.1464, "declinationDeg": -34.5258 },
+      { "rightAscensionDeg": 268.7967, "declinationDeg": -34.5259 }
+    ],
+    "brightness": 0.41,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m7",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M10",
+    "displayName": "Messier 10 globular cluster",
+    "rightAscensionDeg": 254.2888,
+    "declinationDeg": -4.1116,
+    "angularSizeDeg": 0.4743,
+    "worldCoords": [
+      { "rightAscensionDeg": 254.4552, "declinationDeg": -4.2803 },
+      { "rightAscensionDeg": 254.1195, "declinationDeg": -4.2786 },
+      { "rightAscensionDeg": 254.1226, "declinationDeg": -3.9421 },
+      { "rightAscensionDeg": 254.458, "declinationDeg": -3.9455 }
+    ],
+    "brightness": 0.45,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m10",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M11",
+    "displayName": "Wild Duck Cluster",
+    "rightAscensionDeg": 282.784,
+    "declinationDeg": -6.2653,
+    "angularSizeDeg": 0.3196,
+    "worldCoords": [
+      { "rightAscensionDeg": -77.098, "declinationDeg": -6.3738 },
+      { "rightAscensionDeg": -77.3252, "declinationDeg": -6.3825 },
+      { "rightAscensionDeg": -77.3339, "declinationDeg": -6.1567 },
+      { "rightAscensionDeg": -77.1068, "declinationDeg": -6.1481 }
+    ],
+    "brightness": 0.59,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m11",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M12",
+    "displayName": "Messier 12 globular cluster",
+    "rightAscensionDeg": 251.8078,
+    "declinationDeg": -1.9455,
+    "angularSizeDeg": 0.4069,
+    "worldCoords": [
+      { "rightAscensionDeg": 251.9518, "declinationDeg": -2.0893 },
+      { "rightAscensionDeg": 251.664, "declinationDeg": -2.0893 },
+      { "rightAscensionDeg": 251.6638, "declinationDeg": -1.8017 },
+      { "rightAscensionDeg": 251.9516, "declinationDeg": -1.8017 }
+    ],
+    "brightness": 0.37,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m12",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M13",
+    "displayName": "Hercules Globular Cluster",
+    "rightAscensionDeg": 250.4204,
+    "declinationDeg": 36.4607,
+    "angularSizeDeg": 0.6316,
+    "worldCoords": [
+      { "rightAscensionDeg": 250.6992, "declinationDeg": 36.2385 },
+      { "rightAscensionDeg": 250.1458, "declinationDeg": 36.2355 },
+      { "rightAscensionDeg": 250.1402, "declinationDeg": 36.6821 },
+      { "rightAscensionDeg": 250.6964, "declinationDeg": 36.6854 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m13",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M15",
+    "displayName": "Great Pegasus Cluster",
+    "rightAscensionDeg": 322.4881,
+    "declinationDeg": 12.1761,
+    "angularSizeDeg": 0.5403,
+    "worldCoords": [
+      { "rightAscensionDeg": 322.6612, "declinationDeg": 11.9656 },
+      { "rightAscensionDeg": 322.2728, "declinationDeg": 12.0068 },
+      { "rightAscensionDeg": 322.3147, "declinationDeg": 12.3865 },
+      { "rightAscensionDeg": 322.7035, "declinationDeg": 12.3453 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m15-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M22",
+    "displayName": "Sagittarius Cluster",
+    "rightAscensionDeg": 279.1036,
+    "declinationDeg": -23.8985,
+    "angularSizeDeg": 0.6216,
+    "worldCoords": [
+      { "rightAscensionDeg": 279.343, "declinationDeg": -24.1185 },
+      { "rightAscensionDeg": 278.8634, "declinationDeg": -24.1179 },
+      { "rightAscensionDeg": 278.8642, "declinationDeg": -23.6772 },
+      { "rightAscensionDeg": 279.344, "declinationDeg": -23.6795 }
+    ],
+    "brightness": 0.53,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m22",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M33",
+    "displayName": "Triangulum Galaxy",
+    "rightAscensionDeg": 23.4831,
+    "declinationDeg": 30.6623,
+    "angularSizeDeg": 1.8236,
+    "worldCoords": [
+      { "rightAscensionDeg": 24.5389, "declinationDeg": 30.5842 },
+      { "rightAscensionDeg": 23.3977, "declinationDeg": 29.7536 },
+      { "rightAscensionDeg": 22.426, "declinationDeg": 30.7322 },
+      { "rightAscensionDeg": 23.5697, "declinationDeg": 31.5705 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m33",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M51",
+    "displayName": "Whirlpool Galaxy",
+    "rightAscensionDeg": 202.4836,
+    "declinationDeg": 47.2278,
+    "angularSizeDeg": 0.5408,
+    "worldCoords": [
+      { "rightAscensionDeg": 202.6985, "declinationDeg": 47.0004 },
+      { "rightAscensionDeg": 202.15, "declinationDeg": 47.0807 },
+      { "rightAscensionDeg": 202.267, "declinationDeg": 47.4546 },
+      { "rightAscensionDeg": 202.819, "declinationDeg": 47.374 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m51-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M63",
+    "displayName": "Sunflower Galaxy",
+    "rightAscensionDeg": 198.9624,
+    "declinationDeg": 42.0422,
+    "angularSizeDeg": 0.3651,
+    "worldCoords": [
+      { "rightAscensionDeg": 199.0209, "declinationDeg": 41.865 },
+      { "rightAscensionDeg": 198.724, "declinationDeg": 41.9983 },
+      { "rightAscensionDeg": 198.9032, "declinationDeg": 42.2193 },
+      { "rightAscensionDeg": 199.2014, "declinationDeg": 42.0856 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m63-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M64",
+    "displayName": "Black Eye Galaxy",
+    "rightAscensionDeg": 194.1796,
+    "declinationDeg": 21.6807,
+    "angularSizeDeg": 0.2611,
+    "worldCoords": [
+      { "rightAscensionDeg": 194.2789, "declinationDeg": 21.5887 },
+      { "rightAscensionDeg": 194.0805, "declinationDeg": 21.5882 },
+      { "rightAscensionDeg": 194.0802, "declinationDeg": 21.7729 },
+      { "rightAscensionDeg": 194.279, "declinationDeg": 21.773 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m64",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M65",
+    "displayName": "Messier 65 galaxy",
+    "rightAscensionDeg": 169.7297,
+    "declinationDeg": 13.0922,
+    "angularSizeDeg": 0.2476,
+    "worldCoords": [
+      { "rightAscensionDeg": 169.8195, "declinationDeg": 13.0044 },
+      { "rightAscensionDeg": 169.6397, "declinationDeg": 13.0048 },
+      { "rightAscensionDeg": 169.6401, "declinationDeg": 13.1798 },
+      { "rightAscensionDeg": 169.8196, "declinationDeg": 13.1796 }
+    ],
+    "brightness": 0.54,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m65",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M66",
+    "displayName": "Messier 66 galaxy",
+    "rightAscensionDeg": 170.052,
+    "declinationDeg": 12.9905,
+    "angularSizeDeg": 0.3018,
+    "worldCoords": [
+      { "rightAscensionDeg": 170.1615, "declinationDeg": 12.8838 },
+      { "rightAscensionDeg": 169.9425, "declinationDeg": 12.8838 },
+      { "rightAscensionDeg": 169.9425, "declinationDeg": 13.0972 },
+      { "rightAscensionDeg": 170.1615, "declinationDeg": 13.0972 }
+    ],
+    "brightness": 0.54,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m66",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M81",
+    "displayName": "Bode's Galaxy",
+    "rightAscensionDeg": 148.9002,
+    "declinationDeg": 69.0657,
+    "angularSizeDeg": 0.6725,
+    "worldCoords": [
+      { "rightAscensionDeg": 149.5567, "declinationDeg": 68.8259 },
+      { "rightAscensionDeg": 148.2393, "declinationDeg": 68.8276 },
+      { "rightAscensionDeg": 148.2298, "declinationDeg": 69.3029 },
+      { "rightAscensionDeg": 149.5748, "declinationDeg": 69.3014 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m81",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M82",
+    "displayName": "Cigar Galaxy",
+    "rightAscensionDeg": 148.9443,
+    "declinationDeg": 69.6513,
+    "angularSizeDeg": 0.3987,
+    "worldCoords": [
+      { "rightAscensionDeg": 149.3695, "declinationDeg": 69.518 },
+      { "rightAscensionDeg": 148.5644, "declinationDeg": 69.5024 },
+      { "rightAscensionDeg": 148.5144, "declinationDeg": 69.7835 },
+      { "rightAscensionDeg": 149.3291, "declinationDeg": 69.7995 }
+    ],
+    "brightness": 0.54,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m82-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M83",
+    "displayName": "Southern Pinwheel Galaxy",
+    "rightAscensionDeg": 204.2576,
+    "declinationDeg": -29.8707,
+    "angularSizeDeg": 0.457,
+    "worldCoords": [
+      { "rightAscensionDeg": 204.4444, "declinationDeg": -30.0319 },
+      { "rightAscensionDeg": 204.0712, "declinationDeg": -30.0323 },
+      { "rightAscensionDeg": 204.0714, "declinationDeg": -29.7091 },
+      { "rightAscensionDeg": 204.4435, "declinationDeg": -29.7088 }
+    ],
+    "brightness": 0.53,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m83",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC891",
+    "displayName": "NGC 891 edge-on galaxy",
+    "rightAscensionDeg": 35.639,
+    "declinationDeg": 42.347,
+    "angularSizeDeg": 0.3392,
+    "worldCoords": [
+      { "rightAscensionDeg": 35.8009, "declinationDeg": 42.2267 },
+      { "rightAscensionDeg": 35.4773, "declinationDeg": 42.2273 },
+      { "rightAscensionDeg": 35.4767, "declinationDeg": 42.4668 },
+      { "rightAscensionDeg": 35.8012, "declinationDeg": 42.4666 }
+    ],
+    "brightness": 0.51,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n891",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M97",
+    "displayName": "Owl Nebula",
+    "rightAscensionDeg": 168.706,
+    "declinationDeg": 55.0194,
+    "angularSizeDeg": 0.2871,
+    "worldCoords": [
+      { "rightAscensionDeg": 168.9254, "declinationDeg": 54.9504 },
+      { "rightAscensionDeg": 168.5863, "declinationDeg": 54.8934 },
+      { "rightAscensionDeg": 168.4859, "declinationDeg": 55.088 },
+      { "rightAscensionDeg": 168.8264, "declinationDeg": 55.1453 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m97dumont",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M101",
+    "displayName": "Pinwheel Galaxy",
+    "rightAscensionDeg": 210.8587,
+    "declinationDeg": 54.3675,
+    "angularSizeDeg": 0.9738,
+    "worldCoords": [
+      { "rightAscensionDeg": 211.4445, "declinationDeg": 54.0215 },
+      { "rightAscensionDeg": 210.2719, "declinationDeg": 54.0221 },
+      { "rightAscensionDeg": 210.2635, "declinationDeg": 54.7104 },
+      { "rightAscensionDeg": 211.4548, "declinationDeg": 54.7102 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m101-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M104",
+    "displayName": "Sombrero Galaxy",
+    "rightAscensionDeg": 189.9968,
+    "declinationDeg": -11.6295,
+    "angularSizeDeg": 0.3661,
+    "worldCoords": [
+      { "rightAscensionDeg": 190.1291, "declinationDeg": -11.7588 },
+      { "rightAscensionDeg": 189.8647, "declinationDeg": -11.7588 },
+      { "rightAscensionDeg": 189.8646, "declinationDeg": -11.5001 },
+      { "rightAscensionDeg": 190.1288, "declinationDeg": -11.5001 }
+    ],
+    "brightness": 0.61,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m104",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "M106",
+    "displayName": "Messier 106 galaxy",
+    "rightAscensionDeg": 184.7124,
+    "declinationDeg": 47.3172,
+    "angularSizeDeg": 0.5597,
+    "worldCoords": [
+      { "rightAscensionDeg": 185.107, "declinationDeg": 47.2362 },
+      { "rightAscensionDeg": 184.5948, "declinationDeg": 47.049 },
+      { "rightAscensionDeg": 184.3167, "declinationDeg": 47.397 },
+      { "rightAscensionDeg": 184.831, "declinationDeg": 47.5853 }
+    ],
+    "brightness": 0.46,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/m106-vasey",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC253",
+    "displayName": "Sculptor Galaxy",
+    "rightAscensionDeg": 11.8736,
+    "declinationDeg": -25.3014,
+    "angularSizeDeg": 0.5839,
+    "worldCoords": [
+      { "rightAscensionDeg": 12.1021, "declinationDeg": -25.5076 },
+      { "rightAscensionDeg": 11.6454, "declinationDeg": -25.5079 },
+      { "rightAscensionDeg": 11.6454, "declinationDeg": -25.0947 },
+      { "rightAscensionDeg": 12.1015, "declinationDeg": -25.0947 }
+    ],
+    "brightness": 0.52,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n253",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC4565",
+    "displayName": "Needle Galaxy",
+    "rightAscensionDeg": 189.0405,
+    "declinationDeg": 25.9676,
+    "angularSizeDeg": 0.4407,
+    "worldCoords": [
+      { "rightAscensionDeg": 189.2138, "declinationDeg": 25.8117 },
+      { "rightAscensionDeg": 188.8672, "declinationDeg": 25.8117 },
+      { "rightAscensionDeg": 188.8672, "declinationDeg": 26.1233 },
+      { "rightAscensionDeg": 189.2138, "declinationDeg": 26.1233 }
+    ],
+    "brightness": 0.42,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n4565",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
+  },
+  {
+    "id": "NGC5128",
+    "displayName": "Centaurus A",
+    "rightAscensionDeg": 201.3868,
+    "declinationDeg": -43.0012,
+    "angularSizeDeg": 0.7816,
+    "worldCoords": [
+      { "rightAscensionDeg": 201.7664, "declinationDeg": -43.2767 },
+      { "rightAscensionDeg": 201.0071, "declinationDeg": -43.2769 },
+      { "rightAscensionDeg": 201.0107, "declinationDeg": -42.7245 },
+      { "rightAscensionDeg": 201.7629, "declinationDeg": -42.7243 }
+    ],
+    "brightness": 0.37,
+    "tintR": 1.0,
+    "tintG": 1.0,
+    "tintB": 1.0,
+    "texturePath": "astraterra:environment/deep-sky/stellarium/n5128",
+    "fallbackTexturePaths": [
+      "astraterra:environment/deep-sky-cloud"
+    ]
   }
 ]

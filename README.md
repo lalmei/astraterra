@@ -8,7 +8,7 @@ AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story
 
 ![AstraTerra's compact, magnitude-scaled stars over a Vintage Story landscape](docs/screenshots/night-sky.jpg)
 
-A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Deep-sky objects reward careful telescope observation.
+A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.
 
 ### Measure the sky with a Sextant
 

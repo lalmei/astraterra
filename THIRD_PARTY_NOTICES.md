@@ -85,6 +85,36 @@ Included texture credits from Stellarium `textures.json`:
 - `n1499.png`: Zhao Jingna
 - `n2244.png`: Keesscherer
 - `etaCarinae.png`: Harel Boren
+- `m1dumont.png`: Stephane Dumont
+- `m2.png`: Starhopper
+- `m3.png`: Starhopper
+- `m4.png`: Starhopper
+- `m5.png`: Starhopper
+- `m6.png`: Grasslands Observatory
+- `m7.png`: ESO, post-processing: Sun Shuwei
+- `m10.png`: Starhopper
+- `m11.png`: Grasslands Observatory
+- `m12.png`: Hewholooks
+- `m13.png`: Starhopper
+- `m15-vasey.png`: Plover Hill Observatory
+- `m22.png`: Hewholooks
+- `m33.png`: HG731GZ
+- `m51-vasey.png`: Plover Hill Observatory
+- `m63-vasey.png`: Plover Hill Observatory
+- `m64.png`: Adam Block/Mount Lemmon SkyCenter/University of Arizona
+- `m65.png`: Adam Block/Mount Lemmon SkyCenter/University of Arizona
+- `m66.png`: Adam Block/Mount Lemmon SkyCenter/University of Arizona
+- `m81.png`: Kees Scherer, post-processing: Sun Shuwei
+- `m82-vasey.png`: Plover Hill Observatory
+- `m83.png`: TRAPPIST/E. Jehin/ESO
+- `n891.png`: Hewholooks
+- `m97dumont.png`: Stephane Dumont
+- `m101-vasey.png`: Plover Hill Observatory
+- `m104.png`: Adam Block/Mount Lemmon SkyCenter/University of Arizona & Ngc1535, post-processing: Sun Shuwei
+- `m106-vasey.png`: Plover Hill Observatory
+- `n253.png`: HG731GZ
+- `n4565.png`: Ken Crawford
+- `n5128.png`: ESO
 
 ## reference sky implementation Local Fallback Textures
 
