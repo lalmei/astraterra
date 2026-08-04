@@ -1,6 +1,6 @@
 # AstraTerra Docs
 
-![AstraTerra](modicon.png)
+![AstraTerra](https://raw.githubusercontent.com/lalmei/astraterra/main/modicon.png)
 AstraTerra turns Vintage Story's night sky into an 5000+ Earth centered starfield with telescope observation, constellation journaling, deep-sky sights, and a sextant readout.
 
 <div class="astraterra-feature-grid">
