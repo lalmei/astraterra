@@ -53,6 +53,8 @@ run:
 
 deploy-run: deploy run
 
+docs-build docs-serve: SHELL := /bin/sh
+
 docs-build:
 	@uv run --with-requirements docs/requirements.txt properdocs build -f properdocs.yml --strict
 
