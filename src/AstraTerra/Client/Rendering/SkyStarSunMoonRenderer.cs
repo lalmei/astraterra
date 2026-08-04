@@ -50,6 +50,7 @@ public static class SkyStarSunMoonRenderer
     private static int telescopeStarTextureId;
     private static int telescopeFaintStarTextureId;
     private static int constellationDotTextureId;
+    private static MeshRef? deepSkyQuadMesh;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
@@ -72,6 +73,8 @@ public static class SkyStarSunMoonRenderer
 
     public static void Reset()
     {
+        deepSkyQuadMesh?.Dispose();
+        deepSkyQuadMesh = null;
         api = null;
         config = null;
         catalog = null;
@@ -273,23 +276,6 @@ public static class SkyStarSunMoonRenderer
             shader.ViewMatrix = render.CameraMatrixOriginf;
             shader.ProjectionMatrix = render.CurrentProjectionMatrix;
 
-            foreach (var deepSkyObject in visibleDeepSkyObjects)
-            {
-                var textureId = ResolveDeepSkyTexture(clientApi, deepSkyObject);
-                if (textureId != 0)
-                {
-                    RenderDeepSkyQuad(clientApi, shader, quadModel, deepSkyObject, imageSize, textureId, modelMatrixBuffer);
-                }
-            }
-
-            if (constellationDotTextureId != 0)
-            {
-                foreach (var dot in constellationDots)
-                {
-                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer);
-                }
-            }
-
             foreach (var star in visibleStars)
             {
                 var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
@@ -310,6 +296,32 @@ public static class SkyStarSunMoonRenderer
                 drawnCount++;
                 smallestDrawnSize = Math.Min(smallestDrawnSize, size);
                 largestDrawnSize = Math.Max(largestDrawnSize, size);
+            }
+
+            if (visibleDeepSkyObjects.Count > 0)
+            {
+                // The telescope photographs are foreground plates. Standard alpha
+                // blending lets their dark sky attenuate the catalog sprites below;
+                // additive glow blending would make draw order visually irrelevant.
+                render.GlToggleBlend(true, EnumBlendMode.Standard);
+                foreach (var deepSkyObject in visibleDeepSkyObjects)
+                {
+                    var textureId = ResolveDeepSkyTexture(clientApi, deepSkyObject);
+                    if (textureId != 0)
+                    {
+                        RenderDeepSkyQuad(clientApi, shader, deepSkyObject, textureId, modelMatrixBuffer);
+                    }
+                }
+
+                render.GlToggleBlend(true, EnumBlendMode.Glow);
+            }
+
+            if (constellationDotTextureId != 0)
+            {
+                foreach (var dot in constellationDots)
+                {
+                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer);
+                }
             }
         }
         finally
@@ -403,19 +415,24 @@ public static class SkyStarSunMoonRenderer
     private static void RenderDeepSkyQuad(
         ICoreClientAPI clientApi,
         IStandardShaderProgram shader,
-        MeshRef quadModel,
         RenderedDeepSkyObject deepSkyObject,
-        int imageSize,
         int textureId,
         float[] modelMatrixBuffer)
     {
-        var modelMatrix = BuildSkyBillboardMatrix(
-            clientApi,
-            deepSkyObject.DirectionX,
-            deepSkyObject.DirectionY,
-            deepSkyObject.DirectionZ,
-            (float)Math.Clamp(deepSkyObject.AngularSizeDeg, 0.1, 8.0),
-            imageSize);
+        var meshData = DeepSkyQuadMeshBuilder.Build(deepSkyObject.QuadCorners, SkyDistance);
+        if (deepSkyQuadMesh is null)
+        {
+            deepSkyQuadMesh = clientApi.Render.UploadMesh(meshData);
+        }
+        else
+        {
+            clientApi.Render.UpdateMesh(deepSkyQuadMesh, meshData);
+        }
+
+        var entity = clientApi.World.Player.Entity;
+        var verticalOrigin = (float)entity.LocalEyePos.Y
+            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
+        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
         var alpha = (float)Math.Clamp(deepSkyObject.Brightness * DeepSkyBrightnessScale, 0.0, 0.7);
         var tint = new Vec4f(
             Math.Clamp(deepSkyObject.TintR, 0.0f, 1.0f),
@@ -429,7 +446,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(quadModel);
+        clientApi.Render.RenderMesh(deepSkyQuadMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 

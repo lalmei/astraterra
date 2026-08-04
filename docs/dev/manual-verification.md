@@ -69,6 +69,8 @@
 - Equator: pass in manual in-game check; starfield and authored constellation orientation looked correct.
 - Starfield comparison: use `.stars starfield both` to inspect alignment, then verify `vanilla` hides AstraTerra stars and `astraterra` hides the vanilla cubemap without restarting.
 - Star size comparison: with `.stars starfield both`, confirm typical AstraTerra stars are similarly compact to the vanilla points and that only the brightest catalog stars have a modest outer glow rather than a dominant disc.
+- Polaris comparison: with `.stars starfield both`, compare Polaris to a similarly bright vanilla point; confirm its core is no longer undersized while magnitude-six stars remain compact.
+- Deep-sky registration: scope a Stellarium-backed object such as M42 and confirm catalog stars embedded in the image coincide with AstraTerra stars across the full image, including its rotation and non-square footprint.
 - Coordinate grids: use `.stars sky-grid horizontal` and confirm the cyan horizon stays at altitude 0° while its cardinal meridians meet at the zenith. Use `equatorial` and confirm the rose celestial equator and hour circles rotate with time while remaining aligned with catalog stars. Use `both` to compare the frames, then restore `none`.
 - Mid-latitude north: not run in this automated pass.
 - Mid-latitude south: not run in this automated pass.

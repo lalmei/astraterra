@@ -1,5 +1,7 @@
 namespace AstraTerra.Astronomy;
 
+public readonly record struct DeepSkyDirection(double X, double Y, double Z);
+
 public sealed record RenderedDeepSkyObject(
     string Id,
     string DisplayName,
@@ -9,9 +11,7 @@ public sealed record RenderedDeepSkyObject(
     float TintG,
     float TintB,
     IReadOnlyList<string> TexturePaths,
-    double DirectionX,
-    double DirectionY,
-    double DirectionZ
+    IReadOnlyList<DeepSkyDirection> QuadCorners
 );
 
 public static class DeepSkyRenderModel
@@ -55,7 +55,24 @@ public static class DeepSkyRenderModel
             return null;
         }
 
-        var (directionX, directionY, directionZ) = CalculateDirection(coordinates.AzimuthDeg, coordinates.AltitudeDeg);
+        if (entry.WorldCoords is null || entry.WorldCoords.Count != 4)
+        {
+            return null;
+        }
+
+        var quadCorners = entry.WorldCoords
+            .Select(corner =>
+            {
+                var horizontal = CelestialMath.GetHorizontalCoordinates(
+                    corner.RightAscensionDeg,
+                    corner.DeclinationDeg,
+                    latitudeDeg,
+                    localSiderealDeg);
+                var (x, y, z) = CalculateDirection(horizontal.AzimuthDeg, horizontal.AltitudeDeg);
+                return new DeepSkyDirection(x, y, z);
+            })
+            .ToList();
+
         return new RenderedDeepSkyObject(
             entry.Id,
             entry.DisplayName,
@@ -65,9 +82,7 @@ public static class DeepSkyRenderModel
             entry.TintG,
             entry.TintB,
             BuildTexturePathList(entry),
-            directionX,
-            directionY,
-            directionZ);
+            quadCorners);
     }
 
     private static IReadOnlyList<string> BuildTexturePathList(DeepSkyObjectEntry entry)
