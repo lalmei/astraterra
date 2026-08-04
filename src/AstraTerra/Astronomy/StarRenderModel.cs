@@ -88,7 +88,7 @@ public static class StarRenderModel
     private static double StarBrightnessFromMagnitude(double visualMagnitude)
     {
         var dimming = Math.Clamp((visualMagnitude - 0.4) / 5.6, 0.0, 1.0);
-        return 1.0 - (dimming * 0.8);
+        return 1.0 - (dimming * 0.64);
     }
 
     private static double EstimateColorTemperature(double? bvColorIndex)

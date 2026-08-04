@@ -117,7 +117,7 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.InRange(rendered!.Brightness, 0.19, 0.21);
+        Assert.InRange(rendered!.Brightness, 0.35, 0.37);
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public sealed class StarRenderModelTests
         var brighter = StarRenderModel.Project(magnitudeTwo, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
         var dimmer = StarRenderModel.Project(magnitudeSix, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(brighter!.Brightness > dimmer!.Brightness * 3.5);
-        Assert.InRange(dimmer.Brightness, 0.19, 0.21);
+        Assert.True(brighter!.Brightness > dimmer!.Brightness * 2.2);
+        Assert.InRange(dimmer.Brightness, 0.35, 0.37);
     }
 
     [Fact]
