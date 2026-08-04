@@ -26,4 +26,12 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 
 Deep-sky textures are rendered as spherical quads. Each of the four registered right-ascension/declination corners is projected independently every frame, preserving the source image's sky position, rotation, and aspect ratio. `angularSizeDeg` remains descriptive metadata and is not used to reconstruct a square billboard.
 
+The curated 30-object Stellarium expansion is reproducible from a Stellarium checkout:
+
+```bash
+python tools/deepsky/import_stellarium.py /path/to/stellarium/nebulae/default
+```
+
+The importer requires a canonical four-corner texture registration, derives the catalog center and descriptive angular size from the source footprint, and copies the exact registered PNG into the runtime texture directory.
+
 When adding a new runtime data shape, version the filename and add asset tests for schema-level expectations.

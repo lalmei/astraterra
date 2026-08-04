@@ -169,7 +169,16 @@ public sealed class StarCatalogAssetTests
         using var deepSky = JsonDocument.Parse(File.OpenRead("assets/astraterra/data/deep-sky.v1.json"));
         var objects = deepSky.RootElement.EnumerateArray().ToList();
 
+        Assert.Equal(50, objects.Count);
         Assert.Contains(objects, entry => entry.GetProperty("id").GetString() == "M45");
+        Assert.Contains(objects, entry => entry.GetProperty("id").GetString() == "M1");
+        Assert.Contains(objects, entry => entry.GetProperty("id").GetString() == "NGC5128");
+        Assert.Equal(
+            objects.Count,
+            objects.Select(entry => entry.GetProperty("id").GetString()).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(
+            objects.Count,
+            objects.Select(entry => entry.GetProperty("texturePath").GetString()).Distinct(StringComparer.Ordinal).Count());
         Assert.All(
             objects,
             entry =>
@@ -191,7 +200,12 @@ public sealed class StarCatalogAssetTests
                 Assert.InRange(entry.GetProperty("tintR").GetDouble(), 0.0, 1.0);
                 Assert.InRange(entry.GetProperty("tintG").GetDouble(), 0.0, 1.0);
                 Assert.InRange(entry.GetProperty("tintB").GetDouble(), 0.0, 1.0);
-                Assert.StartsWith("astraterra:environment/deep-sky/stellarium/", entry.GetProperty("texturePath").GetString());
+                var texturePath = entry.GetProperty("texturePath").GetString();
+                Assert.StartsWith("astraterra:environment/deep-sky/stellarium/", texturePath);
+                var textureName = texturePath!["astraterra:environment/deep-sky/stellarium/".Length..];
+                Assert.True(
+                    File.Exists(Path.Combine("assets/astraterra/textures/environment/deep-sky/stellarium", textureName + ".png")),
+                    $"Deep-sky texture is missing for {entry.GetProperty("id").GetString()}: {textureName}.png");
                 var fallbacks = entry.GetProperty("fallbackTexturePaths").EnumerateArray().Select(path => path.GetString()).ToList();
                 Assert.Contains("astraterra:environment/deep-sky-cloud", fallbacks);
             });
