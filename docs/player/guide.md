@@ -1,15 +1,21 @@
 # AstraTerra Player Guide
 
-AstraTerra turns the night sky into an Earth-focused starfield for Vintage Story. Stars change with latitude and season, telescope zoom reveals more sky detail, and saved constellation lines can be used as a seasonal memory aid.
+AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Stars change with latitude, seasons, (future: longitude) telescope zoom reveals more sky detail, and saved constellation lines can be used as a seasonal memory aid.
 
 ## What You Can Do
 
-- Watch an Earth-like fixed-star sky that changes as you travel north or south.
+- Watch an 5000+ fixed-star sky that changes as you travel north or south.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
-- Use the Precision Telescope for stronger zoom.
+- Use the Precision Telescope for slight stronger zoom, maybe clear view.
 - Use the Sextant to read the angle of a visible star above the horizon.
-- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear.
-- Build authored Modern IAU constellations with commands when you want known star patterns in your journal.
+- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear, and what day of the year it is.
+- Two prebuilt constellation catalogs, that could be used to debug, or used in builds.
+
+### Extension
+
+Right now the star field is only defined by the star catalog configuration,
+found within a JSON file in the mod. The current one was build using Stellarium dataset using
+One could randomly generate it during world creation, or add/edit stars.
 
 ## Items
 
@@ -33,7 +39,7 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 Hold right click with the Sextant and align the center of the screen with a visible star. The top-center readout displays the targeted star's angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
-If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead.
+If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead. You need a star to be able to read it. (Will add moon and sun later, maybe add some blindess effect if you use it on the sun)
 
 ### Calibrated Astrolabe
 
@@ -61,6 +67,8 @@ The telescope overlay can still open when those conditions are not met, but draw
 The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected constellation is below the horizon.
 
 ## Starfield Comparison Modes
+
+Right now available for debug purposes.
 
 Use `.stars starfield astraterra|both|vanilla` to switch the visible starfield immediately:
 
