@@ -9,8 +9,9 @@ public sealed class StarBillboardSizingTests
     [InlineData(0.0, 1.75)]
     [InlineData(7.0, 2.94)]
     [InlineData(12.0, 5.04)]
-    [InlineData(24.0, 6.0)]
-    [InlineData(40.0, 6.0)]
+    [InlineData(16.75, 7.035)]
+    [InlineData(24.0, 8.0)]
+    [InlineData(40.0, 8.0)]
     public void CalculateCoreDiameterPixels_Scales_To_Compact_Star_Sizes(
         double projectedSize,
         float expectedDiameter)

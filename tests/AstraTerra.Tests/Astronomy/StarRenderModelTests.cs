@@ -146,7 +146,32 @@ public sealed class StarRenderModelTests
 
         Assert.True(brightRendered!.Size > middleRendered!.Size);
         Assert.True(middleRendered.Size > faintRendered!.Size);
-        Assert.True(brightRendered.Size < faintRendered.Size * 1.3);
+        Assert.True(brightRendered.Size > faintRendered.Size * 1.45);
+    }
+
+    [Fact]
+    public void Project_Gives_Polaris_A_Larger_Bright_Star_Footprint()
+    {
+        var polaris = new StarCatalogEntry(11767, 37.9546, 89.2641, 1.98, 0.60, true);
+
+        var rendered = StarRenderModel.Project(polaris, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 1);
+
+        Assert.NotNull(rendered);
+        Assert.InRange(rendered!.Size, 16.6, 16.9);
+    }
+
+    [Fact]
+    public void Project_Keeps_Magnitude_Size_Stable_While_Twilight_Dims_Opacity()
+    {
+        var polaris = new StarCatalogEntry(11767, 37.9546, 89.2641, 1.98, 0.60, true);
+
+        var night = StarRenderModel.Project(polaris, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 1);
+        var twilight = StarRenderModel.Project(polaris, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 0.3);
+
+        Assert.NotNull(night);
+        Assert.NotNull(twilight);
+        Assert.Equal(night!.Size, twilight!.Size);
+        Assert.True(night.Brightness > twilight.Brightness);
     }
 
     [Fact]

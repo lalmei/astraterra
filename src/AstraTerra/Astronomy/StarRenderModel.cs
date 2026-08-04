@@ -50,7 +50,7 @@ public static class StarRenderModel
         var horizonFactor = Math.Clamp((coordinates.AltitudeDeg - fadeStart) / (horizonFadeBandDeg - fadeStart), 0.0, 1.0);
         var brightness = Math.Clamp(StarBrightnessFromMagnitude(star.VisualMagnitude) * brightnessBias * horizonFactor, 0.0, 1.0);
         var (directionX, directionY, directionZ) = CalculateDirection(coordinates.AzimuthDeg, coordinates.AltitudeDeg);
-        var size = CalculateSize(star.VisualMagnitude, brightnessBias);
+        var size = CalculateSize(star.VisualMagnitude);
 
         return new RenderedStar(
             star.Hip,
@@ -78,11 +78,10 @@ public static class StarRenderModel
             -horizontal * Math.Cos(azimuth));
     }
 
-    private static double CalculateSize(double visualMagnitude, double brightnessBias)
+    private static double CalculateSize(double visualMagnitude)
     {
         var brightness = StarBrightnessFromMagnitude(visualMagnitude);
-        var biasFactor = Math.Clamp(Math.Sqrt(Math.Max(0.0, brightnessBias)), 0.65, 1.75);
-        return Math.Clamp(12.5 * (0.9 + (brightness * 0.2)) * biasFactor, 7.0, 24.0);
+        return Math.Clamp(12.5 * (0.7 + (brightness * 0.78)), 7.0, 24.0);
     }
 
     private static double StarBrightnessFromMagnitude(double visualMagnitude)
