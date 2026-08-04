@@ -71,4 +71,46 @@ public sealed class StarCatalogJournalBuilderTests
 
         Assert.Contains(StarCatalogJournalBuilder.ModernIauCultureId, exception.Message);
     }
+
+    [Fact]
+    public void BuildSelected_Uses_Requested_Order_And_Ignores_Duplicate_Codes()
+    {
+        var catalog = BuildSelectionCatalog();
+
+        var journal = StarCatalogJournalBuilder.BuildSelected(catalog, ["Two", "One", "two"]);
+
+        Assert.Equal(["Second", "First"], journal.Constellations.OrderBy(record => record.Id).Select(record => record.Name));
+    }
+
+    [Fact]
+    public void BuildSelected_Reports_A_Missing_Constellation_Code()
+    {
+        var catalog = BuildSelectionCatalog();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            StarCatalogJournalBuilder.BuildSelected(catalog, ["Missing"]));
+
+        Assert.Contains("Missing", exception.Message);
+    }
+
+    private static StarCatalog BuildSelectionCatalog()
+        => new(
+            [
+                new StarCatalogEntry(1, 0, 0, 1, null, true),
+                new StarCatalogEntry(2, 0, 0, 1, null, true),
+                new StarCatalogEntry(3, 0, 0, 1, null, true)
+            ],
+            [],
+            [
+                new SkyCultureConstellationSet(
+                    1,
+                    StarCatalogJournalBuilder.ModernIauCultureId,
+                    "Modern IAU",
+                    ["single"],
+                    new SkyCultureSource("Test", "https://example.com", "Test", "Test"),
+                    [
+                        new SkyCultureConstellation("One", "First", [[1, 2]]),
+                        new SkyCultureConstellation("Two", "Second", [[2, 3]])
+                    ])
+            ]);
 }

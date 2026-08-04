@@ -41,6 +41,14 @@ Administrators with the Vintage Story `give` privilege can create a ready-made t
 
 The command adds a written book titled **Star Catalog** to the caller's inventory. Put it in the left hand to show every authored constellation or use it with the Calibrated Astrolabe. This admin setup command does not require ink and quill.
 
+To create a smaller book titled **The Zodiac** containing the traditional twelve zodiac constellations in sign order, run:
+
+```text
+/stars give-zodiac
+```
+
+This book contains Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpius, Sagittarius, Capricornus, Aquarius, and Pisces. Ophiuchus is not included in the traditional twelve-sign set.
+
 ## Recovery And Debug Commands
 
 ```text

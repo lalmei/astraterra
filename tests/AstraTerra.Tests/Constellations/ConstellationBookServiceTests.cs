@@ -48,18 +48,20 @@ public sealed class ConstellationBookServiceTests
         Assert.Equal(2, constellation.GetProperty("lines").GetArrayLength());
     }
 
-    [Fact]
-    public void WriteJournal_Uses_Custom_Title_For_Admin_Star_Catalog()
+    [Theory]
+    [InlineData(ConstellationBookService.StarCatalogTitle)]
+    [InlineData(ConstellationBookService.ZodiacTitle)]
+    public void WriteJournal_Uses_Custom_Title_For_Admin_Test_Books(string bookTitle)
     {
         var journal = new ConstellationJournal();
         journal.CreateFromEdge(10, 20);
         var attributes = new TreeAttribute();
 
-        ConstellationBookService.WriteJournal(attributes, journal, ConstellationBookService.StarCatalogTitle);
+        ConstellationBookService.WriteJournal(attributes, journal, bookTitle);
 
-        Assert.Equal(ConstellationBookService.StarCatalogTitle, attributes.GetString(ConstellationBookService.VanillaTitleAttribute));
+        Assert.Equal(bookTitle, attributes.GetString(ConstellationBookService.VanillaTitleAttribute));
         using var document = JsonDocument.Parse(attributes.GetString(ConstellationBookService.SkyCultureJsonAttribute));
-        Assert.Equal(ConstellationBookService.StarCatalogTitle, document.RootElement.GetProperty("displayName").GetString());
+        Assert.Equal(bookTitle, document.RootElement.GetProperty("displayName").GetString());
     }
 
     [Fact]

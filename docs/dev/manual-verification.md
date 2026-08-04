@@ -34,6 +34,8 @@
 
 - As an administrator with the `give` privilege, run `/stars give-catalog`; expected result: a written book titled `Star Catalog` is added to the inventory with 88 named constellation entries.
 - Put `Star Catalog` in the left hand, run `.stars list`, and confirm all 88 authored constellation names are present. Confirm the sky overlay and Calibrated Astrolabe can use the catalog without ink and quill.
+- Run `/stars give-zodiac`; expected result: a written book titled `The Zodiac` is added to the inventory with 12 entries ordered Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpius, Sagittarius, Capricornus, Aquarius, and Pisces.
+- Put `The Zodiac` in the left hand and confirm `.stars list`, the sky overlay, and the Calibrated Astrolabe use only those 12 constellations. Confirm Ophiuchus is not included.
 - Run `.stars build Ori`; expected result: a selected constellation named `Orion`.
 - Run `.stars build UMa`; expected result: a selected constellation named `Ursa Major`.
 - Run `.stars build UMi`; expected result: a selected constellation named `Ursa Minor`.

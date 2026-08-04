@@ -140,6 +140,12 @@ public sealed class StarCatalogAssetTests
         Assert.Equal(88, journal.Constellations.Count);
         Assert.Equal(88, journal.Constellations.Select(record => record.Name).Distinct().Count());
         Assert.All(journal.Constellations, record => Assert.NotEmpty(record.Edges));
+
+        var zodiac = StarCatalogJournalBuilder.BuildZodiac(new StarCatalog(stars, [], [culture]));
+        Assert.Equal(
+            ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"],
+            zodiac.Constellations.OrderBy(record => record.Id).Select(record => record.Name));
+        Assert.All(zodiac.Constellations, record => Assert.NotEmpty(record.Edges));
     }
 
     [Fact]
