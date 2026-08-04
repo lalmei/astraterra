@@ -18,6 +18,8 @@ gunzip -c hygdata_v42.csv.gz > hygdata_v42.csv
 
 The Astronomy Nexus project page also links to the current HYG release and license terms.
 
+`hipparcos-supplement.v1.json` contains the exceptional HIP 55203 entry used by the Modern IAU Ursa Major figure. HYG omits this multiple-star system as a normal catalog row; the supplement records the SIMBAD position and combined photometry so the authored line remains renderable. The generator includes supplemental stars only when they are referenced by a required sky-culture file.
+
 Modern IAU constellation line data is adapted from Stellarium's `modern_iau` sky culture, licensed CC BY-SA 4.0:
 
 ```bash

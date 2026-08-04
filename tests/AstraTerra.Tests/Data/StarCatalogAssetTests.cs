@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AstraTerra.Astronomy;
+using AstraTerra.Constellations;
 using Xunit;
 
 namespace AstraTerra.Tests.Data;
@@ -110,6 +112,34 @@ public sealed class StarCatalogAssetTests
                 constellation.GetProperty("lines").EnumerateArray(),
                 line => Assert.True(line.GetArrayLength() >= 2));
         }
+    }
+
+    [Fact]
+    public void ModernIauSkyCulture_Builds_A_Complete_Admin_Star_Catalog()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        var stars = JsonSerializer.Deserialize<StarCatalogEntry[]>(
+            File.ReadAllText("assets/astraterra/data/star-catalog.v1.json"),
+            options);
+        var culture = JsonSerializer.Deserialize<SkyCultureConstellationSet>(
+            File.ReadAllText("assets/astraterra/data/sky-cultures/modern-iau.constellations.v1.json"),
+            options);
+        Assert.NotNull(stars);
+        Assert.NotNull(culture);
+
+        var missingLineStars = culture.Constellations
+            .SelectMany(constellation => constellation.Lines)
+            .SelectMany(line => line)
+            .Distinct()
+            .Except(stars.Select(star => star.Hip))
+            .ToList();
+        Assert.Empty(missingLineStars);
+
+        var journal = StarCatalogJournalBuilder.Build(new StarCatalog(stars, [], [culture]));
+
+        Assert.Equal(88, journal.Constellations.Count);
+        Assert.Equal(88, journal.Constellations.Select(record => record.Name).Distinct().Count());
+        Assert.All(journal.Constellations, record => Assert.NotEmpty(record.Edges));
     }
 
     [Fact]

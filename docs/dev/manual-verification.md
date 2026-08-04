@@ -32,6 +32,8 @@
 
 ## Authored Constellation Build
 
+- As an administrator with the `give` privilege, run `/stars give-catalog`; expected result: a written book titled `Star Catalog` is added to the inventory with 88 named constellation entries.
+- Put `Star Catalog` in the left hand, run `.stars list`, and confirm all 88 authored constellation names are present. Confirm the sky overlay and Calibrated Astrolabe can use the catalog without ink and quill.
 - Run `.stars build Ori`; expected result: a selected constellation named `Orion`.
 - Run `.stars build UMa`; expected result: a selected constellation named `Ursa Major`.
 - Run `.stars build UMi`; expected result: a selected constellation named `Ursa Minor`.

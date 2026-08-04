@@ -3240,6 +3240,14 @@
     "isGuideStar": true
   },
   {
+    "hip": 55203,
+    "rightAscensionDeg": 169.5455495,
+    "declinationDeg": 31.5292889,
+    "visualMagnitude": 3.79,
+    "bvColorIndex": 0.59,
+    "isGuideStar": true
+  },
+  {
     "hip": 14879,
     "rightAscensionDeg": 48.018735,
     "declinationDeg": -28.987618,
@@ -23997,6 +24005,22 @@
     "declinationDeg": 42.792111,
     "visualMagnitude": 5.55,
     "bvColorIndex": 1.492,
+    "isGuideStar": true
+  },
+  {
+    "hip": 102989,
+    "rightAscensionDeg": 312.99483,
+    "declinationDeg": -33.177974,
+    "visualMagnitude": 6.06,
+    "bvColorIndex": 0.029,
+    "isGuideStar": true
+  },
+  {
+    "hip": 10826,
+    "rightAscensionDeg": 34.83663,
+    "declinationDeg": -2.977643,
+    "visualMagnitude": 6.47,
+    "bvColorIndex": 0.966,
     "isGuideStar": true
   }
 ]

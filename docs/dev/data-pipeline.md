@@ -14,6 +14,8 @@ python -m cataloggen.main --help
 
 The committed v1 star catalog is generated from local HYG v4.2 source data. Source dataset placement and licensing notes live in `tools/cataloggen/sources/README.md`.
 
+Pass the Modern IAU asset through `--required-sky-culture-json` when regenerating the runtime catalog. This retains every star referenced by an authored figure even when it falls beyond the normal brightness or count cutoff; `hipparcos-supplement.v1.json` supplies exceptional referenced entries absent from HYG.
+
 ## Runtime Assets
 
 - `star-catalog.v1.json`: baked fixed-star catalog.

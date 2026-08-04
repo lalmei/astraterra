@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "SIMBAD V* ksi UMa",
+    "url": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=V*+ksi+UMa",
+    "notes": "HIP 55203 is absent from HYG v4.2 because its multiple-star astrometry is not represented as a normal HYG record. The position, combined V magnitude, and B-V value are retained here because the Stellarium Modern IAU Ursa Major figure references HIP 55203."
+  },
+  "stars": [
+    {
+      "hip": 55203,
+      "rightAscensionDeg": 169.5455495,
+      "declinationDeg": 31.5292889,
+      "visualMagnitude": 3.79,
+      "bvColorIndex": 0.59,
+      "isGuideStar": true
+    }
+  ]
+}

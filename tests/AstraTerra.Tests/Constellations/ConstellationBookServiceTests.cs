@@ -49,6 +49,20 @@ public sealed class ConstellationBookServiceTests
     }
 
     [Fact]
+    public void WriteJournal_Uses_Custom_Title_For_Admin_Star_Catalog()
+    {
+        var journal = new ConstellationJournal();
+        journal.CreateFromEdge(10, 20);
+        var attributes = new TreeAttribute();
+
+        ConstellationBookService.WriteJournal(attributes, journal, ConstellationBookService.StarCatalogTitle);
+
+        Assert.Equal(ConstellationBookService.StarCatalogTitle, attributes.GetString(ConstellationBookService.VanillaTitleAttribute));
+        using var document = JsonDocument.Parse(attributes.GetString(ConstellationBookService.SkyCultureJsonAttribute));
+        Assert.Equal(ConstellationBookService.StarCatalogTitle, document.RootElement.GetProperty("displayName").GetString());
+    }
+
+    [Fact]
     public void EmptyJournal_ReadableText_States_No_Constellations()
     {
         var text = ConstellationBookService.BuildReadableText(new ConstellationJournal());

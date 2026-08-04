@@ -33,6 +33,14 @@ The current authored set includes all 88 Modern IAU constellations. Built conste
 
 See the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) for every supported code and a copyable command list.
 
+Administrators with the Vintage Story `give` privilege can create a ready-made test book containing all 88 patterns:
+
+```text
+/stars give-catalog
+```
+
+The command adds a written book titled **Star Catalog** to the caller's inventory. Put it in the left hand to show every authored constellation or use it with the Calibrated Astrolabe. This admin setup command does not require ink and quill.
+
 ## Recovery And Debug Commands
 
 ```text
