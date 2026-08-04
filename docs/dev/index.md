@@ -27,6 +27,8 @@ make docs-serve
 
 The documentation site builds with ProperDocs and the MaterialX theme. The configuration lives in `properdocs.yml`, and the docs toolchain is pinned in `docs/requirements.txt`.
 
+Install [uv](https://docs.astral.sh/uv/) before running the documentation targets. `make docs-build` performs the same strict build used by CI. Pull requests that change the docs or their build configuration are validated without publishing; pushes to `main` publish the result to the [AstraTerra documentation site](https://lalmei.github.io/astraterra/).
+
 ## Repository Layout
 
 ```text
