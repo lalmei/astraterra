@@ -30,16 +30,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Realistic Surveying
-
-AstraTerra's Sextant item model transforms and crafting recipe are adapted from the user's downloaded Realistic Surveying package:
-
-- Mod: Realistic Surveying
-- Mod ID: `realisticsurveying`
-- Version: 0.8.1
-- Author: Onions
-- Source package: `~/Downloads/realisticsurveying_0`
-- License: not declared in the local package metadata.
 
 ## Stellarium Modern IAU Sky Culture
 
@@ -116,14 +106,3 @@ Included texture credits from Stellarium `textures.json`:
 - `n4565.png`: Ken Crawford
 - `n5128.png`: ESO
 
-## reference sky implementation Local Fallback Textures
-
-AstraTerra includes local fallback textures copied from the user's downloaded reference sky implementation package at `~/Downloads/reference-package_0-3`:
-
-- Mod: reference sky implementation
-- Author: LadyLioness
-- Runtime directory: `assets/astraterra/textures/environment/deep-sky/local-fallback`
-- Source files: `assets/reference-sky/textures/environment/nebula.png`, `gas1.png`, `gas2.png`, `gas3.png`
-- License: not declared in the local package metadata.
-
-These textures are used only as fallbacks when the preferred Stellarium texture for a deep-sky object cannot be loaded.

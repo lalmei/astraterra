@@ -5,9 +5,9 @@
     "attachments": []
   },
   "textures": {
-    "linen": "block/linen",
-    "rusty-iron": "block/metal/ingot/copper",
-    "charred": "block/wood/debarked/birch"
+    "linen": "game:block/linen",
+    "rusty-iron": "game:block/metal/ingot/copper",
+    "charred": "game:block/wood/debarked/birch"
   },
   "elements": [
     {
