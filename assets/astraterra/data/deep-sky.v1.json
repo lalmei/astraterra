@@ -5,6 +5,12 @@
     "rightAscensionDeg": 56.75,
     "declinationDeg": 24.1167,
     "angularSizeDeg": 2.1,
+    "worldCoords": [
+      { "rightAscensionDeg": 57.8101, "declinationDeg": 23.9301 },
+      { "rightAscensionDeg": 56.4627, "declinationDeg": 23.0651 },
+      { "rightAscensionDeg": 55.5068, "declinationDeg": 24.2933 },
+      { "rightAscensionDeg": 56.8609, "declinationDeg": 25.1672 }
+    ],
     "brightness": 0.58,
     "tintR": 0.62,
     "tintG": 0.78,
@@ -21,6 +27,12 @@
     "rightAscensionDeg": 83.8221,
     "declinationDeg": -5.3911,
     "angularSizeDeg": 1.2,
+    "worldCoords": [
+      { "rightAscensionDeg": 86.083, "declinationDeg": -7.122 },
+      { "rightAscensionDeg": 82.8645, "declinationDeg": -7.5215 },
+      { "rightAscensionDeg": 82.4686, "declinationDeg": -4.3286 },
+      { "rightAscensionDeg": 85.6746, "declinationDeg": -3.9321 }
+    ],
     "brightness": 0.82,
     "tintR": 0.72,
     "tintG": 0.9,
@@ -37,6 +49,12 @@
     "rightAscensionDeg": 270.925,
     "declinationDeg": -24.38,
     "angularSizeDeg": 1.5,
+    "worldCoords": [
+      { "rightAscensionDeg": 272.9501, "declinationDeg": -25.1911 },
+      { "rightAscensionDeg": 270.2975, "declinationDeg": -25.3538 },
+      { "rightAscensionDeg": 270.1469, "declinationDeg": -22.9536 },
+      { "rightAscensionDeg": 272.7492, "declinationDeg": -22.7959 }
+    ],
     "brightness": 0.62,
     "tintR": 1.0,
     "tintG": 0.68,
@@ -53,6 +71,12 @@
     "rightAscensionDeg": 10.6847,
     "declinationDeg": 41.269,
     "angularSizeDeg": 3.0,
+    "worldCoords": [
+      { "rightAscensionDeg": 12.6537, "declinationDeg": 39.8284 },
+      { "rightAscensionDeg": 8.9795, "declinationDeg": 39.6673 },
+      { "rightAscensionDeg": 8.6791, "declinationDeg": 42.4868 },
+      { "rightAscensionDeg": 12.5152, "declinationDeg": 42.6567 }
+    ],
     "brightness": 0.45,
     "tintR": 0.86,
     "tintG": 0.82,
@@ -69,6 +93,12 @@
     "rightAscensionDeg": 312.75,
     "declinationDeg": 44.33,
     "angularSizeDeg": 2.0,
+    "worldCoords": [
+      { "rightAscensionDeg": 316.7411, "declinationDeg": 41.8383 },
+      { "rightAscensionDeg": 311.1343, "declinationDeg": 42.0255 },
+      { "rightAscensionDeg": 311.1982, "declinationDeg": 46.2025 },
+      { "rightAscensionDeg": 317.2162, "declinationDeg": 45.9995 }
+    ],
     "brightness": 0.42,
     "tintR": 1.0,
     "tintG": 0.62,
@@ -85,6 +115,12 @@
     "rightAscensionDeg": 274.7354,
     "declinationDeg": -13.8064,
     "angularSizeDeg": 1.868,
+    "worldCoords": [
+      { "rightAscensionDeg": 275.6711, "declinationDeg": -14.2988 },
+      { "rightAscensionDeg": 274.2266, "declinationDeg": -14.7144 },
+      { "rightAscensionDeg": 273.803, "declinationDeg": -13.3131 },
+      { "rightAscensionDeg": 275.2407, "declinationDeg": -12.8992 }
+    ],
     "brightness": 0.52,
     "tintR": 1.0,
     "tintG": 0.76,
@@ -101,6 +137,12 @@
     "rightAscensionDeg": 275.1968,
     "declinationDeg": -16.1241,
     "angularSizeDeg": 0.946,
+    "worldCoords": [
+      { "rightAscensionDeg": 275.4221, "declinationDeg": -16.5786 },
+      { "rightAscensionDeg": 274.7231, "declinationDeg": -16.3399 },
+      { "rightAscensionDeg": 274.9727, "declinationDeg": -15.6695 },
+      { "rightAscensionDeg": 275.6695, "declinationDeg": -15.9082 }
+    ],
     "brightness": 0.58,
     "tintR": 1.0,
     "tintG": 0.78,
@@ -117,6 +159,12 @@
     "rightAscensionDeg": 270.5993,
     "declinationDeg": -22.9744,
     "angularSizeDeg": 0.605,
+    "worldCoords": [
+      { "rightAscensionDeg": 270.8906, "declinationDeg": -23.2528 },
+      { "rightAscensionDeg": 270.2961, "declinationDeg": -23.2424 },
+      { "rightAscensionDeg": 270.309, "declinationDeg": -22.6959 },
+      { "rightAscensionDeg": 270.9014, "declinationDeg": -22.7064 }
+    ],
     "brightness": 0.54,
     "tintR": 0.85,
     "tintG": 0.72,
@@ -133,6 +181,12 @@
     "rightAscensionDeg": 299.901,
     "declinationDeg": 22.7216,
     "angularSizeDeg": 0.154,
+    "worldCoords": [
+      { "rightAscensionDeg": -60.0221, "declinationDeg": 22.6538 },
+      { "rightAscensionDeg": -60.1725, "declinationDeg": 22.6505 },
+      { "rightAscensionDeg": -60.1762, "declinationDeg": 22.789 },
+      { "rightAscensionDeg": -60.025, "declinationDeg": 22.7931 }
+    ],
     "brightness": 0.45,
     "tintR": 0.72,
     "tintG": 0.95,
@@ -149,6 +203,12 @@
     "rightAscensionDeg": 283.3957,
     "declinationDeg": 33.0281,
     "angularSizeDeg": 0.1,
+    "worldCoords": [
+      { "rightAscensionDeg": -76.5675, "declinationDeg": 33.011 },
+      { "rightAscensionDeg": -76.6245, "declinationDeg": 32.997 },
+      { "rightAscensionDeg": -76.6411, "declinationDeg": 33.0455 },
+      { "rightAscensionDeg": -76.584, "declinationDeg": 33.059 }
+    ],
     "brightness": 0.42,
     "tintR": 0.75,
     "tintG": 1.0,
@@ -165,6 +225,12 @@
     "rightAscensionDeg": 84.706,
     "declinationDeg": -2.5456,
     "angularSizeDeg": 2.481,
+    "worldCoords": [
+      { "rightAscensionDeg": 85.9484, "declinationDeg": -3.7416 },
+      { "rightAscensionDeg": 83.5078, "declinationDeg": -3.7871 },
+      { "rightAscensionDeg": 83.4671, "declinationDeg": -1.3472 },
+      { "rightAscensionDeg": 85.9007, "declinationDeg": -1.3064 }
+    ],
     "brightness": 0.5,
     "tintR": 1.0,
     "tintG": 0.58,
@@ -181,6 +247,12 @@
     "rightAscensionDeg": 13.1364,
     "declinationDeg": 56.6973,
     "angularSizeDeg": 1.714,
+    "worldCoords": [
+      { "rightAscensionDeg": 13.8464, "declinationDeg": 56.2272 },
+      { "rightAscensionDeg": 12.2879, "declinationDeg": 56.3026 },
+      { "rightAscensionDeg": 12.4096, "declinationDeg": 57.1681 },
+      { "rightAscensionDeg": 14.0015, "declinationDeg": 57.0913 }
+    ],
     "brightness": 0.48,
     "tintR": 1.0,
     "tintG": 0.62,
@@ -197,6 +269,12 @@
     "rightAscensionDeg": 109.6414,
     "declinationDeg": -13.1962,
     "angularSizeDeg": 0.543,
+    "worldCoords": [
+      { "rightAscensionDeg": 109.9131, "declinationDeg": -13.2031 },
+      { "rightAscensionDeg": 109.6327, "declinationDeg": -13.4618 },
+      { "rightAscensionDeg": 109.3701, "declinationDeg": -13.1892 },
+      { "rightAscensionDeg": 109.6496, "declinationDeg": -12.9308 }
+    ],
     "brightness": 0.44,
     "tintR": 0.75,
     "tintG": 0.92,
@@ -213,6 +291,12 @@
     "rightAscensionDeg": 350.164,
     "declinationDeg": 61.1943,
     "angularSizeDeg": 1.676,
+    "worldCoords": [
+      { "rightAscensionDeg": 350.9949, "declinationDeg": 60.9416 },
+      { "rightAscensionDeg": 349.649, "declinationDeg": 60.7914 },
+      { "rightAscensionDeg": 349.319, "declinationDeg": 61.4452 },
+      { "rightAscensionDeg": 350.6931, "declinationDeg": 61.5989 }
+    ],
     "brightness": 0.46,
     "tintR": 1.0,
     "tintG": 0.66,
@@ -229,6 +313,12 @@
     "rightAscensionDeg": 38.4907,
     "declinationDeg": 61.1244,
     "angularSizeDeg": 6.768,
+    "worldCoords": [
+      { "rightAscensionDeg": 41.6553, "declinationDeg": 59.6183 },
+      { "rightAscensionDeg": 35.5205, "declinationDeg": 59.529 },
+      { "rightAscensionDeg": 35.0094, "declinationDeg": 62.6256 },
+      { "rightAscensionDeg": 41.7777, "declinationDeg": 62.7246 }
+    ],
     "brightness": 0.38,
     "tintR": 1.0,
     "tintG": 0.55,
@@ -245,6 +335,12 @@
     "rightAscensionDeg": 44.9301,
     "declinationDeg": 61.0653,
     "angularSizeDeg": 6.861,
+    "worldCoords": [
+      { "rightAscensionDeg": 47.7714, "declinationDeg": 59.4179 },
+      { "rightAscensionDeg": 41.6553, "declinationDeg": 59.6183 },
+      { "rightAscensionDeg": 41.7777, "declinationDeg": 62.7246 },
+      { "rightAscensionDeg": 48.5162, "declinationDeg": 62.5005 }
+    ],
     "brightness": 0.36,
     "tintR": 1.0,
     "tintG": 0.58,
@@ -261,6 +357,12 @@
     "rightAscensionDeg": 303.0481,
     "declinationDeg": 38.3372,
     "angularSizeDeg": 0.379,
+    "worldCoords": [
+      { "rightAscensionDeg": 303.2366, "declinationDeg": 38.1884 },
+      { "rightAscensionDeg": 302.8589, "declinationDeg": 38.1891 },
+      { "rightAscensionDeg": 302.8589, "declinationDeg": 38.4857 },
+      { "rightAscensionDeg": 303.238, "declinationDeg": 38.4855 }
+    ],
     "brightness": 0.42,
     "tintR": 1.0,
     "tintG": 0.66,
@@ -277,6 +379,12 @@
     "rightAscensionDeg": 60.1726,
     "declinationDeg": 36.1927,
     "angularSizeDeg": 4.011,
+    "worldCoords": [
+      { "rightAscensionDeg": 62.0851, "declinationDeg": 34.5972 },
+      { "rightAscensionDeg": 58.2295, "declinationDeg": 34.6213 },
+      { "rightAscensionDeg": 58.1822, "declinationDeg": 37.7877 },
+      { "rightAscensionDeg": 62.1935, "declinationDeg": 37.7646 }
+    ],
     "brightness": 0.4,
     "tintR": 1.0,
     "tintG": 0.5,
@@ -293,6 +401,12 @@
     "rightAscensionDeg": 98.0333,
     "declinationDeg": 4.9391,
     "angularSizeDeg": 2.015,
+    "worldCoords": [
+      { "rightAscensionDeg": 99.0401, "declinationDeg": 4.4594 },
+      { "rightAscensionDeg": 97.5523, "declinationDeg": 3.9357 },
+      { "rightAscensionDeg": 97.0246, "declinationDeg": 5.4202 },
+      { "rightAscensionDeg": 98.5161, "declinationDeg": 5.9412 }
+    ],
     "brightness": 0.5,
     "tintR": 1.0,
     "tintG": 0.62,
@@ -309,6 +423,12 @@
     "rightAscensionDeg": 160.9291,
     "declinationDeg": -59.8211,
     "angularSizeDeg": 6.17,
+    "worldCoords": [
+      { "rightAscensionDeg": 163.98, "declinationDeg": -61.3168 },
+      { "rightAscensionDeg": 157.8101, "declinationDeg": -61.2812 },
+      { "rightAscensionDeg": 158.143, "declinationDeg": -58.3275 },
+      { "rightAscensionDeg": 163.7832, "declinationDeg": -58.3588 }
+    ],
     "brightness": 0.5,
     "tintR": 0.95,
     "tintG": 0.75,

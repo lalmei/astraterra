@@ -22,6 +22,8 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 - `guide-stars.v1.json`: grouped guide-star metadata.
 - `sky-cultures.v1.json`: manifest for authored sky cultures.
 - `sky-cultures/*.json`: authored constellation line data.
-- `deep-sky.v1.json`: telescope-only deep-sky object metadata.
+- `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
+
+Deep-sky textures are rendered as spherical quads. Each of the four registered right-ascension/declination corners is projected independently every frame, preserving the source image's sky position, rotation, and aspect ratio. `angularSizeDeg` remains descriptive metadata and is not used to reconstruct a square billboard.
 
 When adding a new runtime data shape, version the filename and add asset tests for schema-level expectations.

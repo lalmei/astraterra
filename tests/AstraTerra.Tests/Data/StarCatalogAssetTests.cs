@@ -178,6 +178,15 @@ public sealed class StarCatalogAssetTests
                 AssertFinite(entry.GetProperty("rightAscensionDeg").GetDouble());
                 AssertFinite(entry.GetProperty("declinationDeg").GetDouble());
                 Assert.InRange(entry.GetProperty("angularSizeDeg").GetDouble(), 0.1, 8.0);
+                var worldCoords = entry.GetProperty("worldCoords").EnumerateArray().ToList();
+                Assert.Equal(4, worldCoords.Count);
+                Assert.All(
+                    worldCoords,
+                    corner =>
+                    {
+                        AssertFinite(corner.GetProperty("rightAscensionDeg").GetDouble());
+                        AssertFinite(corner.GetProperty("declinationDeg").GetDouble());
+                    });
                 Assert.InRange(entry.GetProperty("brightness").GetDouble(), 0.0, 1.0);
                 Assert.InRange(entry.GetProperty("tintR").GetDouble(), 0.0, 1.0);
                 Assert.InRange(entry.GetProperty("tintG").GetDouble(), 0.0, 1.0);

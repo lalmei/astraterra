@@ -112,6 +112,22 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        var starsIndex = renderer.IndexOf("foreach (var star in visibleStars)", StringComparison.Ordinal);
+        var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
+        var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
+        var constellationIndex = renderer.IndexOf("foreach (var dot in constellationDots)", deepSkyIndex, StringComparison.Ordinal);
+
+        Assert.True(starsIndex >= 0);
+        Assert.True(foregroundBlendIndex > starsIndex);
+        Assert.True(deepSkyIndex > foregroundBlendIndex);
+        Assert.True(constellationIndex > deepSkyIndex);
+    }
+
+    [Fact]
     public void Sky_Renderer_Reset_Clears_Static_Session_State_In_Source()
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
