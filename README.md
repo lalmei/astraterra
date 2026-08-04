@@ -1,11 +1,16 @@
 # AstraTerra
 
-AstraTerra turns the night sky into an 5000+ for Vintage Story 1.22.2. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
+![astraterra](modicon.png)
 
-Teams could have someone focused on server on keeping track of time, and allow explored to use navigational instrument to determine their location and path.
+AstraTerra turns the night sky into an 5000+ for Vintage Story 1.22+ The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
 
-Stil in alpha. Many item models and recipes are placeholders.
-Do check the third party notices for the original creators. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.
+Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instrument to determine their location and path.
+
+Stil in alpha. Many item models and recipes are placeholders, along with the UI/UX
+
+Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.
+
+Always looking for contributions, models, code, docs etc.
 
 ## Features
 
