@@ -8,13 +8,14 @@ namespace AstraTerra.Tests.Data;
 public sealed class StarCatalogAssetTests
 {
     [Fact]
-    public void StarCatalog_Has_V1_Visible_Star_Count()
+    public void StarCatalog_Has_All_Magnitude_Six_Stars_And_Required_Extras()
     {
         using var stream = File.OpenRead("assets/astraterra/data/star-catalog.v1.json");
         using var document = JsonDocument.Parse(stream);
         var stars = document.RootElement.EnumerateArray().ToList();
 
-        Assert.InRange(stars.Count, 2500, 3500);
+        Assert.Equal(5044, stars.Count);
+        Assert.Equal(2, stars.Count(star => star.GetProperty("visualMagnitude").GetDouble() > 6.0));
     }
 
     [Fact]

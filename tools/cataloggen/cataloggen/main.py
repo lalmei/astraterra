@@ -10,7 +10,11 @@ from cataloggen.hipparcos import HipStar, select_visible_catalog
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate AstraTerra runtime star catalog assets.")
     parser.add_argument("--max-visual-magnitude", type=float, default=6.0)
-    parser.add_argument("--max-stars", type=int, default=1000)
+    parser.add_argument(
+        "--max-stars",
+        type=int,
+        help="Optional count cap applied after the visual-magnitude cutoff.",
+    )
     parser.add_argument("--hyg-csv", type=Path, help="Optional HYG CSV source file.")
     parser.add_argument(
         "--required-sky-culture-json",
@@ -39,7 +43,9 @@ def main() -> None:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     source_stars = load_hyg_csv(args.hyg_csv) if args.hyg_csv else [HipStar(677, 2.09708, 29.09043, 2.07, 0.15)]
-    selected_stars = select_visible_catalog(source_stars, args.max_visual_magnitude)[: args.max_stars]
+    selected_stars = select_visible_catalog(source_stars, args.max_visual_magnitude)
+    if args.max_stars is not None:
+        selected_stars = selected_stars[: args.max_stars]
     source_stars.extend(star for path in args.supplement_json for star in load_supplement_json(path))
     required_hips = load_required_hips(args.required_sky_culture_json)
     stars = include_required_stars(
