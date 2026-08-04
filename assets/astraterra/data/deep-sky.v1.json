@@ -17,7 +17,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/pleiades",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -39,7 +38,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m42",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -61,7 +59,6 @@
     "tintB": 0.72,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m8",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas1",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -83,7 +80,6 @@
     "tintB": 0.74,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m31",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas2",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -105,7 +101,6 @@
     "tintB": 0.66,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n7000",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas3",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -127,7 +122,6 @@
     "tintB": 0.72,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m16",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -149,7 +143,6 @@
     "tintB": 0.7,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m17",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -171,7 +164,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m20",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -193,7 +185,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m27dumont",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas1",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -215,7 +206,6 @@
     "tintB": 0.85,
     "texturePath": "astraterra:environment/deep-sky/stellarium/m57dumont",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas2",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -237,7 +227,6 @@
     "tintB": 0.55,
     "texturePath": "astraterra:environment/deep-sky/stellarium/ic434",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -259,7 +248,6 @@
     "tintB": 0.66,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n281",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas1",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -281,7 +269,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n2359",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas2",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -303,7 +290,6 @@
     "tintB": 0.72,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n7635",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas3",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -325,7 +311,6 @@
     "tintB": 0.62,
     "texturePath": "astraterra:environment/deep-sky/stellarium/ic1805",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -347,7 +332,6 @@
     "tintB": 0.66,
     "texturePath": "astraterra:environment/deep-sky/stellarium/ic1848",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -369,7 +353,6 @@
     "tintB": 0.72,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n6888",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas3",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -391,7 +374,6 @@
     "tintB": 0.55,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n1499",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -413,7 +395,6 @@
     "tintB": 0.68,
     "texturePath": "astraterra:environment/deep-sky/stellarium/n2244",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/gas1",
       "astraterra:environment/deep-sky-cloud"
     ]
   },
@@ -435,7 +416,6 @@
     "tintB": 1.0,
     "texturePath": "astraterra:environment/deep-sky/stellarium/etaCarinae",
     "fallbackTexturePaths": [
-      "astraterra:environment/deep-sky/local-fallback/nebula",
       "astraterra:environment/deep-sky-cloud"
     ]
   },

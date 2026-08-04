@@ -208,6 +208,9 @@ public sealed class StarCatalogAssetTests
                     $"Deep-sky texture is missing for {entry.GetProperty("id").GetString()}: {textureName}.png");
                 var fallbacks = entry.GetProperty("fallbackTexturePaths").EnumerateArray().Select(path => path.GetString()).ToList();
                 Assert.Contains("astraterra:environment/deep-sky-cloud", fallbacks);
+                Assert.DoesNotContain(
+                    fallbacks,
+                    path => path?.StartsWith("astraterra:environment/deep-sky/local-fallback/", StringComparison.Ordinal) == true);
             });
     }
 
