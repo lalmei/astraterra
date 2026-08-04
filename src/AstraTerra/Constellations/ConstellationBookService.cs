@@ -9,6 +9,7 @@ public static class ConstellationBookService
 {
     public const string BookTitle = "AstraTerra Constellation Journal";
     public const string StarCatalogTitle = "Star Catalog";
+    public const string ZodiacTitle = "The Zodiac";
     public const string JournalJsonAttribute = "astraterraJournalJson";
     public const string SkyCultureJsonAttribute = "astraterraSkyCultureJson";
     public const string BookIdAttribute = "astraterraBookId";

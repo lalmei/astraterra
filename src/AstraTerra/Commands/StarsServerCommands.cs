@@ -22,7 +22,7 @@ public sealed class StarsServerCommands
         api.ChatCommands.Create("stars")
             .WithDescription("Inspect AstraTerra status.")
             .RequiresPrivilege(Privilege.chat)
-            .HandleWith(_ => TextCommandResult.Success("AstraTerra commands: /stars debug, /stars goto-lat degrees, /stars give-catalog. Client journal commands are available as .stars list, .stars info, .stars build, .stars connect, .stars name, .stars select, .stars delete, and .stars daylight-stars."))
+            .HandleWith(_ => TextCommandResult.Success("AstraTerra commands: /stars debug, /stars goto-lat degrees, /stars give-catalog, /stars give-zodiac. Client journal commands are available as .stars list, .stars info, .stars build, .stars connect, .stars name, .stars select, .stars delete, and .stars daylight-stars."))
             .BeginSubCommand("debug")
                 .HandleWith(_ => TextCommandResult.Success(DebugStatus()))
             .EndSubCommand()
@@ -36,6 +36,11 @@ public sealed class StarsServerCommands
                 .RequiresPrivilege(Privilege.give)
                 .RequiresPlayer()
                 .HandleWith(args => TextCommandResult.Success(GiveCatalog(args)))
+            .EndSubCommand()
+            .BeginSubCommand("give-zodiac")
+                .RequiresPrivilege(Privilege.give)
+                .RequiresPlayer()
+                .HandleWith(args => TextCommandResult.Success(GiveZodiac(args)))
             .EndSubCommand();
     }
 
@@ -88,6 +93,24 @@ public sealed class StarsServerCommands
     }
 
     private string GiveCatalog(TextCommandCallingArgs args)
+        => GivePreparedBook(
+            args,
+            ConstellationBookService.StarCatalogTitle,
+            "book-normal-darkolive",
+            catalog => StarCatalogJournalBuilder.Build(catalog));
+
+    private string GiveZodiac(TextCommandCallingArgs args)
+        => GivePreparedBook(
+            args,
+            ConstellationBookService.ZodiacTitle,
+            "book-normal-purple",
+            catalog => StarCatalogJournalBuilder.BuildZodiac(catalog));
+
+    private string GivePreparedBook(
+        TextCommandCallingArgs args,
+        string bookTitle,
+        string bookItemPath,
+        System.Func<StarCatalog, ConstellationJournal> buildJournal)
     {
         if (api is null)
         {
@@ -97,32 +120,32 @@ public sealed class StarsServerCommands
         var catalog = catalogProvider();
         if (catalog is null)
         {
-            return "Cannot create Star Catalog: the astronomy catalog is not loaded.";
+            return $"Cannot create {bookTitle}: the astronomy catalog is not loaded.";
         }
 
-        var bookItem = api.World.GetItem(new AssetLocation("game", "book-normal-darkolive"));
+        var bookItem = api.World.GetItem(new AssetLocation("game", bookItemPath));
         if (bookItem is null)
         {
-            return "Cannot create Star Catalog: the normal book item is unavailable.";
+            return $"Cannot create {bookTitle}: the normal book item is unavailable.";
         }
 
         ConstellationJournal journal;
         try
         {
-            journal = StarCatalogJournalBuilder.Build(catalog);
+            journal = buildJournal(catalog);
         }
         catch (Exception exception)
         {
-            return $"Cannot create Star Catalog: {exception.Message}";
+            return $"Cannot create {bookTitle}: {exception.Message}";
         }
 
         var stack = new ItemStack(bookItem);
-        ConstellationBookService.WriteJournal(stack, journal, ConstellationBookService.StarCatalogTitle);
+        ConstellationBookService.WriteJournal(stack, journal, bookTitle);
         if (!args.Caller.Player.InventoryManager.TryGiveItemstack(stack, true))
         {
-            return "Could not give Star Catalog: clear one inventory slot and try again.";
+            return $"Could not give {bookTitle}: clear one inventory slot and try again.";
         }
 
-        return $"Gave Star Catalog with {journal.Constellations.Count} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
+        return $"Gave {bookTitle} with {journal.Constellations.Count} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
     }
 }
