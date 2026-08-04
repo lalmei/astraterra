@@ -3,7 +3,7 @@ namespace AstraTerra.Client.Rendering;
 public static class StarBillboardSizing
 {
     public const float MinimumCoreDiameterPixels = 1.75f;
-    public const float ProjectedSizeScale = 0.25f;
+    public const float ProjectedSizeScale = 0.42f;
     public const float MaximumCoreDiameterPixels = 6.0f;
     public const float GlowDiameterRange = 1.0f;
 
