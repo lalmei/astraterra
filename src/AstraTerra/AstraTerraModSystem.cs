@@ -159,6 +159,7 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         new ConstellationBookServer(() => catalog).Register(api);
         new StarsServerCommands(() => catalog).Register(api);
+        api.Logger.Event("AstraTerra startup step: server commands registered: /stars debug/goto-lat/give-catalog");
     }
 
     public override void Dispose()

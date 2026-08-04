@@ -8,6 +8,7 @@ namespace AstraTerra.Constellations;
 public static class ConstellationBookService
 {
     public const string BookTitle = "AstraTerra Constellation Journal";
+    public const string StarCatalogTitle = "Star Catalog";
     public const string JournalJsonAttribute = "astraterraJournalJson";
     public const string SkyCultureJsonAttribute = "astraterraSkyCultureJson";
     public const string BookIdAttribute = "astraterraBookId";
@@ -109,11 +110,11 @@ public static class ConstellationBookService
         return string.Join(Environment.NewLine, lines);
     }
 
-    public static SkyCultureConstellationSet ToSkyCulture(ConstellationJournal journal, string bookId)
+    public static SkyCultureConstellationSet ToSkyCulture(ConstellationJournal journal, string bookId, string? bookTitle = null)
         => new(
             1,
             $"astraterra-book-{bookId}",
-            BookTitle,
+            ResolveBookTitle(bookTitle),
             ["book", "personal"],
             new SkyCultureSource(
                 "AstraTerra constellation book",
@@ -131,14 +132,15 @@ public static class ConstellationBookService
                         .ToList()))
                 .ToList());
 
-    public static string SerializeSkyCulture(ConstellationJournal journal, string bookId)
-        => JsonSerializer.Serialize(ToSkyCulture(journal, bookId), SkyCultureOptions);
+    public static string SerializeSkyCulture(ConstellationJournal journal, string bookId, string? bookTitle = null)
+        => JsonSerializer.Serialize(ToSkyCulture(journal, bookId, bookTitle), SkyCultureOptions);
 
-    public static void WriteJournal(ItemStack stack, ConstellationJournal journal)
-        => WriteJournal(stack.Attributes, journal);
+    public static void WriteJournal(ItemStack stack, ConstellationJournal journal, string? bookTitle = null)
+        => WriteJournal(stack.Attributes, journal, bookTitle);
 
-    public static void WriteJournal(ITreeAttribute attributes, ConstellationJournal journal)
+    public static void WriteJournal(ITreeAttribute attributes, ConstellationJournal journal, string? bookTitle = null)
     {
+        var resolvedBookTitle = ResolveBookTitle(bookTitle);
         var bookId = attributes.GetString(BookIdAttribute, null);
         if (string.IsNullOrWhiteSpace(bookId))
         {
@@ -149,8 +151,8 @@ public static class ConstellationBookService
         attributes.SetInt(SchemaVersionAttribute, 1);
         attributes.SetString(LockedByAttribute, AstraTerraSignerUid);
         attributes.SetString(JournalJsonAttribute, ConstellationPersistence.Serialize(journal));
-        attributes.SetString(SkyCultureJsonAttribute, SerializeSkyCulture(journal, bookId));
-        attributes.SetString(VanillaTitleAttribute, BookTitle);
+        attributes.SetString(SkyCultureJsonAttribute, SerializeSkyCulture(journal, bookId, resolvedBookTitle));
+        attributes.SetString(VanillaTitleAttribute, resolvedBookTitle);
         attributes.SetString(VanillaTextAttribute, BuildReadableText(journal));
         attributes.SetString(VanillaSignedByAttribute, AstraTerraSigner);
         attributes.SetString(VanillaSignedByUidAttribute, AstraTerraSignerUid);
@@ -168,4 +170,7 @@ public static class ConstellationBookService
     private static bool HasVanillaText(ItemStack? stack)
         => stack?.Attributes?.HasAttribute(VanillaTextAttribute) == true ||
            stack?.Attributes?.HasAttribute("textCodes") == true;
+
+    private static string ResolveBookTitle(string? bookTitle)
+        => string.IsNullOrWhiteSpace(bookTitle) ? BookTitle : bookTitle.Trim();
 }

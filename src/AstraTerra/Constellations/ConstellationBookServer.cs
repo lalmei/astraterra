@@ -50,6 +50,9 @@ public sealed class ConstellationBookServer
         }
 
         var wasConstellationBook = ConstellationBookService.IsConstellationBook(slot.Itemstack);
+        var bookTitle = wasConstellationBook
+            ? slot.Itemstack.Attributes.GetString(ConstellationBookService.VanillaTitleAttribute, null)
+            : null;
         var journal = ConstellationBookService.ReadJournalOrEmpty(slot.Itemstack);
         var legacyMigrationAccepted = false;
 
@@ -67,7 +70,7 @@ public sealed class ConstellationBookServer
                 return Error(result.Message);
             }
 
-            ConstellationBookService.WriteJournal(slot.Itemstack, journal);
+            ConstellationBookService.WriteJournal(slot.Itemstack, journal, bookTitle);
             slot.MarkDirty();
             return new ConstellationBookResponsePacket
             {

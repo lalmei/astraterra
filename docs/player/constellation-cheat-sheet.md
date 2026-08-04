@@ -23,6 +23,16 @@ The current sky culture can also be named explicitly:
 
 The culture prefix is optional while Modern IAU is the only authored sky culture. Full names work for single-word names such as `Orion`, but the codes also work for names containing spaces.
 
+## Admin Test Catalog
+
+An administrator with the Vintage Story `give` privilege can create one written book containing all 88 patterns:
+
+```text
+/stars give-catalog
+```
+
+The command adds **Star Catalog** to the caller's inventory without requiring ink and quill. Put the book in your left hand to render all authored lines or test constellation selection with the Calibrated Astrolabe.
+
 ## Popular Starting Points
 
 ```text

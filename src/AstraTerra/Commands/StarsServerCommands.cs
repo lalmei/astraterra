@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Constellations;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
@@ -21,7 +22,7 @@ public sealed class StarsServerCommands
         api.ChatCommands.Create("stars")
             .WithDescription("Inspect AstraTerra status.")
             .RequiresPrivilege(Privilege.chat)
-            .HandleWith(_ => TextCommandResult.Success("AstraTerra commands: /stars debug, /stars goto-lat degrees. Client journal commands are available as .stars list, .stars info, .stars build, .stars connect, .stars name, .stars select, .stars delete, and .stars daylight-stars."))
+            .HandleWith(_ => TextCommandResult.Success("AstraTerra commands: /stars debug, /stars goto-lat degrees, /stars give-catalog. Client journal commands are available as .stars list, .stars info, .stars build, .stars connect, .stars name, .stars select, .stars delete, and .stars daylight-stars."))
             .BeginSubCommand("debug")
                 .HandleWith(_ => TextCommandResult.Success(DebugStatus()))
             .EndSubCommand()
@@ -30,6 +31,11 @@ public sealed class StarsServerCommands
                 .RequiresPlayer()
                 .WithArgs(api.ChatCommands.Parsers.Word("degrees"))
                 .HandleWith(args => TextCommandResult.Success(GotoLatitude(args)))
+            .EndSubCommand()
+            .BeginSubCommand("give-catalog")
+                .RequiresPrivilege(Privilege.give)
+                .RequiresPlayer()
+                .HandleWith(args => TextCommandResult.Success(GiveCatalog(args)))
             .EndSubCommand();
     }
 
@@ -79,5 +85,44 @@ public sealed class StarsServerCommands
 
         var actualLatitude = LatitudeMapper.MapClimateLatitude(latitudeProvider(targetZ));
         return $"Teleporting to latitude {actualLatitude:0.###} near target {targetLatitudeDeg:0.###}: x={targetX:0}; y={targetY:0}; z={targetZ:0}.";
+    }
+
+    private string GiveCatalog(TextCommandCallingArgs args)
+    {
+        if (api is null)
+        {
+            return "AstraTerra server command is not initialized.";
+        }
+
+        var catalog = catalogProvider();
+        if (catalog is null)
+        {
+            return "Cannot create Star Catalog: the astronomy catalog is not loaded.";
+        }
+
+        var bookItem = api.World.GetItem(new AssetLocation("game", "book-normal-darkolive"));
+        if (bookItem is null)
+        {
+            return "Cannot create Star Catalog: the normal book item is unavailable.";
+        }
+
+        ConstellationJournal journal;
+        try
+        {
+            journal = StarCatalogJournalBuilder.Build(catalog);
+        }
+        catch (Exception exception)
+        {
+            return $"Cannot create Star Catalog: {exception.Message}";
+        }
+
+        var stack = new ItemStack(bookItem);
+        ConstellationBookService.WriteJournal(stack, journal, ConstellationBookService.StarCatalogTitle);
+        if (!args.Caller.Player.InventoryManager.TryGiveItemstack(stack, true))
+        {
+            return "Could not give Star Catalog: clear one inventory slot and try again.";
+        }
+
+        return $"Gave Star Catalog with {journal.Constellations.Count} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
     }
 }
