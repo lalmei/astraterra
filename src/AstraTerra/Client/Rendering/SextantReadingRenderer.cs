@@ -16,13 +16,14 @@ public sealed class SextantReadingRenderer : IRenderer
 
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
-    private readonly StarCatalog catalog;
+    private readonly StarCatalog? catalog;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
     private LoadedTexture? readingTexture;
     private string? readingText;
 
-    public SextantReadingRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog catalog)
+    /// <param name="catalog">Null when the star catalog failed to load. Sun and moon sighting still works.</param>
+    public SextantReadingRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog? catalog)
     {
         this.api = api;
         this.config = config;
@@ -73,18 +74,51 @@ public sealed class SextantReadingRenderer : IRenderer
             return "Sextant: no sight line";
         }
 
-        var calendar = api.World.Calendar;
-        if (!SkyStarSunMoonRenderer.ForceDaylightStars && 1.0 - calendar.DayLightStrength <= 0.02)
-        {
-            return "Sextant: stars not visible";
-        }
-
         if (!HasOpenSkyAbovePlayer())
         {
             return "Sextant: sky blocked";
         }
 
+        var target = FindTargetBody(CollectSightableBodies());
+        if (target is null)
+        {
+            return CanSightStars()
+                ? "Sextant: align with a star, the sun, or the moon"
+                : "Sextant: align with the sun or the moon";
+        }
+
+        return $"{target.DisplayName} — angle above horizon: {target.AltitudeDeg:+0.0;-0.0;0.0} deg";
+    }
+
+    /// <summary>
+    /// The sun and moon come straight from Vintage Story, so the sextant measures the bodies the
+    /// game actually draws. Both are sightable whenever they are up, which is what lets the moon be
+    /// shot in daylight; only the star catalog needs a dark sky.
+    /// </summary>
+    private IEnumerable<SightedBody> CollectSightableBodies()
+    {
+        var calendar = api.World.Calendar;
         var position = api.World.Player.Entity.Pos;
+
+        var sunVector = calendar.GetSunPosition(position.XYZ, calendar.TotalDays);
+        var sun = SkyBodyModel.FromWorldDirection("Sun", sunVector.X, sunVector.Y, sunVector.Z);
+        if (sun is not null && sun.AltitudeDeg > 0)
+        {
+            yield return sun;
+        }
+
+        var moonVector = calendar.GetMoonPosition(position.XYZ, calendar.TotalDays);
+        var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
+        if (moon is not null && moon.AltitudeDeg > 0)
+        {
+            yield return moon;
+        }
+
+        if (!CanSightStars())
+        {
+            yield break;
+        }
+
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
@@ -99,26 +133,27 @@ public sealed class SextantReadingRenderer : IRenderer
             localSiderealAngle,
             config.StarBrightnessBias,
             visualHorizonCutoffDeg: 0.0);
-        var target = FindTargetStar(visibleStars);
-        if (target is null)
+        foreach (var star in visibleStars)
         {
-            return "Sextant: align with a star";
+            yield return SkyBodyModel.FromStar(star);
         }
-
-        return $"Angle above horizon: {target.AltitudeDeg:+0.0;-0.0;0.0} deg";
     }
 
-    private RenderedStar? FindTargetStar(IEnumerable<RenderedStar> stars)
+    private bool CanSightStars()
+        => catalog is not null
+            && (SkyStarSunMoonRenderer.ForceDaylightStars || 1.0 - api.World.Calendar.DayLightStrength > 0.02);
+
+    private SightedBody? FindTargetBody(IEnumerable<SightedBody> bodies)
     {
         var centerX = api.Render.FrameWidth / 2f;
         var centerY = api.Render.FrameHeight / 2f;
         var radiusSquared = TargetRadiusPixels * TargetRadiusPixels;
-        RenderedStar? closest = null;
+        SightedBody? closest = null;
         var closestDistanceSquared = double.MaxValue;
 
-        foreach (var star in stars)
+        foreach (var body in bodies)
         {
-            if (!TryProject(star, cachedViewMatrix!, cachedProjectionMatrix!, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y))
+            if (!TryProject(body, cachedViewMatrix!, cachedProjectionMatrix!, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y))
             {
                 continue;
             }
@@ -128,7 +163,7 @@ public sealed class SextantReadingRenderer : IRenderer
             var distanceSquared = (dx * dx) + (dy * dy);
             if (distanceSquared <= radiusSquared && distanceSquared < closestDistanceSquared)
             {
-                closest = star;
+                closest = body;
                 closestDistanceSquared = distanceSquared;
             }
         }
@@ -224,7 +259,7 @@ public sealed class SextantReadingRenderer : IRenderer
     }
 
     private bool TryProject(
-        RenderedStar star,
+        SightedBody body,
         double[] viewMatrix,
         double[] projectionMatrix,
         float frameWidth,
@@ -232,7 +267,7 @@ public sealed class SextantReadingRenderer : IRenderer
         out float screenX,
         out float screenY)
     {
-        var (worldX, worldY, worldZ) = BuildSkyProjectionPosition(star.DirectionX, star.DirectionY, star.DirectionZ);
+        var (worldX, worldY, worldZ) = BuildSkyProjectionPosition(body.DirectionX, body.DirectionY, body.DirectionZ);
         return ProjectWorldToScreen(
             worldX,
             worldY,
