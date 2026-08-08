@@ -74,14 +74,67 @@ public sealed class AstrolabeServiceTests
             totalDays,
             daysPerYear,
             hoursPerDay);
-        var risingTarget = new AstrolabeTarget(1, "Rising", localSidereal - 45, 0, 2);
-        var settingTarget = new AstrolabeTarget(2, "Setting", localSidereal + 45, 0, 2);
+        // A target whose right ascension is still ahead of local sidereal time has not transited
+        // yet, so it is east of the meridian and climbing.
+        var risingTarget = new AstrolabeTarget(1, "Rising", localSidereal + 45, 0, 2);
+        var settingTarget = new AstrolabeTarget(2, "Setting", localSidereal - 45, 0, 2);
 
         var rising = AstrolabeService.Read(risingTarget, 0, totalDays, daysPerYear, hoursPerDay, 0);
         var setting = AstrolabeService.Read(settingTarget, 0, totalDays, daysPerYear, hoursPerDay, 0);
 
         Assert.Equal(AstrolabeMotionState.Rising, rising.MotionState);
         Assert.Equal(AstrolabeMotionState.Setting, setting.MotionState);
+        Assert.InRange(rising.AzimuthDeg, 0.0, 180.0);
+        Assert.InRange(setting.AzimuthDeg, 180.0, 360.0);
+    }
+
+    [Fact]
+    public void Read_Counts_Down_To_The_Next_Transit()
+    {
+        const double totalDays = 0;
+        const int daysPerYear = 120;
+        const double hoursPerDay = 24;
+        var localSidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            totalDays,
+            daysPerYear,
+            hoursPerDay);
+
+        var justBeforeTransit = AstrolabeService.Read(
+            new AstrolabeTarget(1, "Soon", localSidereal + 45, 0, 2),
+            latitudeDeg: 0,
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg: 0);
+        var justAfterTransit = AstrolabeService.Read(
+            new AstrolabeTarget(2, "Missed it", localSidereal - 45, 0, 2),
+            latitudeDeg: 0,
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg: 0);
+
+        var cycleHours = justBeforeTransit.SiderealCycleHours;
+
+        Assert.Equal(cycleHours * 45.0 / 360.0, justBeforeTransit.HoursUntilTransit, 6);
+        Assert.Equal(cycleHours * 315.0 / 360.0, justAfterTransit.HoursUntilTransit, 6);
+    }
+
+    [Fact]
+    public void SiderealCycle_Runs_Slightly_Shorter_Than_The_Solar_Day()
+    {
+        const int daysPerYear = 120;
+        const double hoursPerDay = 24;
+
+        var reading = AstrolabeService.Read(
+            new AstrolabeTarget(1, "Any", 0, 0, 2),
+            latitudeDeg: 0,
+            totalDays: 0,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg: 0);
+
+        Assert.InRange(reading.SiderealCycleHours, hoursPerDay * 0.9, hoursPerDay);
     }
 
     [Fact]
