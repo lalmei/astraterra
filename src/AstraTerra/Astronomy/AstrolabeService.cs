@@ -95,7 +95,7 @@ public static class AstrolabeService
         var horizonClass = ClassifyHorizon(latitudeDeg, target.DeclinationDeg);
         var rotationRateDegPerHour = SiderealRotationRateDegPerHour(daysPerYear, hoursPerDay);
         var siderealCycleHours = 360.0 / rotationRateDegPerHour;
-        var hoursUntilTransit = CelestialMath.NormalizeDegrees(localSiderealDeg - target.RightAscensionDeg) / rotationRateDegPerHour;
+        var hoursUntilTransit = CelestialMath.NormalizeDegrees(target.RightAscensionDeg - localSiderealDeg) / rotationRateDegPerHour;
 
         var motionState = ClassifyMotion(
             target,
@@ -185,8 +185,9 @@ public static class AstrolabeService
 
     private static double SiderealRotationRateDegPerHour(int daysPerYear, double hoursPerDay)
     {
-        var rate = 15.0 - (360.0 / (daysPerYear * hoursPerDay));
-        return rate > 0.001 ? rate : 15.0;
+        // 15 deg per solar hour, plus the seasonal drift the sky gains over a year, which makes
+        // the sidereal day slightly shorter than the solar day.
+        return 15.0 + (360.0 / (daysPerYear * hoursPerDay));
     }
 
     private static double AverageCircularDegrees(IEnumerable<double> degrees)
