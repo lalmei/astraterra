@@ -7,8 +7,8 @@ AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Star
 - Watch an 5000+ fixed-star sky that changes as you travel north or south.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
-- Use the Sextant to read the angle of a visible star above the horizon.
-- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear, and what day of the year it is.
+- Use the Sextant to read the angle of a star, the sun, or the moon above the horizon, day or night.
+- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear, tell the time of night, and see what day of the year it is.
 - Two prebuilt constellation catalogs, that could be used to debug, or used in builds.
 
 ### Extension
@@ -37,15 +37,26 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 ### Sextant
 
-Hold right click with the Sextant and align the center of the screen with a visible star. The top-center readout displays the targeted star's angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
+Hold right click with the Sextant and align the center of the screen with the sun, the moon, or a visible star. The top-center readout names what you sighted and displays its angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
-If no readable star is near the center, the readout asks you to align with a star. If the sky is blocked or stars are not visible, it reports that instead. You need a star to be able to read it. (Will add moon and sun later, maybe add some blindess effect if you use it on the sun)
+The sun and the moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime moon is a perfectly good sight, and often an easier one than a star. Stars still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
+
+If nothing readable is near the center, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
+
+!!! note "Sun safety"
+    Sighting the sun currently costs you nothing. A real navigator would use a shade glass.
 
 ### Calibrated Astrolabe
 
 Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to calibrate it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
 
 The top-center readout shows the selected constellation's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
+
+Below that, the Astrolabe tells you the time. It reads the hour off the sky the way a nocturnal does — from where the sun actually is — and reports the hour of the world day, whether it is daylight, dusk, night, or dawn, the sun's angle above or below the horizon, and how long until the next sunrise or sunset.
+
+The clock follows your forecast. Scroll ahead six hours and the time advances with the stars, so you can find the hour a constellation reaches its best position before you commit to waiting for it. Near the poles, where the sun may not rise or set at all for a stretch of the year, the readout says so rather than inventing an hour.
+
+The time of day is also shown when no book is held, so the Astrolabe is still useful on its own.
 
 - Middle click to select the next constellation in the held book.
 - Scroll to forecast one hour at a time.

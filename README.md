@@ -32,13 +32,15 @@ Similarly the deep sky views could be generated or use custom assets, or place a
 
 ### Measure the sky with a Sextant
 
-Hold right click and sight a star to read its angle above the horizon. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
+Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too — a daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
 
 ![Sextant usage](docs/screenshots/sextant_azimuthal_grid.png)
 
 ### Plan observations with a Calibrated Astrolabe
 
 Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.
+
+It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.
 
 ![Astrolabe usage](docs/screenshots/astrolabe.png)
 

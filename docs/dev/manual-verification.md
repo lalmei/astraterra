@@ -22,13 +22,24 @@
 - Confirm `.stars info` includes ID, star count, segment count, month window, season summary, and state.
 - If the constellation state is not `below horizon`, look toward its stars while holding the written book in the left hand and confirm saved segments render in the sky.
 - Rename and delete the constellation with `.stars name <id> <text>` and `.stars delete <id>`.
+- Watch the sky for several in-game hours and confirm stars rise in the east and set in the west, in the same direction the vanilla sun travels.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
+- In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
+- With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.
+- Sight the sun near sunrise or sunset and confirm the reported angle approaches zero as it meets the horizon.
+- Point away from every body and confirm the readout lists what is available to aim at rather than reporting stars are not visible.
+- With the star catalog asset missing or failing to load, confirm the Sextant still sights the sun and moon and offers only those two.
+- Hold the Astrolabe steady for a minute of world time and confirm the clock line advances without the frame rate dropping; the sky clock is cached per world minute rather than recomputed each frame.
 - Hold the written constellation book in the left hand and the Calibrated Astrolabe in the main hand.
 - Hold right click and confirm the astrolabe shows latitude, world day, compass direction, altitude, motion state, and time until transit for a recorded constellation.
+- Confirm the astrolabe's clock line shows the hour, the phase of the day, the sun's angle, and the time to the next sunrise or sunset, and that the hour agrees with the game's own clock.
+- Scroll the forecast forward and confirm the clock line advances with it, and that the phase changes from day to dusk to night at the appropriate hours.
+- Hold the astrolabe with no book and confirm the clock line still shows.
 - Middle click and confirm the astrolabe cycles through only the constellations in the held book.
 - Scroll and confirm the forecast moves by one hour; sneak-scroll and confirm it moves by seven days, never earlier than now or later than one world year.
 - Repeat the astrolabe check indoors or during daylight and confirm planning remains available.
 - At a high latitude, confirm the astrolabe distinguishes a circumpolar constellation from one that never rises.
+- At an extreme latitude during a polar day or night, confirm the astrolabe reports that the sun does not set or does not rise instead of showing an hour.
 
 ## Authored Constellation Build
 
