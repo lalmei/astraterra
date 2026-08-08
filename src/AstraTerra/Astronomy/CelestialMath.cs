@@ -32,7 +32,12 @@ public static class CelestialMath
         var dayOfYear = PositiveModulo(totalDays, daysPerYear);
         var seasonalTurns = PositiveModulo(dayOfYear - equinoxDayOfYear, daysPerYear) / daysPerYear;
         var localSolarHours = PositiveModulo(totalDays * hoursPerDay, hoursPerDay) + longitudeDegrees / 15.0;
-        return NormalizeDegrees((seasonalTurns * 360.0) + ((12.0 - localSolarHours) * 15.0));
+
+        // The sun transits at local noon, so sidereal time equals the sun's right ascension
+        // (the seasonal term) at that moment and gains 15 deg for every solar hour after it.
+        // The hour angle in GetHorizontalCoordinates is sidereal - right ascension, so sidereal
+        // must increase with time for the sky to turn east to west.
+        return NormalizeDegrees((seasonalTurns * 360.0) + ((localSolarHours - 12.0) * 15.0));
     }
 
     public static double ClassifyAltitudeDeg(double rightAscensionDeg, double declinationDeg, double latitudeDeg, double localSiderealDeg)
