@@ -12,17 +12,26 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 {
     private const float TitleTopOffset = 48.0f;
     private const float ReadingTopOffset = 86.0f;
-    private const float HelpTopOffset = 124.0f;
+    private const float ClockTopOffset = 118.0f;
+    private const float HelpTopOffset = 150.0f;
+
+    /// <summary>How far the player must travel before the sky clock is worth recomputing.</summary>
+    private const double ClockCacheBlockSize = 32.0;
 
     private readonly ICoreClientAPI api;
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private LoadedTexture? titleTexture;
     private LoadedTexture? readingTexture;
+    private LoadedTexture? clockTexture;
     private LoadedTexture? helpTexture;
     private string? titleText;
     private string? readingText;
+    private string? clockText;
     private string? helpText;
+    private string? cachedClockLine;
+    private long cachedClockMinute;
+    private int cachedClockPositionKey;
     private bool renderingDisabledAfterFailure;
 
     public AstrolabePlannerRenderer(
@@ -72,6 +81,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     {
         DeleteTexture(titleTexture);
         DeleteTexture(readingTexture);
+        DeleteTexture(clockTexture);
         DeleteTexture(helpTexture);
     }
 
@@ -83,6 +93,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             RenderLines(
                 "Calibrated Astrolabe",
                 "Hold a written constellation book in your left hand.",
+                ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
             return;
         }
@@ -93,6 +104,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             RenderLines(
                 "Calibrated Astrolabe",
                 "No readable constellations are recorded in this book.",
+                ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
             return;
         }
@@ -122,7 +134,78 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         var title = $"Calibrated Astrolabe — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {FormatLatitude(latitude)} — day {forecastDay}/{daysPerYear}";
         var details = $"{reading.Target.DisplayName} ({selectedIndex + 1}/{targets.Count}) — {FormatReading(reading)}";
         var help = "Middle click: next constellation   Scroll: 1 hour   Sneak + scroll: 7 days";
-        RenderLines(title, details, help);
+        RenderLines(title, details, ReadSkyClockLine(forecastTotalDays), help);
+    }
+
+    /// <summary>
+    /// The astrolabe's other half: reading the hour off the sky. The sun altitude comes from
+    /// Vintage Story so the hour lines up with the daylight the player can see, and it is sampled
+    /// at the forecast time so scrolling ahead moves the clock with the stars.
+    /// </summary>
+    private string ReadSkyClockLine(double totalDays)
+    {
+        var calendar = api.World.Calendar;
+        var hoursPerDay = Math.Max(1.0, calendar.HoursPerDay);
+        var position = api.World.Player.Entity.Pos.XYZ;
+
+        // Finding the next sunrise and sunset costs a few hundred sun samples, but the line only
+        // changes once a world minute, and this runs every frame while the astrolabe is raised.
+        // Recompute on the minute, or once the player has travelled far enough to move the sun.
+        var minute = (long)Math.Floor(totalDays * hoursPerDay * 60.0);
+        var positionKey = HashCode.Combine(
+            (long)Math.Floor(position.X / ClockCacheBlockSize),
+            (long)Math.Floor(position.Z / ClockCacheBlockSize));
+        if (cachedClockLine is not null && minute == cachedClockMinute && positionKey == cachedClockPositionKey)
+        {
+            return cachedClockLine;
+        }
+
+        var clock = SkyClock.Read(totalDays, hoursPerDay, days => SunAltitudeDegAt(position, days));
+        cachedClockLine = FormatSkyClock(clock, hoursPerDay);
+        cachedClockMinute = minute;
+        cachedClockPositionKey = positionKey;
+        return cachedClockLine;
+    }
+
+    private double SunAltitudeDegAt(Vec3d position, double totalDays)
+    {
+        var vector = api.World.Calendar.GetSunPosition(position, totalDays);
+        return SkyBodyModel.FromWorldDirection("Sun", vector.X, vector.Y, vector.Z)?.AltitudeDeg ?? 0.0;
+    }
+
+    private static string FormatSkyClock(SkyClockReading clock, double hoursPerDay)
+    {
+        var phase = clock.Phase switch
+        {
+            SkyPhase.Day => "daylight",
+            SkyPhase.Dusk => "dusk",
+            SkyPhase.Night => "night",
+            SkyPhase.Dawn => "dawn",
+            _ => "unknown"
+        };
+
+        var next = clock.Phase == SkyPhase.Day
+            ? clock.HoursUntilSunset is { } sunset
+                ? $"sunset in {sunset:0.0} h"
+                : "the sun does not set"
+            : clock.HoursUntilSunrise is { } sunrise
+                ? $"sunrise in {sunrise:0.0} h"
+                : "the sun does not rise";
+
+        return $"{FormatClockTime(clock.LocalTimeHours, hoursPerDay)} — {phase}, sun {clock.SunAltitudeDeg:+0.0;-0.0;0.0}°, {next}";
+    }
+
+    private static string FormatClockTime(double localTimeHours, double hoursPerDay)
+    {
+        var wrapped = Math.Clamp(localTimeHours, 0.0, hoursPerDay);
+        var hours = (int)Math.Floor(wrapped);
+        var minutes = (int)Math.Floor((wrapped - hours) * 60.0);
+        if (minutes >= 60)
+        {
+            minutes = 59;
+        }
+
+        return $"{hours:00}:{minutes:00}";
     }
 
     private IReadOnlyList<AstrolabeTarget> GetCurrentTargets()
@@ -141,7 +224,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
                (AstrolabeReadingState.IsReading || api.World.Player.Entity.Controls.RightMouseDown);
     }
 
-    private void RenderLines(string title, string reading, string help)
+    private void RenderLines(string title, string reading, string clock, string help)
     {
         RenderLine(
             ref titleTexture,
@@ -155,6 +238,12 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             reading,
             new CairoFont(22, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
             ReadingTopOffset);
+        RenderLine(
+            ref clockTexture,
+            ref clockText,
+            clock,
+            new CairoFont(18, GuiStyle.StandardFontName, ColorUtil.WhiteArgbDouble, ColorUtil.BlackArgbDouble),
+            ClockTopOffset);
         RenderLine(
             ref helpTexture,
             ref helpText,

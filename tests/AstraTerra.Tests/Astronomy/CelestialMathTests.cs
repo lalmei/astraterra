@@ -103,6 +103,24 @@ public sealed class CelestialMathTests
         }
     }
 
+    [Theory]
+    [InlineData(0.0, 24.0, 0.0)]
+    [InlineData(0.5, 24.0, 12.0)]
+    [InlineData(10.25, 24.0, 6.0)]
+    [InlineData(-0.25, 24.0, 18.0)]
+    [InlineData(3.5, 16.0, 8.0)]
+    public void LocalSolarTime_Wraps_Into_The_World_Day(double totalDays, double hoursPerDay, double expectedHours)
+    {
+        Assert.Equal(expectedHours, CelestialMath.GetLocalSolarTimeHours(totalDays, hoursPerDay), 6);
+    }
+
+    [Fact]
+    public void LocalSolarTime_Rejects_A_Zero_Length_Day()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CelestialMath.GetLocalSolarTimeHours(totalDays: 1, hoursPerDay: 0));
+    }
+
     private static double SignedDelta(double degrees)
     {
         var normalized = CelestialMath.NormalizeDegrees(degrees);
