@@ -126,9 +126,16 @@ public sealed class AstraTerraModSystem : ModSystem
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
 
+        // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
+        // catalog, so the sextant is registered before the catalog gate and keeps working without it.
+        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
+        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
+        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
+        api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
+
         if (catalog is null)
         {
-            api.Logger.Event("AstraTerra startup step: client renderers skipped: catalog-dependent astronomy renderers were not registered; sky coordinate grid remains available");
+            api.Logger.Event("AstraTerra startup step: client renderers skipped: catalog-dependent astronomy renderers were not registered; sky coordinate grid and sun/moon sextant sighting remain available");
             return;
         }
 
@@ -140,10 +147,6 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Event.MouseMove += constellationOverlayRenderer.OnMouseMove;
         api.Event.MouseUp += constellationOverlayRenderer.OnMouseUp;
         api.Event.RegisterRenderer(new TelescopeScopeRenderer(api), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
-        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
-        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
-        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
-        api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
         astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient);
         api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
