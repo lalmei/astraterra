@@ -40,6 +40,20 @@ public static class CelestialMath
         return NormalizeDegrees((seasonalTurns * 360.0) + ((localSolarHours - 12.0) * 15.0));
     }
 
+    /// <summary>
+    /// Hour of the world day for a calendar timestamp, matching the clock the game itself shows.
+    /// Longitude is deliberately left out: vanilla's clock does not shift with world X either.
+    /// </summary>
+    public static double GetLocalSolarTimeHours(double totalDays, double hoursPerDay)
+    {
+        if (hoursPerDay <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
+        }
+
+        return PositiveModulo(totalDays * hoursPerDay, hoursPerDay);
+    }
+
     public static double ClassifyAltitudeDeg(double rightAscensionDeg, double declinationDeg, double latitudeDeg, double localSiderealDeg)
         => GetHorizontalCoordinates(rightAscensionDeg, declinationDeg, latitudeDeg, localSiderealDeg).AltitudeDeg;
 
