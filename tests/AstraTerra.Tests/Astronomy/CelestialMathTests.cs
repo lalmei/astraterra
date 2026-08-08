@@ -47,6 +47,65 @@ public sealed class CelestialMathTests
         var primeMeridian = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0.5, daysPerYear: 24, hoursPerDay: 24);
         var eastNinety = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0.5, daysPerYear: 24, hoursPerDay: 24, longitudeDegrees: 90);
 
-        Assert.Equal(270.0, CelestialMath.NormalizeDegrees(eastNinety - primeMeridian), 6);
+        Assert.Equal(90.0, CelestialMath.NormalizeDegrees(eastNinety - primeMeridian), 6);
+    }
+
+    [Fact]
+    public void VanillaAlignedSidereal_AdvancesWithTimeOfDay()
+    {
+        const int daysPerYear = 360;
+        const double hoursPerDay = 24;
+        var midnight = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 100, daysPerYear: daysPerYear, hoursPerDay: hoursPerDay);
+        var threeHoursLater = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            totalDays: 100 + (3.0 / hoursPerDay),
+            daysPerYear: daysPerYear,
+            hoursPerDay: hoursPerDay);
+
+        var advance = SignedDelta(threeHoursLater - midnight);
+
+        Assert.True(advance > 0, $"Sidereal time must advance as the day goes on, but moved {advance:0.###} deg.");
+        Assert.Equal(3.0 * (15.0 + (360.0 / (daysPerYear * hoursPerDay))), advance, 6);
+    }
+
+    [Fact]
+    public void Stars_Travel_East_To_West_Across_The_Night()
+    {
+        const int daysPerYear = 360;
+        const double hoursPerDay = 24;
+        const double transitDay = 100;
+        const double latitudeDeg = 45;
+
+        // Pick a star that sits exactly on the meridian at midnight of the sample day.
+        var rightAscensionDeg = CelestialMath.GetVanillaAlignedLocalSiderealAngle(transitDay, daysPerYear, hoursPerDay);
+
+        var beforeTransit = SampleAzimuth(-3);
+        var atTransit = SampleAzimuth(0);
+        var afterTransit = SampleAzimuth(3);
+
+        // Azimuth is measured clockwise from north: east is 90, south 180, west 270.
+        Assert.InRange(beforeTransit, 90.0, 180.0);
+        Assert.Equal(180.0, atTransit, 6);
+        Assert.InRange(afterTransit, 180.0, 270.0);
+
+        double SampleAzimuth(double hourOffset)
+        {
+            var localSiderealDeg = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+                transitDay + (hourOffset / hoursPerDay),
+                daysPerYear,
+                hoursPerDay);
+            var coordinates = CelestialMath.GetHorizontalCoordinates(
+                rightAscensionDeg,
+                declinationDeg: 0,
+                latitudeDeg,
+                localSiderealDeg);
+            Assert.True(coordinates.AltitudeDeg > 0, "Sample must stay above the horizon.");
+            return coordinates.AzimuthDeg;
+        }
+    }
+
+    private static double SignedDelta(double degrees)
+    {
+        var normalized = CelestialMath.NormalizeDegrees(degrees);
+        return normalized > 180.0 ? normalized - 360.0 : normalized;
     }
 }
