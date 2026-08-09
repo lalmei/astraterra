@@ -140,6 +140,10 @@ term, so the astrolabe agrees with the clock the game shows elsewhere.
     own clock does not. Note also that the `/ 15` conversion assumes a 24-hour day; on a world with
     a different `hoursPerDay` the longitude offset is scaled accordingly.
 
+    Vintage Story has **no longitude concept at all**, and its sun ignores world X entirely, so this
+    shift has nothing to stay in step with. See [Latitude And Longitude](latitude-and-longitude.md)
+    for where the observer position comes from and why this is an unresolved divergence.
+
 ## Where The Invariants Are Pinned
 
 | Invariant | Test |
