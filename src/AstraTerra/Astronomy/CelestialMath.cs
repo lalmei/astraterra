@@ -16,6 +16,26 @@ public static class CelestialMath
         return NormalizeDegrees((dayFraction * 360.0) + GetSeasonalAngle(dayOfYear, dayFraction, daysPerYear));
     }
 
+    /// <summary>
+    /// How far round its orbit the world has travelled since the equinox, in degrees. This is the
+    /// seasonal term of <see cref="GetVanillaAlignedLocalSiderealAngle"/>, which is the sun's right
+    /// ascension at local noon and therefore stands in for solar longitude.
+    /// </summary>
+    /// <remarks>
+    /// Season-anchored events belong on this angle rather than a day of the year: <c>daysPerYear</c>
+    /// is world configuration, so day 224 lands in a different season on every world while 140 deg
+    /// of solar longitude is late summer on all of them. Extracted from the sidereal angle rather
+    /// than recomputed so the two can never drift apart.
+    /// </remarks>
+    public static double GetSolarLongitudeDegrees(double totalDays, int daysPerYear, double equinoxDayOfYear = 0)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
+
+        var dayOfYear = PositiveModulo(totalDays, daysPerYear);
+        var seasonalTurns = PositiveModulo(dayOfYear - equinoxDayOfYear, daysPerYear) / daysPerYear;
+        return seasonalTurns * 360.0;
+    }
+
     public static double GetVanillaAlignedLocalSiderealAngle(
         double totalDays,
         int daysPerYear,
@@ -29,15 +49,14 @@ public static class CelestialMath
             throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
         }
 
-        var dayOfYear = PositiveModulo(totalDays, daysPerYear);
-        var seasonalTurns = PositiveModulo(dayOfYear - equinoxDayOfYear, daysPerYear) / daysPerYear;
+        var solarLongitudeDeg = GetSolarLongitudeDegrees(totalDays, daysPerYear, equinoxDayOfYear);
         var localSolarHours = PositiveModulo(totalDays * hoursPerDay, hoursPerDay) + longitudeDegrees / 15.0;
 
         // The sun transits at local noon, so sidereal time equals the sun's right ascension
         // (the seasonal term) at that moment and gains 15 deg for every solar hour after it.
         // The hour angle in GetHorizontalCoordinates is sidereal - right ascension, so sidereal
         // must increase with time for the sky to turn east to west.
-        return NormalizeDegrees((seasonalTurns * 360.0) + ((localSolarHours - 12.0) * 15.0));
+        return NormalizeDegrees(solarLongitudeDeg + ((localSolarHours - 12.0) * 15.0));
     }
 
     /// <summary>
@@ -79,6 +98,20 @@ public static class CelestialMath
     {
         var normalized = degrees % 360.0;
         return normalized < 0 ? normalized + 360.0 : normalized;
+    }
+
+    /// <summary>
+    /// Signed shortest way round from <paramref name="fromDegrees"/> to <paramref name="toDegrees"/>,
+    /// in the range (-180, 180]. Positive means <paramref name="toDegrees"/> is ahead.
+    /// </summary>
+    /// <remarks>
+    /// Anything that measures "how far from" an angle needs this rather than a plain subtraction, or
+    /// a window straddling 0/360 reads as a full turn wide instead of a few degrees.
+    /// </remarks>
+    public static double ShortestAngularDistanceDegrees(double fromDegrees, double toDegrees)
+    {
+        var difference = NormalizeDegrees(toDegrees - fromDegrees);
+        return difference > 180.0 ? difference - 360.0 : difference;
     }
 
     private static double PositiveModulo(double value, double modulus)
