@@ -12,6 +12,9 @@ env:
   VINTAGE_STORY_VERSION: 1.22.2
   VINTAGE_STORY_ARCHIVE_URL: https://cdn.vintagestory.at/gamefiles/stable/vs_client_linux-x64_1.22.2.tar.gz
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Test, Build, and Package
@@ -75,3 +78,55 @@ jobs:
           name: astraterra-mod-package
           path: dist/*.zip
           if-no-files-found: error
+
+      - name: Attach mod package to release draft
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Mirrors MOD_VERSION and PACKAGE_FILE in the Makefile. Uses perl rather than
+          # jq so this works on the self-hosted runner without extra tooling.
+          version="$(perl -0ne 'print $1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)"
+          if [[ -z "$version" ]]; then
+            echo "Could not read a semantic version from modinfo.json." >&2
+            exit 1
+          fi
+
+          tag="v$version"
+          package="dist/AstraTerra-$version.zip"
+          if [[ ! -f "$package" ]]; then
+            echo "Expected package $package was not produced by 'make package'." >&2
+            exit 1
+          fi
+
+          # Release Drafter runs from the same push on a separate runner, so the draft
+          # may not exist yet. In practice it finishes long before this job does; the
+          # wait is insurance rather than the expected path.
+          draft_state=""
+          for attempt in $(seq 1 10); do
+            if draft_state="$(gh release view "$tag" --json isDraft --jq '.isDraft' 2>/dev/null)"; then
+              break
+            fi
+            draft_state=""
+            echo "Waiting for release draft $tag (attempt $attempt/10)..."
+            sleep 15
+          done
+
+          # A published release must never be modified by automation. This happens when
+          # main moves after $tag has already shipped, i.e. the version was not bumped.
+          if [[ "$draft_state" == "false" ]]; then
+            echo "::warning::Release $tag is already published; leaving its assets untouched. Bump the version before merging further changes to main."
+            exit 0
+          fi
+
+          if [[ -z "$draft_state" ]]; then
+            echo "No draft $tag appeared; creating one so the package is not lost."
+            gh release create "$tag" --draft --title "$tag" --notes ""
+          fi
+
+          # Only touches assets, so Release Drafter's generated notes survive.
+          gh release upload "$tag" "$package" --clobber
+          echo "Attached $package to draft $tag"

@@ -18,6 +18,51 @@ make deploy
 
 Then enable AstraTerra in Vintage Story 1.22.2 and run the [manual verification checklist](manual-verification.md).
 
+## Releasing
+
+### Bump the version
+
+```bash
+make bump-minor-version          # 0.1.56 -> 0.2.0
+make bump-patch-version          # 0.1.56 -> 0.1.57
+make bump-version VERSION=1.0.0  # explicit
+```
+
+The version lives in **two** places — `modinfo.json` and `AstraTerraModMetadata.Version` — and
+`BootstrapSmokeTests.Runtime_Version_Stays_In_Sync_With_Modinfo` fails if they drift. Always bump
+through the Makefile rather than editing either by hand.
+
+!!! note "The bump targets deploy"
+    `bump-version`, and therefore `bump-minor-version` and `bump-patch-version`, chain into
+    `deploy`, which copies the built mod into your local Vintage Story install. Use
+    `make bump-version-files VERSION=x.y.z` to update the version without deploying.
+
+### What happens on merge to `main`
+
+Two workflows run from the same push, independently:
+
+| Workflow | Runner | Does |
+| --- | --- | --- |
+| `release-drafter.yml` | `ubuntu-latest` | Reads the version from `modinfo.json` and creates or renames the **draft** release to `vX.Y.Z`, with notes generated from merged pull requests |
+| `ci.yml` | self-hosted macOS | Tests, builds, packages, then uploads `dist/AstraTerra-X.Y.Z.zip` both as a workflow artifact and as an asset on that draft |
+
+Release Drafter owns the notes; CI only ever touches assets (`gh release upload --clobber`), so the
+two do not fight. CI waits for the draft to appear, and creates one itself if Release Drafter never
+got there, so a build is never stranded without somewhere to land.
+
+**Publishing stays manual.** Review the draft, confirm the attached zip, then publish — which is
+what creates the `vX.Y.Z` git tag.
+
+!!! warning "A published release is never modified"
+    If `main` moves after `vX.Y.Z` has already been published — that is, someone merged without
+    bumping the version — CI logs a warning and leaves the release alone rather than overwriting a
+    shipped asset. The package still exists as a workflow artifact. Bump the version and merge again.
+
+!!! note "CI needs the self-hosted runner"
+    `ci.yml` runs on `[self-hosted, macOS, astraterra-local]`. Release Drafter does not. If that
+    machine is offline when you merge, you will get a correctly versioned draft with no package
+    attached, and no build anywhere.
+
 ## Documentation Site
 
 ```bash
