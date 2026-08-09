@@ -64,6 +64,7 @@ nav:
       - Guide: dev/index.md
       - Architecture: dev/architecture.md
       - Celestial Model: dev/celestial-model.md
+      - Latitude And Longitude: dev/latitude-and-longitude.md
       - Data Pipeline: dev/data-pipeline.md
       - Manual Verification: dev/manual-verification.md
       - Product Scope: dev/product-scope.md
