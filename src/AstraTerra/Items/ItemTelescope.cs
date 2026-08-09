@@ -18,7 +18,10 @@ public abstract class ItemTelescope : Item
         ref EnumHandHandling handling)
     {
         handling = EnumHandHandling.PreventDefault;
-        TelescopeScopeState.Begin(MaxZoomStep, MaxZoomFovMultiplier);
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            TelescopeScopeState.Begin(MaxZoomStep, MaxZoomFovMultiplier);
+        }
     }
 
     public override bool OnHeldInteractStep(
@@ -28,7 +31,10 @@ public abstract class ItemTelescope : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        TelescopeScopeState.Begin(MaxZoomStep, MaxZoomFovMultiplier);
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            TelescopeScopeState.Begin(MaxZoomStep, MaxZoomFovMultiplier);
+        }
         return true;
     }
 
@@ -39,7 +45,10 @@ public abstract class ItemTelescope : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        TelescopeScopeState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            TelescopeScopeState.End();
+        }
     }
 
     public override bool OnHeldInteractCancel(
@@ -50,7 +59,10 @@ public abstract class ItemTelescope : Item
         EntitySelection entitySel,
         EnumItemUseCancelReason cancelReason)
     {
-        TelescopeScopeState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            TelescopeScopeState.End();
+        }
         return true;
     }
 }

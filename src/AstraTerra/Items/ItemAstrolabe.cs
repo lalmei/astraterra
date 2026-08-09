@@ -14,7 +14,10 @@ public sealed class ItemAstrolabe : Item
         ref EnumHandHandling handling)
     {
         handling = EnumHandHandling.PreventDefault;
-        AstrolabeReadingState.Begin();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            AstrolabeReadingState.Begin();
+        }
     }
 
     public override bool OnHeldInteractStep(
@@ -24,7 +27,10 @@ public sealed class ItemAstrolabe : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        AstrolabeReadingState.Begin();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            AstrolabeReadingState.Begin();
+        }
         return true;
     }
 
@@ -35,7 +41,10 @@ public sealed class ItemAstrolabe : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        AstrolabeReadingState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            AstrolabeReadingState.End();
+        }
     }
 
     public override bool OnHeldInteractCancel(
@@ -46,7 +55,10 @@ public sealed class ItemAstrolabe : Item
         EntitySelection entitySel,
         EnumItemUseCancelReason cancelReason)
     {
-        AstrolabeReadingState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            AstrolabeReadingState.End();
+        }
         return true;
     }
 }

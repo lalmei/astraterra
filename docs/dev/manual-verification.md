@@ -75,6 +75,20 @@
 - Confirm the constellation journal persists.
 - Confirm selected constellation, last mode, and zoom are restored from the per-world client state file.
 
+## Multiplayer
+
+Observation state (telescope scope, sextant reading, astrolabe planner) lives in process-wide
+statics that drive the local HUD, so it must never be set by another player's interaction. The
+hosted-world case is the one that catches regressions, because a hosted world runs its server inside
+the host's own client process — a dedicated server hides the bug, since nothing in that process draws.
+
+- Host a world from the game client ("open to LAN" / uPnP) and have a second player join.
+- As the joining player, hold right click with a Brass Telescope; expected result: **the host sees no scope overlay and no field-of-view change.** Repeat with the host scoping and the guest observing.
+- Repeat both directions with the Sextant; expected result: the other player gets no angle readout.
+- Repeat both directions with the Calibrated Astrolabe; expected result: the other player gets no planning readout.
+- With both players scoped at once, confirm each sees only their own zoom level and mode, and that scrolling zoom on one does not move the other.
+- Repeat the telescope check on a dedicated server with the two players standing next to each other, to confirm a nearby player's interaction does not open the local overlay.
+
 ## Result Log
 
 - Equator: pass in manual in-game check; starfield and authored constellation orientation looked correct.
