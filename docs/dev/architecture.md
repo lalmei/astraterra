@@ -2,7 +2,9 @@
 
 ## Runtime Systems
 
-`Astronomy/` contains the pure sky model: latitude mapping, sidereal time, horizontal-coordinate classification, star projection, astrolabe planning, sky-culture loading, and seasonal constellation summaries. Keep this code testable outside the Vintage Story runtime when possible.
+`Astronomy/` contains the pure sky model: latitude mapping, sidereal time, horizontal-coordinate classification, star projection, astrolabe planning, sky-culture loading, seasonal constellation summaries, and meteor shower activity.
+
+The convention here is narrower than "no Vintage Story types", which the asset loaders in this folder have never followed. It is: **the model is pure, and the loaders that feed it are the only exception.** A loader may take `ICoreAPI` to reach the game's asset system, but it must also expose a pure parse entry point over a string so the shipped asset's shape can be tested without a running game — see `MeteorShowerCatalogLoader.Parse`. Everything else in this folder takes plain numbers and returns plain numbers, which is what keeps it testable outside the Vintage Story runtime.
 
 `Client/Rendering/` owns visual presentation. The AstraTerra starfield renders as 3D billboards around the vanilla sun/moon pass. A Harmony prefix on Vintage Story's night-sky pass selects AstraTerra-only, combined, or vanilla-only rendering without shadowing the game's cubemap assets. Orthographic renderers handle telescope overlay, constellation line overlays, and sextant readouts.
 
