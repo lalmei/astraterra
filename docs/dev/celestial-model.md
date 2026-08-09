@@ -84,6 +84,42 @@ countdown, which counts down from right ascension to sidereal time:
 hoursUntilTransit = normalize(rightAscension - sidereal) / rate
 ```
 
+## Season-Anchored Events
+
+Anything that should happen at the same point in the *year* — a meteor shower peak, a seasonal
+constellation window — must be anchored to **solar longitude**, never to a day of the year.
+
+`CelestialMath.GetSolarLongitudeDegrees` is the seasonal term of the sidereal angle, extracted so the
+two cannot drift apart. It is the sun's right ascension at local noon, which is what makes it stand
+in for solar longitude:
+
+```text
+solarLongitude = ((totalDays - equinoxDay) mod daysPerYear) / daysPerYear * 360
+```
+
+!!! warning "A day of the year is not a season"
+    `daysPerYear` is **world configuration**. Vintage Story's default is 108, but a world can be
+    created with 12 or 360. An event pinned to "day 224" therefore lands in a different season on
+    every world, while 140° of solar longitude is late summer on all of them.
+
+    This is the same class of mistake as the rotation sign: correct on the world you happened to test
+    and wrong everywhere else. `MeteorShowerActivityTests` pins it across 12-, 108- and 360-day
+    years, and those tests fail loudly if day-of-year anchoring is reintroduced.
+
+### Measuring distance from an anchor
+
+Use `CelestialMath.ShortestAngularDistanceDegrees`, never a plain subtraction. A window straddling
+0°/360° otherwise reads as nearly a full turn wide rather than a few degrees, and the event silently
+never fires — or fires all year.
+
+### A short year compresses every window
+
+Because windows are angular, their length in days scales with `daysPerYear`. A 10° window is about
+3 days on a 108-day year but **0.33 of a day** on a 12-day year, where it can fall entirely in
+daylight and never be observable. That is inherent to anchoring on the angle rather than a defect,
+but anything user-facing built on this should account for a window that may be shorter than a single
+night.
+
 ## The Sun And The Moon
 
 The sun and moon are **not** modelled by AstraTerra. They come from Vintage Story itself, via
@@ -155,5 +191,10 @@ term, so the astrolabe agrees with the clock the game shows elsewhere.
 | Sidereal day is shorter than solar | `AstrolabeServiceTests.SiderealCycle_Runs_Slightly_Shorter_Than_The_Solar_Day` |
 | Rising is east of the meridian | `AstrolabeServiceTests.Read_Uses_Live_Sky_Direction_To_Distinguish_Rising_And_Setting` |
 | Azimuth is north-referenced | `SkyBodyModelTests.Azimuth_Is_Measured_Clockwise_From_North` |
-| Vanilla vectors are converted | `SkyBodyModelTests.Vanilla_Sun_Azimuth_Is_Rotated_From_South_To_North` |
+| Vanilla vectors need no rotation | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded` |
 | Day phases and polar cases | `SkyClockTests` |
+| Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle` |
+| A full turn per year on any year length | `CelestialMathTests.SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length` |
+| Angular distance takes the short way round | `CelestialMathTests.ShortestAngularDistance_Never_Exceeds_Half_A_Turn` |
+| A season survives a change of year length | `MeteorShowerActivityTests.A_Shower_Keeps_Its_Season_On_A_Twelve_Day_Year_And_A_Three_Hundred_Sixty_Day_One` |
+| Windows straddling 0°/360° behave normally | `MeteorShowerActivityTests.A_Window_Straddling_The_Wrap_Behaves_Exactly_Like_One_That_Does_Not` |
