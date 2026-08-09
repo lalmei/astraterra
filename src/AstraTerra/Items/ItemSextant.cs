@@ -14,7 +14,10 @@ public sealed class ItemSextant : Item
         ref EnumHandHandling handling)
     {
         handling = EnumHandHandling.PreventDefault;
-        SextantReadingState.Begin();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            SextantReadingState.Begin();
+        }
     }
 
     public override bool OnHeldInteractStep(
@@ -24,7 +27,10 @@ public sealed class ItemSextant : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        SextantReadingState.Begin();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            SextantReadingState.Begin();
+        }
         return true;
     }
 
@@ -35,7 +41,10 @@ public sealed class ItemSextant : Item
         BlockSelection blockSel,
         EntitySelection entitySel)
     {
-        SextantReadingState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            SextantReadingState.End();
+        }
     }
 
     public override bool OnHeldInteractCancel(
@@ -46,7 +55,10 @@ public sealed class ItemSextant : Item
         EntitySelection entitySel,
         EnumItemUseCancelReason cancelReason)
     {
-        SextantReadingState.End();
+        if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            SextantReadingState.End();
+        }
         return true;
     }
 }

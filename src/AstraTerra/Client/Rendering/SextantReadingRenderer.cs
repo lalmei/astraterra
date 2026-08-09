@@ -114,7 +114,8 @@ public sealed class SextantReadingRenderer : IRenderer
             yield return moon;
         }
 
-        if (!CanSightStars())
+        // The null check is redundant with CanSightStars, but the compiler cannot see through it.
+        if (catalog is null || !CanSightStars())
         {
             yield break;
         }
