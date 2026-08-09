@@ -1,0 +1,83 @@
+[
+  {
+    "id": "LYR",
+    "displayName": "Lyrids",
+    "rightAscensionDeg": 271.4,
+    "declinationDeg": 33.6,
+    "peakSolarLongitudeDeg": 32.32,
+    "windowHalfWidthDeg": 8.0,
+    "peakZenithHourlyRate": 18.0
+  },
+  {
+    "id": "ETA",
+    "displayName": "Eta Aquariids",
+    "rightAscensionDeg": 338.0,
+    "declinationDeg": -1.0,
+    "peakSolarLongitudeDeg": 45.5,
+    "windowHalfWidthDeg": 18.0,
+    "peakZenithHourlyRate": 50.0
+  },
+  {
+    "id": "SDA",
+    "displayName": "Southern Delta Aquariids",
+    "rightAscensionDeg": 339.0,
+    "declinationDeg": -16.4,
+    "peakSolarLongitudeDeg": 125.0,
+    "windowHalfWidthDeg": 17.0,
+    "peakZenithHourlyRate": 25.0
+  },
+  {
+    "id": "PER",
+    "displayName": "Perseids",
+    "rightAscensionDeg": 48.2,
+    "declinationDeg": 58.1,
+    "peakSolarLongitudeDeg": 140.0,
+    "windowHalfWidthDeg": 18.0,
+    "peakZenithHourlyRate": 100.0
+  },
+  {
+    "id": "ORI",
+    "displayName": "Orionids",
+    "rightAscensionDeg": 95.2,
+    "declinationDeg": 15.6,
+    "peakSolarLongitudeDeg": 208.0,
+    "windowHalfWidthDeg": 18.0,
+    "peakZenithHourlyRate": 20.0
+  },
+  {
+    "id": "LEO",
+    "displayName": "Leonids",
+    "rightAscensionDeg": 152.0,
+    "declinationDeg": 21.6,
+    "peakSolarLongitudeDeg": 235.27,
+    "windowHalfWidthDeg": 12.0,
+    "peakZenithHourlyRate": 15.0
+  },
+  {
+    "id": "GEM",
+    "displayName": "Geminids",
+    "rightAscensionDeg": 112.3,
+    "declinationDeg": 32.5,
+    "peakSolarLongitudeDeg": 262.2,
+    "windowHalfWidthDeg": 7.0,
+    "peakZenithHourlyRate": 150.0
+  },
+  {
+    "id": "URS",
+    "displayName": "Ursids",
+    "rightAscensionDeg": 217.1,
+    "declinationDeg": 75.4,
+    "peakSolarLongitudeDeg": 270.7,
+    "windowHalfWidthDeg": 5.0,
+    "peakZenithHourlyRate": 10.0
+  },
+  {
+    "id": "QUA",
+    "displayName": "Quadrantids",
+    "rightAscensionDeg": 230.1,
+    "declinationDeg": 48.5,
+    "peakSolarLongitudeDeg": 283.15,
+    "windowHalfWidthDeg": 8.0,
+    "peakZenithHourlyRate": 110.0
+  }
+]

@@ -103,6 +103,84 @@ public sealed class CelestialMathTests
         }
     }
 
+    [Fact]
+    public void SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle()
+    {
+        const int daysPerYear = 360;
+        const double hoursPerDay = 24;
+
+        // At local noon the sidereal angle is exactly the seasonal term, which is what makes that
+        // term stand in for solar longitude. Sampled across the year rather than at one date.
+        for (var day = 0; day < daysPerYear; day += 7)
+        {
+            var noon = day + 0.5;
+            var sidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(noon, daysPerYear, hoursPerDay);
+            var solarLongitude = CelestialMath.GetSolarLongitudeDegrees(noon, daysPerYear);
+
+            Assert.Equal(CelestialMath.NormalizeDegrees(solarLongitude), sidereal, 9);
+        }
+    }
+
+    [Theory]
+    [InlineData(12)]
+    [InlineData(108)]
+    [InlineData(360)]
+    public void SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length(int daysPerYear)
+    {
+        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(0, daysPerYear), 9);
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.25, daysPerYear), 9);
+        Assert.Equal(180.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.5, daysPerYear), 9);
+        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.75, daysPerYear), 9);
+        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear, daysPerYear), 9);
+
+        // Same point in the year on the next lap, and the one before the world started.
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 3.25, daysPerYear), 9);
+        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * -0.25, daysPerYear), 9);
+    }
+
+    [Fact]
+    public void SolarLongitude_Shifts_With_The_Equinox_Day()
+    {
+        const int daysPerYear = 360;
+
+        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(90, daysPerYear, equinoxDayOfYear: 90), 9);
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(180, daysPerYear, equinoxDayOfYear: 90), 9);
+        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(0, daysPerYear, equinoxDayOfYear: 90), 9);
+    }
+
+    [Theory]
+    [InlineData(10.0, 20.0, 10.0)]
+    [InlineData(20.0, 10.0, -10.0)]
+    [InlineData(359.0, 1.0, 2.0)]
+    [InlineData(1.0, 359.0, -2.0)]
+    [InlineData(350.0, 10.0, 20.0)]
+    [InlineData(0.0, 180.0, 180.0)]
+    [InlineData(0.0, 181.0, -179.0)]
+    [InlineData(-10.0, 10.0, 20.0)]
+    [InlineData(720.0, 5.0, 5.0)]
+    public void ShortestAngularDistance_Takes_The_Short_Way_Round(double fromDegrees, double toDegrees, double expected)
+    {
+        Assert.Equal(expected, CelestialMath.ShortestAngularDistanceDegrees(fromDegrees, toDegrees), 9);
+    }
+
+    [Fact]
+    public void ShortestAngularDistance_Never_Exceeds_Half_A_Turn()
+    {
+        for (var from = 0.0; from < 360.0; from += 7.0)
+        {
+            for (var to = 0.0; to < 360.0; to += 11.0)
+            {
+                var distance = CelestialMath.ShortestAngularDistanceDegrees(from, to);
+
+                Assert.InRange(distance, -180.0, 180.0);
+                Assert.Equal(
+                    CelestialMath.NormalizeDegrees(to),
+                    CelestialMath.NormalizeDegrees(from + distance),
+                    9);
+            }
+        }
+    }
+
     [Theory]
     [InlineData(0.0, 24.0, 0.0)]
     [InlineData(0.5, 24.0, 12.0)]

@@ -23,6 +23,9 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 - `sky-cultures.v1.json`: manifest for authored sky cultures.
 - `sky-cultures/*.json`: authored constellation line data.
 - `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
+- `meteor-showers.v1.json`: annual meteor showers. Radiant, peak solar longitude, activity half-width, and peak ZHR, hand-authored from the IMO Meteor Shower Calendar working list.
+
+Shower peaks are recorded as **solar longitude**, not as a day of the year, because `daysPerYear` is world configuration: 140 deg is late summer on a 12-day world and a 360-day world alike, while day 224 is not. `CelestialMath.GetSolarLongitudeDegrees` is the matching read.
 
 Deep-sky textures are rendered as spherical quads. Each of the four registered right-ascension/declination corners is projected independently every frame, preserving the source image's sky position, rotation, and aspect ratio. `angularSizeDeg` remains descriptive metadata and is not used to reconstruct a square billboard.
 
