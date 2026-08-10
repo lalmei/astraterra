@@ -39,6 +39,8 @@ Administrators with the Vintage Story `give` privilege can create a ready-made t
 /stars give-catalog
 ```
 
+The same **Star Catalog** and **The Zodiac** books also appear on the **AstraTerra** creative inventory tab, so creative-mode players can drag them without using a command.
+
 The command adds a written book titled **Star Catalog** to the caller's inventory. Put it in the left hand to show every authored constellation or use it with the Calibrated Astrolabe. This admin setup command does not require ink and quill.
 
 To create a smaller book titled **The Zodiac** containing the traditional twelve zodiac constellations in sign order, run:

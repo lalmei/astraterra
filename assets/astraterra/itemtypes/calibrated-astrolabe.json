@@ -12,7 +12,8 @@
   "creativeinventory": {
     "general": ["*"],
     "items": ["*"],
-    "tools": ["*"]
+    "tools": ["*"],
+    "astraterra": ["*"]
   },
   "materialDensity": 900,
   "fpHandTransform": {

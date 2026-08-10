@@ -77,6 +77,12 @@ public sealed class AstraTerraModSystem : ModSystem
         }
     }
 
+    public override void AssetsFinalize(ICoreAPI api)
+    {
+        base.AssetsFinalize(api);
+        ConstellationPreparedBooks.RegisterCreativeStacks(api, catalog);
+    }
+
     public override void StartClientSide(ICoreClientAPI api)
     {
         SkyStarSunMoonRenderer.Reset();

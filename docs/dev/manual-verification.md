@@ -41,6 +41,12 @@
 - At a high latitude, confirm the astrolabe distinguishes a circumpolar constellation from one that never rises.
 - At an extreme latitude during a polar day or night, confirm the astrolabe reports that the sun does not set or does not rise instead of showing an hour.
 
+## Creative Inventory
+
+- Open the creative inventory and select the **AstraTerra** tab.
+- Confirm Brass Telescope, Precision Telescope, Sextant, and Calibrated Astrolabe are present and can be dragged into the player inventory.
+- Confirm **Star Catalog** and **The Zodiac** appear on the same tab and can be dragged without using `/stars give-catalog` or `/stars give-zodiac`.
+
 ## Authored Constellation Build
 
 - As an administrator with the `give` privilege, run `/stars give-catalog`; expected result: a written book titled `Star Catalog` is added to the inventory with 88 named constellation entries.

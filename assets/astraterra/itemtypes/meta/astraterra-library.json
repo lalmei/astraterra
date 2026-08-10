@@ -1,0 +1,13 @@
+{
+  "code": "library",
+  "maxstacksize": 1,
+  "attributes": {
+    "handbook": {
+      "exclude": true
+    }
+  },
+  "texture": {
+    "base": "game:item/meta/randomizer/library"
+  },
+  "creativeinventoryStacks": []
+}

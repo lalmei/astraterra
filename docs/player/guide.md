@@ -103,9 +103,9 @@ Use the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) to find 
 
 ## Quick Start
 
-1. Craft or spawn a Brass Telescope.
+1. In creative mode, open the creative inventory and use the **AstraTerra** tab to drag out a Brass Telescope, Sextant, Calibrated Astrolabe, **Star Catalog**, or **The Zodiac**. Survival players can craft the instruments instead.
 2. Wait for a dark, clear night with open sky overhead.
-3. Put a blank normal book in your left hand and keep ink and quill in your inventory.
+3. Put a blank normal book (or a catalog book from the creative tab) in your left hand and keep ink and quill in your inventory.
 4. Hold right click with the telescope to scope in.
 5. Middle click to switch to Draw mode.
 6. Drag between visible guide stars to create a constellation segment.
