@@ -1,7 +1,8 @@
 # AstraTerra Docs
 
 ![AstraTerra](https://raw.githubusercontent.com/lalmei/astraterra/main/modicon.png)
-AstraTerra turns Vintage Story's night sky into an 5000+ Earth centered starfield with telescope observation, constellation journaling, deep-sky sights, and a sextant readout.
+
+Astra Terra turns Vintage Story’s sky into a scientifically grounded astronomy and navigation system. Observe a 5,000+ star Earth-centered sky, navigate by the Sun, Moon, and stars, explore deep-sky objects through a telescope, and chart and monitor your own constellations as the heavens move overhead.
 
 <div class="astraterra-feature-grid">
   <a href="player/guide/#constellation-journal">
