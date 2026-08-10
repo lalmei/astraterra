@@ -120,6 +120,20 @@ daylight and never be observable. That is inherent to anchoring on the angle rat
 but anything user-facing built on this should account for a window that may be shorter than a single
 night.
 
+### Turning a shower rate into visible streaks
+
+`MeteorShowerActivity.ReadAll` is the runtime boundary between the world clock and the client visual:
+it combines solar-longitude proximity, radiant altitude, moon phase brightness, and the same natural
+darkness used by the starfield. The visual model then treats Vintage Story's roughly two-real-minute
+world hour as the presentation hour. A peak rate of 120 meteors per hour therefore produces about
+one streak per real second, while weak nights remain visibly sparse.
+
+Streak positions are generated around the radiant on the celestial sphere. Their tangent always
+points away from it, and angular length grows with radiant separation. The renderer turns each frame
+into a tapered four-section ribbon on the sky sphere and submits all active streaks in one mesh.
+Transient positions are client-local visual state; the shared astronomical conditions remain fully
+deterministic.
+
 ## The Sun And The Moon
 
 The sun and moon are **not** modelled by AstraTerra. They come from Vintage Story itself, via

@@ -5,6 +5,7 @@ AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Star
 ## What You Can Do
 
 - Watch an 5000+ fixed-star sky that changes as you travel north or south.
+- Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
 - Use the Sextant to read the angle of a star, the sun, or the moon above the horizon, day or night.
@@ -76,6 +77,21 @@ Astronomy interaction works best when:
 The telescope overlay can still open when those conditions are not met, but drawing and star-specific readouts may be unavailable.
 
 The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected constellation is below the horizon.
+
+## Meteor Showers
+
+Meteor showers recur at the same fraction of every configured world year rather than on a hard-coded
+day number. A shower becomes worth watching when its season is near the peak, its radiant is above
+the horizon, and the sky is dark. A bright moon suppresses most faint meteors but does not eliminate
+the brightest ones.
+
+The strongest catalog shower is the Geminids. On the default 108-day calendar, a useful test is
+**month 9, day 8 at about 02:00**, from roughly **32.5° north**. This is close to the peak while the
+radiant is high; the exact count still changes with longitude and moon phase. Use `.stars debug` to
+check the latitude reported by AstraTerra.
+
+Each streak points back toward its shower's radiant. Streaks close to that point are short, while
+streaks farther across the sky are longer because the parallel meteor paths are seen in perspective.
 
 ## Starfield Comparison Modes
 

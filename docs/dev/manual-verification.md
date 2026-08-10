@@ -14,6 +14,14 @@
 - Confirm telescope and sextant items use visible non-placeholder models/textures.
 - Hold right click with the Brass Telescope and confirm normal item interaction is suppressed while scoped.
 - Confirm the fixed-star sky is visible at night and does not crash with the generated catalog.
+- In a default 108-day world, move to about 32.5° north with `.stars goto-lat 32.5`, set the calendar
+  to month 9 day 8 at about 02:00, and watch open sky for at least 30 seconds. Confirm Geminid streaks
+  appear, travel away from one common radiant, and vary from short near the radiant to longer farther
+  away. A bright moon may make the shower sparse but must not eliminate every meteor.
+- Move the time into daylight and confirm new meteors stop spawning. Move indoors and confirm no
+  stale streak remains frozen overhead; return outdoors at night and confirm spawning resumes.
+- Move away from the shower's activity window and confirm no meteor streaks appear during the same
+  observation interval.
 - Put a blank normal book in the left hand and keep ink and quill in inventory.
 - Use `.stars list` before drawing; expected result: no saved constellations for the held book.
 - Scope with the Brass Telescope, switch to Draw mode, and drag from one guide star to another; expected result: a constellation segment is written into the held book and the naming dialog opens.

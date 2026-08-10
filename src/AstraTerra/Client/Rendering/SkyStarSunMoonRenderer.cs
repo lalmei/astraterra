@@ -26,6 +26,7 @@ public static class SkyStarSunMoonRenderer
     private const double MinimumSkyRenderDarkness = 0.10;
     private const float MinimumStarAlpha = 0.035f;
     private const float SkyDistance = 40.0f;
+    private const float MeteorSkyDistance = 39.8f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
     private const float StarGlowMaxAlpha = 0.35f;
     private const float DeepSkyBrightnessScale = 0.42f;
@@ -36,6 +37,8 @@ public static class SkyStarSunMoonRenderer
     private static ICoreClientAPI? api;
     private static AstraTerraConfig? config;
     private static StarCatalog? catalog;
+    private static IReadOnlyList<MeteorShowerEntry> meteorShowers = Array.Empty<MeteorShowerEntry>();
+    private static MeteorShowerVisualModel meteorVisuals = new();
     private static double secondsSinceLastLog;
     private static double secondsSinceLastSkipLog;
     private static bool starTextureLoadFailed;
@@ -51,6 +54,7 @@ public static class SkyStarSunMoonRenderer
     private static int telescopeFaintStarTextureId;
     private static int constellationDotTextureId;
     private static MeshRef? deepSkyQuadMesh;
+    private static MeshRef? meteorStreakMesh;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
@@ -58,26 +62,38 @@ public static class SkyStarSunMoonRenderer
     public static bool ShouldRenderVanillaStarfield
         => config is null || StarfieldModeParser.ShowsVanilla(config.GetStarfieldMode());
 
-    public static void Initialize(ICoreClientAPI clientApi, AstraTerraConfig loadedConfig, StarCatalog loadedCatalog)
+    public static void Initialize(
+        ICoreClientAPI clientApi,
+        AstraTerraConfig loadedConfig,
+        StarCatalog loadedCatalog,
+        IReadOnlyList<MeteorShowerEntry> loadedMeteorShowers)
     {
+        ArgumentNullException.ThrowIfNull(loadedMeteorShowers);
         Reset();
         api = clientApi;
         config = loadedConfig;
         catalog = loadedCatalog;
+        meteorShowers = loadedMeteorShowers;
+        meteorVisuals = new MeteorShowerVisualModel((ulong)Environment.TickCount64);
         clientApi.Logger.Notification(
-            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px",
+            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px; meteorShowers={3}",
             StarBillboardSizing.MinimumCoreDiameterPixels,
             StarBillboardSizing.MaximumCoreDiameterPixels,
-            StarAngularSizePerPixelDeg);
+            StarAngularSizePerPixelDeg,
+            meteorShowers.Count);
     }
 
     public static void Reset()
     {
         deepSkyQuadMesh?.Dispose();
         deepSkyQuadMesh = null;
+        meteorStreakMesh?.Dispose();
+        meteorStreakMesh = null;
         api = null;
         config = null;
         catalog = null;
+        meteorShowers = Array.Empty<MeteorShowerEntry>();
+        meteorVisuals.Clear();
         secondsSinceLastLog = 0;
         secondsSinceLastSkipLog = 0;
         starTextureLoadFailed = false;
@@ -144,6 +160,7 @@ public static class SkyStarSunMoonRenderer
 
         if (!StarfieldModeParser.ShowsAstraTerra(config.GetStarfieldMode()))
         {
+            meteorVisuals.Clear();
             return;
         }
 
@@ -152,6 +169,7 @@ public static class SkyStarSunMoonRenderer
         var renderDarkness = forceDaylightStars ? 1.0 : naturalDarkness;
         if (!ShouldRenderForDarkness(naturalDarkness, forceDaylightStars))
         {
+            meteorVisuals.Clear();
             LogSkyStep(dt, "skipped daylight: daylight={0:0.00}; darkness={1:0.00}", calendar.DayLightStrength, naturalDarkness);
             return;
         }
@@ -159,6 +177,7 @@ public static class SkyStarSunMoonRenderer
         var playerPos = api.World.Player.Entity.Pos;
         if (!HasOpenSkyAbovePlayer(api))
         {
+            meteorVisuals.Clear();
             LogSkyStep(dt, "skipped blocked sky: x={0:0.0}; y={1:0.0}; z={2:0.0}", playerPos.X, playerPos.Y, playerPos.Z);
             return;
         }
@@ -173,13 +192,25 @@ public static class SkyStarSunMoonRenderer
         var brightnessBias = config.StarBrightnessBias * (float)renderDarkness;
         var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias);
         var drawableStars = FilterDrawableStars(visibleStars);
-        if (drawableStars.Count == 0)
+        var solarLongitude = CelestialMath.GetSolarLongitudeDegrees(
+            calendar.TotalDays,
+            Math.Max(1, calendar.DaysPerYear));
+        var meteorReadings = MeteorShowerActivity.ReadAll(
+            meteorShowers,
+            solarLongitude,
+            latitude,
+            localSiderealAngle,
+            naturalDarkness,
+            calendar.MoonPhaseBrightness);
+        var meteorStreaks = meteorVisuals.Advance(dt, meteorReadings);
+        if (drawableStars.Count == 0 && meteorStreaks.Count == 0)
         {
             LogSkyStep(
                 dt,
-                "skipped no drawable stars: catalog={0}; visible={1}; latitude={2:0.0}; localSidereal={3:0.0}; brightnessBias={4:0.00}",
+                "skipped no drawable sky objects: catalog={0}; visibleStars={1}; meteorShowers={2}; latitude={3:0.0}; localSidereal={4:0.0}; brightnessBias={5:0.00}",
                 catalog.Stars.Count,
                 visibleStars.Count,
+                meteorShowers.Count,
                 latitude,
                 localSiderealAngle,
                 brightnessBias);
@@ -226,7 +257,20 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        RenderSky(api, drawableStars, visibleDeepSkyObjects, constellationDots, quadModel, imageSize, dt, calendar.DayLightStrength, playerPos.Yaw, playerPos.Pitch, forceDaylightStars);
+        RenderSky(
+            api,
+            drawableStars,
+            visibleDeepSkyObjects,
+            constellationDots,
+            meteorStreaks,
+            meteorReadings.FirstOrDefault(reading => reading.ObservedHourlyRate > 0.0),
+            quadModel,
+            imageSize,
+            dt,
+            calendar.DayLightStrength,
+            playerPos.Yaw,
+            playerPos.Pitch,
+            forceDaylightStars);
     }
 
     private static void RenderSky(
@@ -234,6 +278,8 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<RenderedStar> visibleStars,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
         IReadOnlyList<SkyConstellationDot> constellationDots,
+        IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
+        MeteorShowerReading? strongestMeteorReading,
         MeshRef quadModel,
         int imageSize,
         float deltaTime,
@@ -251,6 +297,8 @@ public static class SkyStarSunMoonRenderer
         var smallestDrawnSize = double.MaxValue;
         var largestDrawnSize = 0.0;
         var modelMatrixBuffer = new float[16];
+
+        UpdateMeteorStreakMesh(clientApi, meteorStreaks);
 
         render.GlToggleBlend(true, EnumBlendMode.Glow);
         render.GlDisableCullFace();
@@ -323,6 +371,11 @@ public static class SkyStarSunMoonRenderer
                     RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer);
                 }
             }
+
+            if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0)
+            {
+                RenderMeteorStreaks(clientApi, shader, modelMatrixBuffer);
+            }
         }
         finally
         {
@@ -360,6 +413,16 @@ public static class SkyStarSunMoonRenderer
                 drawnCount == 0 ? 0 : smallestDrawnSize,
                 largestDrawnSize,
                 useTelescopeSprites);
+            if (strongestMeteorReading is not null || meteorStreaks.Count > 0)
+            {
+                clientApi.Logger.Notification(
+                    "AstraTerra meteor shower: strongest={0}; rate={1:0.0}/h; radiantAz={2:0.0}; radiantAlt={3:0.0}; activeStreaks={4}",
+                    strongestMeteorReading?.Shower.DisplayName ?? "none",
+                    strongestMeteorReading?.ObservedHourlyRate ?? 0.0,
+                    strongestMeteorReading?.AzimuthDeg ?? 0.0,
+                    strongestMeteorReading?.AltitudeDeg ?? 0.0,
+                    meteorStreaks.Count);
+            }
         }
     }
 
@@ -409,6 +472,51 @@ public static class SkyStarSunMoonRenderer
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         clientApi.Render.RenderMesh(quadModel);
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+    }
+
+    private static void UpdateMeteorStreakMesh(
+        ICoreClientAPI clientApi,
+        IReadOnlyList<RenderedMeteorStreak> meteorStreaks)
+    {
+        if (meteorStreaks.Count == 0)
+        {
+            return;
+        }
+
+        var meshData = MeteorStreakMeshBuilder.Build(meteorStreaks, MeteorSkyDistance);
+        if (meteorStreakMesh is null)
+        {
+            meteorStreakMesh = clientApi.Render.UploadMesh(meshData);
+        }
+        else
+        {
+            clientApi.Render.UpdateMesh(meteorStreakMesh, meshData);
+        }
+    }
+
+    private static void RenderMeteorStreaks(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        float[] modelMatrixBuffer)
+    {
+        if (meteorStreakMesh is null)
+        {
+            return;
+        }
+
+        var entity = clientApi.World.Player.Entity;
+        var verticalOrigin = (float)entity.LocalEyePos.Y
+            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
+        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+        shader.RgbaTint = ColorUtil.WhiteArgbVec;
+        shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
+        shader.Tex2D = constellationDotTextureId;
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
+        clientApi.Render.RenderMesh(meteorStreakMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
