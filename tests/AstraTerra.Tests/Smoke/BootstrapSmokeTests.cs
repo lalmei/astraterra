@@ -58,6 +58,7 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra startup step: item class registered", modSystem);
         Assert.Contains("AstraTerra startup step: config loaded", modSystem);
         Assert.Contains("AstraTerra startup step: astronomy catalog loaded", modSystem);
+        Assert.Contains("AstraTerra startup step: meteor shower catalog loaded", modSystem);
         Assert.Contains("AstraTerra startup step: telescope zoom patched", modSystem);
         Assert.Contains("AstraTerra startup step: observation input registered", modSystem);
         Assert.Contains("AstraTerra startup step: legacy constellation journal loaded", modSystem);
@@ -68,7 +69,7 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerraSkyCoordinateGrid", modSystem);
         Assert.Contains("AstraTerra.Items.ItemAstrolabe", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
-        Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog)", modSystem);
+        Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);
     }
 
@@ -99,6 +100,9 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("MinimumStarAlpha", renderer);
         Assert.Contains("ShouldRenderForDarkness(naturalDarkness, forceDaylightStars)", renderer);
         Assert.Contains("AstraTerra disabled sky rendering after an unexpected error", renderer);
+        Assert.Contains("MeteorShowerActivity.ReadAll", renderer);
+        Assert.Contains("MeteorStreakMeshBuilder.Build", renderer);
+        Assert.Contains("RenderMeteorStreaks", renderer);
     }
 
     [Fact]
@@ -136,6 +140,8 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("api = null;", renderer);
         Assert.Contains("config = null;", renderer);
         Assert.Contains("catalog = null;", renderer);
+        Assert.Contains("meteorShowers = Array.Empty<MeteorShowerEntry>();", renderer);
+        Assert.Contains("meteorVisuals.Clear();", renderer);
         Assert.Contains("forceDaylightStars = false;", renderer);
         Assert.Contains("renderingDisabledAfterFailure = false;", renderer);
     }
