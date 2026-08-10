@@ -2,6 +2,8 @@
 
 Use `.stars build` to add any of the 88 Modern IAU constellation patterns to the constellation book in your left hand.
 
+If you just want to observe the Internationally defined Constallations. Just grab a blank book, a quil/ink, and use the cheat commands bellow.
+
 ## Before You Build
 
 You need:
@@ -57,96 +59,96 @@ This adds a book titled **The Zodiac** in sign order from Aries through Pisces. 
 
 ## All 88 Constellations
 
-| Code | Constellation | Build command |
-|---|---|---|
-| `And` | Andromeda | `.stars build And` |
-| `Ant` | Antlia | `.stars build Ant` |
-| `Aps` | Apus | `.stars build Aps` |
-| `Aql` | Aquila | `.stars build Aql` |
-| `Aqr` | Aquarius | `.stars build Aqr` |
-| `Ara` | Ara | `.stars build Ara` |
-| `Ari` | Aries | `.stars build Ari` |
-| `Aur` | Auriga | `.stars build Aur` |
-| `Boo` | Boötes | `.stars build Boo` |
-| `CMa` | Canis Major | `.stars build CMa` |
-| `CMi` | Canis Minor | `.stars build CMi` |
-| `CVn` | Canes Venatici | `.stars build CVn` |
-| `Cae` | Caelum | `.stars build Cae` |
-| `Cam` | Camelopardalis | `.stars build Cam` |
-| `Cap` | Capricornus | `.stars build Cap` |
-| `Car` | Carina | `.stars build Car` |
-| `Cas` | Cassiopeia | `.stars build Cas` |
-| `Cen` | Centaurus | `.stars build Cen` |
-| `Cep` | Cepheus | `.stars build Cep` |
-| `Cet` | Cetus | `.stars build Cet` |
-| `Cha` | Chamaeleon | `.stars build Cha` |
-| `Cir` | Circinus | `.stars build Cir` |
-| `Cnc` | Cancer | `.stars build Cnc` |
-| `Col` | Columba | `.stars build Col` |
-| `Com` | Coma Berenices | `.stars build Com` |
-| `CrA` | Corona Australis | `.stars build CrA` |
-| `CrB` | Corona Borealis | `.stars build CrB` |
-| `Crt` | Crater | `.stars build Crt` |
-| `Cru` | Crux | `.stars build Cru` |
-| `Crv` | Corvus | `.stars build Crv` |
-| `Cyg` | Cygnus | `.stars build Cyg` |
-| `Del` | Delphinus | `.stars build Del` |
-| `Dor` | Dorado | `.stars build Dor` |
-| `Dra` | Draco | `.stars build Dra` |
-| `Equ` | Equuleus | `.stars build Equ` |
-| `Eri` | Eridanus | `.stars build Eri` |
-| `For` | Fornax | `.stars build For` |
-| `Gem` | Gemini | `.stars build Gem` |
-| `Gru` | Grus | `.stars build Gru` |
-| `Her` | Hercules | `.stars build Her` |
-| `Hor` | Horologium | `.stars build Hor` |
-| `Hya` | Hydra | `.stars build Hya` |
-| `Hyi` | Hydrus | `.stars build Hyi` |
-| `Ind` | Indus | `.stars build Ind` |
-| `LMi` | Leo Minor | `.stars build LMi` |
-| `Lac` | Lacerta | `.stars build Lac` |
-| `Leo` | Leo | `.stars build Leo` |
-| `Lep` | Lepus | `.stars build Lep` |
-| `Lib` | Libra | `.stars build Lib` |
-| `Lup` | Lupus | `.stars build Lup` |
-| `Lyn` | Lynx | `.stars build Lyn` |
-| `Lyr` | Lyra | `.stars build Lyr` |
-| `Men` | Mensa | `.stars build Men` |
-| `Mic` | Microscopium | `.stars build Mic` |
-| `Mon` | Monoceros | `.stars build Mon` |
-| `Mus` | Musca | `.stars build Mus` |
-| `Nor` | Norma | `.stars build Nor` |
-| `Oct` | Octans | `.stars build Oct` |
-| `Oph` | Ophiuchus | `.stars build Oph` |
-| `Ori` | Orion | `.stars build Ori` |
-| `Pav` | Pavo | `.stars build Pav` |
-| `Peg` | Pegasus | `.stars build Peg` |
-| `Per` | Perseus | `.stars build Per` |
-| `Phe` | Phoenix | `.stars build Phe` |
-| `Pic` | Pictor | `.stars build Pic` |
-| `PsA` | Piscis Austrinus | `.stars build PsA` |
-| `Psc` | Pisces | `.stars build Psc` |
-| `Pup` | Puppis | `.stars build Pup` |
-| `Pyx` | Pyxis | `.stars build Pyx` |
-| `Ret` | Reticulum | `.stars build Ret` |
-| `Scl` | Sculptor | `.stars build Scl` |
-| `Sco` | Scorpius | `.stars build Sco` |
-| `Sct` | Scutum | `.stars build Sct` |
-| `Ser` | Serpens | `.stars build Ser` |
-| `Sex` | Sextans | `.stars build Sex` |
-| `Sge` | Sagitta | `.stars build Sge` |
-| `Sgr` | Sagittarius | `.stars build Sgr` |
-| `Tau` | Taurus | `.stars build Tau` |
-| `Tel` | Telescopium | `.stars build Tel` |
+| Code  | Constellation       | Build command      |
+| ----- | ------------------- | ------------------ |
+| `And` | Andromeda           | `.stars build And` |
+| `Ant` | Antlia              | `.stars build Ant` |
+| `Aps` | Apus                | `.stars build Aps` |
+| `Aql` | Aquila              | `.stars build Aql` |
+| `Aqr` | Aquarius            | `.stars build Aqr` |
+| `Ara` | Ara                 | `.stars build Ara` |
+| `Ari` | Aries               | `.stars build Ari` |
+| `Aur` | Auriga              | `.stars build Aur` |
+| `Boo` | Boötes              | `.stars build Boo` |
+| `CMa` | Canis Major         | `.stars build CMa` |
+| `CMi` | Canis Minor         | `.stars build CMi` |
+| `CVn` | Canes Venatici      | `.stars build CVn` |
+| `Cae` | Caelum              | `.stars build Cae` |
+| `Cam` | Camelopardalis      | `.stars build Cam` |
+| `Cap` | Capricornus         | `.stars build Cap` |
+| `Car` | Carina              | `.stars build Car` |
+| `Cas` | Cassiopeia          | `.stars build Cas` |
+| `Cen` | Centaurus           | `.stars build Cen` |
+| `Cep` | Cepheus             | `.stars build Cep` |
+| `Cet` | Cetus               | `.stars build Cet` |
+| `Cha` | Chamaeleon          | `.stars build Cha` |
+| `Cir` | Circinus            | `.stars build Cir` |
+| `Cnc` | Cancer              | `.stars build Cnc` |
+| `Col` | Columba             | `.stars build Col` |
+| `Com` | Coma Berenices      | `.stars build Com` |
+| `CrA` | Corona Australis    | `.stars build CrA` |
+| `CrB` | Corona Borealis     | `.stars build CrB` |
+| `Crt` | Crater              | `.stars build Crt` |
+| `Cru` | Crux                | `.stars build Cru` |
+| `Crv` | Corvus              | `.stars build Crv` |
+| `Cyg` | Cygnus              | `.stars build Cyg` |
+| `Del` | Delphinus           | `.stars build Del` |
+| `Dor` | Dorado              | `.stars build Dor` |
+| `Dra` | Draco               | `.stars build Dra` |
+| `Equ` | Equuleus            | `.stars build Equ` |
+| `Eri` | Eridanus            | `.stars build Eri` |
+| `For` | Fornax              | `.stars build For` |
+| `Gem` | Gemini              | `.stars build Gem` |
+| `Gru` | Grus                | `.stars build Gru` |
+| `Her` | Hercules            | `.stars build Her` |
+| `Hor` | Horologium          | `.stars build Hor` |
+| `Hya` | Hydra               | `.stars build Hya` |
+| `Hyi` | Hydrus              | `.stars build Hyi` |
+| `Ind` | Indus               | `.stars build Ind` |
+| `LMi` | Leo Minor           | `.stars build LMi` |
+| `Lac` | Lacerta             | `.stars build Lac` |
+| `Leo` | Leo                 | `.stars build Leo` |
+| `Lep` | Lepus               | `.stars build Lep` |
+| `Lib` | Libra               | `.stars build Lib` |
+| `Lup` | Lupus               | `.stars build Lup` |
+| `Lyn` | Lynx                | `.stars build Lyn` |
+| `Lyr` | Lyra                | `.stars build Lyr` |
+| `Men` | Mensa               | `.stars build Men` |
+| `Mic` | Microscopium        | `.stars build Mic` |
+| `Mon` | Monoceros           | `.stars build Mon` |
+| `Mus` | Musca               | `.stars build Mus` |
+| `Nor` | Norma               | `.stars build Nor` |
+| `Oct` | Octans              | `.stars build Oct` |
+| `Oph` | Ophiuchus           | `.stars build Oph` |
+| `Ori` | Orion               | `.stars build Ori` |
+| `Pav` | Pavo                | `.stars build Pav` |
+| `Peg` | Pegasus             | `.stars build Peg` |
+| `Per` | Perseus             | `.stars build Per` |
+| `Phe` | Phoenix             | `.stars build Phe` |
+| `Pic` | Pictor              | `.stars build Pic` |
+| `PsA` | Piscis Austrinus    | `.stars build PsA` |
+| `Psc` | Pisces              | `.stars build Psc` |
+| `Pup` | Puppis              | `.stars build Pup` |
+| `Pyx` | Pyxis               | `.stars build Pyx` |
+| `Ret` | Reticulum           | `.stars build Ret` |
+| `Scl` | Sculptor            | `.stars build Scl` |
+| `Sco` | Scorpius            | `.stars build Sco` |
+| `Sct` | Scutum              | `.stars build Sct` |
+| `Ser` | Serpens             | `.stars build Ser` |
+| `Sex` | Sextans             | `.stars build Sex` |
+| `Sge` | Sagitta             | `.stars build Sge` |
+| `Sgr` | Sagittarius         | `.stars build Sgr` |
+| `Tau` | Taurus              | `.stars build Tau` |
+| `Tel` | Telescopium         | `.stars build Tel` |
 | `TrA` | Triangulum Australe | `.stars build TrA` |
-| `Tri` | Triangulum | `.stars build Tri` |
-| `Tuc` | Tucana | `.stars build Tuc` |
-| `UMa` | Ursa Major | `.stars build UMa` |
-| `UMi` | Ursa Minor | `.stars build UMi` |
-| `Vel` | Vela | `.stars build Vel` |
-| `Vir` | Virgo | `.stars build Vir` |
-| `Vol` | Volans | `.stars build Vol` |
-| `Vul` | Vulpecula | `.stars build Vul` |
+| `Tri` | Triangulum          | `.stars build Tri` |
+| `Tuc` | Tucana              | `.stars build Tuc` |
+| `UMa` | Ursa Major          | `.stars build UMa` |
+| `UMi` | Ursa Minor          | `.stars build UMi` |
+| `Vel` | Vela                | `.stars build Vel` |
+| `Vir` | Virgo               | `.stars build Vir` |
+| `Vol` | Volans              | `.stars build Vol` |
+| `Vul` | Vulpecula           | `.stars build Vul` |
 
 ## After Building
 

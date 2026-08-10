@@ -13,3 +13,4 @@ __pycache__/
 *.pyc
 tools/cataloggen/sources/*.csv
 tools/cataloggen/sources/*.csv.gz
+.claude

@@ -32,7 +32,15 @@ assets/astraterra/
 └── textures/
 ```
 
-Runtime catalog assets are versioned by filename. Sky-culture files are registered through `assets/astraterra/data/sky-cultures.v1.json`, with individual culture files under `assets/astraterra/data/sky-cultures/`.
+Runtime catalog assets are versioned by filename.
+
+`assets/astraterra/data/star_catalog.v1.json` : Contains the defined stars. Modifing this file can change which stars you see.
+
+`assets/astraterra/data/deep-sky.v1.json` : Contains the defined sky images, in our reserved for nebulas, galaxy and other deep sky objects. We use real astronomy photograhs, but these can also be pre-generated.
+
+Sky-culture files are registered through `assets/astraterra/data/sky-cultures.v1.json`, with individual culture files under `assets/astraterra/data/sky-cultures/`.
+
+The Sky-culture allows you to predefined different sets of constalations, which might be useful for Custom Stories, and lore.
 
 ## Rendering Baseline
 
