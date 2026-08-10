@@ -96,21 +96,18 @@ public sealed class StarsServerCommands
         => GivePreparedBook(
             args,
             ConstellationBookService.StarCatalogTitle,
-            "book-normal-darkolive",
-            catalog => StarCatalogJournalBuilder.Build(catalog));
+            ConstellationPreparedBooks.CreateStarCatalog);
 
     private string GiveZodiac(TextCommandCallingArgs args)
         => GivePreparedBook(
             args,
             ConstellationBookService.ZodiacTitle,
-            "book-normal-purple",
-            catalog => StarCatalogJournalBuilder.BuildZodiac(catalog));
+            ConstellationPreparedBooks.CreateZodiac);
 
     private string GivePreparedBook(
         TextCommandCallingArgs args,
         string bookTitle,
-        string bookItemPath,
-        System.Func<StarCatalog, ConstellationJournal> buildJournal)
+        System.Func<ICoreAPI, StarCatalog, ItemStack> createBook)
     {
         if (api is null)
         {
@@ -123,29 +120,22 @@ public sealed class StarsServerCommands
             return $"Cannot create {bookTitle}: the astronomy catalog is not loaded.";
         }
 
-        var bookItem = api.World.GetItem(new AssetLocation("game", bookItemPath));
-        if (bookItem is null)
-        {
-            return $"Cannot create {bookTitle}: the normal book item is unavailable.";
-        }
-
-        ConstellationJournal journal;
+        ItemStack stack;
         try
         {
-            journal = buildJournal(catalog);
+            stack = createBook(api, catalog);
         }
         catch (Exception exception)
         {
             return $"Cannot create {bookTitle}: {exception.Message}";
         }
 
-        var stack = new ItemStack(bookItem);
-        ConstellationBookService.WriteJournal(stack, journal, bookTitle);
+        var constellationCount = ConstellationBookService.ReadJournalOrEmpty(stack).Constellations.Count;
         if (!args.Caller.Player.InventoryManager.TryGiveItemstack(stack, true))
         {
             return $"Could not give {bookTitle}: clear one inventory slot and try again.";
         }
 
-        return $"Gave {bookTitle} with {journal.Constellations.Count} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
+        return $"Gave {bookTitle} with {constellationCount} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
     }
 }

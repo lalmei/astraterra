@@ -23,7 +23,8 @@
   "creativeinventory": {
     "general": ["*"],
     "items": ["*"],
-    "tools": ["*"]
+    "tools": ["*"],
+    "astraterra": ["*"]
   },
   "textures": {
     "glass": { "base": "game:item/resource/ungraded/clearquartz" },

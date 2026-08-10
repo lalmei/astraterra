@@ -31,6 +31,7 @@ An administrator with the Vintage Story `give` privilege can create one written 
 /stars give-catalog
 ```
 
+Creative-mode players can also drag **Star Catalog** and **The Zodiac** from the **AstraTerra** creative inventory tab.
 The command adds **Star Catalog** to the caller's inventory without requiring ink and quill. Put the book in your left hand to render all authored lines or test constellation selection with the Calibrated Astrolabe.
 
 For a smaller test book containing only the traditional twelve zodiac constellations, run:
