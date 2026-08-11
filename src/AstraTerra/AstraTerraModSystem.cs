@@ -44,13 +44,14 @@ public sealed class AstraTerraModSystem : ModSystem
         {
             config = AstraTerraConfigLoader.Load(clientApi);
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}",
+                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}",
                 config.StarfieldMode,
                 config.SkyGridMode,
                 config.StarBrightnessBias,
                 config.ShowMinimalHud,
                 config.ShowReticle,
-                config.DebugGuideStarEmphasisDefault);
+                config.DebugGuideStarEmphasisDefault,
+                config.DebugMeteorRateMultiplier);
         }
 
         try

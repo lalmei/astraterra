@@ -15,9 +15,12 @@
 - Hold right click with the Brass Telescope and confirm normal item interaction is suppressed while scoped.
 - Confirm the fixed-star sky is visible at night and does not crash with the generated catalog.
 - In a default 108-day world, move to about 32.5° north with `.stars goto-lat 32.5`, set the calendar
-  to month 9 day 8 at about 02:00, and watch open sky for at least 30 seconds. Confirm Geminid streaks
+  to month 9 day 8 at about 02:00, and watch open sky for several minutes. Confirm Geminid streaks
   appear, travel away from one common radiant, and vary from short near the radiant to longer farther
   away. A bright moon may make the shower sparse but must not eliminate every meteor.
+- For a shorter development check, set `DebugMeteorRateMultiplier` to `30.0` in
+  `ModConfig/astraterra.json` and restart the client. This reproduces the original accelerated test
+  rate. Restore the default value of `1.0` before evaluating normal player-visible frequency.
 - Move the time into daylight and confirm new meteors stop spawning. Move indoors and confirm no
   stale streak remains frozen overhead; return outdoors at night and confirm spawning resumes.
 - Move away from the shower's activity window and confirm no meteor streaks appear during the same

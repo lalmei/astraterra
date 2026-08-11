@@ -202,7 +202,10 @@ public static class SkyStarSunMoonRenderer
             localSiderealAngle,
             naturalDarkness,
             calendar.MoonPhaseBrightness);
-        var meteorStreaks = meteorVisuals.Advance(dt, meteorReadings);
+        var meteorStreaks = meteorVisuals.Advance(
+            dt,
+            meteorReadings,
+            config.GetDebugMeteorRateMultiplier());
         if (drawableStars.Count == 0 && meteorStreaks.Count == 0)
         {
             LogSkyStep(

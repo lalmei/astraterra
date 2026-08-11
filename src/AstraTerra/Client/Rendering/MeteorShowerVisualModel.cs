@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Config;
 
 namespace AstraTerra.Client.Rendering;
 
@@ -27,20 +28,19 @@ public sealed record RenderedMeteorStreak(
 
 /// <summary>
 /// Converts an observed meteor rate into short-lived, client-local streaks. The astronomical rate
-/// remains in <see cref="MeteorShowerActivity"/>; this class only compresses an observing hour into
-/// a playable span and gives each meteor a deterministic radiant-relative path.
+/// remains in <see cref="MeteorShowerActivity"/>; this class converts that real-world hourly rate
+/// into elapsed seconds and gives each meteor a deterministic radiant-relative path.
 /// </summary>
 public sealed class MeteorShowerVisualModel
 {
     /// <summary>
-    /// Vintage Story's default clock advances by roughly one world hour in two real minutes. Using
-    /// the same presentation scale makes a peak ZHR of 120 read as about one visible meteor per
-    /// second without turning a paused clock into a frozen visual effect.
+    /// Published ZHR values describe meteors per real observation hour, independent of how quickly
+    /// the world calendar advances.
     /// </summary>
-    public const double ObservationHourSeconds = 120.0;
-
+    public const double ObservationHourSeconds = 3600.0;
     public const int MaximumActiveStreaks = 16;
     public const double MaximumFrameStepSeconds = 0.25;
+    private const double SpawnAccumulatorEpsilon = 1e-12;
 
     private readonly List<MeteorStreak> activeStreaks = [];
     private ulong sequence;
@@ -55,7 +55,8 @@ public sealed class MeteorShowerVisualModel
 
     public IReadOnlyList<RenderedMeteorStreak> Advance(
         double deltaSeconds,
-        IReadOnlyList<MeteorShowerReading> readings)
+        IReadOnlyList<MeteorShowerReading> readings,
+        double debugRateMultiplier = 1.0)
     {
         ArgumentNullException.ThrowIfNull(readings);
 
@@ -65,7 +66,10 @@ public sealed class MeteorShowerVisualModel
 
         AgeStreaks(elapsed);
 
-        var totalRate = readings.Sum(reading => Math.Max(0.0, reading.ObservedHourlyRate));
+        var rateMultiplier = double.IsFinite(debugRateMultiplier)
+            ? Math.Clamp(debugRateMultiplier, 0.0, AstraTerraConfig.MaximumDebugMeteorRateMultiplier)
+            : 1.0;
+        var totalRate = readings.Sum(reading => Math.Max(0.0, reading.ObservedHourlyRate)) * rateMultiplier;
         if (totalRate <= 0.0)
         {
             spawnAccumulator = 0.0;
@@ -73,9 +77,9 @@ public sealed class MeteorShowerVisualModel
         }
 
         spawnAccumulator += totalRate * elapsed / ObservationHourSeconds;
-        while (spawnAccumulator >= 1.0 && activeStreaks.Count < MaximumActiveStreaks)
+        while (spawnAccumulator >= 1.0 - SpawnAccumulatorEpsilon && activeStreaks.Count < MaximumActiveStreaks)
         {
-            spawnAccumulator -= 1.0;
+            spawnAccumulator = Math.Max(0.0, spawnAccumulator - 1.0);
             var spawnSequence = sequence++;
             var reading = ChooseReading(readings, totalRate, SampleUnit(spawnSequence, 0));
             var streak = TryCreateStreak(reading, spawnSequence);
