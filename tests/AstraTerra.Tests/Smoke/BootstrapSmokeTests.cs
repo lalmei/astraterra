@@ -186,6 +186,7 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("ShowMinimalHud", props);
         Assert.Contains("ShowReticle", props);
         Assert.Contains("DebugGuideStarEmphasisDefault", props);
+        Assert.Contains("DebugMeteorRateMultiplier", props);
     }
 
     private static string RepositoryRoot

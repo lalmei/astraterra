@@ -7,18 +7,36 @@ namespace AstraTerra.Tests.Client.Rendering;
 public sealed class MeteorShowerVisualModelTests
 {
     [Fact]
-    public void Published_Rate_Is_Compressed_To_The_Game_Observation_Hour()
+    public void Published_Rate_Uses_A_Real_Observation_Hour()
+    {
+        var model = new MeteorShowerVisualModel(seed: 42);
+        var reading = Reading("GEM", observedHourlyRate: 120.0);
+
+        for (var frame = 0; frame < 119; frame++)
+        {
+            model.Advance(0.25, [reading]);
+        }
+
+        Assert.Empty(model.ActiveStreaks);
+
+        model.Advance(0.25, [reading]);
+
+        Assert.Single(model.ActiveStreaks);
+        Assert.Equal("GEM", model.ActiveStreaks[0].ShowerId);
+    }
+
+    [Fact]
+    public void Debug_Multiplier_Can_Reproduce_The_Original_Accelerated_Rate()
     {
         var model = new MeteorShowerVisualModel(seed: 42);
         var reading = Reading("GEM", observedHourlyRate: 120.0);
 
         for (var frame = 0; frame < 4; frame++)
         {
-            model.Advance(0.25, [reading]);
+            model.Advance(0.25, [reading], debugRateMultiplier: 30.0);
         }
 
         Assert.Single(model.ActiveStreaks);
-        Assert.Equal("GEM", model.ActiveStreaks[0].ShowerId);
     }
 
     [Fact]
@@ -43,7 +61,7 @@ public sealed class MeteorShowerVisualModelTests
         var model = new MeteorShowerVisualModel(seed: 7);
         var reading = Reading("PER", observedHourlyRate: 480.0, azimuthDeg: 45.0, altitudeDeg: 50.0);
 
-        model.Advance(0.25, [reading]);
+        model.Advance(0.25, [reading], debugRateMultiplier: 30.0);
 
         var streak = Assert.Single(model.ActiveStreaks);
         Assert.True(streak.InitialCenter.Y > 0.0);
@@ -69,7 +87,7 @@ public sealed class MeteorShowerVisualModelTests
         var model = new MeteorShowerVisualModel(seed: 99);
         var reading = Reading("GEM", observedHourlyRate: 480.0);
 
-        var birthFrame = Assert.Single(model.Advance(0.25, [reading]));
+        var birthFrame = Assert.Single(model.Advance(0.25, [reading], debugRateMultiplier: 30.0));
         var movingFrame = Assert.Single(model.Advance(0.10, [Reading("GEM", observedHourlyRate: 0.0)]));
 
         Assert.True(movingFrame.AngularLengthDeg > birthFrame.AngularLengthDeg);

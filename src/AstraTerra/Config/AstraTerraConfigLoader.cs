@@ -27,6 +27,16 @@ public static class AstraTerraConfigLoader
         }
 
         config.SkyGridMode = SkyGridModeParser.ToConfigValue(skyGridMode);
+        var normalizedMeteorRateMultiplier = config.GetDebugMeteorRateMultiplier();
+        if (normalizedMeteorRateMultiplier != config.DebugMeteorRateMultiplier)
+        {
+            api.Logger.Warning(
+                "AstraTerra config has invalid debug meteor rate multiplier '{0}'; using '{1}'.",
+                config.DebugMeteorRateMultiplier,
+                normalizedMeteorRateMultiplier);
+        }
+
+        config.DebugMeteorRateMultiplier = normalizedMeteorRateMultiplier;
         Store(api, config);
         return config;
     }
