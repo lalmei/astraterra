@@ -119,9 +119,16 @@ night.
 
 `MeteorShowerActivity.ReadAll` is the runtime boundary between the world clock and the client visual:
 it combines solar-longitude proximity, radiant altitude, moon phase brightness, and the same natural
-darkness used by the starfield. The visual model then treats Vintage Story's roughly two-real-minute
-world hour as the presentation hour. A peak rate of 120 meteors per hour therefore produces about
-one streak per real second, while weak nights remain visibly sparse.
+darkness used by the starfield.
+
+A published ZHR is meteors per hour of *real* watching, so `MeteorShowerVisualModel` spends it over
+3600 real seconds rather than over a world hour. An observed rate of 120 therefore averages one
+streak every 30 real seconds — watching a shower is meant to be a patient thing. The two clocks
+differ by more than a factor of twenty: a default world hour passes in roughly two real minutes, so
+spending the rate over the world hour instead would produce a meteor every second or so and read as
+a storm on every ordinary night. `DebugMeteorRateMultiplier` in the client config exists to compress
+that wait during development, and it scales only how often meteors spawn, never which shower they
+come from.
 
 Streak positions are generated around the radiant on the celestial sphere. Their tangent always
 points away from it, and angular length grows with radiant separation. The renderer turns each frame
