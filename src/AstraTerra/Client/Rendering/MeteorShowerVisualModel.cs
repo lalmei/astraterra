@@ -69,19 +69,25 @@ public sealed class MeteorShowerVisualModel
         var rateMultiplier = double.IsFinite(debugRateMultiplier)
             ? Math.Clamp(debugRateMultiplier, 0.0, AstraTerraConfig.MaximumDebugMeteorRateMultiplier)
             : 1.0;
-        var totalRate = readings.Sum(reading => Math.Max(0.0, reading.ObservedHourlyRate)) * rateMultiplier;
-        if (totalRate <= 0.0)
+        var observedRate = readings.Sum(reading => Math.Max(0.0, reading.ObservedHourlyRate));
+        var spawnRate = observedRate * rateMultiplier;
+        if (!double.IsFinite(spawnRate) || spawnRate <= 0.0)
         {
             spawnAccumulator = 0.0;
             return BuildFrames();
         }
 
-        spawnAccumulator += totalRate * elapsed / ObservationHourSeconds;
+        spawnAccumulator += spawnRate * elapsed / ObservationHourSeconds;
         while (spawnAccumulator >= 1.0 - SpawnAccumulatorEpsilon && activeStreaks.Count < MaximumActiveStreaks)
         {
             spawnAccumulator = Math.Max(0.0, spawnAccumulator - 1.0);
             var spawnSequence = sequence++;
-            var reading = ChooseReading(readings, totalRate, SampleUnit(spawnSequence, 0));
+
+            // Which shower a meteor belongs to is drawn against the astronomical rate, never the
+            // debug-scaled one. Sampling against the scaled total would push almost every draw off
+            // the end of the table and onto the fallback, so a raised multiplier would quietly
+            // attribute the whole sky to the weakest active shower and fly it from that radiant.
+            var reading = ChooseReading(readings, observedRate, SampleUnit(spawnSequence, 0));
             var streak = TryCreateStreak(reading, spawnSequence);
             if (streak is not null)
             {
@@ -160,10 +166,10 @@ public sealed class MeteorShowerVisualModel
 
     private static MeteorShowerReading ChooseReading(
         IReadOnlyList<MeteorShowerReading> readings,
-        double totalRate,
+        double observedRate,
         double sample)
     {
-        var target = sample * totalRate;
+        var target = sample * observedRate;
         foreach (var reading in readings)
         {
             target -= Math.Max(0.0, reading.ObservedHourlyRate);

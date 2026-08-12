@@ -40,6 +40,25 @@ public sealed class MeteorShowerVisualModelTests
     }
 
     [Fact]
+    public void Streaks_Follow_The_Astronomical_Rates_Even_Under_A_Debug_Multiplier()
+    {
+        var model = new MeteorShowerVisualModel(seed: 3);
+        var strong = Reading("GEM", observedHourlyRate: 7600.0);
+        var weak = Reading("URS", observedHourlyRate: 80.0);
+
+        // A single frame's worth of spawn credit for a full sky, so nothing expires mid-sample.
+        model.Advance(0.25, [strong, weak], debugRateMultiplier: 30.0);
+
+        var strongStreaks = model.ActiveStreaks.Count(streak => streak.ShowerId == "GEM");
+        var weakStreaks = model.ActiveStreaks.Count(streak => streak.ShowerId == "URS");
+
+        Assert.Equal(MeteorShowerVisualModel.MaximumActiveStreaks, model.ActiveStreaks.Count);
+        Assert.True(
+            strongStreaks > weakStreaks,
+            $"The 95:1 shower should dominate the sky, but drew {strongStreaks} against {weakStreaks}.");
+    }
+
+    [Fact]
     public void Zero_Observed_Rate_Never_Spawns_And_Clears_Spawn_Credit()
     {
         var model = new MeteorShowerVisualModel(seed: 12);
