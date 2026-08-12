@@ -55,6 +55,18 @@ AstraTerra follows the reference sky implementation-style sun/moon render pass:
 - batch transient meteor ribbons into one updated mesh,
 - keep orthographic rendering for overlays and labels.
 
+!!! warning "A mesh that is updated every frame must never change size"
+    Vintage Story sizes a mesh's GPU buffers from the vertex count of the first `UploadMesh` and
+    never grows them. `UpdateMesh` writes into whatever was allocated, and it tells the draw call
+    the *new* index count regardless — so a batch that grew between frames loses its vertices to a
+    rejected buffer write and then draws past the end of its own index buffer.
+
+    Both per-frame sky meshes are therefore built at a constant size whatever they are drawing:
+    `DeepSkyQuadMeshBuilder` from a fixed subdivision count, and `MeteorStreakMeshBuilder` by
+    padding out to `MaximumActiveStreaks` with empty, zero-area streak slots. Any new mesh built
+    once per frame and updated in place has to do the same.
+    `MeteorStreakMeshBuilderTests.Mesh_Size_Does_Not_Change_With_The_Number_Of_Streaks` pins it.
+
 Brightness is intentionally game-readable rather than physically faithful. Magnitude affects relative brightness, but faint visible stars keep a readable floor. Star cores use compact, vanilla-like apparent diameters; only brighter stars receive a restrained outer glow.
 
 ## Test Rules
