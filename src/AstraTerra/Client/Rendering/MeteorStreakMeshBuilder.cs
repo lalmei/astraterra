@@ -4,6 +4,17 @@ using Vintagestory.API.MathTools;
 
 namespace AstraTerra.Client.Rendering;
 
+/// <summary>
+/// Batches the active streaks into the single mesh the sky pass draws.
+/// </summary>
+/// <remarks>
+/// The mesh is always built at full capacity, however few streaks are burning. Vintage Story sizes
+/// a mesh's GPU buffers from the vertex count of the first <c>UploadMesh</c> and never grows them —
+/// <c>UpdateMesh</c> only writes into the space already allocated, while still advertising the new
+/// index count to the draw call. A mesh first uploaded on a one-meteor frame would therefore drop
+/// every later frame's vertices and then draw past the end of its own index buffer as soon as two
+/// meteors overlapped.
+/// </remarks>
 public static class MeteorStreakMeshBuilder
 {
     private readonly record struct TrailSection(double Position, double WidthScale, double AlphaScale);
@@ -15,6 +26,9 @@ public static class MeteorStreakMeshBuilder
         new(0.34, 1.00, 1.00),
         new(0.50, 0.08, 0.00)
     ];
+
+    private static readonly int VerticesPerStreak = Sections.Length * 2;
+    private static readonly int IndicesPerStreak = (Sections.Length - 1) * 6;
 
     public static MeshData Build(
         IReadOnlyList<RenderedMeteorStreak> streaks,
@@ -32,11 +46,9 @@ public static class MeteorStreakMeshBuilder
             throw new ArgumentOutOfRangeException(nameof(capacity));
         }
 
-        const int verticesPerStreak = 8;
-        const int indicesPerStreak = 18;
         var meshData = new MeshData(
-            capacity * verticesPerStreak,
-            capacity * indicesPerStreak,
+            capacity * VerticesPerStreak,
+            capacity * IndicesPerStreak,
             withNormals: false,
             withUv: true,
             withRgba: true,
@@ -45,9 +57,16 @@ public static class MeteorStreakMeshBuilder
             mode = EnumDrawMode.Triangles
         };
 
+        var drawnStreaks = 0;
         foreach (var streak in streaks.Take(capacity))
         {
             AddStreak(meshData, streak, radius);
+            drawnStreaks++;
+        }
+
+        for (var slot = drawnStreaks; slot < capacity; slot++)
+        {
+            AddUnusedStreakSlot(meshData, radius);
         }
 
         return meshData;
@@ -94,6 +113,29 @@ public static class MeteorStreakMeshBuilder
                 0);
         }
 
+        AddStreakIndices(meshData, firstVertex);
+    }
+
+    /// <summary>
+    /// Fills a streak's worth of the batch with nothing: eight coincident, fully transparent
+    /// vertices whose triangles all have zero area and produce no fragments. Keeping the slot
+    /// costs a few degenerate triangles and buys a mesh whose size never changes between frames.
+    /// </summary>
+    private static void AddUnusedStreakSlot(MeshData meshData, float radius)
+    {
+        var firstVertex = meshData.VerticesCount;
+        var color = ColorUtil.ColorFromRgba(0, 0, 0, 0);
+
+        for (var vertexIndex = 0; vertexIndex < VerticesPerStreak; vertexIndex++)
+        {
+            meshData.AddVertexWithFlags(0f, radius, 0f, 0f, 0f, color, 0);
+        }
+
+        AddStreakIndices(meshData, firstVertex);
+    }
+
+    private static void AddStreakIndices(MeshData meshData, int firstVertex)
+    {
         for (var sectionIndex = 0; sectionIndex < Sections.Length - 1; sectionIndex++)
         {
             var left = firstVertex + (sectionIndex * 2);
