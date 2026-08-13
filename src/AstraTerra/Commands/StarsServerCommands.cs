@@ -9,11 +9,18 @@ namespace AstraTerra.Commands;
 public sealed class StarsServerCommands
 {
     private readonly Func<StarCatalog?> catalogProvider;
+    private readonly Func<PlanetCatalog?> planetProvider;
     private ICoreServerAPI? api;
 
     public StarsServerCommands(Func<StarCatalog?> catalogProvider)
+        : this(catalogProvider, () => null)
+    {
+    }
+
+    public StarsServerCommands(Func<StarCatalog?> catalogProvider, Func<PlanetCatalog?> planetProvider)
     {
         this.catalogProvider = catalogProvider;
+        this.planetProvider = planetProvider;
     }
 
     public void Register(ICoreServerAPI api)
@@ -41,6 +48,11 @@ public sealed class StarsServerCommands
                 .RequiresPrivilege(Privilege.give)
                 .RequiresPlayer()
                 .HandleWith(args => TextCommandResult.Success(GiveZodiac(args)))
+            .EndSubCommand()
+            .BeginSubCommand("give-wanderers")
+                .RequiresPrivilege(Privilege.give)
+                .RequiresPlayer()
+                .HandleWith(args => TextCommandResult.Success(GivePlanetCatalog(args)))
             .EndSubCommand();
     }
 
@@ -103,6 +115,42 @@ public sealed class StarsServerCommands
             args,
             ConstellationBookService.ZodiacTitle,
             ConstellationPreparedBooks.CreateZodiac);
+
+    /// <summary>
+    /// Hands over a book that already names every planet, so development and creative play can skip
+    /// identifying them one at a time.
+    /// </summary>
+    private string GivePlanetCatalog(TextCommandCallingArgs args)
+    {
+        if (api is null)
+        {
+            return "AstraTerra server command is not initialized.";
+        }
+
+        var planets = planetProvider();
+        if (planets is null)
+        {
+            return $"Cannot create {ConstellationBookService.PlanetCatalogTitle}: the planet catalog is not loaded.";
+        }
+
+        ItemStack stack;
+        try
+        {
+            stack = ConstellationPreparedBooks.CreatePlanetCatalog(api, planets);
+        }
+        catch (Exception exception)
+        {
+            return $"Cannot create {ConstellationBookService.PlanetCatalogTitle}: {exception.Message}";
+        }
+
+        var named = ConstellationBookService.ReadPlanetJournalOrEmpty(stack).Planets.Count;
+        if (!args.Caller.Player.InventoryManager.TryGiveItemstack(stack, true))
+        {
+            return $"Could not give {ConstellationBookService.PlanetCatalogTitle}: clear one inventory slot and try again.";
+        }
+
+        return $"Gave {ConstellationBookService.PlanetCatalogTitle} naming {named} planets. Put it in your left hand and the sextant and astrolabe will use those names.";
+    }
 
     private string GivePreparedBook(
         TextCommandCallingArgs args,

@@ -216,13 +216,20 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     }
 
     /// <summary>
-    /// Labels a planet as one, so a wanderer is not mistaken for a figure the player recorded.
-    /// Constellations read exactly as they always have.
+    /// Labels a planet as one, and calls it whatever the held book calls it. Resolved here rather
+    /// than baked into the target so swapping books renames the sky immediately.
     /// </summary>
-    private static string FormatTargetName(AstrolabeTarget target)
-        => target.Kind == AstrolabeTargetKind.Planet
-            ? $"{target.DisplayName} · planet"
-            : target.DisplayName;
+    private string FormatTargetName(AstrolabeTarget target)
+    {
+        if (target.Kind != AstrolabeTargetKind.Planet)
+        {
+            return target.DisplayName;
+        }
+
+        var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(
+            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        return $"{journal.DisplayName(target.SourceId)} · planet";
+    }
 
     private IReadOnlyList<AstrolabeTarget> GetCurrentTargets()
     {

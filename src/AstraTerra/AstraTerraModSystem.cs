@@ -109,7 +109,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void AssetsFinalize(ICoreAPI api)
     {
         base.AssetsFinalize(api);
-        ConstellationPreparedBooks.RegisterCreativeStacks(api, catalog);
+        ConstellationPreparedBooks.RegisterCreativeStacks(api, catalog, planets);
     }
 
     public override void StartClientSide(ICoreClientAPI api)
@@ -198,7 +198,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void StartServerSide(ICoreServerAPI api)
     {
         new ConstellationBookServer(() => catalog).Register(api);
-        new StarsServerCommands(() => catalog).Register(api);
+        new StarsServerCommands(() => catalog, () => planets).Register(api);
         api.Logger.Event("AstraTerra startup step: server commands registered: /stars debug/goto-lat/give-catalog/give-zodiac");
     }
 

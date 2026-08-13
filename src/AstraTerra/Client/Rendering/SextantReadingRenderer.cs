@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Config;
+using AstraTerra.Constellations;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -163,10 +164,15 @@ public sealed class SextantReadingRenderer : IRenderer
             localSiderealAngle,
             config.StarBrightnessBias,
             visualHorizonCutoffDeg: 0.0);
+
+        // A planet reads by whatever the observer's own book calls it. Without that book it is what
+        // it looks like from the ground: a star that wanders. The catalog's name is never shown —
+        // it arrives only through a book somebody already wrote.
+        var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(
+            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
         foreach (var planet in visiblePlanets)
         {
-            // A planet reads by name, not as a catalogue number.
-            yield return SkyBodyModel.FromBody(planet.DisplayName, planet.Body);
+            yield return SkyBodyModel.FromBody(journal.DisplayName(planet.Id), planet.Body);
         }
     }
 

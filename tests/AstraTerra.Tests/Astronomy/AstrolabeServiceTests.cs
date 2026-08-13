@@ -183,7 +183,12 @@ public sealed class AstrolabeServiceTests
         Assert.Equal(5, targets.Count);
         Assert.All(targets, target => Assert.Equal(AstrolabeTargetKind.Planet, target.Kind));
         Assert.All(targets, target => Assert.Equal(0, target.StarCount));
-        Assert.Contains(targets, target => target.SourceId == "mars" && target.DisplayName == "Mars");
+        Assert.Contains(targets, target => target.SourceId == "mars");
+
+        // The catalog's own names must not leak through the target: a wanderer is nameless until an
+        // observer writes one down, and the name comes from their book.
+        Assert.All(targets, target => Assert.Equal(PlanetJournal.UnidentifiedDisplayName, target.DisplayName));
+        Assert.DoesNotContain(targets, target => target.DisplayName == "Mars");
     }
 
     [Fact]

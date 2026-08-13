@@ -10,8 +10,10 @@ public static class ConstellationPreparedBooks
 {
     public const string StarCatalogBookId = "star-catalog";
     public const string ZodiacBookId = "zodiac";
+    public const string PlanetCatalogBookId = "wanderers";
     public const string StarCatalogBookItemPath = "book-normal-darkolive";
     public const string ZodiacBookItemPath = "book-normal-purple";
+    public const string PlanetCatalogBookItemPath = "book-normal-red";
     public const string CreativeHostItemPath = "library";
     public const string CreativeTab = "astraterra";
 
@@ -33,6 +35,33 @@ public static class ConstellationPreparedBooks
             ZodiacBookId,
             c => StarCatalogJournalBuilder.BuildZodiac(c));
 
+    /// <summary>
+    /// A book that already knows every planet by the name our own sky culture gave it.
+    /// </summary>
+    /// <remarks>
+    /// The counterpart to identifying them one at a time through a telescope: handing an observer
+    /// this book is handing them somebody else's completed work. It exists mostly so development and
+    /// creative play do not have to rediscover the sky on every world.
+    /// </remarks>
+    public static ItemStack CreatePlanetCatalog(ICoreAPI api, PlanetCatalog planets)
+    {
+        ArgumentNullException.ThrowIfNull(planets);
+
+        var bookItem = api.World.GetItem(new AssetLocation("game", PlanetCatalogBookItemPath))
+            ?? throw new InvalidOperationException("Cannot create the planet catalog: the normal book item is unavailable.");
+
+        var journal = new PlanetJournal();
+        foreach (var planet in planets.Planets)
+        {
+            journal.Rename(planet.Id, planet.DisplayName);
+        }
+
+        var stack = new ItemStack(bookItem);
+        stack.Attributes.SetString(ConstellationBookService.BookIdAttribute, PlanetCatalogBookId);
+        ConstellationBookService.WritePlanetJournal(stack, journal, ConstellationBookService.PlanetCatalogTitle);
+        return stack;
+    }
+
     public static ItemStack CreatePreparedBook(
         ICoreAPI api,
         StarCatalog catalog,
@@ -52,6 +81,9 @@ public static class ConstellationPreparedBooks
     }
 
     public static void RegisterCreativeStacks(ICoreAPI api, StarCatalog? catalog)
+        => RegisterCreativeStacks(api, catalog, null);
+
+    public static void RegisterCreativeStacks(ICoreAPI api, StarCatalog? catalog, PlanetCatalog? planets)
     {
         var host = api.World.GetItem(new AssetLocation("astraterra", CreativeHostItemPath));
         if (host is null)
@@ -68,24 +100,29 @@ public static class ConstellationPreparedBooks
 
         try
         {
-            var stacks = new[]
+            var stacks = new List<JsonItemStack>
             {
                 ToCreativeStack(CreateStarCatalog(api, catalog)),
                 ToCreativeStack(CreateZodiac(api, catalog))
             };
+
+            if (planets is not null)
+            {
+                stacks.Add(ToCreativeStack(CreatePlanetCatalog(api, planets)));
+            }
 
             host.CreativeInventoryStacks =
             [
                 new CreativeTabAndStackList
                 {
                     Tabs = [CreativeTab],
-                    Stacks = stacks
+                    Stacks = stacks.ToArray()
                 }
             ];
 
             api.Logger.Event(
                 "AstraTerra creative shelf registered: books={0}",
-                stacks.Length);
+                stacks.Count);
         }
         catch (Exception exception)
         {

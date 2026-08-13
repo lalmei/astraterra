@@ -51,6 +51,14 @@ To create a smaller book titled **The Zodiac** containing the traditional twelve
 
 This book contains Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpius, Sagittarius, Capricornus, Aquarius, and Pisces. Ophiuchus is not included in the traditional twelve-sign set.
 
+To create a book titled **The Wanderers**, which already names all five planets the way our own sky culture named them, run:
+
+```text
+/stars give-wanderers
+```
+
+Planets are otherwise anonymous: without a book that names them, every instrument calls a planet a *wandering star*, because that is all it looks like from the ground. This book is somebody else's finished work — handy for testing and for creative play, and a shortcut past identifying each planet yourself. Put it in your left hand and the Sextant and Astrolabe will use its names.
+
 ## Recovery And Debug Commands
 
 ```text
