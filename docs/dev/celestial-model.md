@@ -78,6 +78,76 @@ countdown, which counts down from right ascension to sidereal time:
 hoursUntilTransit = normalize(rightAscension - sidereal) / rate
 ```
 
+### 3. Horizontal coordinates to a drawable body
+
+`SkyProjection.Project` is the last leg, and it is deliberately generic: it takes an
+`EquatorialCoordinates` and a visual magnitude and knows nothing about what kind of object it is
+placing. It applies the horizon cutoff, the fade band, the magnitude curve, and the world direction,
+and returns a `RenderedBody`.
+
+Everything that has a position in the sky goes through it. `RenderedStar` is that body plus a HIP
+number, a colour temperature and a guide-star flag; a planet or comet is that body plus its own name
+and tint. Deep-sky plates share the horizon handling and the direction but not the magnitude curve,
+because their brightness is authored per object — a nebula is a surface brightness spread over
+degrees, not a point source.
+
+!!! warning "One projection, or the sky drifts apart"
+    A body that moves is drawn against the fixed stars, so the two must be placed by the same
+    arithmetic. A second copy of the horizon fade or the magnitude curve for planets would look
+    right on its own and wrong next to a star at the same altitude — and nothing would fail.
+
+    `SkyProjectionTests.A_Moving_Body_Lands_Exactly_Where_A_Star_At_The_Same_Position_Does`
+    pins the two paths together.
+
+## Bodies That Move
+
+A catalog star's right ascension and declination are constants. A planet's, a comet's and a
+radiant's are functions of world time, and that is the only difference between them.
+
+`ISkyEphemeris` is that function, and nothing more:
+
+```csharp
+EquatorialCoordinates PositionAt(double totalDays);
+double MagnitudeAt(double totalDays);
+```
+
+Implementations live in `Astronomy/` and stay pure, which is what lets an orbit be checked against
+published positions for real dates without a running game. `FixedEphemeris` covers anything that does
+not move, so a caller collecting bodies to sight or to forecast never has to know which kind it holds.
+
+Positions are **geocentric**: they do not depend on where the observer stands. Latitude and longitude
+enter afterwards, in the projection.
+
+### From the ecliptic to the equator
+
+Planets and comets are computed in the plane they orbit in, not in the plane the sky is drawn in.
+`CelestialMath.EclipticToEquatorial` rotates between the two by the obliquity of the ecliptic,
+`CelestialMath.MeanObliquityDeg` (23.4392911°, Earth's mean tilt at J2000).
+
+It rotates a unit vector rather than using the textbook
+`atan2(sin l cos e - tan b sin e, cos l)`. Same rotation, but that form divides by zero at the
+ecliptic poles — which planets never approach and a steeply inclined comet can.
+
+The same constant is what the sun's seasonal declination needs, so both should read it from here
+rather than each carrying a tilt of their own.
+
+### Sampling: once a world minute, not once a frame
+
+An orbit costs real arithmetic; a planet moves by arcminutes over a world hour. `CachedSkyEphemeris`
+wraps any ephemeris and quantizes the sample to the world minute, the same trick
+`AstrolabePlannerRenderer` uses for its sunrise search.
+
+Two differences from that one are worth knowing:
+
+- **The world minute is the whole key.** The sky clock also buckets on player position, because
+  sunrise depends on latitude. A geocentric position does not, so there is nothing to add here.
+- **The sample is taken at the top of the minute**, not at the instant asked for, so every caller
+  inside a minute is told the same thing whoever asked first.
+
+Only one sample is remembered. A caller that interleaves times — the astrolabe forecast scrolling
+ahead while the sky renders the present — should hold its own instance rather than share one, or
+every call misses.
+
 ## Season-Anchored Events
 
 Anything that should happen at the same point in the _year_ — a meteor shower peak, a seasonal
@@ -207,6 +277,9 @@ a different `hoursPerDay` the longitude offset is scaled accordingly.
 | Sidereal day is shorter than solar            | `AstrolabeServiceTests.SiderealCycle_Runs_Slightly_Shorter_Than_The_Solar_Day`                               |
 | Rising is east of the meridian                | `AstrolabeServiceTests.Read_Uses_Live_Sky_Direction_To_Distinguish_Rising_And_Setting`                       |
 | Azimuth is north-referenced                   | `SkyBodyModelTests.Azimuth_Is_Measured_Clockwise_From_North`                                                 |
+| Moving and fixed bodies share one projection  | `SkyProjectionTests.A_Moving_Body_Lands_Exactly_Where_A_Star_At_The_Same_Position_Does`                      |
+| The ecliptic is tilted the right way          | `CelestialMathTests.EclipticToEquatorial_Places_The_North_Ecliptic_Pole_In_Draco`                            |
+| An ephemeris is sampled once a world minute   | `SkyEphemerisTests.A_Cached_Body_Is_Sampled_Once_Per_World_Minute_However_Many_Frames_Pass`                  |
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |
