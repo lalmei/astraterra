@@ -113,6 +113,27 @@ public sealed class SkyBodyModelTests
         Assert.Equal(star.DirectionZ, body.DirectionZ, 6);
     }
 
+    [Fact]
+    public void A_Planet_Sights_By_Name_Rather_Than_A_Catalogue_Number()
+    {
+        var catalog = PlanetCatalogLoader.Parse(File.ReadAllText("assets/astraterra/data/planets.v1.json"));
+        var mars = catalog.Planets.Single(planet => planet.Id == "mars");
+        var rendered = PlanetRenderModel.Project(
+            mars,
+            new FixedEphemeris(new EquatorialCoordinates(101.3, -16.7), visualMagnitude: -1.2),
+            totalDays: 0,
+            latitudeDeg: 20,
+            localSiderealDeg: 101.3,
+            brightnessBias: 1.0);
+        Assert.NotNull(rendered);
+
+        var body = SkyBodyModel.FromBody(rendered!.DisplayName, rendered.Body);
+
+        Assert.Equal("Mars", body.DisplayName);
+        Assert.Equal(rendered.AltitudeDeg, body.AltitudeDeg, 6);
+        Assert.Equal(rendered.AzimuthDeg, body.AzimuthDeg, 6);
+    }
+
     /// <summary>Mirrors the direction convention used when stars are placed in the sky.</summary>
     private static (double X, double Y, double Z) DirectionFromHorizontal(double azimuthDeg, double altitudeDeg)
     {

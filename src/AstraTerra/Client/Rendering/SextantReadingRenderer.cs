@@ -17,17 +17,27 @@ public sealed class SextantReadingRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
     private readonly StarCatalog? catalog;
+    private readonly PlanetCatalog? planetCatalog;
+    private PlanetRenderModel? planetModel;
+    private int planetModelDaysPerYear;
+    private double planetModelHoursPerDay;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
     private LoadedTexture? readingTexture;
     private string? readingText;
 
     /// <param name="catalog">Null when the star catalog failed to load. Sun and moon sighting still works.</param>
-    public SextantReadingRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog? catalog)
+    /// <param name="planetCatalog">Null when the planet catalog failed to load. Everything else still sights.</param>
+    public SextantReadingRenderer(
+        ICoreClientAPI api,
+        AstraTerraConfig config,
+        StarCatalog? catalog,
+        PlanetCatalog? planetCatalog = null)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
+        this.planetCatalog = planetCatalog;
     }
 
     public double RenderOrder => 0.99;
@@ -138,6 +148,49 @@ public sealed class SextantReadingRenderer : IRenderer
         {
             yield return SkyBodyModel.FromStar(star);
         }
+
+        // Planets sight under the same dark-sky rule as stars, because that is when the sky renderer
+        // draws them: the sextant should only measure what an observer can actually see.
+        var planets = ResolvePlanetModel(Math.Max(1, calendar.DaysPerYear), Math.Max(1.0, calendar.HoursPerDay));
+        if (planets is null)
+        {
+            yield break;
+        }
+
+        var visiblePlanets = planets.ProjectVisiblePlanets(
+            calendar.TotalDays,
+            latitude,
+            localSiderealAngle,
+            config.StarBrightnessBias,
+            visualHorizonCutoffDeg: 0.0);
+        foreach (var planet in visiblePlanets)
+        {
+            // A planet reads by name, not as a catalogue number.
+            yield return SkyBodyModel.FromBody(planet.DisplayName, planet.Body);
+        }
+    }
+
+    /// <summary>
+    /// Built on demand and kept, because a client only learns the world's <c>daysPerYear</c> when the
+    /// server hands it over, and because each planet's ephemeris caches its last sample.
+    /// </summary>
+    private PlanetRenderModel? ResolvePlanetModel(int daysPerYear, double hoursPerDay)
+    {
+        if (planetCatalog is null)
+        {
+            return null;
+        }
+
+        if (planetModel is null
+            || daysPerYear != planetModelDaysPerYear
+            || Math.Abs(hoursPerDay - planetModelHoursPerDay) > 1e-9)
+        {
+            planetModel = new PlanetRenderModel(planetCatalog, daysPerYear, hoursPerDay);
+            planetModelDaysPerYear = daysPerYear;
+            planetModelHoursPerDay = hoursPerDay;
+        }
+
+        return planetModel;
     }
 
     private bool CanSightStars()

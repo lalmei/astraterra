@@ -192,7 +192,22 @@ Two differences from that one are worth knowing:
 
 Only one sample is remembered. A caller that interleaves times — the astrolabe forecast scrolling
 ahead while the sky renders the present — should hold its own instance rather than share one, or
-every call misses.
+every call misses. That is not hypothetical: `AstrolabePlannerRenderer` and `SextantReadingRenderer`
+each build and keep their own, precisely because the astrolabe asks about forecast times while the
+sky asks about now.
+
+### Instruments point at an ephemeris, not at a position
+
+`AstrolabeTarget` carries an `ISkyEphemeris` rather than a right ascension and declination, because
+the instrument exists to answer questions about *other* times: it scrolls hours and days ahead, and a
+planet is somewhere else by then. A recorded constellation supplies a `FixedEphemeris` and behaves
+exactly as it did before.
+
+One approximation is left in deliberately. `hoursUntilTransit` holds the target's right ascension
+where the reading found it, rather than solving the transit against the ephemeris. A planet drifts
+under half a degree a day, so a night's countdown is a couple of minutes out — below anything the
+instruments can show. A comet near perihelion would not be, and that is where the solve has to become
+iterative.
 
 ## Season-Anchored Events
 

@@ -8,8 +8,8 @@ AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Star
 - Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
-- Use the Sextant to read the angle of a star, the sun, or the moon above the horizon, day or night.
-- Use the Calibrated Astrolabe to predict where and when recorded constellations will appear, tell the time of night, and see what day of the year it is.
+- Use the Sextant to read the angle of a star, a planet, the sun, or the moon above the horizon, day or night.
+- Use the Calibrated Astrolabe to predict where and when recorded constellations and the planets will appear, tell the time of night, and see what day of the year it is.
 - Two prebuilt constellation catalogs, that could be used to debug, or used in builds. `Catalog` the 88 Internationally (IAU) defined constalations and the `Zodiac` containes just the 12 constallations in the Zodiac.
 
 ### Extension
@@ -40,7 +40,9 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 Hold right click with the Sextant and align the center of the screen with the sun, the moon, or a visible star. The top-center readout names what you sighted and displays its angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
-The sun and the moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime moon is a perfectly good sight, and often an easier one than a star. Stars still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
+The sun and the moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime moon is a perfectly good sight, and often an easier one than a star. Stars and planets still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
+
+Planets sight by name: the readout says **Mars**, not a catalogue number. Since they are usually among the brightest things up, they are the easiest sights in the sky after the sun and the moon.
 
 If nothing readable is near the center, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
 
@@ -51,7 +53,9 @@ Sighting the sun currently costs you nothing. A real navigator would use a shade
 
 Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to calibrate it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
 
-The top-center readout shows the selected constellation's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
+The top-center readout shows the selected target's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
+
+Middle click cycles through the constellations recorded in the book and then through the five planets, which are marked `· planet` so they are not mistaken for a figure you drew. Every planet is listed whether or not it is currently up — being told that Saturn is below the horizon and transits in nine hours is exactly the sort of thing the instrument is for.
 
 Below that, the Astrolabe tells you the time. It reads the hour off the sky the way a nocturnal does — from where the sun actually is — and reports the hour of the world day, whether it is daylight, dusk, night, or dawn, the sun's angle above or below the horizon, and how long until the next sunrise or sunset.
 
@@ -59,11 +63,13 @@ The clock follows your forecast. Scroll ahead six hours and the time advances wi
 
 The time of day is also shown when no book is held, so the Astrolabe is still useful on its own.
 
-- Middle click to select the next constellation in the held book.
+- Middle click to select the next target: the constellations in the held book, then the planets.
 - Scroll to forecast one hour at a time.
 - Sneak and scroll to forecast seven days at a time.
 
 Forecasting spans one world year and uses that world's configured year and day lengths. Releasing right click returns the forecast to the current time.
+
+A planet is forecast where it will actually be, not where it is now: scroll a season ahead and Mars has moved against the stars behind it. The transit countdown holds the planet's position where the forecast puts it, which is worth a couple of minutes over a night — far below anything you could measure with these instruments.
 
 ## Observation Conditions
 
@@ -76,7 +82,7 @@ Astronomy interaction works best when:
 
 The telescope overlay can still open when those conditions are not met, but drawing and star-specific readouts may be unavailable.
 
-The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected constellation is below the horizon.
+The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected target is below the horizon.
 
 ## Meteor Showers
 

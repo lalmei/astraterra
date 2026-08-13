@@ -21,6 +21,10 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
+    private readonly PlanetCatalog? planetCatalog;
+    private IReadOnlyList<AstrolabeTarget>? planetTargets;
+    private int planetTargetsDaysPerYear;
+    private double planetTargetsHoursPerDay;
     private LoadedTexture? titleTexture;
     private LoadedTexture? readingTexture;
     private LoadedTexture? clockTexture;
@@ -34,14 +38,17 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private int cachedClockPositionKey;
     private bool renderingDisabledAfterFailure;
 
+    /// <param name="planetCatalog">Null when the planet catalog failed to load. Constellations still plan.</param>
     public AstrolabePlannerRenderer(
         ICoreClientAPI api,
         StarCatalog catalog,
-        ConstellationBookClient bookClient)
+        ConstellationBookClient bookClient,
+        PlanetCatalog? planetCatalog = null)
     {
         this.api = api;
         this.catalog = catalog;
         this.bookClient = bookClient;
+        this.planetCatalog = planetCatalog;
     }
 
     public double RenderOrder => 0.99;
@@ -98,7 +105,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             return;
         }
 
-        var targets = AstrolabeService.BuildTargets(journal, catalog);
+        var targets = BuildTargets(journal);
         if (targets.Count == 0)
         {
             RenderLines(
@@ -132,8 +139,8 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
         var forecastDay = PositiveModulo((int)Math.Floor(forecastTotalDays), daysPerYear) + 1;
         var title = $"Calibrated Astrolabe — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {FormatLatitude(latitude)} — day {forecastDay}/{daysPerYear}";
-        var details = $"{reading.Target.DisplayName} ({selectedIndex + 1}/{targets.Count}) — {FormatReading(reading)}";
-        var help = "Middle click: next constellation   Scroll: 1 hour   Sneak + scroll: 7 days";
+        var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — {FormatReading(reading)}";
+        var help = "Middle click: next target   Scroll: 1 hour   Sneak + scroll: 7 days";
         RenderLines(title, details, ReadSkyClockLine(forecastTotalDays), help);
     }
 
@@ -208,10 +215,55 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         return $"{hours:00}:{minutes:00}";
     }
 
+    /// <summary>
+    /// Labels a planet as one, so a wanderer is not mistaken for a figure the player recorded.
+    /// Constellations read exactly as they always have.
+    /// </summary>
+    private static string FormatTargetName(AstrolabeTarget target)
+        => target.Kind == AstrolabeTargetKind.Planet
+            ? $"{target.DisplayName} · planet"
+            : target.DisplayName;
+
     private IReadOnlyList<AstrolabeTarget> GetCurrentTargets()
     {
         var journal = bookClient.ReadCurrentJournal();
-        return journal is null ? [] : AstrolabeService.BuildTargets(journal, catalog);
+        return journal is null ? [] : BuildTargets(journal);
+    }
+
+    /// <summary>
+    /// The recorded figures the book holds, followed by the wandering planets.
+    /// </summary>
+    /// <remarks>
+    /// Constellations keep their existing order and position in the list, so middle click still lands
+    /// where a player expects before it reaches the planets.
+    /// </remarks>
+    private IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal)
+        => [.. AstrolabeService.BuildTargets(journal, catalog), .. ResolvePlanetTargets()];
+
+    /// <summary>
+    /// Built once and kept. Each planet target owns a cached ephemeris, and the astrolabe asks about
+    /// forecast times while the sky renderer asks about now — rebuilding per frame would throw the
+    /// cache away and re-solve five orbits every frame the instrument is raised.
+    /// </summary>
+    private IReadOnlyList<AstrolabeTarget> ResolvePlanetTargets()
+    {
+        if (planetCatalog is null)
+        {
+            return [];
+        }
+
+        var daysPerYear = Math.Max(1, api.World.Calendar.DaysPerYear);
+        var hoursPerDay = Math.Max(1.0, api.World.Calendar.HoursPerDay);
+        if (planetTargets is null
+            || daysPerYear != planetTargetsDaysPerYear
+            || Math.Abs(hoursPerDay - planetTargetsHoursPerDay) > 1e-9)
+        {
+            planetTargets = AstrolabeService.BuildPlanetTargets(planetCatalog, daysPerYear, hoursPerDay);
+            planetTargetsDaysPerYear = daysPerYear;
+            planetTargetsHoursPerDay = hoursPerDay;
+        }
+
+        return planetTargets;
     }
 
     private bool IsReadingAstrolabe()

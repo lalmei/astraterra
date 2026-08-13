@@ -163,7 +163,7 @@ public sealed class AstraTerraModSystem : ModSystem
 
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
-        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog);
+        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
         api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
@@ -182,7 +182,7 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Event.MouseMove += constellationOverlayRenderer.OnMouseMove;
         api.Event.MouseUp += constellationOverlayRenderer.OnMouseUp;
         api.Event.RegisterRenderer(new TelescopeScopeRenderer(api), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
-        astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient);
+        astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient, planets);
         api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
         api.Logger.Event(
