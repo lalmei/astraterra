@@ -21,9 +21,12 @@ public sealed class AstrolabeServiceTests
 
         var target = Assert.Single(AstrolabeService.BuildTargets(journal, catalog));
 
+        var coordinates = target.Ephemeris.PositionAt(0);
+
         Assert.Equal("Meridian Seam", target.DisplayName);
-        Assert.True(target.RightAscensionDeg < 0.001 || target.RightAscensionDeg > 359.999);
-        Assert.Equal(20, target.DeclinationDeg, 6);
+        Assert.Equal(AstrolabeTargetKind.Constellation, target.Kind);
+        Assert.True(coordinates.RightAscensionDeg < 0.001 || coordinates.RightAscensionDeg > 359.999);
+        Assert.Equal(20, coordinates.DeclinationDeg, 6);
         Assert.Equal(2, target.StarCount);
     }
 
@@ -48,7 +51,7 @@ public sealed class AstrolabeServiceTests
             totalDays,
             daysPerYear,
             hoursPerDay);
-        var target = new AstrolabeTarget(1, "Zenith", rightAscension, 0, 2);
+        var target = Target("Zenith", rightAscension, 0);
 
         var reading = AstrolabeService.Read(
             target,
@@ -76,8 +79,8 @@ public sealed class AstrolabeServiceTests
             hoursPerDay);
         // A target whose right ascension is still ahead of local sidereal time has not transited
         // yet, so it is east of the meridian and climbing.
-        var risingTarget = new AstrolabeTarget(1, "Rising", localSidereal + 45, 0, 2);
-        var settingTarget = new AstrolabeTarget(2, "Setting", localSidereal - 45, 0, 2);
+        var risingTarget = Target("Rising", localSidereal + 45, 0);
+        var settingTarget = Target("Setting", localSidereal - 45, 0);
 
         var rising = AstrolabeService.Read(risingTarget, 0, totalDays, daysPerYear, hoursPerDay, 0);
         var setting = AstrolabeService.Read(settingTarget, 0, totalDays, daysPerYear, hoursPerDay, 0);
@@ -100,14 +103,14 @@ public sealed class AstrolabeServiceTests
             hoursPerDay);
 
         var justBeforeTransit = AstrolabeService.Read(
-            new AstrolabeTarget(1, "Soon", localSidereal + 45, 0, 2),
+            Target("Soon", localSidereal + 45, 0),
             latitudeDeg: 0,
             totalDays,
             daysPerYear,
             hoursPerDay,
             longitudeDeg: 0);
         var justAfterTransit = AstrolabeService.Read(
-            new AstrolabeTarget(2, "Missed it", localSidereal - 45, 0, 2),
+            Target("Missed it", localSidereal - 45, 0),
             latitudeDeg: 0,
             totalDays,
             daysPerYear,
@@ -127,7 +130,7 @@ public sealed class AstrolabeServiceTests
         const double hoursPerDay = 24;
 
         var reading = AstrolabeService.Read(
-            new AstrolabeTarget(1, "Any", 0, 0, 2),
+            Target("Any", 0, 0),
             latitudeDeg: 0,
             totalDays: 0,
             daysPerYear,
@@ -141,14 +144,14 @@ public sealed class AstrolabeServiceTests
     public void Read_Classifies_Circumpolar_And_Never_Rising_Targets()
     {
         var circumpolar = AstrolabeService.Read(
-            new AstrolabeTarget(1, "North", 0, 60, 2),
+            Target("North", 0, 60),
             latitudeDeg: 60,
             totalDays: 0,
             daysPerYear: 120,
             hoursPerDay: 24,
             longitudeDeg: 0);
         var neverRises = AstrolabeService.Read(
-            new AstrolabeTarget(2, "South", 0, -60, 2),
+            Target("South", 0, -60),
             latitudeDeg: 60,
             totalDays: 0,
             daysPerYear: 120,
@@ -171,4 +174,65 @@ public sealed class AstrolabeServiceTests
     {
         Assert.Equal(expected, AstrolabeService.CompassPoint(azimuthDeg));
     }
+
+    [Fact]
+    public void BuildPlanetTargets_Lists_Every_Planet_Whether_Or_Not_It_Is_Up()
+    {
+        var targets = AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 108, hoursPerDay: 24);
+
+        Assert.Equal(5, targets.Count);
+        Assert.All(targets, target => Assert.Equal(AstrolabeTargetKind.Planet, target.Kind));
+        Assert.All(targets, target => Assert.Equal(0, target.StarCount));
+        Assert.Contains(targets, target => target.SourceId == "mars" && target.DisplayName == "Mars");
+    }
+
+    [Fact]
+    public void A_Planet_Is_Read_Where_It_Will_Be_At_The_Forecast_Time()
+    {
+        var mars = AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 108, hoursPerDay: 24)
+            .Single(target => target.SourceId == "mars");
+
+        var now = AstrolabeService.Read(mars, latitudeDeg: 45, totalDays: 0, daysPerYear: 108, hoursPerDay: 24, longitudeDeg: 0);
+        var inHalfAYear = AstrolabeService.Read(mars, latitudeDeg: 45, totalDays: 54, daysPerYear: 108, hoursPerDay: 24, longitudeDeg: 0);
+
+        // A fixed target would report the same right ascension at both times; the point of an
+        // ephemeris on the target is that a wanderer does not.
+        Assert.True(
+            Math.Abs(CelestialMath.ShortestAngularDistanceDegrees(
+                now.Coordinates.RightAscensionDeg,
+                inHalfAYear.Coordinates.RightAscensionDeg)) > 10.0,
+            "Mars did not move between the two readings.");
+    }
+
+    [Fact]
+    public void A_Constellation_Reads_The_Same_Position_At_Any_Time()
+    {
+        var target = Target("Fixed", rightAscensionDeg: 120, declinationDeg: 20);
+
+        var now = AstrolabeService.Read(target, latitudeDeg: 45, totalDays: 0, daysPerYear: 108, hoursPerDay: 24, longitudeDeg: 0);
+        var later = AstrolabeService.Read(target, latitudeDeg: 45, totalDays: 54, daysPerYear: 108, hoursPerDay: 24, longitudeDeg: 0);
+
+        Assert.Equal(now.Coordinates, later.Coordinates);
+    }
+
+    [Fact]
+    public void BuildPlanetTargets_Rejects_A_World_With_No_Year_Or_No_Day()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 0, hoursPerDay: 24));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 108, hoursPerDay: 0));
+    }
+
+    private static PlanetCatalog LoadPlanets()
+        => PlanetCatalogLoader.Parse(File.ReadAllText("assets/astraterra/data/planets.v1.json"));
+
+    private static AstrolabeTarget Target(string displayName, double rightAscensionDeg, double declinationDeg)
+        => AstrolabeTarget.Fixed(
+            AstrolabeTargetKind.Constellation,
+            displayName,
+            displayName,
+            rightAscensionDeg,
+            declinationDeg,
+            starCount: 2);
 }
