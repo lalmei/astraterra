@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "observer": {
+    "semiMajorAxisAu": 1.00000261,
+    "semiMajorAxisRateAuPerCentury": 0.00000562,
+    "eccentricity": 0.01671123,
+    "eccentricityRatePerCentury": -0.00004392,
+    "inclinationDeg": -0.00001531,
+    "inclinationRateDegPerCentury": -0.01294668,
+    "meanLongitudeDeg": 100.46457166,
+    "meanLongitudeRateDegPerCentury": 35999.37244981,
+    "longitudeOfPerihelionDeg": 102.93768193,
+    "longitudeOfPerihelionRateDegPerCentury": 0.32327364,
+    "longitudeOfAscendingNodeDeg": 0.0,
+    "longitudeOfAscendingNodeRateDegPerCentury": 0.0
+  },
+  "planets": [
+    {
+      "id": "mercury",
+      "displayName": "Mercury",
+      "elements": {
+        "semiMajorAxisAu": 0.38709927,
+        "semiMajorAxisRateAuPerCentury": 0.00000037,
+        "eccentricity": 0.20563593,
+        "eccentricityRatePerCentury": 0.00001906,
+        "inclinationDeg": 7.00497902,
+        "inclinationRateDegPerCentury": -0.00594749,
+        "meanLongitudeDeg": 252.25032350,
+        "meanLongitudeRateDegPerCentury": 149472.67411175,
+        "longitudeOfPerihelionDeg": 77.45779628,
+        "longitudeOfPerihelionRateDegPerCentury": 0.16047689,
+        "longitudeOfAscendingNodeDeg": 48.33076593,
+        "longitudeOfAscendingNodeRateDegPerCentury": -0.12534081
+      },
+      "absoluteMagnitude": -0.42,
+      "phaseCoefficient": 0.029,
+      "tintR": 0.86,
+      "tintG": 0.82,
+      "tintB": 0.76
+    },
+    {
+      "id": "venus",
+      "displayName": "Venus",
+      "elements": {
+        "semiMajorAxisAu": 0.72333566,
+        "semiMajorAxisRateAuPerCentury": 0.00000390,
+        "eccentricity": 0.00677672,
+        "eccentricityRatePerCentury": -0.00004107,
+        "inclinationDeg": 3.39467605,
+        "inclinationRateDegPerCentury": -0.00078890,
+        "meanLongitudeDeg": 181.97909950,
+        "meanLongitudeRateDegPerCentury": 58517.81538729,
+        "longitudeOfPerihelionDeg": 131.60246718,
+        "longitudeOfPerihelionRateDegPerCentury": 0.00268329,
+        "longitudeOfAscendingNodeDeg": 76.67984255,
+        "longitudeOfAscendingNodeRateDegPerCentury": -0.27769418
+      },
+      "absoluteMagnitude": -4.40,
+      "phaseCoefficient": 0.018,
+      "tintR": 1.0,
+      "tintG": 0.98,
+      "tintB": 0.90
+    },
+    {
+      "id": "mars",
+      "displayName": "Mars",
+      "elements": {
+        "semiMajorAxisAu": 1.52371034,
+        "semiMajorAxisRateAuPerCentury": 0.00001847,
+        "eccentricity": 0.09339410,
+        "eccentricityRatePerCentury": 0.00007882,
+        "inclinationDeg": 1.84969142,
+        "inclinationRateDegPerCentury": -0.00813131,
+        "meanLongitudeDeg": -4.55343205,
+        "meanLongitudeRateDegPerCentury": 19140.30268499,
+        "longitudeOfPerihelionDeg": -23.94362959,
+        "longitudeOfPerihelionRateDegPerCentury": 0.44441088,
+        "longitudeOfAscendingNodeDeg": 49.55953891,
+        "longitudeOfAscendingNodeRateDegPerCentury": -0.29257343
+      },
+      "absoluteMagnitude": -1.52,
+      "phaseCoefficient": 0.016,
+      "tintR": 1.0,
+      "tintG": 0.55,
+      "tintB": 0.38
+    },
+    {
+      "id": "jupiter",
+      "displayName": "Jupiter",
+      "elements": {
+        "semiMajorAxisAu": 5.20288700,
+        "semiMajorAxisRateAuPerCentury": -0.00011607,
+        "eccentricity": 0.04838624,
+        "eccentricityRatePerCentury": -0.00013253,
+        "inclinationDeg": 1.30439695,
+        "inclinationRateDegPerCentury": -0.00183714,
+        "meanLongitudeDeg": 34.39644051,
+        "meanLongitudeRateDegPerCentury": 3034.74612775,
+        "longitudeOfPerihelionDeg": 14.72847983,
+        "longitudeOfPerihelionRateDegPerCentury": 0.21252668,
+        "longitudeOfAscendingNodeDeg": 100.47390909,
+        "longitudeOfAscendingNodeRateDegPerCentury": 0.20469106
+      },
+      "absoluteMagnitude": -9.40,
+      "phaseCoefficient": 0.005,
+      "tintR": 1.0,
+      "tintG": 0.93,
+      "tintB": 0.78
+    },
+    {
+      "id": "saturn",
+      "displayName": "Saturn",
+      "elements": {
+        "semiMajorAxisAu": 9.53667594,
+        "semiMajorAxisRateAuPerCentury": -0.00125060,
+        "eccentricity": 0.05386179,
+        "eccentricityRatePerCentury": -0.00050991,
+        "inclinationDeg": 2.48599187,
+        "inclinationRateDegPerCentury": 0.00193609,
+        "meanLongitudeDeg": 49.95424423,
+        "meanLongitudeRateDegPerCentury": 1222.49362201,
+        "longitudeOfPerihelionDeg": 92.59887831,
+        "longitudeOfPerihelionRateDegPerCentury": -0.41897216,
+        "longitudeOfAscendingNodeDeg": 113.66242448,
+        "longitudeOfAscendingNodeRateDegPerCentury": -0.28867794
+      },
+      "absoluteMagnitude": -8.88,
+      "phaseCoefficient": 0.044,
+      "tintR": 0.98,
+      "tintG": 0.88,
+      "tintB": 0.66
+    }
+  ]
+}

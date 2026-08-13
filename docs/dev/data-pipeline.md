@@ -24,6 +24,11 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 - `sky-cultures/*.json`: authored constellation line data.
 - `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
 - `meteor-showers.v1.json`: annual meteor showers. Radiant, peak solar longitude, activity half-width, and peak ZHR, hand-authored from the IMO Meteor Shower Calendar working list.
+- `planets.v1.json`: the five naked-eye planets and the observer's own orbit. Six Keplerian elements and their per-century rates per body, hand-authored from JPL's *Approximate Positions of the Major Planets* Table 1 (valid 1800–2050), plus a magnitude zero point, a linear phase coefficient, and a tint.
+
+Like the shower catalog, the planet table is hand-authored rather than generated: it is six rows of published constants, and a generator would add a build step without removing a source of error. The error it would not catch is a mistyped digit, so `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law` checks each body's semi-major axis against its mean-motion rate — two numbers that are independent in the file and physically locked together — and `PlanetEphemerisTests` checks the resulting positions against real oppositions.
+
+Earth sits under `observer` rather than in the `planets` array, because its orbit is subtracted from every other one rather than drawn.
 
 Shower peaks are recorded as **solar longitude**, not as a day of the year, because `daysPerYear` is world configuration: 140 deg is late summer on a 12-day world and a 360-day world alike, while day 224 is not. `CelestialMath.GetSolarLongitudeDegrees` is the matching read.
 

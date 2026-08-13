@@ -57,6 +57,16 @@ published peak strength, how high the radiant is above the horizon, sky darkness
 Short streaks near the radiant and longer streaks farther away preserve the perspective that makes
 a real shower appear to radiate from one point in the sky.
 
+### Follow the wandering planets
+
+Mercury, Venus, Mars, Jupiter and Saturn move against the fixed stars on real orbits, solved from
+published orbital elements rather than animated along a path. A world year is a year of that motion,
+whatever the world's day count, so Jupiter takes about twelve world years to come back around and
+Venus swings between the evening and morning sky within a season, brightening and fading as it goes.
+
+Chart Mars over a couple of world weeks and it will turn back on itself. Nobody scripted that
+retrograde loop: it is what the sky does when the world overtakes a slower planet on the inside.
+
 ## Roadmap
 
 In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the [Moving Sky Objects](https://github.com/lalmei/astraterra/milestone/1) milestone.
@@ -70,10 +80,9 @@ In no order what so ever. Items with an issue have a design sketch and a suggest
 - Modify architecture for more easier customization. Such as custom deep sky objects.
 - Star Catalog randomizer loot tables for chest and ruins. (i.e. create a star catalog with Maya constellations for a Mayan Ruin, or other sky cultures.) much of the backend is there since sterallarium already contains much of this datasets.
 - [Comets](https://github.com/lalmei/astraterra/issues/38). Authored apparitions with an anti-sunward tail.
-- [Planets](https://github.com/lalmei/astraterra/issues/37). The five naked-eye wanderers, retrograde motion included.
 - New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41) — sighting a mountain to get its distance and height.
 
-Planets and comets need a [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36), since their right ascension and declination change with time. Meteor radiants are fixed like catalog stars and do not need that dependency. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
+Comets sit on the same [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) the planets already use, since their right ascension and declination change with time. Meteor radiants are fixed like catalog stars and do not need that dependency. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
 
 ## Docs
 
