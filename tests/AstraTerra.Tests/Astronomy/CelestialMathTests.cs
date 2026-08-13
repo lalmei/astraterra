@@ -199,6 +199,59 @@ public sealed class CelestialMathTests
             () => CelestialMath.GetLocalSolarTimeHours(totalDays: 1, hoursPerDay: 0));
     }
 
+    [Theory]
+    [InlineData(0.0, 0.0, 0.0)]
+    [InlineData(180.0, 180.0, 0.0)]
+    [InlineData(90.0, 90.0, CelestialMath.MeanObliquityDeg)]
+    [InlineData(270.0, 270.0, -CelestialMath.MeanObliquityDeg)]
+    public void EclipticToEquatorial_Pins_The_Equinoxes_And_Solstices(
+        double eclipticLongitudeDeg,
+        double expectedRightAscensionDeg,
+        double expectedDeclinationDeg)
+    {
+        var equatorial = CelestialMath.EclipticToEquatorial(eclipticLongitudeDeg, eclipticLatitudeDeg: 0);
+
+        Assert.Equal(expectedRightAscensionDeg, equatorial.RightAscensionDeg, 6);
+        Assert.Equal(expectedDeclinationDeg, equatorial.DeclinationDeg, 6);
+    }
+
+    [Fact]
+    public void EclipticToEquatorial_Places_The_North_Ecliptic_Pole_In_Draco()
+    {
+        var pole = CelestialMath.EclipticToEquatorial(eclipticLongitudeDeg: 0, eclipticLatitudeDeg: 90);
+
+        // 18h, +66.5 deg: the pole sits a full obliquity away from the celestial pole, which is the
+        // sign check that catches a rotation applied the wrong way round.
+        Assert.Equal(270.0, pole.RightAscensionDeg, 6);
+        Assert.Equal(90.0 - CelestialMath.MeanObliquityDeg, pole.DeclinationDeg, 6);
+    }
+
+    [Fact]
+    public void EclipticToEquatorial_Keeps_The_Ecliptic_Within_One_Obliquity_Of_The_Equator()
+    {
+        for (var longitudeDeg = 0.0; longitudeDeg < 360.0; longitudeDeg += 3.0)
+        {
+            var equatorial = CelestialMath.EclipticToEquatorial(longitudeDeg, eclipticLatitudeDeg: 0);
+
+            Assert.InRange(
+                equatorial.DeclinationDeg,
+                -CelestialMath.MeanObliquityDeg - 1e-9,
+                CelestialMath.MeanObliquityDeg + 1e-9);
+        }
+    }
+
+    [Fact]
+    public void EclipticToEquatorial_Is_The_Identity_On_A_World_With_No_Tilt()
+    {
+        var equatorial = CelestialMath.EclipticToEquatorial(
+            eclipticLongitudeDeg: 137.5,
+            eclipticLatitudeDeg: 12.25,
+            obliquityDeg: 0);
+
+        Assert.Equal(137.5, equatorial.RightAscensionDeg, 6);
+        Assert.Equal(12.25, equatorial.DeclinationDeg, 6);
+    }
+
     private static double SignedDelta(double degrees)
     {
         var normalized = CelestialMath.NormalizeDegrees(degrees);

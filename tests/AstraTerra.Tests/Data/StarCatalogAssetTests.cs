@@ -214,6 +214,32 @@ public sealed class StarCatalogAssetTests
             });
     }
 
+    [Fact]
+    public void DeepSkyCatalog_Deserializes_Into_The_Shape_The_Game_Loads()
+    {
+        // The renderer reaches the asset through this type, not through a JsonDocument, so the
+        // property names on the entry and on its shared EquatorialCoordinates corners have to keep
+        // matching the shipped file.
+        var entries = JsonSerializer.Deserialize<DeepSkyObjectEntry[]>(
+            File.ReadAllText("assets/astraterra/data/deep-sky.v1.json"),
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.NotNull(entries);
+        var pleiades = Assert.Single(entries!, entry => entry.Id == "M45");
+        Assert.Equal(56.75, pleiades.RightAscensionDeg, 4);
+        Assert.Equal(4, pleiades.WorldCoords.Count);
+        Assert.All(
+            entries!,
+            entry => Assert.All(
+                entry.WorldCoords,
+                corner =>
+                {
+                    AssertFinite(corner.RightAscensionDeg);
+                    AssertFinite(corner.DeclinationDeg);
+                    Assert.NotEqual(default, corner);
+                }));
+    }
+
     private static void AssertFinite(double value)
     {
         Assert.False(double.IsNaN(value));

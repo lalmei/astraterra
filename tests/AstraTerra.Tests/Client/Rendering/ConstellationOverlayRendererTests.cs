@@ -66,14 +66,16 @@ public sealed class ConstellationOverlayRendererTests
     private static RenderedStar Star(int hip, double directionX = 0, double directionY = 1, double directionZ = 0)
         => new(
             hip,
-            VisualMagnitude: 1,
-            AzimuthDeg: 0,
-            AltitudeDeg: 45,
-            Brightness: 1,
+            new RenderedBody(
+                Coordinates: new EquatorialCoordinates(0, 0),
+                VisualMagnitude: 1,
+                AzimuthDeg: 0,
+                AltitudeDeg: 45,
+                Brightness: 1,
+                DirectionX: directionX,
+                DirectionY: directionY,
+                DirectionZ: directionZ,
+                Size: 1),
             ColorTemperatureK: 6500,
-            IsGuideStar: true,
-            DirectionX: directionX,
-            DirectionY: directionY,
-            DirectionZ: directionZ,
-            Size: 1);
+            IsGuideStar: true);
 }

@@ -51,14 +51,29 @@ public static class SkyBodyModel
         return new SightedBody(displayName, azimuthDeg, altitudeDeg, x, y, z);
     }
 
+    /// <summary>
+    /// Sights anything the sky projection has placed. Naming is the caller's job, because a
+    /// catalogue number, a planet and a comet apparition all read differently in the readout.
+    /// </summary>
+    public static SightedBody FromBody(string displayName, RenderedBody body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        return new SightedBody(
+            displayName,
+            body.AzimuthDeg,
+            body.AltitudeDeg,
+            body.DirectionX,
+            body.DirectionY,
+            body.DirectionZ);
+    }
+
     public static SightedBody FromStar(RenderedStar star)
-        => new(
-            $"Star HIP {star.Hip}",
-            star.AzimuthDeg,
-            star.AltitudeDeg,
-            star.DirectionX,
-            star.DirectionY,
-            star.DirectionZ);
+    {
+        ArgumentNullException.ThrowIfNull(star);
+
+        return FromBody($"Star HIP {star.Hip}", star.Body);
+    }
 
     private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 }

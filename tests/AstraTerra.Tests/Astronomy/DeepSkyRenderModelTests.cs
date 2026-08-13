@@ -15,10 +15,10 @@ public sealed class DeepSkyRenderModelTests
             0,
             2.0,
             [
-                new DeepSkyEquatorialCorner(-1, -1),
-                new DeepSkyEquatorialCorner(1, -1),
-                new DeepSkyEquatorialCorner(1, 1),
-                new DeepSkyEquatorialCorner(-1, 1)
+                new EquatorialCoordinates(-1, -1),
+                new EquatorialCoordinates(1, -1),
+                new EquatorialCoordinates(1, 1),
+                new EquatorialCoordinates(-1, 1)
             ],
             0.5,
             0.8f,
@@ -52,10 +52,10 @@ public sealed class DeepSkyRenderModelTests
             0,
             2.0,
             [
-                new DeepSkyEquatorialCorner(179, -1),
-                new DeepSkyEquatorialCorner(181, -1),
-                new DeepSkyEquatorialCorner(181, 1),
-                new DeepSkyEquatorialCorner(179, 1)
+                new EquatorialCoordinates(179, -1),
+                new EquatorialCoordinates(181, -1),
+                new EquatorialCoordinates(181, 1),
+                new EquatorialCoordinates(179, 1)
             ],
             0.5,
             0.8f,
@@ -72,12 +72,12 @@ public sealed class DeepSkyRenderModelTests
     [Fact]
     public void Project_Preserves_Stellarium_Corner_Order_And_Rotation()
     {
-        DeepSkyEquatorialCorner[] worldCoords =
+        EquatorialCoordinates[] worldCoords =
         [
-            new DeepSkyEquatorialCorner(-2, -1),
-            new DeepSkyEquatorialCorner(1, -2),
-            new DeepSkyEquatorialCorner(2, 1),
-            new DeepSkyEquatorialCorner(-1, 2)
+            new EquatorialCoordinates(-2, -1),
+            new EquatorialCoordinates(1, -2),
+            new EquatorialCoordinates(2, 1),
+            new EquatorialCoordinates(-1, 2)
         ];
         var entry = new DeepSkyObjectEntry(
             "TEST",

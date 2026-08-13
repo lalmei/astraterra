@@ -339,10 +339,10 @@ public static class SkyStarSunMoonRenderer
                 {
                     var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(size, alpha);
                     var glowTint = new Vec4f(tint.R, tint.G, tint.B, outerAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, star, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
+                    RenderStarQuad(clientApi, shader, quadModel, star.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
                 }
 
-                RenderStarQuad(clientApi, shader, quadModel, star, size, imageSize, textureId, tint, modelMatrixBuffer);
+                RenderStarQuad(clientApi, shader, quadModel, star.Body, size, imageSize, textureId, tint, modelMatrixBuffer);
 
                 drawnCount++;
                 smallestDrawnSize = Math.Min(smallestDrawnSize, size);
@@ -429,18 +429,22 @@ public static class SkyStarSunMoonRenderer
         }
     }
 
+    /// <summary>
+    /// Draws one sky billboard. Takes the shared <see cref="RenderedBody"/> rather than a star, so
+    /// anything the sky projection places can be drawn through this same path.
+    /// </summary>
     private static void RenderStarQuad(
         ICoreClientAPI clientApi,
         IStandardShaderProgram shader,
         MeshRef quadModel,
-        RenderedStar star,
+        RenderedBody body,
         float sizePixels,
         int imageSize,
         int textureId,
         Vec4f tint,
         float[] modelMatrixBuffer)
     {
-        var modelMatrix = BuildModelMatrix(clientApi, star, sizePixels, imageSize);
+        var modelMatrix = BuildModelMatrix(clientApi, body, sizePixels, imageSize);
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = tint;
@@ -609,10 +613,10 @@ public static class SkyStarSunMoonRenderer
         return false;
     }
 
-    private static Matrix4 BuildModelMatrix(ICoreClientAPI clientApi, RenderedStar star, float sizePixels, int imageSize)
+    private static Matrix4 BuildModelMatrix(ICoreClientAPI clientApi, RenderedBody body, float sizePixels, int imageSize)
     {
         var angularSizeDeg = Math.Clamp(sizePixels * StarAngularSizePerPixelDeg, 0.01f, 2.0f);
-        return BuildSkyBillboardMatrix(clientApi, star.DirectionX, star.DirectionY, star.DirectionZ, angularSizeDeg, imageSize);
+        return BuildSkyBillboardMatrix(clientApi, body.DirectionX, body.DirectionY, body.DirectionZ, angularSizeDeg, imageSize);
     }
 
     private static Matrix4 BuildSkyBillboardMatrix(

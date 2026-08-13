@@ -2,8 +2,35 @@ namespace AstraTerra.Astronomy;
 
 public readonly record struct HorizontalCoordinates(double AzimuthDeg, double AltitudeDeg);
 
+/// <summary>
+/// A position on the celestial sphere, in the frame every sky object shares.
+/// </summary>
+/// <remarks>
+/// A catalog object carries one of these as a constant; a body that moves resolves one from an
+/// <see cref="ISkyEphemeris"/> at a world time. Everything downstream of that — projection, the
+/// sextant, the astrolabe — sees only this shape, which is what lets one path serve stars, deep-sky
+/// objects, planets and comets alike.
+/// </remarks>
+public readonly record struct EquatorialCoordinates(double RightAscensionDeg, double DeclinationDeg);
+
 public static class CelestialMath
 {
+    /// <summary>
+    /// Tilt of the ecliptic — the plane the planets orbit in — against the celestial equator, in
+    /// degrees. Earth's mean obliquity at J2000.
+    /// </summary>
+    /// <remarks>
+    /// Anything that starts life in ecliptic coordinates needs this to reach the equatorial frame
+    /// the rest of the sky lives in: planet and comet positions arrive as ecliptic longitude and
+    /// latitude, and the sun's declination is this same angle projected onto the year. Landed once
+    /// here so those cannot disagree about the tilt of the world they share.
+    /// <para>
+    /// The 128-year drift in the real value is far below anything a billboard in a voxel sky can
+    /// show, so it is treated as a constant.
+    /// </para>
+    /// </remarks>
+    public const double MeanObliquityDeg = 23.4392911;
+
     public static double GetSeasonalAngle(int dayOfYear, double dayFraction, int daysPerYear)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
@@ -92,6 +119,38 @@ public static class CelestialMath
         var azimuthX = Math.Tan(declination) * Math.Cos(latitude) - Math.Sin(latitude) * Math.Cos(hourAngle);
         var azimuth = NormalizeDegrees(ToDegrees(Math.Atan2(azimuthY, azimuthX)));
         return new HorizontalCoordinates(azimuth, altitude);
+    }
+
+    /// <summary>
+    /// Rotates a position from the ecliptic frame, where the planets are computed, into the
+    /// equatorial frame the sky is drawn in.
+    /// </summary>
+    /// <param name="obliquityDeg">
+    /// Defaults to <see cref="MeanObliquityDeg"/>. Exposed so a world with a different tilt — or a
+    /// test pinning the rotation itself — can supply its own.
+    /// </param>
+    /// <remarks>
+    /// Done through a unit vector rather than the textbook <c>atan2(sin l cos e - tan b sin e,
+    /// cos l)</c>, which is the same rotation but divides by zero at the ecliptic poles. Planets
+    /// never go near them; a comet on a steep orbit can.
+    /// </remarks>
+    public static EquatorialCoordinates EclipticToEquatorial(
+        double eclipticLongitudeDeg,
+        double eclipticLatitudeDeg,
+        double obliquityDeg = MeanObliquityDeg)
+    {
+        var longitude = ToRadians(eclipticLongitudeDeg);
+        var latitude = ToRadians(eclipticLatitudeDeg);
+        var obliquity = ToRadians(obliquityDeg);
+        var cosLatitude = Math.Cos(latitude);
+
+        var x = cosLatitude * Math.Cos(longitude);
+        var y = (cosLatitude * Math.Sin(longitude) * Math.Cos(obliquity)) - (Math.Sin(latitude) * Math.Sin(obliquity));
+        var z = (cosLatitude * Math.Sin(longitude) * Math.Sin(obliquity)) + (Math.Sin(latitude) * Math.Cos(obliquity));
+
+        return new EquatorialCoordinates(
+            NormalizeDegrees(ToDegrees(Math.Atan2(y, x))),
+            ToDegrees(Math.Asin(Math.Clamp(z, -1.0, 1.0))));
     }
 
     public static double NormalizeDegrees(double degrees)
