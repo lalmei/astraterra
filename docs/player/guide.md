@@ -26,11 +26,20 @@ Hold right click to enter the scoped view. While scoped:
 
 - Scroll to change zoom.
 - Middle click to cycle modes.
+- In Observe mode, centre a wandering star and press sneak to write it down and name it.
 - In Draw mode, left-drag from one guide star to another to create a segment.
 - In Inspect mode, click a saved constellation segment to name or rename it.
 - In Remove Segment mode, click a saved segment to delete it.
 
 The telescope still works as a zoom tool when astronomy conditions are not available.
+
+#### Identifying a wandering star
+
+A telescope cannot tell you a planet is a planet — through any eyepiece it stays a point of light, exactly like the stars around it. What gives it away is that it *moves*: chart it over a few nights and it will have shifted against the fixed stars behind it, and that is how the ancients picked them out.
+
+When you are satisfied you have found one, centre it in the eyepiece in Observe mode and press sneak. It goes into your book and you are asked what to call it. Sneak rather than a click, because right click is already holding the scope up. As with drawing constellations, you need a book in your left hand and ink and quill in your inventory.
+
+The name is yours. Nothing in the sky will ever tell you it was called Mars — that name only arrives in a book somebody else already wrote.
 
 ### Precision Telescope
 

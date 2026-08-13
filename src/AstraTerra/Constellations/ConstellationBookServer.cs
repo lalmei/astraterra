@@ -49,6 +49,11 @@ public sealed class ConstellationBookServer
             return Error("Writing constellations requires ink and quill in your inventory.");
         }
 
+        if (ConstellationBookMutationActions.IsPlanetAction(packet.Action))
+        {
+            return HandlePlanetMutation(slot, packet);
+        }
+
         var wasConstellationBook = ConstellationBookService.IsConstellationBook(slot.Itemstack);
         var bookTitle = wasConstellationBook
             ? slot.Itemstack.Attributes.GetString(ConstellationBookService.VanillaTitleAttribute, null)
@@ -83,6 +88,65 @@ public sealed class ConstellationBookServer
         catch (Exception exception)
         {
             return Error($"Could not update constellation book: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Writes the planet half of the book, leaving the drawn figures alone.
+    /// </summary>
+    /// <remarks>
+    /// Identifying and naming are separate actions so an observer can write a wanderer down the
+    /// moment they notice it moving and settle on a name afterwards, which is how the constellation
+    /// side already behaves.
+    /// </remarks>
+    private static ConstellationBookResponsePacket HandlePlanetMutation(
+        ItemSlot slot,
+        ConstellationBookMutationPacket packet)
+    {
+        if (string.IsNullOrWhiteSpace(packet.PlanetId))
+        {
+            return Error("No planet was selected.");
+        }
+
+        try
+        {
+            var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(slot.Itemstack);
+            var alreadyKnown = journal.IsIdentified(packet.PlanetId);
+            string message;
+            var promptName = string.Empty;
+
+            if (packet.Action == ConstellationBookMutationActions.RenamePlanet)
+            {
+                var record = journal.Rename(packet.PlanetId, packet.Name);
+                message = string.IsNullOrWhiteSpace(record.Name)
+                    ? "Cleared the name of a wandering star."
+                    : $"Named a wandering star {record.Name}.";
+            }
+            else if (alreadyKnown)
+            {
+                // Nothing to write, but the observer plainly wants to revisit the entry.
+                message = $"Already recorded: {journal.DisplayName(packet.PlanetId)}.";
+                promptName = packet.PlanetId;
+            }
+            else
+            {
+                journal.Identify(packet.PlanetId);
+                message = "Recorded a wandering star. It keeps its place among the stars for no more than a night.";
+                promptName = packet.PlanetId;
+            }
+
+            ConstellationBookService.WritePlanetJournal(slot.Itemstack, journal);
+            slot.MarkDirty();
+            return new ConstellationBookResponsePacket
+            {
+                Success = true,
+                Message = message,
+                PromptNamePlanetId = promptName
+            };
+        }
+        catch (Exception exception)
+        {
+            return Error($"Could not update the planet book: {exception.Message}");
         }
     }
 
