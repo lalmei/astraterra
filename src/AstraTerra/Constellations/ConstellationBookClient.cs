@@ -103,6 +103,25 @@ public sealed class ConstellationBookClient
         });
     }
 
+    public void SendIdentifyPlanet(string planetId)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.IdentifyPlanet,
+            PlanetId = planetId
+        });
+    }
+
+    public void SendRenamePlanet(string planetId, string? name)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.RenamePlanet,
+            PlanetId = planetId,
+            Name = name ?? string.Empty
+        });
+    }
+
     public void SendBuild(string target)
     {
         SendMutation(new ConstellationBookMutationPacket
@@ -159,6 +178,14 @@ public sealed class ConstellationBookClient
         {
             var record = new ConstellationRecord(packet.PromptRenameConstellationId, null, 0, 0, []);
             new ConstellationNameDialog(api, record, SendRename).TryOpen();
+        }
+
+        if (!string.IsNullOrWhiteSpace(packet.PromptNamePlanetId))
+        {
+            var existing = ConstellationBookService
+                .ReadPlanetJournalOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack)
+                .Find(packet.PromptNamePlanetId);
+            new PlanetNameDialog(api, packet.PromptNamePlanetId, existing?.Name, SendRenamePlanet).TryOpen();
         }
 
         if (!packet.Success)

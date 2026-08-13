@@ -22,12 +22,24 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private static readonly Vec4f DragGuideTint = new(0.980f, 0.702f, 0.529f, 0.78f);
     private static readonly Vec4f PreviewSegmentTint = new(0.980f, 0.702f, 0.529f, 0.56f);
 
+    /// <summary>
+    /// How far from the middle of the eyepiece a planet may sit and still count as the one being
+    /// looked at. Generous, because the telescope is aimed by turning your head.
+    /// </summary>
+    private const float PlanetPickRadius = 90.0f;
+
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
+    private readonly PlanetCatalog? planetCatalog;
+    private PlanetRenderModel? planetModel;
+    private int planetModelDaysPerYear;
+    private double planetModelHoursPerDay;
+    private bool sneakWasDown;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
+    private IReadOnlyList<ProjectedPlanet> projectedPlanets = [];
     private IReadOnlyList<ProjectedGuideStar> projectedGuideStars = [];
     private LoadedTexture pixelTexture;
     private bool renderingDisabledAfterFailure;
@@ -36,12 +48,18 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private int? drawHoverHipId;
     private IReadOnlyList<RenderedScreenSegment> screenSegments = [];
 
-    public ConstellationOverlayRenderer(ICoreClientAPI api, AstraTerraConfig config, StarCatalog catalog, ConstellationBookClient bookClient)
+    public ConstellationOverlayRenderer(
+        ICoreClientAPI api,
+        AstraTerraConfig config,
+        StarCatalog catalog,
+        ConstellationBookClient bookClient,
+        PlanetCatalog? planetCatalog = null)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
         this.bookClient = bookClient;
+        this.planetCatalog = planetCatalog;
         pixelTexture = new LoadedTexture(api)
         {
             Width = 1,
@@ -200,14 +218,16 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength));
         projectedGuideStars = ProjectGuideStars(visibleStars.Where(star => star.IsGuideStar));
+        projectedPlanets = ProjectPlanets(calendar.TotalDays, latitude, localSiderealAngle);
+        PollIdentifyPlanet();
         var visibleStarMap = visibleStars.ToDictionary(star => star.Hip);
         var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
         var nextScreenSegments = new List<RenderedScreenSegment>();
 
         foreach (var segment in segments)
         {
-            if (!TryProject(segment.Start, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var startX, out var startY) ||
-                !TryProject(segment.End, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var endX, out var endY))
+            if (!TryProject(segment.Start.Body, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var startX, out var startY) ||
+                !TryProject(segment.End.Body, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var endX, out var endY))
             {
                 continue;
             }
@@ -342,7 +362,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         return stars.Select(star =>
             {
-                var projected = TryProject(star, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y);
+                var projected = TryProject(star.Body, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y);
                 return projected ? new ProjectedGuideStar(star.Hip, x, y) : (ProjectedGuideStar?)null;
             })
             .Where(star => star is not null)
@@ -350,11 +370,117 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             .ToList();
     }
 
+    private IReadOnlyList<ProjectedPlanet> ProjectPlanets(double totalDays, double latitudeDeg, double localSiderealDeg)
+    {
+        var planets = ResolvePlanetModel();
+        if (planets is null || cachedViewMatrix is null || cachedProjectionMatrix is null)
+        {
+            return [];
+        }
+
+        return planets
+            .ProjectVisiblePlanets(totalDays, latitudeDeg, localSiderealDeg, config.StarBrightnessBias, visualHorizonCutoffDeg: 0.0)
+            .Select(planet =>
+            {
+                var projected = TryProject(planet.Body, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y);
+                return projected ? new ProjectedPlanet(planet.Id, x, y) : (ProjectedPlanet?)null;
+            })
+            .Where(planet => planet is not null)
+            .Select(planet => planet!.Value)
+            .ToList();
+    }
+
+    private PlanetRenderModel? ResolvePlanetModel()
+    {
+        if (planetCatalog is null)
+        {
+            return null;
+        }
+
+        var daysPerYear = Math.Max(1, api.World.Calendar.DaysPerYear);
+        var hoursPerDay = Math.Max(1.0, api.World.Calendar.HoursPerDay);
+        if (planetModel is null
+            || daysPerYear != planetModelDaysPerYear
+            || Math.Abs(hoursPerDay - planetModelHoursPerDay) > 1e-9)
+        {
+            planetModel = new PlanetRenderModel(planetCatalog, daysPerYear, hoursPerDay);
+            planetModelDaysPerYear = daysPerYear;
+            planetModelHoursPerDay = hoursPerDay;
+        }
+
+        return planetModel;
+    }
+
+    /// <summary>
+    /// Writes down whatever the telescope is pointed at, when the observer sneaks while observing.
+    /// </summary>
+    /// <remarks>
+    /// A key rather than a click: right click is already held down to keep the scope raised, and both
+    /// mouse buttons are spoken for in the drawing modes. The target is whatever sits nearest the
+    /// middle of the eyepiece, because a telescope is aimed by turning your head rather than by
+    /// moving a cursor.
+    /// <para>
+    /// Fires on the press rather than while held, so leaning on sneak does not rewrite the book every
+    /// frame.
+    /// </para>
+    /// </remarks>
+    private void PollIdentifyPlanet()
+    {
+        var sneakDown = api.World.Player.Entity.Controls.Sneak;
+        var pressed = sneakDown && !sneakWasDown;
+        sneakWasDown = sneakDown;
+
+        if (!pressed || TelescopeScopeState.Mode != ObservationMode.Observe)
+        {
+            return;
+        }
+
+        var planet = PickPlanetNearCentre();
+        if (planet is null)
+        {
+            return;
+        }
+
+        if (!bookClient.CanMutate(out var message))
+        {
+            api.ShowChatMessage(message);
+            return;
+        }
+
+        bookClient.SendIdentifyPlanet(planet.Value.PlanetId);
+    }
+
+    private ProjectedPlanet? PickPlanetNearCentre()
+    {
+        var centreX = api.Render.FrameWidth / 2f;
+        var centreY = api.Render.FrameHeight / 2f;
+        var radiusSquared = PlanetPickRadius * PlanetPickRadius;
+        ProjectedPlanet? closest = null;
+        var closestDistanceSquared = double.MaxValue;
+
+        foreach (var planet in projectedPlanets)
+        {
+            var dx = planet.X - centreX;
+            var dy = planet.Y - centreY;
+            var distanceSquared = (dx * dx) + (dy * dy);
+            if (distanceSquared > radiusSquared || distanceSquared >= closestDistanceSquared)
+            {
+                continue;
+            }
+
+            closest = planet;
+            closestDistanceSquared = distanceSquared;
+        }
+
+        return closest;
+    }
+
     private void ClearInteractionTargets()
     {
         hoveredGuideHipId = null;
         drawHoverHipId = null;
         projectedGuideStars = [];
+        projectedPlanets = [];
         screenSegments = [];
     }
 
@@ -470,7 +596,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     }
 
     private bool TryProject(
-        RenderedStar star,
+        RenderedBody body,
         double[] viewMatrix,
         double[] projectionMatrix,
         float frameWidth,
@@ -478,7 +604,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         out float screenX,
         out float screenY)
     {
-        var (worldX, worldY, worldZ) = BuildSkyProjectionPosition(star.DirectionX, star.DirectionY, star.DirectionZ);
+        var (worldX, worldY, worldZ) = BuildSkyProjectionPosition(body.DirectionX, body.DirectionY, body.DirectionZ);
         return ProjectWorldToScreen(
             worldX,
             worldY,
@@ -570,6 +696,8 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     }
 
     private readonly record struct ProjectedGuideStar(int Hip, float X, float Y);
+
+    private readonly record struct ProjectedPlanet(string PlanetId, float X, float Y);
 
     private readonly record struct RenderedScreenSegment(int ConstellationId, int StartHip, int EndHip, float StartX, float StartY, float EndX, float EndY);
 }

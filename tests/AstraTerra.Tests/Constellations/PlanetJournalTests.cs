@@ -136,4 +136,19 @@ public sealed class PlanetJournalTests
 
         Assert.Throws<ArgumentException>(() => journal.Identify("  "));
     }
+
+    [Theory]
+    [InlineData(ConstellationBookMutationActions.IdentifyPlanet, true)]
+    [InlineData(ConstellationBookMutationActions.RenamePlanet, true)]
+    [InlineData(ConstellationBookMutationActions.AddEdge, false)]
+    [InlineData(ConstellationBookMutationActions.Rename, false)]
+    [InlineData(ConstellationBookMutationActions.Delete, false)]
+    [InlineData(ConstellationBookMutationActions.Build, false)]
+    [InlineData("nonsense", false)]
+    public void Only_Planet_Actions_Write_The_Planet_Half_Of_A_Book(string action, bool expected)
+    {
+        // The server routes on this: a constellation action must never land in the planet journal,
+        // and a planet action must never rewrite the drawn figures.
+        Assert.Equal(expected, ConstellationBookMutationActions.IsPlanetAction(action));
+    }
 }

@@ -175,7 +175,7 @@ public sealed class AstraTerraModSystem : ModSystem
         }
 
         SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets);
-        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient);
+        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, planets);
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
         api.Event.MouseDown += constellationOverlayRenderer.OnMouseDown;
