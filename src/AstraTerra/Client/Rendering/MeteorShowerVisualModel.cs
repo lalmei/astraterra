@@ -42,6 +42,19 @@ public sealed class MeteorShowerVisualModel
     public const double MaximumFrameStepSeconds = 0.25;
     private const double SpawnAccumulatorEpsilon = 1e-12;
 
+    /// <summary>
+    /// What is left of a streak arriving head-on at the radiant, where perspective collapses the
+    /// whole path to a point.
+    /// </summary>
+    private const double RadiantHeadOnLengthDeg = 0.65;
+
+    /// <summary>
+    /// Length a streak gains once it is seen broadside, 90 deg from its radiant. Real shower meteors
+    /// that far out draw something like 10-20 deg; this stays under that, far enough to read as a
+    /// streak rather than a dash without becoming the brightest thing in the sky every time.
+    /// </summary>
+    private const double BroadsideLengthDeg = 8.0;
+
     private readonly List<MeteorStreak> activeStreaks = [];
     private ulong sequence;
     private double spawnAccumulator;
@@ -106,10 +119,19 @@ public sealed class MeteorShowerVisualModel
         spawnAccumulator = 0.0;
     }
 
+    /// <summary>
+    /// How long a streak draws, from head-on at the radiant to broadside across the sky.
+    /// </summary>
+    /// <remarks>
+    /// Every meteor in a shower travels the same direction, so perspective alone decides what the
+    /// observer gets: a point near the radiant and a full path at right angles to it. The exponent
+    /// spends most of that growth inside the first 30 deg, which is where the foreshortening actually
+    /// lets go.
+    /// </remarks>
     public static double CalculateAngularLengthDeg(double radiantSeparationDeg)
     {
         var separation = Math.Clamp(radiantSeparationDeg, 0.0, 90.0) * Math.PI / 180.0;
-        return 0.65 + (5.2 * Math.Pow(Math.Sin(separation), 0.9));
+        return RadiantHeadOnLengthDeg + (BroadsideLengthDeg * Math.Pow(Math.Sin(separation), 0.9));
     }
 
     private void AgeStreaks(double elapsed)
