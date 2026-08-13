@@ -131,6 +131,52 @@ ecliptic poles — which planets never approach and a steeply inclined comet can
 The same constant is what the sun's seasonal declination needs, so both should read it from here
 rather than each carrying a tilt of their own.
 
+### The planets
+
+`PlanetEphemeris` solves two orbits per sample — the planet's and the observer's — and subtracts
+them. Retrograde motion is not scripted anywhere; it is what that subtraction does when the world
+overtakes a slower planet on the inside, and a player charting Mars over a couple of world weeks will
+watch it happen.
+
+Elements come from JPL's *Approximate Positions of the Major Planets*, six per body plus per-century
+rates, accurate to arcminutes across 1800–2050. `KeplerianOrbit` implements JPL's own formulation:
+advance the elements, take the mean anomaly, solve Kepler's equation by Newton–Raphson, place the
+body in its orbital plane, rotate that plane into the ecliptic.
+
+Magnitude is `H + 5 log10(r · delta)` plus a linear phase term. Venus swings by more than a magnitude
+over a world year, which is the point of modelling it at all.
+
+!!! warning "The star brightness curve saturates before the planets do"
+    `SkyProjection.GetBrightnessFromMagnitude` is deliberately compressed for stars and reaches full
+    brightness at magnitude 0.4. Every planet but Saturn spends most of its time brighter than that,
+    so left alone, Venus at -4.9 and Mars at its dimmest would be drawn identically.
+
+    `PlanetRenderModel.GetBrilliance` keeps responding across the range planets occupy, and the
+    renderer spends it on the glow rather than the core. Anything else added to the sky brighter than
+    magnitude 0.4 needs the same treatment, or the sky flattens out at the bright end.
+
+### The world epoch
+
+Orbits are published against Julian centuries past J2000, so a world day has to be worth something
+in real time. Two decisions in `WorldEpoch` fix it, and both are visible in the sky:
+
+| Decision | Value | Consequence |
+| --- | --- | --- |
+| A world year is a Julian year | `RealDaysPerWorldYear = 365.25` | Jupiter takes ~12 **world** years on a 12-day world and a 360-day world alike |
+| World time zero is the March 2000 equinox | `EquinoxOffsetDaysFromJ2000 = 78.816` | The planets share the seasons the rest of the mod already keeps |
+
+!!! warning "The epoch has to be an equinox, not J2000"
+    `GetSolarLongitudeDegrees` reads zero at `totalDays` zero, and solar longitude is measured from
+    the March equinox. Anchoring the planets at J2000 itself would start them 79 days round Earth's
+    orbit from where the world says its own sun is — every planet in the wrong season, a body at
+    opposition drawn near the sun, and nothing failing anywhere.
+
+    The two suns still differ by up to about 4° of ecliptic longitude, because the seasonal model
+    advances at a constant rate while the real world speeds up at perihelion. That is the equation of
+    centre, it is worth about a quarter of an hour of transit timing, and
+    `PlanetEphemerisTests.The_Sun_The_Planets_Are_Measured_From_Tracks_The_Sun_The_Seasons_Use`
+    holds it there.
+
 ### Sampling: once a world minute, not once a frame
 
 An orbit costs real arithmetic; a planet moves by arcminutes over a world hour. `CachedSkyEphemeris`
@@ -280,6 +326,12 @@ a different `hoursPerDay` the longitude offset is scaled accordingly.
 | Moving and fixed bodies share one projection  | `SkyProjectionTests.A_Moving_Body_Lands_Exactly_Where_A_Star_At_The_Same_Position_Does`                      |
 | The ecliptic is tilted the right way          | `CelestialMathTests.EclipticToEquatorial_Places_The_North_Ecliptic_Pole_In_Draco`                            |
 | An ephemeris is sampled once a world minute   | `SkyEphemerisTests.A_Cached_Body_Is_Sampled_Once_Per_World_Minute_However_Many_Frames_Pass`                  |
+| Planets are where they really were            | `PlanetEphemerisTests.A_Planet_Is_Where_It_Really_Was_At_A_Historic_Opposition`                              |
+| World time zero is the March equinox          | `PlanetEphemerisTests.The_World_Clock_Starts_At_The_March_Equinox`                                           |
+| An inner planet stays near the sun            | `PlanetEphemerisTests.An_Inner_Planet_Never_Strays_Far_From_The_Sun`                                         |
+| Retrograde motion falls out of the maths      | `PlanetEphemerisTests.Mars_Turns_Back_On_Itself_Without_Anyone_Scripting_It`                                 |
+| Jupiter takes ~12 world years on any world    | `PlanetEphemerisTests.Jupiter_Takes_About_Twelve_World_Years_Whatever_A_World_Year_Is`                       |
+| Element rates match their semi-major axes     | `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law`                                                 |
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |

@@ -29,6 +29,13 @@ public static class SkyStarSunMoonRenderer
     private const float MeteorSkyDistance = 39.8f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
     private const float StarGlowMaxAlpha = 0.35f;
+
+    /// <summary>
+    /// How much wider a planet's glow grows than its core, at full brilliance. Larger than the star
+    /// glow: a planet outshining every star around it is the thing that makes a player look twice.
+    /// </summary>
+    private const float PlanetGlowSizeRange = 1.8f;
+    private const float PlanetGlowMaxAlpha = 0.5f;
     private const float DeepSkyBrightnessScale = 0.42f;
     private const double ConstellationDotSpacingDeg = 0.65;
     private const float ConstellationDotAngularSizeDeg = 0.14f;
@@ -38,6 +45,10 @@ public static class SkyStarSunMoonRenderer
     private static AstraTerraConfig? config;
     private static StarCatalog? catalog;
     private static IReadOnlyList<MeteorShowerEntry> meteorShowers = Array.Empty<MeteorShowerEntry>();
+    private static PlanetCatalog? planetCatalog;
+    private static PlanetRenderModel? planetModel;
+    private static int planetModelDaysPerYear;
+    private static double planetModelHoursPerDay;
     private static MeteorShowerVisualModel meteorVisuals = new();
     private static double secondsSinceLastLog;
     private static double secondsSinceLastSkipLog;
@@ -66,7 +77,8 @@ public static class SkyStarSunMoonRenderer
         ICoreClientAPI clientApi,
         AstraTerraConfig loadedConfig,
         StarCatalog loadedCatalog,
-        IReadOnlyList<MeteorShowerEntry> loadedMeteorShowers)
+        IReadOnlyList<MeteorShowerEntry> loadedMeteorShowers,
+        PlanetCatalog? loadedPlanets = null)
     {
         ArgumentNullException.ThrowIfNull(loadedMeteorShowers);
         Reset();
@@ -74,13 +86,39 @@ public static class SkyStarSunMoonRenderer
         config = loadedConfig;
         catalog = loadedCatalog;
         meteorShowers = loadedMeteorShowers;
+        planetCatalog = loadedPlanets;
         meteorVisuals = new MeteorShowerVisualModel((ulong)Environment.TickCount64);
         clientApi.Logger.Notification(
-            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px; meteorShowers={3}",
+            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px; meteorShowers={3}; planets={4}",
             StarBillboardSizing.MinimumCoreDiameterPixels,
             StarBillboardSizing.MaximumCoreDiameterPixels,
             StarAngularSizePerPixelDeg,
-            meteorShowers.Count);
+            meteorShowers.Count,
+            planetCatalog?.Planets.Count ?? 0);
+    }
+
+    /// <summary>
+    /// Builds the planet model on demand rather than at startup, because a client only learns the
+    /// world's <c>daysPerYear</c> when the server hands it over, and that number sets how fast every
+    /// orbit runs.
+    /// </summary>
+    private static PlanetRenderModel? ResolvePlanetModel(int daysPerYear, double hoursPerDay)
+    {
+        if (planetCatalog is null)
+        {
+            return null;
+        }
+
+        if (planetModel is null
+            || daysPerYear != planetModelDaysPerYear
+            || Math.Abs(hoursPerDay - planetModelHoursPerDay) > 1e-9)
+        {
+            planetModel = new PlanetRenderModel(planetCatalog, daysPerYear, hoursPerDay);
+            planetModelDaysPerYear = daysPerYear;
+            planetModelHoursPerDay = hoursPerDay;
+        }
+
+        return planetModel;
     }
 
     public static void Reset()
@@ -93,6 +131,10 @@ public static class SkyStarSunMoonRenderer
         config = null;
         catalog = null;
         meteorShowers = Array.Empty<MeteorShowerEntry>();
+        planetCatalog = null;
+        planetModel = null;
+        planetModelDaysPerYear = 0;
+        planetModelHoursPerDay = 0;
         meteorVisuals.Clear();
         secondsSinceLastLog = 0;
         secondsSinceLastSkipLog = 0;
@@ -206,7 +248,11 @@ public static class SkyStarSunMoonRenderer
             dt,
             meteorReadings,
             config.GetDebugMeteorRateMultiplier());
-        if (drawableStars.Count == 0 && meteorStreaks.Count == 0)
+        var visiblePlanets = ResolvePlanetModel(Math.Max(1, calendar.DaysPerYear), Math.Max(1.0, calendar.HoursPerDay))
+            ?.ProjectVisiblePlanets(calendar.TotalDays, latitude, localSiderealAngle, brightnessBias)
+            ?? (IReadOnlyList<RenderedPlanet>)Array.Empty<RenderedPlanet>();
+        var drawablePlanets = FilterDrawablePlanets(visiblePlanets);
+        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && meteorStreaks.Count == 0)
         {
             LogSkyStep(
                 dt,
@@ -263,6 +309,7 @@ public static class SkyStarSunMoonRenderer
         RenderSky(
             api,
             drawableStars,
+            drawablePlanets,
             visibleDeepSkyObjects,
             constellationDots,
             meteorStreaks,
@@ -279,6 +326,7 @@ public static class SkyStarSunMoonRenderer
     private static void RenderSky(
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedStar> visibleStars,
+        IReadOnlyList<RenderedPlanet> visiblePlanets,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
         IReadOnlyList<SkyConstellationDot> constellationDots,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
@@ -349,6 +397,27 @@ public static class SkyStarSunMoonRenderer
                 largestDrawnSize = Math.Max(largestDrawnSize, size);
             }
 
+            // Planets go through the same billboard path as stars, but always on the rayed sprite
+            // and with a glow scaled by brilliance rather than by the saturated star curve, so that
+            // Venus reads as the brightest thing in the sky and Saturn does not.
+            foreach (var planet in visiblePlanets)
+            {
+                var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
+                var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
+                var tint = new Vec4f(planet.TintR, planet.TintG, planet.TintB, alpha);
+                var size = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
+                var glowAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
+                if (glowAlpha > 0.005f)
+                {
+                    var glowSize = size * (1f + (PlanetGlowSizeRange * brilliance));
+                    var glowTint = new Vec4f(planet.TintR, planet.TintG, planet.TintB, glowAlpha);
+                    RenderStarQuad(clientApi, shader, quadModel, planet.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
+                }
+
+                RenderStarQuad(clientApi, shader, quadModel, planet.Body, size, imageSize, brightStarTextureId, tint, modelMatrixBuffer);
+                drawnCount++;
+            }
+
             if (visibleDeepSkyObjects.Count > 0)
             {
                 // The telescope photographs are foreground plates. Standard alpha
@@ -394,14 +463,24 @@ public static class SkyStarSunMoonRenderer
         {
             secondsSinceLastLog = 0;
             clientApi.Logger.Notification(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; drawn={1}; constellationDots={2}; daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2}; daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
                 constellationDots.Count,
                 daylight,
                 forceDaylight,
                 CelestialMath.NormalizeDegrees(ToDegrees(yaw)),
-                Math.Clamp(-ToDegrees(pitch), -89.0, 89.0));
+                Math.Clamp(-ToDegrees(pitch), -89.0, 89.0),
+                visiblePlanets.Count);
+            if (visiblePlanets.Count > 0)
+            {
+                clientApi.Logger.Notification(
+                    "AstraTerra planet draw: {0}",
+                    string.Join(
+                        "; ",
+                        visiblePlanets.Select(planet =>
+                            $"{planet.DisplayName} mag={planet.VisualMagnitude:0.0} alt={planet.AltitudeDeg:0.0} az={planet.AzimuthDeg:0.0}")));
+            }
             if (visibleDeepSkyObjects.Count > 0)
             {
                 clientApi.Logger.Notification(
@@ -665,6 +744,20 @@ public static class SkyStarSunMoonRenderer
         var blockPos = entity.Pos.AsBlockPos;
         var eyeY = entity.Pos.InternalY + entity.LocalEyePos.Y;
         return clientApi.World.BlockAccessor.GetRainMapHeightAt(blockPos) <= eyeY;
+    }
+
+    private static IReadOnlyList<RenderedPlanet> FilterDrawablePlanets(IReadOnlyList<RenderedPlanet> visiblePlanets)
+    {
+        var drawablePlanets = new List<RenderedPlanet>(visiblePlanets.Count);
+        foreach (var planet in visiblePlanets)
+        {
+            if (planet.Brightness >= MinimumStarAlpha)
+            {
+                drawablePlanets.Add(planet);
+            }
+        }
+
+        return drawablePlanets;
     }
 
     private static IReadOnlyList<RenderedStar> FilterDrawableStars(IReadOnlyList<RenderedStar> visibleStars)
