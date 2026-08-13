@@ -71,6 +71,35 @@ AstraTerra follows the reference sky implementation-style sun/moon render pass:
     once per frame and updated in place has to do the same.
     `MeteorStreakMeshBuilderTests.Mesh_Size_Does_Not_Change_With_The_Number_Of_Streaks` pins it.
 
+## Sky Sprites
+
+The naked eye and the scoped view use different sprite sets, because the difference between them is physical rather than decorative. Rays are scintillation — air, not optics — so they belong to the eye. A telescope steadies them out: a star collapses to an Airy disc, a bright core inside one faint ring, and a planet is the one thing near enough to open into a resolved disc.
+
+| Sprite | Naked eye | Scoped |
+| --- | --- | --- |
+| Bright star | `star-rays-12-smooth` | `star-log-ring` |
+| Faint star | `star-dog-crisp` | `star-derivative-cross` |
+| Planet | bright star sprite | `star-gaussian-soft` |
+
+The choice matters far more under the scope than under the eye, and the reason is `BuildModelMatrix`: billboards are sized in **degrees**, not screen pixels, so telescope zoom magnifies them. At the naked-eye field of view a star covers about eight pixels and no sprite's shape survives; at the brass telescope's ×0.12 field it covers around sixty-seven, and at the precision telescope's ×0.06 more than a hundred, where the sprite *is* the picture.
+
+That is also where the scoped sky is drawn on top of the deep-sky plates, which are real photographs. The stars photographed into them are round cores with soft halos, so a rayed sprite beside them reads as a different kind of object. `SkyStarSunMoonRendererTests.The_Scoped_Sky_Uses_Its_Own_Sprites` keeps the two sets from collapsing back together.
+
+### Scoped angular size
+
+The plates are the measuring stick for size as well as shape. They are registered by four right-ascension/declination corners, so their scale is known: the Pleiades plate spans 1.508°, and the stars in it have a full width at half maximum of about 0.0044°. Across the shipped set, plate stars run **0.002° to 0.03°**.
+
+An unscaled bright star billboard is `8 px × 0.06 deg/px = 0.48°` — twenty-five to a hundred times that, wide enough to cover a third of the Pleiades plate on its own. `StarBillboardSizing` therefore scales angular size by the field of view when scoped:
+
+- **Stars scale with the field multiplier**, holding a constant handful of screen pixels at any magnification. A star is unresolvable — magnify it and it gets brighter, not bigger — and this is what puts it on the same scale as the plates it is drawn over.
+- **Planets hold a floor** (`ScopedPlanetAngularFloor`), so they do *not* fall away with magnification. Wide open a planet is barely larger than its neighbours; wound all the way in it is several times their size and reads as a disc. A planet is the one thing near enough for a telescope to resolve, which is the reason to point one at it.
+- **Constellation dots follow the star scale**, being overlay marks rather than sky objects: a line stays a fine trail at any zoom.
+
+!!! warning "Anything sized in degrees is magnified by the scope"
+    A fixed `angularSizeDeg` looks correct at the naked eye and bloats under the telescope by up to
+    sixteen times. New sky billboards need to decide which of the two behaviours above they want, or
+    they will look right in testing and wrong through an eyepiece.
+
 Brightness is intentionally game-readable rather than physically faithful. Magnitude affects relative brightness, but faint visible stars keep a readable floor. Star cores use compact, vanilla-like apparent diameters; only brighter stars receive a restrained outer glow.
 
 ## Test Rules

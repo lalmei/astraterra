@@ -16,10 +16,28 @@ namespace AstraTerra.Client.Rendering;
 [HarmonyPatch(typeof(SystemRenderSunMoon), nameof(SystemRenderSunMoon.OnRenderFrame3D))]
 public static class SkyStarSunMoonRenderer
 {
-    private const string StarTexturePath = "astraterra:environment/star-rays-12-smooth";
-    private const string FaintStarTexturePath = "astraterra:environment/star-dog-crisp";
-    private const string TelescopeStarTexturePath = "astraterra:environment/star-rays-12-smooth";
-    private const string TelescopeFaintStarTexturePath = "astraterra:environment/star-dog-crisp";
+    /// <summary>
+    /// Naked-eye sprites. The rays are scintillation — air, not optics — which is why they belong to
+    /// the eye and not to the scoped view.
+    /// </summary>
+    public const string StarTexturePath = "astraterra:environment/star-rays-12-smooth";
+    public const string FaintStarTexturePath = "astraterra:environment/star-dog-crisp";
+
+    /// <summary>
+    /// Scoped sprites. A telescope steadies the air out of the image, so the rays go: a star
+    /// collapses to an Airy disc, a bright core inside one faint diffraction ring, and a fainter star
+    /// to a plain point too dim to show a ring at all.
+    /// </summary>
+    public const string TelescopeStarTexturePath = "astraterra:environment/star-log-ring";
+    public const string TelescopeFaintStarTexturePath = "astraterra:environment/star-derivative-cross";
+
+    /// <summary>
+    /// A planet is the one thing a telescope actually resolves. Stars stay points at any
+    /// magnification because they are too far away to show a disc; a planet is near enough to open
+    /// into one, which is the whole reason an observer bothers to point a scope at it.
+    /// </summary>
+    public const string TelescopePlanetTexturePath = "astraterra:environment/star-gaussian-soft";
+
     private const string ConstellationDotTexturePath = "astraterra:environment/star-pixel";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -56,6 +74,7 @@ public static class SkyStarSunMoonRenderer
     private static bool faintStarTextureLoadFailed;
     private static bool telescopeStarTextureLoadFailed;
     private static bool telescopeFaintStarTextureLoadFailed;
+    private static bool telescopePlanetTextureLoadFailed;
     private static bool constellationDotTextureLoadFailed;
     private static bool forceDaylightStars;
     private static bool renderingDisabledAfterFailure;
@@ -63,6 +82,7 @@ public static class SkyStarSunMoonRenderer
     private static int faintStarTextureId;
     private static int telescopeStarTextureId;
     private static int telescopeFaintStarTextureId;
+    private static int telescopePlanetTextureId;
     private static int constellationDotTextureId;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
@@ -142,6 +162,7 @@ public static class SkyStarSunMoonRenderer
         faintStarTextureLoadFailed = false;
         telescopeStarTextureLoadFailed = false;
         telescopeFaintStarTextureLoadFailed = false;
+        telescopePlanetTextureLoadFailed = false;
         constellationDotTextureLoadFailed = false;
         forceDaylightStars = false;
         renderingDisabledAfterFailure = false;
@@ -149,6 +170,7 @@ public static class SkyStarSunMoonRenderer
         faintStarTextureId = 0;
         telescopeStarTextureId = 0;
         telescopeFaintStarTextureId = 0;
+        telescopePlanetTextureId = 0;
         constellationDotTextureId = 0;
         DeepSkyTextureIds.Clear();
         FailedDeepSkyTexturePaths.Clear();
@@ -344,6 +366,21 @@ public static class SkyStarSunMoonRenderer
         var useTelescopeSprites = TelescopeScopeState.IsScoped;
         var brightStarTextureId = useTelescopeSprites ? telescopeStarTextureId : starTextureId;
         var dimStarTextureId = useTelescopeSprites ? telescopeFaintStarTextureId : faintStarTextureId;
+
+        // Naked-eye planets share the star sprite: at roughly eight screen pixels no sprite's shape
+        // survives, and tint plus glow carry the difference. Under the scope the billboard is
+        // magnified up to sixteen times, the shape becomes the whole picture, and a planet gets its
+        // own resolved disc. Falls back to the star sprite rather than dropping the planet.
+        var planetTextureId = useTelescopeSprites && telescopePlanetTextureId != 0
+            ? telescopePlanetTextureId
+            : brightStarTextureId;
+
+        // Billboards are sized in degrees, so magnification would otherwise enlarge them. A star has
+        // to shrink back to a point under the scope, both because that is what an eyepiece shows and
+        // because the deep-sky plates it is drawn over carry their own stars at 0.002 to 0.03 deg.
+        var fovMultiplier = useTelescopeSprites ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
+        var starAngularScale = StarBillboardSizing.CalculateStarAngularScale(useTelescopeSprites, fovMultiplier);
+        var planetAngularScale = StarBillboardSizing.CalculatePlanetAngularScale(useTelescopeSprites, fovMultiplier);
         var drawnCount = 0;
         var smallestDrawnSize = double.MaxValue;
         var largestDrawnSize = 0.0;
@@ -387,18 +424,18 @@ public static class SkyStarSunMoonRenderer
                 {
                     var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(size, alpha);
                     var glowTint = new Vec4f(tint.R, tint.G, tint.B, outerAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, star.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
+                    RenderStarQuad(clientApi, shader, quadModel, star.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer, starAngularScale);
                 }
 
-                RenderStarQuad(clientApi, shader, quadModel, star.Body, size, imageSize, textureId, tint, modelMatrixBuffer);
+                RenderStarQuad(clientApi, shader, quadModel, star.Body, size, imageSize, textureId, tint, modelMatrixBuffer, starAngularScale);
 
                 drawnCount++;
                 smallestDrawnSize = Math.Min(smallestDrawnSize, size);
                 largestDrawnSize = Math.Max(largestDrawnSize, size);
             }
 
-            // Planets go through the same billboard path as stars, but always on the rayed sprite
-            // and with a glow scaled by brilliance rather than by the saturated star curve, so that
+            // Planets go through the same billboard path as stars, never on the faint sprite, and
+            // with a glow scaled by brilliance rather than by the saturated star curve, so that
             // Venus reads as the brightest thing in the sky and Saturn does not.
             foreach (var planet in visiblePlanets)
             {
@@ -411,10 +448,10 @@ public static class SkyStarSunMoonRenderer
                 {
                     var glowSize = size * (1f + (PlanetGlowSizeRange * brilliance));
                     var glowTint = new Vec4f(planet.TintR, planet.TintG, planet.TintB, glowAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, planet.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer);
+                    RenderStarQuad(clientApi, shader, quadModel, planet.Body, glowSize, imageSize, planetTextureId, glowTint, modelMatrixBuffer, planetAngularScale);
                 }
 
-                RenderStarQuad(clientApi, shader, quadModel, planet.Body, size, imageSize, brightStarTextureId, tint, modelMatrixBuffer);
+                RenderStarQuad(clientApi, shader, quadModel, planet.Body, size, imageSize, planetTextureId, tint, modelMatrixBuffer, planetAngularScale);
                 drawnCount++;
             }
 
@@ -440,7 +477,9 @@ public static class SkyStarSunMoonRenderer
             {
                 foreach (var dot in constellationDots)
                 {
-                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer);
+                    // Overlay marks, not sky objects: they follow the star scale so a line stays a
+                    // fine trail of dots at any magnification instead of swelling into blobs.
+                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer, starAngularScale);
                 }
             }
 
@@ -521,9 +560,10 @@ public static class SkyStarSunMoonRenderer
         int imageSize,
         int textureId,
         Vec4f tint,
-        float[] modelMatrixBuffer)
+        float[] modelMatrixBuffer,
+        float angularScale)
     {
-        var modelMatrix = BuildModelMatrix(clientApi, body, sizePixels, imageSize);
+        var modelMatrix = BuildModelMatrix(clientApi, body, sizePixels, imageSize, angularScale);
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = tint;
@@ -541,14 +581,15 @@ public static class SkyStarSunMoonRenderer
         MeshRef quadModel,
         SkyConstellationDot dot,
         int imageSize,
-        float[] modelMatrixBuffer)
+        float[] modelMatrixBuffer,
+        float angularScale)
     {
         var modelMatrix = BuildSkyBillboardMatrix(
             clientApi,
             dot.DirectionX,
             dot.DirectionY,
             dot.DirectionZ,
-            ConstellationDotAngularSizeDeg,
+            ConstellationDotAngularSizeDeg * angularScale,
             imageSize);
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
@@ -692,9 +733,14 @@ public static class SkyStarSunMoonRenderer
         return false;
     }
 
-    private static Matrix4 BuildModelMatrix(ICoreClientAPI clientApi, RenderedBody body, float sizePixels, int imageSize)
+    private static Matrix4 BuildModelMatrix(
+        ICoreClientAPI clientApi,
+        RenderedBody body,
+        float sizePixels,
+        int imageSize,
+        float angularScale)
     {
-        var angularSizeDeg = Math.Clamp(sizePixels * StarAngularSizePerPixelDeg, 0.01f, 2.0f);
+        var angularSizeDeg = Math.Clamp(sizePixels * StarAngularSizePerPixelDeg * angularScale, 0.001f, 2.0f);
         return BuildSkyBillboardMatrix(clientApi, body.DirectionX, body.DirectionY, body.DirectionZ, angularSizeDeg, imageSize);
     }
 
@@ -780,6 +826,7 @@ public static class SkyStarSunMoonRenderer
         EnsureStarTexture(clientApi, FaintStarTexturePath, ref faintStarTextureId, ref faintStarTextureLoadFailed);
         EnsureStarTexture(clientApi, TelescopeStarTexturePath, ref telescopeStarTextureId, ref telescopeStarTextureLoadFailed);
         EnsureStarTexture(clientApi, TelescopeFaintStarTexturePath, ref telescopeFaintStarTextureId, ref telescopeFaintStarTextureLoadFailed);
+        EnsureStarTexture(clientApi, TelescopePlanetTexturePath, ref telescopePlanetTextureId, ref telescopePlanetTextureLoadFailed);
     }
 
     private static void EnsureConstellationDotTexture(ICoreClientAPI clientApi)
