@@ -130,11 +130,14 @@ public static class AstrolabeService
             throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
         }
 
+        // The catalog's own name is deliberately not carried here. A wanderer has no name until an
+        // observer writes one in a book, so the caller resolves it from whatever book is in hand —
+        // which also keeps this list valid when that book changes.
         return planets.Planets
             .Select(planet => new AstrolabeTarget(
                 AstrolabeTargetKind.Planet,
                 planet.Id,
-                planet.DisplayName,
+                PlanetJournal.UnidentifiedDisplayName,
                 new CachedSkyEphemeris(new PlanetEphemeris(planet, planets.Observer, daysPerYear), hoursPerDay),
                 StarCount: 0))
             .ToList();

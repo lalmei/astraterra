@@ -18,6 +18,10 @@ The convention here is narrower than "no Vintage Story types", which the asset l
 
 `Constellations/` owns the client-local journal model, graph merge/split behavior, stable saved IDs, and persistence.
 
+A book carries two journals in two separate item attributes: `astraterraJournalJson` for drawn figures and `astraterraPlanetJson` for identified planets. They are kept apart so that writing one cannot disturb the other, and so a book written before planets existed still reads. Only the readable page is shared, rebuilt from both whenever either is written.
+
+Planet names are the observer's, not the catalog's. `PlanetCatalog` carries `Mars` for the mod's own use, but nothing shows it: an unrecorded planet reads as `PlanetJournal.UnidentifiedDisplayName` everywhere, and the real names reach a player only through a prepared book. Anything that displays a planet must resolve its name through the held book's `PlanetJournal` at the moment of display rather than baking it into a cached model, or swapping books will not rename the sky.
+
 `Commands/` owns `.stars` command behavior and debug formatting.
 
 `Config/` owns file-backed mod settings.

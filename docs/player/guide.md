@@ -42,7 +42,7 @@ Hold right click with the Sextant and align the center of the screen with the su
 
 The sun and the moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime moon is a perfectly good sight, and often an easier one than a star. Stars and planets still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
 
-Planets sight by name: the readout says **Mars**, not a catalogue number. Since they are usually among the brightest things up, they are the easiest sights in the sky after the sun and the moon.
+Planets sight by whatever *you* call them. With no book naming them the readout says **Wandering star**, because from the ground that is all a planet is: a star that does not keep its place. Put a book that names them in your left hand and the readout uses those names. Since planets are usually among the brightest things up, they are the easiest sights in the sky after the sun and the moon.
 
 If nothing readable is near the center, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
 
@@ -56,6 +56,8 @@ Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to ca
 The top-center readout shows the selected target's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
 
 Middle click cycles through the constellations recorded in the book and then through the five planets, which are marked `· planet` so they are not mistaken for a figure you drew. Every planet is listed whether or not it is currently up — being told that Saturn is below the horizon and transits in nine hours is exactly the sort of thing the instrument is for.
+
+A planet you have not written down reads as **Wandering star**. Swapping books renames the sky immediately, so a borrowed book brings its author's names with it.
 
 Below that, the Astrolabe tells you the time. It reads the hour off the sky the way a nocturnal does — from where the sun actually is — and reports the hour of the world day, whether it is daylight, dusk, night, or dawn, the sun's angle above or below the horizon, and how long until the next sunrise or sunset.
 

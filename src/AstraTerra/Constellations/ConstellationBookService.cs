@@ -11,6 +11,14 @@ public static class ConstellationBookService
     public const string StarCatalogTitle = "Star Catalog";
     public const string ZodiacTitle = "The Zodiac";
     public const string JournalJsonAttribute = "astraterraJournalJson";
+
+    /// <summary>
+    /// Planets live in their own attribute rather than inside the constellation journal, so a book
+    /// written before planets existed still reads, and so writing one kind cannot disturb the other.
+    /// </summary>
+    public const string PlanetJournalJsonAttribute = "astraterraPlanetJson";
+
+    public const string PlanetCatalogTitle = "The Wanderers";
     public const string SkyCultureJsonAttribute = "astraterraSkyCultureJson";
     public const string BookIdAttribute = "astraterraBookId";
     public const string SchemaVersionAttribute = "astraterraBookSchemaVersion";
@@ -91,21 +99,91 @@ public static class ConstellationBookService
     public static ConstellationJournal ReadJournalOrEmpty(ItemStack? stack)
         => ReadJournal(stack) ?? new ConstellationJournal();
 
-    public static string BuildReadableText(ConstellationJournal journal)
+    public static PlanetJournal? ReadPlanetJournal(ItemStack? stack)
+        => stack?.Attributes is null ? null : ReadPlanetJournal(stack.Attributes);
+
+    public static PlanetJournal? ReadPlanetJournal(ITreeAttribute attributes)
     {
-        if (journal.Constellations.Count == 0)
+        var json = attributes.GetString(PlanetJournalJsonAttribute, null);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return PlanetJournalPersistence.Deserialize(json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public static PlanetJournal ReadPlanetJournalOrEmpty(ItemStack? stack)
+        => ReadPlanetJournal(stack) ?? new PlanetJournal();
+
+    /// <summary>
+    /// Writes the planets down, leaving the constellation half of the book untouched. The readable
+    /// page is rebuilt from both, because a reader sees one book.
+    /// </summary>
+    public static void WritePlanetJournal(ItemStack stack, PlanetJournal journal, string? bookTitle = null)
+        => WritePlanetJournal(stack.Attributes, journal, bookTitle);
+
+    public static void WritePlanetJournal(ITreeAttribute attributes, PlanetJournal journal, string? bookTitle = null)
+    {
+        ArgumentNullException.ThrowIfNull(journal);
+
+        // Keeps whatever the book is already called: writing a planet into a Star Catalog must not
+        // rename it to the default journal title.
+        var existingTitle = attributes.GetString(VanillaTitleAttribute, null);
+        EnsureBookIdentity(
+            attributes,
+            !string.IsNullOrWhiteSpace(bookTitle) ? bookTitle.Trim() : ResolveBookTitle(existingTitle));
+        attributes.SetString(PlanetJournalJsonAttribute, PlanetJournalPersistence.Serialize(journal));
+        attributes.SetString(
+            VanillaTextAttribute,
+            BuildReadableText(ReadJournal(attributes) ?? new ConstellationJournal(), journal));
+    }
+
+    public static bool IsPlanetBook(ItemStack? stack)
+        => stack?.Attributes?.HasAttribute(PlanetJournalJsonAttribute) == true;
+
+    public static string BuildReadableText(ConstellationJournal journal)
+        => BuildReadableText(journal, new PlanetJournal());
+
+    public static string BuildReadableText(ConstellationJournal journal, PlanetJournal planetJournal)
+    {
+        ArgumentNullException.ThrowIfNull(planetJournal);
+
+        if (journal.Constellations.Count == 0 && planetJournal.Planets.Count == 0)
         {
             return "No constellations recorded.";
         }
 
-        var lines = new List<string>
-        {
-            "Constellations"
-        };
+        var lines = new List<string>();
 
-        foreach (var record in journal.Constellations.OrderBy(record => record.Id))
+        if (journal.Constellations.Count > 0)
         {
-            lines.Add($"- {FormatDisplayName(record)}: stars={CountStars(record)}; segments={record.Edges.Count}");
+            lines.Add("Constellations");
+            foreach (var record in journal.Constellations.OrderBy(record => record.Id))
+            {
+                lines.Add($"- {FormatDisplayName(record)}: stars={CountStars(record)}; segments={record.Edges.Count}");
+            }
+        }
+
+        if (planetJournal.Planets.Count > 0)
+        {
+            if (lines.Count > 0)
+            {
+                lines.Add(string.Empty);
+            }
+
+            lines.Add("Wandering stars");
+            foreach (var record in planetJournal.Planets.OrderBy(record => record.RecordedTick))
+            {
+                lines.Add($"- {planetJournal.DisplayName(record.PlanetId)}");
+            }
         }
 
         return string.Join(Environment.NewLine, lines);
@@ -142,6 +220,20 @@ public static class ConstellationBookService
     public static void WriteJournal(ITreeAttribute attributes, ConstellationJournal journal, string? bookTitle = null)
     {
         var resolvedBookTitle = ResolveBookTitle(bookTitle);
+        var bookId = EnsureBookIdentity(attributes, resolvedBookTitle);
+
+        attributes.SetString(JournalJsonAttribute, ConstellationPersistence.Serialize(journal));
+        attributes.SetString(SkyCultureJsonAttribute, SerializeSkyCulture(journal, bookId, resolvedBookTitle));
+        attributes.SetString(
+            VanillaTextAttribute,
+            BuildReadableText(journal, ReadPlanetJournal(attributes) ?? new PlanetJournal()));
+    }
+
+    /// <summary>
+    /// Stamps the identity and signature every AstraTerra book carries, whichever half is written.
+    /// </summary>
+    private static string EnsureBookIdentity(ITreeAttribute attributes, string resolvedBookTitle)
+    {
         var bookId = attributes.GetString(BookIdAttribute, null);
         if (string.IsNullOrWhiteSpace(bookId))
         {
@@ -151,12 +243,10 @@ public static class ConstellationBookService
 
         attributes.SetInt(SchemaVersionAttribute, 1);
         attributes.SetString(LockedByAttribute, AstraTerraSignerUid);
-        attributes.SetString(JournalJsonAttribute, ConstellationPersistence.Serialize(journal));
-        attributes.SetString(SkyCultureJsonAttribute, SerializeSkyCulture(journal, bookId, resolvedBookTitle));
         attributes.SetString(VanillaTitleAttribute, resolvedBookTitle);
-        attributes.SetString(VanillaTextAttribute, BuildReadableText(journal));
         attributes.SetString(VanillaSignedByAttribute, AstraTerraSigner);
         attributes.SetString(VanillaSignedByUidAttribute, AstraTerraSignerUid);
+        return bookId;
     }
 
     public static string FormatDisplayName(ConstellationRecord record)
