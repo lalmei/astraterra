@@ -117,13 +117,13 @@ public sealed class PlanetRenderModel
             horizonFadeBandDeg,
             visualHorizonCutoffDeg);
 
-        return body is null
+        return body is not { } projectedBody
             ? null
             : new RenderedPlanet(
                 planet.Id,
                 planet.DisplayName,
-                body,
-                GetBrilliance(body.VisualMagnitude),
+                projectedBody,
+                GetBrilliance(projectedBody.VisualMagnitude),
                 planet.TintR,
                 planet.TintG,
                 planet.TintB);

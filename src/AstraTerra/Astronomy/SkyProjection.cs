@@ -9,7 +9,7 @@ namespace AstraTerra.Astronomy;
 /// name and phase all belong to the record that wraps this one, so that the projection path stays
 /// identical for a star and for something that moves.
 /// </remarks>
-public sealed record RenderedBody(
+public readonly record struct RenderedBody(
     EquatorialCoordinates Coordinates,
     double VisualMagnitude,
     double AzimuthDeg,

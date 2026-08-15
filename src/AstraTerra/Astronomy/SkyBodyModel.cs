@@ -57,8 +57,6 @@ public static class SkyBodyModel
     /// </summary>
     public static SightedBody FromBody(string displayName, RenderedBody body)
     {
-        ArgumentNullException.ThrowIfNull(body);
-
         return new SightedBody(
             displayName,
             body.AzimuthDeg,

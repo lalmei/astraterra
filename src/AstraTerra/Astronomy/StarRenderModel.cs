@@ -72,11 +72,11 @@ public static class StarRenderModel
             horizonFadeBandDeg,
             visualHorizonCutoffDeg);
 
-        return body is null
+        return body is not { } projectedBody
             ? null
             : new RenderedStar(
                 star.Hip,
-                body,
+                projectedBody,
                 EstimateColorTemperature(star.BvColorIndex),
                 star.IsGuideStar);
     }
