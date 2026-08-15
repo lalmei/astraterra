@@ -6,6 +6,12 @@ namespace AstraTerra.Tests.Astronomy;
 public sealed class SkyProjectionTests
 {
     [Fact]
+    public void A_Rendered_Body_Is_A_Value_Type_To_Avoid_Per_Frame_Heap_Allocation()
+    {
+        Assert.True(typeof(RenderedBody).IsValueType);
+    }
+
+    [Fact]
     public void A_Moving_Body_Lands_Exactly_Where_A_Star_At_The_Same_Position_Does()
     {
         var coordinates = new EquatorialCoordinates(37.9546, 89.2641);
@@ -19,7 +25,7 @@ public sealed class SkyProjectionTests
 
         Assert.NotNull(body);
         Assert.NotNull(star);
-        Assert.Equal(star!.Body, body);
+        Assert.Equal(star!.Body, body.Value);
     }
 
     [Fact]
@@ -31,7 +37,8 @@ public sealed class SkyProjectionTests
 
         // A planet's right ascension is only known at a world time, so the astrolabe and sextant
         // need it back off the projection rather than from a catalog.
-        Assert.Equal(coordinates, body!.Coordinates);
+        Assert.True(body.HasValue);
+        Assert.Equal(coordinates, body.Value.Coordinates);
     }
 
     [Fact]
@@ -57,9 +64,9 @@ public sealed class SkyProjectionTests
             localSiderealDeg: 0,
             brightnessBias: 1);
 
-        Assert.NotNull(body);
-        Assert.InRange(body!.AltitudeDeg, -11.0, -9.0);
-        Assert.True(body.Brightness > 0);
+        Assert.True(body.HasValue);
+        Assert.InRange(body.Value.AltitudeDeg, -11.0, -9.0);
+        Assert.True(body.Value.Brightness > 0);
     }
 
     [Fact]
@@ -68,7 +75,9 @@ public sealed class SkyProjectionTests
         var high = SkyProjection.Project(new EquatorialCoordinates(0, 0), 1, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
         var low = SkyProjection.Project(new EquatorialCoordinates(84, 0), 1, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(high!.Brightness > low!.Brightness);
+        Assert.True(high.HasValue);
+        Assert.True(low.HasValue);
+        Assert.True(high.Value.Brightness > low.Value.Brightness);
     }
 
     [Fact]
@@ -76,13 +85,15 @@ public sealed class SkyProjectionTests
     {
         var body = SkyProjection.Project(new EquatorialCoordinates(0, 89.0), 2, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 1);
 
+        Assert.True(body.HasValue);
+        var projectedBody = body.Value;
         var length = Math.Sqrt(
-            (body!.DirectionX * body.DirectionX) +
-            (body.DirectionY * body.DirectionY) +
-            (body.DirectionZ * body.DirectionZ));
+            (projectedBody.DirectionX * projectedBody.DirectionX) +
+            (projectedBody.DirectionY * projectedBody.DirectionY) +
+            (projectedBody.DirectionZ * projectedBody.DirectionZ));
         Assert.Equal(1.0, length, precision: 6);
-        Assert.True(body.DirectionZ < 0);
-        Assert.InRange(body.AzimuthDeg, 0.0, 1.0);
+        Assert.True(projectedBody.DirectionZ < 0);
+        Assert.InRange(projectedBody.AzimuthDeg, 0.0, 1.0);
     }
 
     [Fact]
@@ -91,9 +102,11 @@ public sealed class SkyProjectionTests
         var night = SkyProjection.Project(new EquatorialCoordinates(0, 0), -2, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 100);
         var twilight = SkyProjection.Project(new EquatorialCoordinates(0, 0), -2, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 0.3);
 
-        Assert.InRange(night!.Brightness, 0.0, 1.0);
-        Assert.True(night.Brightness > twilight!.Brightness);
-        Assert.Equal(night.Size, twilight.Size);
+        Assert.True(night.HasValue);
+        Assert.True(twilight.HasValue);
+        Assert.InRange(night.Value.Brightness, 0.0, 1.0);
+        Assert.True(night.Value.Brightness > twilight.Value.Brightness);
+        Assert.Equal(night.Value.Size, twilight.Value.Size);
     }
 
     [Fact]
@@ -122,8 +135,9 @@ public sealed class SkyProjectionTests
         var body = SkyProjection.Project(coordinates, 1, latitudeDeg: -20, localSiderealDeg: 200, brightnessBias: 1);
         var (x, y, z) = SkyProjection.GetWorldDirection(coordinates, latitudeDeg: -20, localSiderealDeg: 200);
 
-        Assert.Equal(body!.DirectionX, x, precision: 12);
-        Assert.Equal(body.DirectionY, y, precision: 12);
-        Assert.Equal(body.DirectionZ, z, precision: 12);
+        Assert.True(body.HasValue);
+        Assert.Equal(body.Value.DirectionX, x, precision: 12);
+        Assert.Equal(body.Value.DirectionY, y, precision: 12);
+        Assert.Equal(body.Value.DirectionZ, z, precision: 12);
     }
 }
