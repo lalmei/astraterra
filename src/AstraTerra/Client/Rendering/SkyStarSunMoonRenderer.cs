@@ -238,14 +238,11 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
+        // No open-sky gate here: this pass draws during the sun/moon render (RenderOrder 0.3),
+        // before opaque terrain (0.37), so terrain painted afterwards occludes the stars wherever
+        // a block is on screen -- exactly how vanilla's own night sky works. A player under a block
+        // still sees the stars through any opening, instead of losing the whole sky at once.
         var playerPos = api.World.Player.Entity.Pos;
-        if (!HasOpenSkyAbovePlayer(api))
-        {
-            meteorVisuals.Clear();
-            LogSkyStep(dt, "skipped blocked sky: x={0:0.0}; y={1:0.0}; z={2:0.0}", playerPos.X, playerPos.Y, playerPos.Z);
-            return;
-        }
-
         var latitude = LatitudeMapper.MapGameLatitude(playerPos.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(playerPos.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
@@ -782,14 +779,6 @@ public static class SkyStarSunMoonRenderer
         }
 
         return null;
-    }
-
-    private static bool HasOpenSkyAbovePlayer(ICoreClientAPI clientApi)
-    {
-        var entity = clientApi.World.Player.Entity;
-        var blockPos = entity.Pos.AsBlockPos;
-        var eyeY = entity.Pos.InternalY + entity.LocalEyePos.Y;
-        return clientApi.World.BlockAccessor.GetRainMapHeightAt(blockPos) <= eyeY;
     }
 
     private static IReadOnlyList<RenderedPlanet> FilterDrawablePlanets(IReadOnlyList<RenderedPlanet> visiblePlanets)
