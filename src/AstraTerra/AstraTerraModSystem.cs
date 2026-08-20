@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
+using AstraTerra.Client.SkyLying;
 using AstraTerra.Client.Zoom;
 using AstraTerra.Commands;
 using AstraTerra.Config;
@@ -19,6 +20,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private IReadOnlyList<MeteorShowerEntry> meteorShowers = Array.Empty<MeteorShowerEntry>();
     private PlanetCatalog? planets;
     private TelescopeZoomPatcher? telescopeZoomPatcher;
+    private SkyLyingController? skyLyingController;
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
@@ -117,8 +119,12 @@ public sealed class AstraTerraModSystem : ModSystem
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
         SextantReadingState.Reset();
+        SkyLyingState.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
+        skyLyingController = new SkyLyingController();
+        skyLyingController.Start(api);
+        api.Logger.Event("AstraTerra startup step: lie-down pose registered: hotkey={0}", SkyLyingController.HotkeyCode);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
         telescopeZoomPatcher.Start(api);
         api.Logger.Event("AstraTerra startup step: telescope zoom patched");
@@ -205,9 +211,11 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
+        skyLyingController?.Stop();
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
         SextantReadingState.Reset();
+        SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {

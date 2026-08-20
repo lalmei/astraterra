@@ -14,6 +14,8 @@ The convention here is narrower than "no Vintage Story types", which the asset l
 
 `Client/Observation/` owns observation mode state. Telescope behavior uses a small shared state object so item interaction, zoom hooks, and renderers agree on scoped mode and zoom.
 
+`Client/SkyLying/` owns the lie-down pose. It mirrors vanilla sit-on-G: a remappable hotkey, a supine `stargaze` clip (the bed `lie` clip pitched onto the back without the side roll, then dropped onto the ground in animation version 1 so the hip offset is applied before the pitch), a first-person snap to zenith pitch, a body-yaw pin so looking around does not spin the seraph, and a Harmony postfix on `EntityPlayer.updateEyeHeight` so the camera follows the ground. Third person and the fixed overhead camera keep their pitch. Empty hands use a behind-the-head pose; a held instrument keeps its own arms. The clip is injected during player tesselation so third person uses the same pose. Pose state is a process-wide static and must only be set for the local player.
+
 `Items/` is the Vintage Story item entry point. Item classes should start and stop observation/readout state, not own sky calculations.
 
 `Constellations/` owns the client-local journal model, graph merge/split behavior, stable saved IDs, and persistence.

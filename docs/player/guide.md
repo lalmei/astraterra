@@ -9,6 +9,7 @@ AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Star
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
 - Use the Sextant to read the angle of a star, a planet, the sun, or the moon above the horizon, day or night.
+- Lie on your back with **Z** to watch the sky from the ground, the same kind of toggle as sit-on-G.
 - Use the Calibrated Astrolabe to predict where and when recorded constellations and the planets will appear, tell the time of night, and see what day of the year it is.
 - Two prebuilt constellation catalogs, that could be used to debug, or used in builds. `Catalog` the 88 Internationally (IAU) defined constalations and the `Zodiac` containes just the 12 constallations in the Zodiac.
 
@@ -81,6 +82,12 @@ The time of day is also shown when no book is held, so the Astrolabe is still us
 Forecasting spans one world year and uses that world's configured year and day lengths. Releasing right click returns the forecast to the current time.
 
 A planet is forecast where it will actually be, not where it is now: scroll a season ahead and Mars has moved against the stars behind it. The transit countdown holds the planet's position where the forecast puts it, which is worth a couple of minutes over a night — far below anything you could measure with these instruments.
+
+## Lying Down
+
+Press **Z** to lie on your back on the ground, the same kind of toggle as sit-on-G. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view instead of the seraph. Third person and the fixed overhead camera keep their current view; only the body lies down. Looking around turns your view, not the body on the ground. Empty hands rest behind the head. Move, jump, or press **Z** again to stand. The binding is remappable under Controls as **Lie down**. **X** stays vanilla off-hand swap.
+
+Telescopes, the Sextant, and the Calibrated Astrolabe still work while you are lying down.
 
 ## Observation Conditions
 

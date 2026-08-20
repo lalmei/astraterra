@@ -108,9 +108,14 @@ public sealed class ConstellationBookServer
             return Error("No planet was selected.");
         }
 
+        if (slot.Itemstack is not { } stack)
+        {
+            return Error("Hold a writable or written constellation book in your left hand.");
+        }
+
         try
         {
-            var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(slot.Itemstack);
+            var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
             var alreadyKnown = journal.IsIdentified(packet.PlanetId);
             string message;
             var promptName = string.Empty;
@@ -135,7 +140,7 @@ public sealed class ConstellationBookServer
                 promptName = packet.PlanetId;
             }
 
-            ConstellationBookService.WritePlanetJournal(slot.Itemstack, journal);
+            ConstellationBookService.WritePlanetJournal(stack, journal);
             slot.MarkDirty();
             return new ConstellationBookResponsePacket
             {
