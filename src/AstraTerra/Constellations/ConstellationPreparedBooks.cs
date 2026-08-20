@@ -13,7 +13,7 @@ public static class ConstellationPreparedBooks
     public const string PlanetCatalogBookId = "wanderers";
     public const string StarCatalogBookItemPath = "book-normal-darkolive";
     public const string ZodiacBookItemPath = "book-normal-purple";
-    public const string PlanetCatalogBookItemPath = "book-normal-red";
+    public const string PlanetCatalogBookItemPath = "book-normal-cherryred";
     public const string CreativeHostItemPath = "library";
     public const string CreativeTab = "astraterra";
 
@@ -47,8 +47,7 @@ public static class ConstellationPreparedBooks
     {
         ArgumentNullException.ThrowIfNull(planets);
 
-        var bookItem = api.World.GetItem(new AssetLocation("game", PlanetCatalogBookItemPath))
-            ?? throw new InvalidOperationException("Cannot create the planet catalog: the normal book item is unavailable.");
+        var bookItem = ResolveWritableBookItem(api, PlanetCatalogBookItemPath, ConstellationBookService.PlanetCatalogTitle);
 
         var journal = new PlanetJournal();
         foreach (var planet in planets.Planets)
@@ -70,8 +69,7 @@ public static class ConstellationPreparedBooks
         string bookId,
         System.Func<StarCatalog, ConstellationJournal> buildJournal)
     {
-        var bookItem = api.World.GetItem(new AssetLocation("game", bookItemPath))
-            ?? throw new InvalidOperationException($"Cannot create {bookTitle}: the normal book item is unavailable.");
+        var bookItem = ResolveWritableBookItem(api, bookItemPath, bookTitle);
 
         var journal = buildJournal(catalog);
         var stack = new ItemStack(bookItem);
@@ -92,43 +90,81 @@ public static class ConstellationPreparedBooks
             return;
         }
 
-        if (catalog is null)
+        var stacks = new List<JsonItemStack>();
+        if (catalog is not null)
+        {
+            TryAddCreativeBook(api, stacks, ConstellationBookService.StarCatalogTitle, () => CreateStarCatalog(api, catalog));
+            TryAddCreativeBook(api, stacks, ConstellationBookService.ZodiacTitle, () => CreateZodiac(api, catalog));
+        }
+
+        if (planets is not null)
+        {
+            TryAddCreativeBook(
+                api,
+                stacks,
+                ConstellationBookService.PlanetCatalogTitle,
+                () => CreatePlanetCatalog(api, planets));
+        }
+
+        if (stacks.Count == 0)
         {
             host.CreativeInventoryStacks = [];
+            api.Logger.Warning("AstraTerra creative shelf disabled: no prepared books could be created.");
             return;
         }
 
+        host.CreativeInventoryStacks =
+        [
+            new CreativeTabAndStackList
+            {
+                Tabs = [CreativeTab],
+                Stacks = stacks.ToArray()
+            }
+        ];
+
+        api.Logger.Event(
+            "AstraTerra creative shelf registered: books={0}",
+            stacks.Count);
+    }
+
+    private static void TryAddCreativeBook(
+        ICoreAPI api,
+        List<JsonItemStack> stacks,
+        string bookTitle,
+        Func<ItemStack> createBook)
+    {
         try
         {
-            var stacks = new List<JsonItemStack>
-            {
-                ToCreativeStack(CreateStarCatalog(api, catalog)),
-                ToCreativeStack(CreateZodiac(api, catalog))
-            };
-
-            if (planets is not null)
-            {
-                stacks.Add(ToCreativeStack(CreatePlanetCatalog(api, planets)));
-            }
-
-            host.CreativeInventoryStacks =
-            [
-                new CreativeTabAndStackList
-                {
-                    Tabs = [CreativeTab],
-                    Stacks = stacks.ToArray()
-                }
-            ];
-
-            api.Logger.Event(
-                "AstraTerra creative shelf registered: books={0}",
-                stacks.Count);
+            stacks.Add(ToCreativeStack(createBook()));
         }
         catch (Exception exception)
         {
-            host.CreativeInventoryStacks = [];
-            api.Logger.Warning("AstraTerra creative shelf disabled: {0}", exception);
+            api.Logger.Warning("AstraTerra creative shelf skipped {0}: {1}", bookTitle, exception);
         }
+    }
+
+    private static Item ResolveWritableBookItem(ICoreAPI api, string preferredPath, string bookTitle)
+    {
+        var preferred = api.World.GetItem(new AssetLocation("game", preferredPath));
+        if (preferred is not null)
+        {
+            return preferred;
+        }
+
+        var fallback = api.World.SearchItems(new AssetLocation("game", "book-normal-*"))
+            .FirstOrDefault(item => item?.Code is not null);
+        if (fallback is not null)
+        {
+            api.Logger.Warning(
+                "AstraTerra vanilla book game:{0} is missing; using {1} for {2}.",
+                preferredPath,
+                fallback.Code,
+                bookTitle);
+            return fallback;
+        }
+
+        throw new InvalidOperationException(
+            $"Cannot create {bookTitle}: vanilla book item game:{preferredPath} is unavailable.");
     }
 
     private static JsonItemStack ToCreativeStack(ItemStack book)
