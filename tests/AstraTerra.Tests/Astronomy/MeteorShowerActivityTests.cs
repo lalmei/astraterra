@@ -29,7 +29,10 @@ public sealed class MeteorShowerActivityTests
         {
             var peakYearFraction = FindPeakYearFraction(shower, daysPerYear);
 
-            Assert.Equal(shower.PeakSolarLongitudeDeg / 360.0, peakYearFraction, 3);
+            // Solar longitude is measured from the March equinox, which falls a fifth of the way
+            // into a world year rather than at its start.
+            var expected = ((shower.PeakSolarLongitudeDeg / 360.0) + CelestialMath.SpringEquinoxYearFraction) % 1.0;
+            Assert.InRange(peakYearFraction, expected - 0.001, expected + 0.001);
         }
     }
 
@@ -46,10 +49,12 @@ public sealed class MeteorShowerActivityTests
 
         // Which is the whole point: the same season is a wildly different day number on each world,
         // so anchoring the peak to a day of the year cannot survive both.
+        // Mid-August on both, which is when the real Perseids peak: day 7 of a twelve-day year and
+        // day 220 of a 360-day one.
         var shortYearPeakDay = shortYearFraction * 12;
         var longYearPeakDay = longYearFraction * 360;
-        Assert.InRange(shortYearPeakDay, 4.0, 5.0);
-        Assert.InRange(longYearPeakDay, 139.0, 141.0);
+        Assert.InRange(shortYearPeakDay, 7.0, 7.7);
+        Assert.InRange(longYearPeakDay, 219.0, 221.0);
     }
 
     [Fact]

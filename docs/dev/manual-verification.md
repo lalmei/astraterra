@@ -27,7 +27,8 @@
 - Hold right click with the Brass Telescope and confirm normal item interaction is suppressed while scoped.
 - Confirm the fixed-star sky is visible at night and does not crash with the generated catalog.
 - In a default 108-day world, move to about 32.5° north with `.stars goto-lat 32.5`, set the calendar
-  to month 9 day 8 at about 02:00, and watch open sky for several minutes. Confirm Geminid streaks
+  to month 12 day 4 at about 02:00 — mid-December, where the Geminids really fall — and watch open
+  sky for several minutes. Confirm Geminid streaks
   appear, travel away from one common radiant, and vary from short near the radiant to longer farther
   away. A bright moon may make the shower sparse but must not eliminate every meteor.
 - For a shorter development check, set `DebugMeteorRateMultiplier` to `30.0` in

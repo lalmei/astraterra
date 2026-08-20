@@ -34,8 +34,9 @@ public sealed class CelestialMathTests
     [Fact]
     public void VanillaAlignedSidereal_UsesNoonAsSolarReference()
     {
-        var midnight = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0, daysPerYear: 24, hoursPerDay: 24);
-        var noon = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0.5, daysPerYear: 24, hoursPerDay: 24);
+        // Measured from a world whose year starts at the equinox, so the daily terms stand alone.
+        var midnight = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0, daysPerYear: 24, hoursPerDay: 24, equinoxDayOfYear: 0);
+        var noon = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0.5, daysPerYear: 24, hoursPerDay: 24, equinoxDayOfYear: 0);
 
         Assert.Equal(180.0, midnight, 6);
         Assert.Equal(7.5, noon, 6);
@@ -127,15 +128,57 @@ public sealed class CelestialMathTests
     [InlineData(360)]
     public void SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length(int daysPerYear)
     {
-        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(0, daysPerYear), 9);
-        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.25, daysPerYear), 9);
-        Assert.Equal(180.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.5, daysPerYear), 9);
-        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.75, daysPerYear), 9);
-        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear, daysPerYear), 9);
+        var equinox = CelestialMath.GetEquinoxDayOfYear(daysPerYear);
+
+        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(equinox, daysPerYear), 9);
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(equinox + (daysPerYear * 0.25), daysPerYear), 9);
+        Assert.Equal(180.0, CelestialMath.GetSolarLongitudeDegrees(equinox + (daysPerYear * 0.5), daysPerYear), 9);
+        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(equinox + (daysPerYear * 0.75), daysPerYear), 9);
+        Assert.Equal(0.0, CelestialMath.GetSolarLongitudeDegrees(equinox + daysPerYear, daysPerYear), 9);
 
         // Same point in the year on the next lap, and the one before the world started.
-        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 3.25, daysPerYear), 9);
-        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * -0.25, daysPerYear), 9);
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(equinox + (daysPerYear * 3.25), daysPerYear), 9);
+        Assert.Equal(270.0, CelestialMath.GetSolarLongitudeDegrees(equinox - (daysPerYear * 0.25), daysPerYear), 9);
+    }
+
+    [Theory]
+    [InlineData(12)]
+    [InlineData(108)]
+    [InlineData(360)]
+    public void The_World_Year_Starts_In_Midwinter_Rather_Than_At_The_Equinox(int daysPerYear)
+    {
+        // Vintage Story runs its sun as -tilt * cos(2*pi*(yearRel + 10/365)), so day zero of a world
+        // year is the first of January and the March equinox is about a fifth of the year later.
+        Assert.Equal(daysPerYear * 0.2226, CelestialMath.GetEquinoxDayOfYear(daysPerYear), 2);
+        Assert.Equal(279.86, CelestialMath.GetSolarLongitudeDegrees(0, daysPerYear), 2);
+        Assert.Equal(90.0, CelestialMath.GetSolarLongitudeDegrees(daysPerYear * 0.4726, daysPerYear), 1);
+    }
+
+    [Fact]
+    public void Betelgeuse_Comes_To_The_Meridian_At_Midnight_In_December()
+    {
+        // The regression this pins: with the year anchored at day zero, Betelgeuse transited at
+        // midnight on day 269 -- late September on a world of twelve 30-day months, a season early.
+        const int daysPerYear = 360;
+        const double hoursPerDay = 24.0;
+        const double betelgeuseRightAscensionDeg = 88.792935;
+
+        // Midnight is a whole world day, so only those are sampled.
+        var transitDay = -1;
+        var closest = double.MaxValue;
+        for (var day = 0; day < daysPerYear; day++)
+        {
+            var midnightSidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(day, daysPerYear, hoursPerDay);
+            var hourAngle = Math.Abs(CelestialMath.ShortestAngularDistanceDegrees(betelgeuseRightAscensionDeg, midnightSidereal));
+            if (hourAngle < closest)
+            {
+                closest = hourAngle;
+                transitDay = day;
+            }
+        }
+
+        // Day 349 of a 360-day year is the 19th of December, which is when it really happens.
+        Assert.InRange(transitDay, 344, 354);
     }
 
     [Fact]

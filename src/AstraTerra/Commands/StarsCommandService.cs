@@ -10,11 +10,13 @@ public sealed class StarsCommandService
     private readonly StarCatalog? catalog;
     private readonly double latitudeDeg;
     private readonly int dayOfYear;
+    private readonly int daysPerYear;
     private readonly double hourAfterSunset;
     private readonly Func<double>? latitudeProvider;
     private readonly Func<int>? latitudeWrapCycleProvider;
     private readonly Func<double>? siderealAngleProvider;
     private readonly Func<int>? dayOfYearProvider;
+    private readonly Func<int>? daysPerYearProvider;
     private int? selectedId;
 
     public StarsCommandService(
@@ -27,7 +29,9 @@ public sealed class StarsCommandService
         Func<double>? latitudeProvider = null,
         Func<int>? latitudeWrapCycleProvider = null,
         Func<double>? siderealAngleProvider = null,
-        Func<int>? dayOfYearProvider = null)
+        Func<int>? dayOfYearProvider = null,
+        int daysPerYear = 365,
+        Func<int>? daysPerYearProvider = null)
     {
         this.journal = journal;
         this.onChanged = onChanged;
@@ -39,6 +43,8 @@ public sealed class StarsCommandService
         this.latitudeWrapCycleProvider = latitudeWrapCycleProvider;
         this.siderealAngleProvider = siderealAngleProvider;
         this.dayOfYearProvider = dayOfYearProvider;
+        this.daysPerYear = daysPerYear;
+        this.daysPerYearProvider = daysPerYearProvider;
     }
 
     public string List()
@@ -301,12 +307,20 @@ public sealed class StarsCommandService
 
         var averageRightAscensionDeg = AverageCircularDegrees(stars.Select(star => star.RightAscensionDeg));
         var averageDeclinationDeg = stars.Average(star => star.DeclinationDeg);
-        return ConstellationSeasonService.Describe(averageRightAscensionDeg, averageDeclinationDeg, CurrentLatitudeDeg, CurrentDayOfYear, hourAfterSunset);
+        return ConstellationSeasonService.Describe(
+            averageRightAscensionDeg,
+            averageDeclinationDeg,
+            CurrentLatitudeDeg,
+            CurrentDayOfYear,
+            hourAfterSunset,
+            CurrentDaysPerYear);
     }
 
     private double CurrentLatitudeDeg => latitudeProvider?.Invoke() ?? latitudeDeg;
 
     private int CurrentDayOfYear => dayOfYearProvider?.Invoke() ?? dayOfYear;
+
+    private int CurrentDaysPerYear => Math.Max(1, daysPerYearProvider?.Invoke() ?? daysPerYear);
 
     private static double AverageCircularDegrees(IEnumerable<double> degrees)
     {

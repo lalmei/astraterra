@@ -26,18 +26,27 @@ public static class WorldEpoch
     /// <summary>Days in the Julian century the published element rates are quoted against.</summary>
     public const double DaysPerJulianCentury = 36525.0;
 
+    /// <summary>Real days from J2000.0 to the March equinox of 2000.</summary>
+    public const double EquinoxOffsetDaysFromJ2000 = 78.816;
+
     /// <summary>
-    /// Real days from J2000.0 to the March equinox of 2000, which is the date a world clock of zero
-    /// is taken to mean.
+    /// Real days from J2000.0 to the date a world clock of zero is taken to mean, which is the start
+    /// of the world year.
     /// </summary>
     /// <remarks>
-    /// The world's own seasons already fix this: <see cref="CelestialMath.GetSolarLongitudeDegrees"/>
-    /// reads zero at <c>totalDays</c> zero, and solar longitude is measured from the March equinox.
-    /// Anchoring the planets at J2000 itself instead would start them 79 days round Earth's orbit
-    /// from where the world says its own sun is, which would put every planet in the wrong season —
-    /// a body at opposition would be drawn near the sun, and nothing would fail.
+    /// The world's own seasons fix this: <see cref="CelestialMath.GetSolarLongitudeDegrees"/> reads
+    /// zero at the March equinox, and that equinox falls
+    /// <see cref="CelestialMath.SpringEquinoxYearFraction"/> of the way into the world year rather
+    /// than at its start. Anchoring the planets anywhere else would start them that far round Earth's
+    /// orbit from where the world says its own sun is, putting every planet in the wrong season — a
+    /// body at opposition would be drawn near the sun, and nothing would fail.
+    /// <para>
+    /// It lands a couple of days before J2000 itself, because a world year begins where vanilla's
+    /// year does: at the first of January.
+    /// </para>
     /// </remarks>
-    public const double EquinoxOffsetDaysFromJ2000 = 78.816;
+    public const double WorldZeroOffsetDaysFromJ2000 =
+        EquinoxOffsetDaysFromJ2000 - (CelestialMath.SpringEquinoxYearFraction * RealDaysPerWorldYear);
 
     /// <summary>
     /// Julian centuries past J2000 for a world time, which is the argument every published element
@@ -48,6 +57,6 @@ public static class WorldEpoch
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
 
         var worldYears = totalDays / daysPerYear;
-        return (EquinoxOffsetDaysFromJ2000 + (worldYears * RealDaysPerWorldYear)) / DaysPerJulianCentury;
+        return (WorldZeroOffsetDaysFromJ2000 + (worldYears * RealDaysPerWorldYear)) / DaysPerJulianCentury;
     }
 }

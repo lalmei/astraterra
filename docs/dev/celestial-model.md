@@ -163,13 +163,14 @@ in real time. Two decisions in `WorldEpoch` fix it, and both are visible in the 
 | Decision | Value | Consequence |
 | --- | --- | --- |
 | A world year is a Julian year | `RealDaysPerWorldYear = 365.25` | Jupiter takes ~12 **world** years on a 12-day world and a 360-day world alike |
-| World time zero is the March 2000 equinox | `EquinoxOffsetDaysFromJ2000 = 78.816` | The planets share the seasons the rest of the mod already keeps |
+| World time zero is the start of the world year | `WorldZeroOffsetDaysFromJ2000 = 78.816 - 0.2226 x 365.25` | The planets share the seasons the rest of the mod already keeps |
 
-!!! warning "The epoch has to be an equinox, not J2000"
-    `GetSolarLongitudeDegrees` reads zero at `totalDays` zero, and solar longitude is measured from
-    the March equinox. Anchoring the planets at J2000 itself would start them 79 days round Earth's
-    orbit from where the world says its own sun is — every planet in the wrong season, a body at
-    opposition drawn near the sun, and nothing failing anywhere.
+!!! warning "The epoch follows the world year, not the equinox and not J2000"
+    `GetSolarLongitudeDegrees` reads zero at the **March equinox**, and that equinox falls
+    `CelestialMath.SpringEquinoxYearFraction` (about 22%) into a world year rather than at its start.
+    Anchoring the planets anywhere else starts them that far round Earth's orbit from where the world
+    says its own sun is — every planet in the wrong season, a body at opposition drawn near the sun,
+    and nothing failing anywhere.
 
     The two suns still differ by up to about 4° of ecliptic longitude, because the seasonal model
     advances at a constant rate while the real world speeds up at perihelion. That is the equation of
@@ -220,7 +221,19 @@ in for solar longitude:
 
 ```text
 solarLongitude = ((totalDays - equinoxDay) mod daysPerYear) / daysPerYear * 360
+equinoxDay     = daysPerYear * SpringEquinoxYearFraction
 ```
+
+!!! warning "Day zero of a world year is the first of January, not the equinox"
+    Vintage Story runs its own sun as `-tilt x cos(2*pi*(yearRel + 10/365))`
+    (`SurvivalCoreSystem.GetSolarSphericalCoords`), so the sun crosses the equator northward about
+    22% of the way into the world year — the same place the calendar starts calling the season
+    spring. `CelestialMath.SpringEquinoxYearFraction = 0.25 - 10/365` is that anchor.
+
+    Anchoring the year at day zero instead put the whole sky about 80° of solar longitude ahead of
+    the world it is drawn over: Betelgeuse came to the meridian at midnight on day 269 — late
+    September on a 360-day world — instead of mid-December.
+    `CelestialMathTests.Betelgeuse_Comes_To_The_Meridian_At_Midnight_In_December` pins it.
 
 !!! warning "A day of the year is not a season"
 `daysPerYear` is **world configuration**. Vintage Story's default is 108, but a world can be

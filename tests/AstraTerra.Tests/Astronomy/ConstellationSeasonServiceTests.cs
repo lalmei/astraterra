@@ -31,7 +31,9 @@ public sealed class ConstellationSeasonServiceTests
             averageRightAscensionDeg: 180,
             averageDeclinationDeg: declinationDeg,
             latitudeDeg: latitudeDeg,
-            dayOfYear: 0,
+            // Sunset on the equinox, when the sidereal angle at midnight is 180 deg: a right
+            // ascension of 180 is then on the meridian.
+            dayOfYear: (int)Math.Round(CelestialMath.GetEquinoxDayOfYear(365)),
             hourAfterSunset: 0);
 
         Assert.Equal(expectedState, info.State);
