@@ -238,11 +238,19 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        // No open-sky gate here: this pass draws during the sun/moon render (RenderOrder 0.3),
-        // before opaque terrain (0.37), so terrain painted afterwards occludes the stars wherever
-        // a block is on screen -- exactly how vanilla's own night sky works. A player under a block
-        // still sees the stars through any opening, instead of losing the whole sky at once.
         var playerPos = api.World.Player.Entity.Pos;
+
+        // Drawing before opaque terrain is not enough on its own: players report the starfield
+        // showing through a cave roof and through house walls, so the pass asks whether the sky is
+        // reachable from the eye. SkyExposure keeps a block overhead from taking the whole sky away,
+        // which is what a plain rain-map check used to do under any tree or porch.
+        if (!SkyExposure.CanSeeSky(api))
+        {
+            meteorVisuals.Clear();
+            LogSkyStep(dt, "skipped blocked sky: x={0:0.0}; y={1:0.0}; z={2:0.0}", playerPos.X, playerPos.Y, playerPos.Z);
+            return;
+        }
+
         var latitude = LatitudeMapper.MapGameLatitude(playerPos.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(playerPos.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
