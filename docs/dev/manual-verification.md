@@ -9,6 +9,18 @@
 - Set time/weather as needed so the sky is dark and clear.
 - For daytime sky checks, run `.stars daylight-stars on`; turn it back off with `.stars daylight-stars off` before normal play validation.
 
+## Lying Down
+
+- Stand still on solid ground and press **Z**; expected result: the seraph lies on its back (not its side), hips and legs rest on the ground rather than floating, empty hands are behind the head (not on the forehead), the first-person camera drops close to the ground, and the view looks straight up.
+- Expected result: the sky, stars, and meteor streaks fill the view. The body stays on the ground and does not block the sky. The camera does not clip into the block below.
+- Switch to third person, then to the fixed overhead camera, and press **Z**; expected result: the body lies down on the ground, but the camera does not snap to the sky.
+- Look around while lying in third person; expected result: the camera/head turns and the body stays planted.
+- Hold right click with the Brass Telescope while lying down; expected result: scoped view still opens, zoom still works, and the arms follow the telescope instead of staying behind the head.
+- Press **W** or Space; expected result: the player stands up and the camera returns to standing height.
+- Press **Z** again while lying; expected result: the player stands without needing to walk.
+- Press **X**; expected result: vanilla off-hand swap still runs, and the player does not lie down.
+- Remap **Lie down** in Controls and confirm the new key toggles the pose.
+
 ## Core Smoke Test
 
 - Confirm telescope and sextant items use visible non-placeholder models/textures.

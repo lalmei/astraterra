@@ -61,7 +61,10 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra startup step: meteor shower catalog loaded", modSystem);
         Assert.Contains("AstraTerra startup step: planet catalog loaded", modSystem);
         Assert.Contains("AstraTerra startup step: telescope zoom patched", modSystem);
+        Assert.Contains("AstraTerra startup step: lie-down pose registered", modSystem);
         Assert.Contains("AstraTerra startup step: observation input registered", modSystem);
+        Assert.Contains("skyLyingController.Start(api)", modSystem);
+        Assert.Contains("SkyLyingState.Reset()", modSystem);
         Assert.Contains("AstraTerra startup step: legacy constellation journal loaded", modSystem);
         Assert.Contains("AstraTerra startup step: client commands registered", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers registered", modSystem);

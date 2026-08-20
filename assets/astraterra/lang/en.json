@@ -22,5 +22,6 @@
   "astraterra:hud-mode-draw": "Draw",
   "astraterra:hud-mode-inspect": "Inspect",
   "astraterra:hud-mode-remove-segment": "Remove Segment",
-  "astraterra:hud-zoom": "Zoom {0}/5"
+  "astraterra:hud-zoom": "Zoom {0}/5",
+  "astraterra:hotkey-liedown": "Lie down"
 }
