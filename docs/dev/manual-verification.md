@@ -47,6 +47,22 @@
 - If the constellation state is not `below horizon`, look toward its stars while holding the written book in the left hand and confirm saved segments render in the sky.
 - Rename and delete the constellation with `.stars name <id> <text>` and `.stars delete <id>`.
 - Watch the sky for several in-game hours and confirm stars rise in the east and set in the west, in the same direction the vanilla sun travels.
+
+## Seasons And Sky Exposure
+
+- Set the calendar to about the 19th of December at midnight and sight Betelgeuse (Orion's shoulder);
+  expected result: it is due south, high on the meridian, as it is in the real December sky. On the
+  equivalent late-September night it must be nowhere near the meridian at midnight.
+- Set the calendar to the equinoxes and solstices and confirm the constellations overhead at midnight
+  match the season the game itself reports, not one a quarter of a year away.
+- At night, stand outdoors under open sky and confirm stars, the coordinate grid and constellation
+  lines all draw.
+- Step under a tree, a porch, or an overhang; expected result: the sky still draws. This is the case
+  a plain rain-map check used to break.
+- Stand inside a closed building away from doors and windows, and again deep inside a cave; expected
+  result: no stars, no grid, no constellation lines, and the sextant reports no open sky.
+- Walk from that interior back out through the door; expected result: the sky returns as the doorway
+  light does, and never shows through the walls on the way out.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
 - With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.

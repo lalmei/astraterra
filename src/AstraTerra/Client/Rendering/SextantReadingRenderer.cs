@@ -310,13 +310,9 @@ public sealed class SextantReadingRenderer : IRenderer
         }
     }
 
-    private bool HasOpenSkyAbovePlayer()
-    {
-        var entity = api.World.Player.Entity;
-        var blockPos = entity.Pos.AsBlockPos;
-        var eyeY = entity.Pos.InternalY + entity.LocalEyePos.Y;
-        return api.World.BlockAccessor.GetRainMapHeightAt(blockPos) <= eyeY;
-    }
+    // Shared with the star pass so the lines, the grid and the sighting reticle appear exactly where
+    // the stars themselves do -- under a tree or in a doorway, but not underground.
+    private bool HasOpenSkyAbovePlayer() => SkyExposure.CanSeeSky(api);
 
     private bool TryProject(
         SightedBody body,
