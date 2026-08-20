@@ -14,11 +14,14 @@ public sealed class PlanetEphemerisTests
     private const int DefaultDaysPerYear = 108;
 
     [Fact]
-    public void The_World_Clock_Starts_At_The_March_Equinox()
+    public void The_World_Clock_Starts_Where_The_World_Year_Does()
     {
-        // The world's own seasons read zero solar longitude at totalDays zero. If the planets were
-        // anchored anywhere else, every one of them would sit in the wrong season.
-        Assert.Equal(0.0, SunEclipticLongitudeDeg(totalDays: 0, DefaultDaysPerYear), 0);
+        // The world's own seasons read zero solar longitude at the March equinox, which falls a fifth
+        // of the way into a world year. If the planets were anchored anywhere else, every one of them
+        // would sit in the wrong season.
+        var equinoxDay = CelestialMath.GetEquinoxDayOfYear(DefaultDaysPerYear);
+
+        Assert.Equal(0.0, SunEclipticLongitudeDeg(equinoxDay, DefaultDaysPerYear), 0);
     }
 
     [Fact]
@@ -255,11 +258,13 @@ public sealed class PlanetEphemerisTests
 
     /// <summary>
     /// World time for a real date, which is what <see cref="WorldEpoch"/> defines: a world clock of
-    /// zero is the March 2000 equinox, and a world year is a Julian year.
+    /// zero is the start of the year the March 2000 equinox falls in, and a world year is a Julian
+    /// year.
     /// </summary>
     private static double WorldDaysFor(DateTime utc)
     {
-        var epoch = new DateTime(2000, 3, 20, 7, 35, 0, DateTimeKind.Utc);
+        var equinox = new DateTime(2000, 3, 20, 7, 35, 0, DateTimeKind.Utc);
+        var epoch = equinox.AddDays(-CelestialMath.SpringEquinoxYearFraction * WorldEpoch.RealDaysPerWorldYear);
         return (utc - epoch).TotalDays / WorldEpoch.RealDaysPerWorldYear * DefaultDaysPerYear;
     }
 

@@ -159,7 +159,8 @@ public sealed class AstraTerraModSystem : ModSystem
                         Math.Max(1.0, calendar.HoursPerDay),
                         longitude);
                 },
-                dayOfYearProvider: () => api.World.Calendar.DayOfYear),
+                dayOfYearProvider: () => api.World.Calendar.DayOfYear,
+                daysPerYearProvider: () => Math.Max(1, api.World.Calendar.DaysPerYear)),
             constellationBookClient,
             config).Register(api);
         api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/starfield/sky-grid");

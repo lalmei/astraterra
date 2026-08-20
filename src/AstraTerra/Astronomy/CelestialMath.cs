@@ -31,6 +31,33 @@ public static class CelestialMath
     /// </remarks>
     public const double MeanObliquityDeg = 23.4392911;
 
+    /// <summary>
+    /// Where the March equinox falls in the world year, as a fraction of it.
+    /// </summary>
+    /// <remarks>
+    /// Vintage Story's own sun runs its declination as <c>-tilt * cos(2*pi*(yearRel + 10/365))</c>,
+    /// so it crosses the equator northward a quarter turn before that cosine peaks. Day zero of a
+    /// world year is therefore the first of January, not the equinox, and a sky anchored at day zero
+    /// runs about 80 deg of solar longitude ahead of the world it is drawn over: Betelgeuse would
+    /// come to the meridian at midnight in late September instead of late December.
+    /// <para>
+    /// This is the one number that ties the star sky to the season the game itself is showing, which
+    /// is why it is taken from vanilla's sun rather than from the calendar's season thresholds --
+    /// those sit two days earlier and it is the sun a player can actually watch.
+    /// </para>
+    /// </remarks>
+    public const double SpringEquinoxYearFraction = 0.25 - (10.0 / 365.0);
+
+    /// <summary>
+    /// The day of the world year the March equinox falls on, for a world of
+    /// <paramref name="daysPerYear"/> days.
+    /// </summary>
+    public static double GetEquinoxDayOfYear(int daysPerYear)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
+        return daysPerYear * SpringEquinoxYearFraction;
+    }
+
     public static double GetSeasonalAngle(int dayOfYear, double dayFraction, int daysPerYear)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
@@ -54,12 +81,13 @@ public static class CelestialMath
     /// of solar longitude is late summer on all of them. Extracted from the sidereal angle rather
     /// than recomputed so the two can never drift apart.
     /// </remarks>
-    public static double GetSolarLongitudeDegrees(double totalDays, int daysPerYear, double equinoxDayOfYear = 0)
+    public static double GetSolarLongitudeDegrees(double totalDays, int daysPerYear, double? equinoxDayOfYear = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
 
+        var equinoxDay = equinoxDayOfYear ?? GetEquinoxDayOfYear(daysPerYear);
         var dayOfYear = PositiveModulo(totalDays, daysPerYear);
-        var seasonalTurns = PositiveModulo(dayOfYear - equinoxDayOfYear, daysPerYear) / daysPerYear;
+        var seasonalTurns = PositiveModulo(dayOfYear - equinoxDay, daysPerYear) / daysPerYear;
         return seasonalTurns * 360.0;
     }
 
@@ -68,7 +96,7 @@ public static class CelestialMath
         int daysPerYear,
         double hoursPerDay,
         double longitudeDegrees = 0,
-        double equinoxDayOfYear = 0)
+        double? equinoxDayOfYear = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
         if (hoursPerDay <= 0)
