@@ -41,6 +41,12 @@ public static class SkyLyingPolicy
     public const long ReclineMilliseconds = 700L;
 
     /// <summary>
+    /// How long the rise runs before it is stopped and the seraph is back on the default
+    /// animations: its 16 frames at the same 30 a second.
+    /// </summary>
+    public const long RiseMilliseconds = 533L;
+
+    /// <summary>
     /// Vanilla's first-person pitch floor: just short of straight up. ClientMain clamps pitch to
     /// this value, which is <c>π/2 + 0.015</c>.
     /// </summary>
@@ -74,8 +80,17 @@ public static class SkyLyingPolicy
     /// <summary>Our own animation code so stopping it cannot cancel a bed sleep.</summary>
     public const string AnimationCode = "astraterra-stargaze";
 
+    /// <summary>
+    /// Sitting up and standing: the recline backwards. Stopping the idle on its own would ease the
+    /// supine pose out, which is the same rigid slide as reclining into it, only quicker.
+    /// </summary>
+    public const string ShapeAnimationRise = "stargaze-up";
+
     /// <summary>Own code for the recline as well, so the two can be started and stopped apart.</summary>
     public const string AnimationCodeRecline = "astraterra-stargaze-down";
+
+    /// <summary>Own code for the rise, which outlives the lying state it ends.</summary>
+    public const string AnimationCodeRise = "astraterra-stargaze-up";
 
     public static double EyeHeight(double standingEyeHeight)
         => standingEyeHeight * EyeHeightMultiplier;
@@ -152,4 +167,19 @@ public static class SkyLyingPolicy
     /// </summary>
     public static bool ShouldSettleIntoIdle(long millisecondsLying)
         => millisecondsLying >= ReclineMilliseconds;
+
+    /// <summary>
+    /// Whether the rise has played out and can be stopped, handing the seraph back to the default
+    /// animations. It suppresses them while it runs, so leaving it on would freeze a walk.
+    /// </summary>
+    public static bool ShouldFinishRising(long millisecondsRising)
+        => millisecondsRising >= RiseMilliseconds;
+
+    /// <summary>
+    /// Whether getting up is worth animating. Standing up on purpose is; being stood up by walking,
+    /// jumping, falling, or dying is not -- the player is already moving, and half a second of a
+    /// clip that suppresses the default animations would hold them in a glide.
+    /// </summary>
+    public static bool ShouldPlayRise(bool voluntary, bool alive)
+        => voluntary && alive;
 }

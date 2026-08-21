@@ -50,8 +50,9 @@ The stargaze clips are generated, not hand-written. `tools/build_stargaze_clips.
 as intent — torso pitch, where the hip joint should end up, how far each joint bends — solves the
 keyframe offsets against a port of the engine's own transform code, checks that nothing sinks into
 the ground and no joint is pulled apart, and writes
-`assets/astraterra/patches/seraph-stargaze.json`. `SkyLyingAnimation` carries the same keyframes for
-shapes the patch does not reach, and a test holds the two to each other.
+`assets/astraterra/patches/seraph-stargaze.json`. Getting up is generated as the recline reversed on
+a shorter clock, so the two cannot disagree about the pose they meet in. `SkyLyingAnimation` carries
+the same keyframes for shapes the patch does not reach, and a test holds the two to each other.
 
 ```bash
 make pose-build                      # regenerate the clips

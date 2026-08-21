@@ -186,6 +186,8 @@ public sealed class SkyLyingPolicyTests
         Assert.Equal("stargaze", SkyLyingPolicy.ShapeAnimationFor(handsBehindHead: true));
         Assert.Equal("stargaze-hold", SkyLyingPolicy.ShapeAnimationFor(handsBehindHead: false));
         Assert.Equal("stargaze-down", SkyLyingPolicy.ShapeAnimationRecline);
+        Assert.Equal("stargaze-up", SkyLyingPolicy.ShapeAnimationRise);
+        Assert.NotEqual(SkyLyingPolicy.AnimationCodeRecline, SkyLyingPolicy.AnimationCodeRise);
         Assert.NotEqual(SkyLyingPolicy.AnimationCode, SkyLyingPolicy.AnimationCodeRecline);
     }
 
@@ -212,5 +214,31 @@ public sealed class SkyLyingPolicyTests
     {
         Assert.True(SkyLyingPolicy.ReclineEaseInSpeed >= SkyLyingPolicy.AnimationEaseInSpeed);
         Assert.True(SkyLyingPolicy.AnimationEaseInSpeed > 2f);
+    }
+
+    /// <summary>
+    /// The rise suppresses the default animations while it plays, so it has to come off again --
+    /// otherwise the first step after standing up is a glide.
+    /// </summary>
+    [Fact]
+    public void The_Rise_Is_Taken_Off_When_It_Has_Played()
+    {
+        Assert.False(SkyLyingPolicy.ShouldFinishRising(0));
+        Assert.False(SkyLyingPolicy.ShouldFinishRising(SkyLyingPolicy.RiseMilliseconds - 1));
+        Assert.True(SkyLyingPolicy.ShouldFinishRising(SkyLyingPolicy.RiseMilliseconds));
+        Assert.True(SkyLyingPolicy.RiseMilliseconds < SkyLyingPolicy.ReclineMilliseconds);
+    }
+
+    /// <summary>
+    /// Standing up on purpose is animated. Being stood up by walking, jumping, falling, or dying is
+    /// not: the player is already moving, and half a second of a clip that suppresses the default
+    /// animations would hold them in a glide.
+    /// </summary>
+    [Fact]
+    public void Only_A_Deliberate_Stand_Up_Is_Animated()
+    {
+        Assert.True(SkyLyingPolicy.ShouldPlayRise(voluntary: true, alive: true));
+        Assert.False(SkyLyingPolicy.ShouldPlayRise(voluntary: false, alive: true));
+        Assert.False(SkyLyingPolicy.ShouldPlayRise(voluntary: true, alive: false));
     }
 }

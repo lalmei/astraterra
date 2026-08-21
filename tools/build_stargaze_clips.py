@@ -15,11 +15,17 @@ end up in the world, how far each joint bends -- and the offsets are solved nume
 against a port of the engine's own transform code, then checked: nothing may sink into
 the ground, and no joint may pull apart.
 
-Three clips come out of it:
+Four clips come out of it:
 
   stargaze-down   the sit-down-and-recline transition, held on its last frame
   stargaze        the supine idle, hands behind the head, breathing
   stargaze-hold   the same body with the arms left alone, for a held instrument
+  stargaze-up     getting back up: the recline read backwards, and quicker
+
+Getting up is the recline reversed because that is what getting up is -- sit up, tuck
+the legs under, stand -- and because the two then cannot disagree about the pose they
+meet in. It runs in three quarters of the time: settling onto the ground is slower
+than leaving it.
 
 The transition exists because the engine eases a clip in by blending its first keyframe
 against the pose the seraph is already in. A clip whose frame 0 is the finished supine
@@ -112,6 +118,9 @@ BREATH = [
 ]
 IDLE_FRAMES = 42
 
+# Getting up, as a fraction of the time going down takes.
+RISE_SCALE = 0.75
+
 
 # --- solving ----------------------------------------------------------------------
 
@@ -174,6 +183,15 @@ def recline_frames(model):
     return frames
 
 
+def rise_frames(recline):
+    """The recline backwards on a shorter clock, so its last pose is this one's first."""
+    last = recline[-1][0]
+    return [
+        (round((last - number) * RISE_SCALE), pose)
+        for number, pose in reversed(recline)
+    ]
+
+
 def idle_frames(model, arms):
     return [
         (number, supine(model, chest=REST_CHEST + lift, arms=arms))
@@ -204,10 +222,13 @@ def clip(name, code, frames, quantity, on_end):
 
 
 def build(model):
+    recline = recline_frames(model)
+    rise = rise_frames(recline)
     return [
-        clip("StargazeDown", "stargaze-down", recline_frames(model), 21, "Hold"),
+        clip("StargazeDown", "stargaze-down", recline, recline[-1][0] + 1, "Hold"),
         clip("Stargaze", "stargaze", idle_frames(model, arms=True), IDLE_FRAMES, "Repeat"),
         clip("StargazeHold", "stargaze-hold", idle_frames(model, arms=False), IDLE_FRAMES, "Repeat"),
+        clip("StargazeUp", "stargaze-up", rise, rise[-1][0] + 1, "Hold"),
     ]
 
 

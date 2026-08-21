@@ -24,8 +24,9 @@
 - Switch to third person, then to the fixed overhead camera, and press **Z**; expected result: the body lies down on the ground, but the camera does not snap to the sky.
 - Look around while lying in third person; expected result: the camera/head turns and the body stays planted.
 - Hold right click with the Brass Telescope while lying down; expected result: scoped view still opens, zoom still works, and the arms follow the telescope instead of staying behind the head.
-- Press **W** or Space; expected result: the player stands up and the camera returns to standing height.
-- Press **Z** again while lying; expected result: the player stands without needing to walk.
+- Press **W** or Space; expected result: the player stands up straight away and walks or jumps normally — no half-second of gliding while an animation finishes — and the camera returns to standing height.
+- Press **Z** again while lying; expected result: the seraph sits up, tucks its legs under, and stands, over about half a second — it does not snap upright or reverse through a bridge — and the camera rises with it.
+- Press **Z** twice quickly to lie down again mid-rise; expected result: it goes back down from wherever it is, without a jump.
 - Press **X**; expected result: vanilla off-hand swap still runs, and the player does not lie down.
 - Remap **Lie down** in Controls and confirm the new key toggles the pose.
 

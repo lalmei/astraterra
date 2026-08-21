@@ -4,8 +4,8 @@ using Vintagestory.API.Common;
 namespace AstraTerra.Client.SkyLying;
 
 /// <summary>
-/// The clips that put the seraph on its back: a recline that gets it there, and a supine idle it
-/// rests in, with and without the hands behind the head.
+/// The clips that put the seraph on its back: a recline that gets it there, a supine idle it rests
+/// in, with and without the hands behind the head, and a rise that gets it up again.
 ///
 /// Two things about the engine shape all of this.
 ///
@@ -42,6 +42,12 @@ public static class SkyLyingAnimation
 
     /// <summary>Frames in the breathing loop.</summary>
     public const int IdleFrames = 42;
+
+    /// <summary>
+    /// Frames in the rise. Getting up is quicker than settling down, so this is three quarters of
+    /// the recline -- half a second.
+    /// </summary>
+    public const int RiseFrames = 16;
 
     /// <summary>The torso pitch that lays the seraph on its back. Swim uses the opposite sign for a face-down stroke.</summary>
     public const float BackPitchZ = -90f;
@@ -122,6 +128,21 @@ public static class SkyLyingAnimation
             EnumEntityAnimationEndHandling.Hold);
 
     /// <summary>
+    /// Getting up: the recline read backwards on a shorter clock, which is both what getting up
+    /// looks like -- sit up, tuck the legs under, stand -- and the only way the two cannot disagree
+    /// about the pose they meet in. Without it, standing up is the engine easing the supine pose
+    /// out, which is the same rigid slide as the bridge, just fast enough to read as a snap.
+    /// </summary>
+    public static Animation Rise()
+        => Clip(
+            "StargazeRise",
+            SkyLyingPolicy.ShapeAnimationRise,
+            [.. ReclinePose.Reverse().Select(frame => new PoseFrame(
+                (int)Math.Round((ReclinePose[^1].Frame - frame.Frame) * 0.75), frame.Bones))],
+            RiseFrames,
+            EnumEntityAnimationEndHandling.Hold);
+
+    /// <summary>
     /// The supine idle: on the back, one knee drawn up, breathing. With the hands free they go
     /// behind the head; with something held, the arms are left to the item's own animation.
     /// </summary>
@@ -150,6 +171,7 @@ public static class SkyLyingAnimation
         Upsert(shape, Recline());
         Upsert(shape, Idle(handsBehindHead: true));
         Upsert(shape, Idle(handsBehindHead: false));
+        Upsert(shape, Rise());
         return true;
     }
 
