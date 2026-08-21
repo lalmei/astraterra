@@ -127,12 +127,32 @@ public sealed class BootstrapSmokeTests
         var starsIndex = renderer.IndexOf("foreach (var star in visibleStars)", StringComparison.Ordinal);
         var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
         var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
-        var constellationIndex = renderer.IndexOf("foreach (var dot in constellationDots)", deepSkyIndex, StringComparison.Ordinal);
+        // The constellation marks are one batched draw now, not a loop over dots.
+        var constellationIndex = renderer.IndexOf("RenderConstellationDots(clientApi, shader, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
 
         Assert.True(starsIndex >= 0);
         Assert.True(foregroundBlendIndex > starsIndex);
         Assert.True(deepSkyIndex > foregroundBlendIndex);
         Assert.True(constellationIndex > deepSkyIndex);
+    }
+
+    /// <summary>
+    /// <c>Vec4f</c> is a class in the Vintage Story API, so a tint built per body per frame is
+    /// thousands of heap objects a second on the render thread. The draw loops keep one instance and
+    /// write into it; this fails if a <c>new Vec4f</c> creeps back between the star loop and the end
+    /// of the planet loop.
+    /// </summary>
+    [Fact]
+    public void The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        var starLoopIndex = renderer.IndexOf("foreach (var star in visibleStars)", StringComparison.Ordinal);
+        var planetLoopEndIndex = renderer.IndexOf("if (visibleDeepSkyObjects.Count > 0)", starLoopIndex, StringComparison.Ordinal);
+
+        Assert.True(starLoopIndex >= 0);
+        Assert.True(planetLoopEndIndex > starLoopIndex);
+        Assert.DoesNotContain("new Vec4f(", renderer[starLoopIndex..planetLoopEndIndex], StringComparison.Ordinal);
     }
 
     [Fact]

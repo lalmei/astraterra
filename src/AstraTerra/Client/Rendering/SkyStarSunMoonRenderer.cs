@@ -89,6 +89,11 @@ public static class SkyStarSunMoonRenderer
     private static int constellationDotTextureId;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
+    private static MeshRef? constellationDotMesh;
+    private static int constellationDotMeshCapacity;
+    private static int constellationDotMeshDrawnCount;
+    private static float constellationDotMeshAngularSizeDeg = float.NaN;
+    private static IReadOnlyList<SkyConstellationDot>? constellationDotMeshDots;
 
     // The sky pass runs on the render thread every frame it draws, over a catalog of five thousand
     // stars. Everything below exists so that pass allocates nothing and repeats no work: buffers are
@@ -98,6 +103,13 @@ public static class SkyStarSunMoonRenderer
     private static readonly List<RenderedStar> ProjectedStars = new(6000);
     private static readonly List<RenderedStar> DrawableStars = new(6000);
     private static readonly List<RenderedPlanet> DrawablePlanets = new(16);
+
+    // Vec4f is a class in the Vintage Story API, so a tint built per body per frame is thousands of
+    // heap objects a second. The shader uploads a uniform the moment it is assigned, so one mutable
+    // instance can serve every draw.
+    private static readonly Vec4f ScratchTint = new(1f, 1f, 1f, 1f);
+    private static readonly Vec4f ScratchGlowTint = new(1f, 1f, 1f, 1f);
+    private static readonly Vec4f ScratchLight = new(1f, 1f, 1f, 1f);
     private static readonly Dictionary<int, RenderedStar> VisibleStarsByHip = new(6000);
     private static double cachedStarLatitudeDeg = double.NaN;
     private static double cachedStarSiderealDeg = double.NaN;
@@ -178,6 +190,12 @@ public static class SkyStarSunMoonRenderer
         deepSkyQuadMesh = null;
         meteorStreakMesh?.Dispose();
         meteorStreakMesh = null;
+        constellationDotMesh?.Dispose();
+        constellationDotMesh = null;
+        constellationDotMeshCapacity = 0;
+        constellationDotMeshDrawnCount = 0;
+        constellationDotMeshAngularSizeDeg = float.NaN;
+        constellationDotMeshDots = null;
         api = null;
         config = null;
         catalog = null;
@@ -479,12 +497,12 @@ public static class SkyStarSunMoonRenderer
                 var textureId = isFaint ? dimStarTextureId : brightStarTextureId;
                 var size = StarBillboardSizing.CalculateCoreDiameterPixels(star.Size);
                 var alpha = (float)Math.Clamp(star.Brightness, 0.0, 1.0);
-                var tint = ColorFromTemperature(star.ColorTemperatureK, alpha);
+                var tint = SetColorFromTemperature(ScratchTint, star.ColorTemperatureK, alpha);
                 var outerAlpha = StarGlowMaxAlpha * alpha * alpha;
                 if (!isFaint && outerAlpha > 0.005f)
                 {
                     var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(size, alpha);
-                    var glowTint = new Vec4f(tint.R, tint.G, tint.B, outerAlpha);
+                    var glowTint = Set(ScratchGlowTint, tint.R, tint.G, tint.B, outerAlpha);
                     RenderStarQuad(clientApi, shader, quadModel, star.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer, starAngularScale);
                 }
 
@@ -502,13 +520,13 @@ public static class SkyStarSunMoonRenderer
             {
                 var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
                 var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
-                var tint = new Vec4f(planet.TintR, planet.TintG, planet.TintB, alpha);
+                var tint = Set(ScratchTint, planet.TintR, planet.TintG, planet.TintB, alpha);
                 var size = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
                 var glowAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
                 if (glowAlpha > 0.005f)
                 {
                     var glowSize = size * (1f + (PlanetGlowSizeRange * brilliance));
-                    var glowTint = new Vec4f(planet.TintR, planet.TintG, planet.TintB, glowAlpha);
+                    var glowTint = Set(ScratchGlowTint, planet.TintR, planet.TintG, planet.TintB, glowAlpha);
                     RenderStarQuad(clientApi, shader, quadModel, planet.Body, glowSize, imageSize, planetTextureId, glowTint, modelMatrixBuffer, planetAngularScale);
                 }
 
@@ -534,14 +552,13 @@ public static class SkyStarSunMoonRenderer
                 render.GlToggleBlend(true, EnumBlendMode.Glow);
             }
 
-            if (constellationDotTextureId != 0)
+            if (constellationDotTextureId != 0 && constellationDots.Count > 0)
             {
-                foreach (var dot in constellationDots)
-                {
-                    // Overlay marks, not sky objects: they follow the star scale so a line stays a
-                    // fine trail of dots at any magnification instead of swelling into blobs.
-                    RenderConstellationDot(clientApi, shader, quadModel, dot, imageSize, modelMatrixBuffer, starAngularScale);
-                }
+                // One mesh, one draw call. The dots are overlay marks, not sky objects: they follow
+                // the star scale so a line stays a fine trail at any magnification instead of
+                // swelling into blobs, which is why the scale is part of the mesh's rebuild key.
+                EnsureConstellationDotMesh(clientApi, constellationDots, starAngularScale);
+                RenderConstellationDots(clientApi, shader, modelMatrixBuffer);
             }
 
             if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0)
@@ -563,7 +580,7 @@ public static class SkyStarSunMoonRenderer
         {
             secondsSinceLastLog = 0;
             clientApi.Logger.VerboseDebug(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2}; daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
                 constellationDots.Count,
@@ -571,7 +588,9 @@ public static class SkyStarSunMoonRenderer
                 forceDaylight,
                 CelestialMath.NormalizeDegrees(ToDegrees(yaw)),
                 Math.Clamp(-ToDegrees(pitch), -89.0, 89.0),
-                visiblePlanets.Count);
+                visiblePlanets.Count,
+                constellationDotMeshDrawnCount,
+                constellationDotMeshCapacity);
             if (visiblePlanets.Count > 0)
             {
                 clientApi.Logger.VerboseDebug(
@@ -628,7 +647,7 @@ public static class SkyStarSunMoonRenderer
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = tint;
-        shader.RgbaLightIn = new Vec4f(tint.R, tint.G, tint.B, 1f);
+        shader.RgbaLightIn = Set(ScratchLight, tint.R, tint.G, tint.B, 1f);
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
@@ -636,30 +655,67 @@ public static class SkyStarSunMoonRenderer
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
-    private static void RenderConstellationDot(
+    /// <summary>
+    /// Rebuilds the batched dot mesh when the dots themselves change, or when the scope changes how
+    /// large a dot should be.
+    /// </summary>
+    private static void EnsureConstellationDotMesh(
         ICoreClientAPI clientApi,
-        IStandardShaderProgram shader,
-        MeshRef quadModel,
-        SkyConstellationDot dot,
-        int imageSize,
-        float[] modelMatrixBuffer,
+        IReadOnlyList<SkyConstellationDot> dots,
         float angularScale)
     {
-        var modelMatrix = BuildSkyBillboardMatrix(
-            clientApi,
-            dot.DirectionX,
-            dot.DirectionY,
-            dot.DirectionZ,
-            ConstellationDotAngularSizeDeg * angularScale,
-            imageSize);
+        var angularSizeDeg = ConstellationDotAngularSizeDeg * angularScale;
+        if (constellationDotMesh is not null &&
+            ReferenceEquals(dots, constellationDotMeshDots) &&
+            Math.Abs(angularSizeDeg - constellationDotMeshAngularSizeDeg) < 1e-6f)
+        {
+            return;
+        }
 
+        var capacity = ConstellationDotMeshBuilder.GetCapacityFor(dots.Count);
+        var meshData = ConstellationDotMeshBuilder.Build(dots, SkyDistance, angularSizeDeg, capacity);
+
+        // Vintage Story sizes a mesh's buffers on the first upload and never grows them, so a batch
+        // that has outgrown its allocation needs a fresh mesh rather than an update into the old one.
+        if (constellationDotMesh is null || capacity > constellationDotMeshCapacity)
+        {
+            constellationDotMesh?.Dispose();
+            constellationDotMesh = clientApi.Render.UploadMesh(meshData);
+            constellationDotMeshCapacity = capacity;
+        }
+        else
+        {
+            clientApi.Render.UpdateMesh(constellationDotMesh, meshData);
+        }
+
+        constellationDotMeshDots = dots;
+        constellationDotMeshAngularSizeDeg = angularSizeDeg;
+        constellationDotMeshDrawnCount = Math.Min(dots.Count, capacity);
+    }
+
+    private static void RenderConstellationDots(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        float[] modelMatrixBuffer)
+    {
+        if (constellationDotMesh is null)
+        {
+            return;
+        }
+
+        var entity = clientApi.World.Player.Entity;
+        var verticalOrigin = (float)entity.LocalEyePos.Y
+            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
+        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+
+        // The tint that used to be a per-dot uniform now rides on the vertices.
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
-        shader.RgbaTint = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, dot.Tint.A);
-        shader.RgbaLightIn = new Vec4f(dot.Tint.R, dot.Tint.G, dot.Tint.B, 1f);
+        shader.RgbaTint = ColorUtil.WhiteArgbVec;
+        shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
         shader.Tex2D = constellationDotTextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(quadModel);
+        clientApi.Render.RenderMesh(constellationDotMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -738,7 +794,7 @@ public static class SkyStarSunMoonRenderer
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = tint;
-        shader.RgbaLightIn = new Vec4f(tint.R, tint.G, tint.B, 1f);
+        shader.RgbaLightIn = Set(ScratchLight, tint.R, tint.G, tint.B, 1f);
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
@@ -1008,7 +1064,7 @@ public static class SkyStarSunMoonRenderer
         return domain + ":" + rest;
     }
 
-    private static Vec4f ColorFromTemperature(double temperatureKelvin, float alpha)
+    private static Vec4f SetColorFromTemperature(Vec4f target, double temperatureKelvin, float alpha)
     {
         var kelvin = Math.Clamp(temperatureKelvin, 2500.0, 12000.0) / 100.0;
         double red;
@@ -1028,11 +1084,25 @@ public static class SkyStarSunMoonRenderer
             blue = 255.0;
         }
 
-        return new Vec4f(
+        return Set(
+            target,
             (float)Math.Clamp(red / 255.0, 0.55, 1.0),
             (float)Math.Clamp(green / 255.0, 0.55, 1.0),
             (float)Math.Clamp(blue / 255.0, 0.55, 1.0),
             alpha);
+    }
+
+    /// <summary>
+    /// Writes a colour into an existing <see cref="Vec4f"/> and hands it back, so the draw loop can
+    /// keep one instance instead of allocating a class per body per frame.
+    /// </summary>
+    private static Vec4f Set(Vec4f target, float red, float green, float blue, float alpha)
+    {
+        target.R = red;
+        target.G = green;
+        target.B = blue;
+        target.A = alpha;
+        return target;
     }
 
     private static void CopyToFloatArray(Matrix4 matrix, float[] target)
