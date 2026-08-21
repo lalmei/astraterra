@@ -39,7 +39,11 @@ public static class SkyStarSunMoonRenderer
     /// </summary>
     public const string TelescopePlanetTexturePath = "astraterra:environment/star-gaussian-soft";
 
-    private const string ConstellationDotTexturePath = "astraterra:environment/star-pixel";
+    /// <summary>
+    /// A single white pixel, tinted per vertex. Shared by everything the sky draws as a shape rather
+    /// than as a sprite: constellation ribbons and meteor streaks.
+    /// </summary>
+    private const string SkyMarkTexturePath = "astraterra:environment/star-pixel";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
     private const double MinimumSkyRenderDarkness = 0.10;
@@ -56,8 +60,17 @@ public static class SkyStarSunMoonRenderer
     private const float PlanetGlowSizeRange = 1.8f;
     private const float PlanetGlowMaxAlpha = 0.5f;
     private const float DeepSkyBrightnessScale = 0.42f;
-    private const double ConstellationDotSpacingDeg = 0.65;
-    private const float ConstellationDotAngularSizeDeg = 0.14f;
+    /// <summary>
+    /// Naked-eye width of a constellation line, scaled by the scope's field so it holds that width on
+    /// screen at any magnification.
+    /// </summary>
+    private const float ConstellationLineWidthDeg = 0.10f;
+
+    /// <summary>
+    /// How far short of each star its lines stop. Without it a pattern reads as lines with stars
+    /// buried under their ends, rather than as stars joined by lines.
+    /// </summary>
+    private const float ConstellationLineEndGapDeg = 0.35f;
     private const double FaintStarMagnitudeThreshold = 2.5;
 
     /// <summary>How often the cost and draw summaries are written to the debug log while the sky is drawing.</summary>
@@ -81,7 +94,7 @@ public static class SkyStarSunMoonRenderer
     private static bool telescopeStarTextureLoadFailed;
     private static bool telescopeFaintStarTextureLoadFailed;
     private static bool telescopePlanetTextureLoadFailed;
-    private static bool constellationDotTextureLoadFailed;
+    private static bool skyMarkTextureLoadFailed;
     private static bool forceDaylightStars;
     private static bool renderingDisabledAfterFailure;
     private static int starTextureId;
@@ -89,10 +102,10 @@ public static class SkyStarSunMoonRenderer
     private static int telescopeStarTextureId;
     private static int telescopeFaintStarTextureId;
     private static int telescopePlanetTextureId;
-    private static int constellationDotTextureId;
+    private static int skyMarkTextureId;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
-    private static MeshRef? constellationDotMesh;
+    private static MeshRef? constellationLineMesh;
 
     // One mesh per sprite in play, rebuilt only when the projection is. There is no texture atlas
     // here and none is needed: the sky only ever draws two star sprites at a time (bright and faint,
@@ -110,10 +123,10 @@ public static class SkyStarSunMoonRenderer
     private static float cachedStarMeshAngularScale = float.NaN;
     private static bool cachedStarMeshScoped;
     private static bool starMeshesDirty = true;
-    private static int constellationDotMeshCapacity;
-    private static int constellationDotMeshDrawnCount;
-    private static float constellationDotMeshAngularSizeDeg = float.NaN;
-    private static IReadOnlyList<SkyConstellationDot>? constellationDotMeshDots;
+    private static int constellationLineMeshCapacity;
+    private static int constellationLineMeshDrawnCount;
+    private static float constellationLineMeshWidthDeg = float.NaN;
+    private static IReadOnlyList<SkyConstellationLine>? constellationLineMeshLines;
 
     // The sky pass runs on the render thread every frame it draws, over a catalog of five thousand
     // stars. Everything below exists so that pass allocates nothing and repeats no work: buffers are
@@ -136,7 +149,7 @@ public static class SkyStarSunMoonRenderer
     private static string? cachedJournalJson;
     private static ConstellationJournal? cachedJournal;
     private static ConstellationJournal? cachedDotsJournal;
-    private static IReadOnlyList<SkyConstellationDot>? cachedConstellationDots;
+    private static IReadOnlyList<SkyConstellationLine>? cachedConstellationLines;
 
     /// <summary>
     /// How far the sky must turn, or the observer move, before the star projection is redone.
@@ -216,8 +229,8 @@ public static class SkyStarSunMoonRenderer
         deepSkyQuadMesh = null;
         meteorStreakMesh?.Dispose();
         meteorStreakMesh = null;
-        constellationDotMesh?.Dispose();
-        constellationDotMesh = null;
+        constellationLineMesh?.Dispose();
+        constellationLineMesh = null;
         brightStarMesh?.Dispose();
         brightStarMesh = null;
         faintStarMesh?.Dispose();
@@ -232,10 +245,10 @@ public static class SkyStarSunMoonRenderer
         BrightStarBillboards.Clear();
         FaintStarBillboards.Clear();
         PlanetBillboards.Clear();
-        constellationDotMeshCapacity = 0;
-        constellationDotMeshDrawnCount = 0;
-        constellationDotMeshAngularSizeDeg = float.NaN;
-        constellationDotMeshDots = null;
+        constellationLineMeshCapacity = 0;
+        constellationLineMeshDrawnCount = 0;
+        constellationLineMeshWidthDeg = float.NaN;
+        constellationLineMeshLines = null;
         api = null;
         config = null;
         catalog = null;
@@ -257,14 +270,14 @@ public static class SkyStarSunMoonRenderer
         cachedJournalJson = null;
         cachedJournal = null;
         cachedDotsJournal = null;
-        cachedConstellationDots = null;
+        cachedConstellationLines = null;
         secondsSinceLastSkipLog = 0;
         starTextureLoadFailed = false;
         faintStarTextureLoadFailed = false;
         telescopeStarTextureLoadFailed = false;
         telescopeFaintStarTextureLoadFailed = false;
         telescopePlanetTextureLoadFailed = false;
-        constellationDotTextureLoadFailed = false;
+        skyMarkTextureLoadFailed = false;
         forceDaylightStars = false;
         renderingDisabledAfterFailure = false;
         starTextureId = 0;
@@ -272,7 +285,7 @@ public static class SkyStarSunMoonRenderer
         telescopeStarTextureId = 0;
         telescopeFaintStarTextureId = 0;
         telescopePlanetTextureId = 0;
-        constellationDotTextureId = 0;
+        skyMarkTextureId = 0;
         DeepSkyTextureIds.Clear();
         FailedDeepSkyTexturePaths.Clear();
     }
@@ -413,10 +426,15 @@ public static class SkyStarSunMoonRenderer
         // Reading the book means deserializing its journal, which is far too much work to repeat
         // sixty times a second for a page that has not changed. The written JSON is the key.
         var journal = ReadJournalCached(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
-        IReadOnlyList<SkyConstellationDot> constellationDots = Array.Empty<SkyConstellationDot>();
+        var scoped = TelescopeScopeState.IsScoped;
+        var fovMultiplier = scoped ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
+        var starAngularScale = StarBillboardSizing.CalculateStarAngularScale(scoped, fovMultiplier);
+        IReadOnlyList<SkyConstellationLine> constellationLines = Array.Empty<SkyConstellationLine>();
         if (journal is not null)
         {
-            if (starsRefreshed || cachedConstellationDots is null || !ReferenceEquals(journal, cachedDotsJournal))
+            // A ribbon spans a whole edge, so unlike the dotted trail it replaced, nothing about its
+            // layout depends on the magnification: only the mesh's width does.
+            if (starsRefreshed || cachedConstellationLines is null || !ReferenceEquals(journal, cachedDotsJournal))
             {
                 VisibleStarsByHip.Clear();
                 foreach (var star in drawableStars)
@@ -425,11 +443,11 @@ public static class SkyStarSunMoonRenderer
                 }
 
                 var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, VisibleStarsByHip);
-                cachedConstellationDots = ConstellationRenderModel.BuildSkyDots(constellationSegments, ConstellationDotSpacingDeg);
+                cachedConstellationLines = ConstellationRenderModel.BuildSkyLines(constellationSegments);
                 cachedDotsJournal = journal;
             }
 
-            constellationDots = cachedConstellationDots;
+            constellationLines = cachedConstellationLines;
         }
 
         EnsureStarTextures(api);
@@ -449,7 +467,7 @@ public static class SkyStarSunMoonRenderer
             return false;
         }
 
-        EnsureConstellationDotTexture(api);
+        EnsureSkyMarkTexture(api);
 
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects = TelescopeScopeState.IsScoped
             ? DeepSkyRenderModel.ProjectVisibleObjects(catalog.DeepSkyObjects, latitude, localSiderealAngle, brightnessBias)
@@ -475,10 +493,11 @@ public static class SkyStarSunMoonRenderer
             drawableStars,
             drawablePlanets,
             visibleDeepSkyObjects,
-            constellationDots,
+            constellationLines,
             meteorStreaks,
             FindStrongestReading(meteorReadings),
             starResidualRotation,
+            starAngularScale,
             quadModel,
             imageSize,
             dt,
@@ -495,10 +514,11 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<RenderedStar> visibleStars,
         IReadOnlyList<RenderedPlanet> visiblePlanets,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
-        IReadOnlyList<SkyConstellationDot> constellationDots,
+        IReadOnlyList<SkyConstellationLine> constellationLines,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
         MeteorShowerReading? strongestMeteorReading,
         Matrix4 starResidualRotation,
+        float starAngularScale,
         MeshRef quadModel,
         int imageSize,
         float deltaTime,
@@ -524,8 +544,9 @@ public static class SkyStarSunMoonRenderer
         // Billboards are sized in degrees, so magnification would otherwise enlarge them. A star has
         // to shrink back to a point under the scope, both because that is what an eyepiece shows and
         // because the deep-sky plates it is drawn over carry their own stars at 0.002 to 0.03 deg.
+        // The star scale arrives from the caller, which also widens the constellation lines by it,
+        // so a line keeps its thickness against the stars it joins at any magnification.
         var fovMultiplier = useTelescopeSprites ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
-        var starAngularScale = StarBillboardSizing.CalculateStarAngularScale(useTelescopeSprites, fovMultiplier);
         var planetAngularScale = StarBillboardSizing.CalculatePlanetAngularScale(useTelescopeSprites, fovMultiplier);
         var drawnCount = 0;
         var smallestDrawnSize = double.MaxValue;
@@ -596,16 +617,16 @@ public static class SkyStarSunMoonRenderer
                 render.GlToggleBlend(true, EnumBlendMode.Glow);
             }
 
-            if (constellationDotTextureId != 0 && constellationDots.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Constellations))
+            if (skyMarkTextureId != 0 && constellationLines.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Constellations))
             {
-                // One mesh, one draw call. The dots are overlay marks, not sky objects: they follow
-                // the star scale so a line stays a fine trail at any magnification instead of
-                // swelling into blobs, which is why the scale is part of the mesh's rebuild key.
-                EnsureConstellationDotMesh(clientApi, constellationDots, starAngularScale);
-                RenderConstellationDots(clientApi, shader, starResidualRotation, modelMatrixBuffer);
+                // One mesh, one draw call. The lines are overlay marks, not sky objects: their width
+                // follows the star scale so a line holds its thickness on screen at any
+                // magnification, which is why the scale is part of the mesh's rebuild key.
+                EnsureConstellationLineMesh(clientApi, constellationLines, starAngularScale);
+                RenderConstellationLines(clientApi, shader, starResidualRotation, modelMatrixBuffer);
             }
 
-            if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors))
+            if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && skyMarkTextureId != 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors))
             {
                 RenderMeteorStreaks(clientApi, shader, modelMatrixBuffer);
             }
@@ -634,17 +655,17 @@ public static class SkyStarSunMoonRenderer
                 report.MeshUpdates,
                 SkyRenderPaths.Describe());
             clientApi.Logger.VerboseDebug(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; sprites={1}; constellationDots={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; sprites={1}; constellationLines={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
-                constellationDots.Count,
+                constellationLines.Count,
                 daylight,
                 forceDaylight,
                 CelestialMath.NormalizeDegrees(ToDegrees(yaw)),
                 Math.Clamp(-ToDegrees(pitch), -89.0, 89.0),
                 visiblePlanets.Count,
-                constellationDotMeshDrawnCount,
-                constellationDotMeshCapacity);
+                constellationLineMeshDrawnCount,
+                constellationLineMeshCapacity);
             if (visiblePlanets.Count > 0)
             {
                 clientApi.Logger.VerboseDebug(
@@ -850,66 +871,71 @@ public static class SkyStarSunMoonRenderer
     private static int ToColorByte(float channel) => (int)Math.Round(Math.Clamp(channel, 0f, 1f) * 255f);
 
     /// <summary>
-    /// Rebuilds the batched dot mesh when the dots themselves change, or when the scope changes how
-    /// large a dot should be.
+    /// Rebuilds the batched line mesh when the lines themselves change, or when the scope changes how
+    /// wide a line should draw.
     /// </summary>
-    private static void EnsureConstellationDotMesh(
+    private static void EnsureConstellationLineMesh(
         ICoreClientAPI clientApi,
-        IReadOnlyList<SkyConstellationDot> dots,
+        IReadOnlyList<SkyConstellationLine> lines,
         float angularScale)
     {
-        var angularSizeDeg = ConstellationDotAngularSizeDeg * angularScale;
-        if (constellationDotMesh is not null &&
-            ReferenceEquals(dots, constellationDotMeshDots) &&
-            Math.Abs(angularSizeDeg - constellationDotMeshAngularSizeDeg) < 1e-6f)
+        var widthDeg = ConstellationLineWidthDeg * angularScale;
+        if (constellationLineMesh is not null &&
+            ReferenceEquals(lines, constellationLineMeshLines) &&
+            Math.Abs(widthDeg - constellationLineMeshWidthDeg) < 1e-6f)
         {
             return;
         }
 
-        var capacity = ConstellationDotMeshBuilder.GetCapacityFor(dots.Count);
-        var meshData = ConstellationDotMeshBuilder.Build(dots, SkyDistance, angularSizeDeg, capacity);
+        var capacity = ConstellationLineMeshBuilder.GetCapacityFor(lines.Count);
+        var meshData = ConstellationLineMeshBuilder.Build(
+            lines,
+            SkyDistance,
+            widthDeg,
+            ConstellationLineEndGapDeg * angularScale,
+            capacity);
 
         // Vintage Story sizes a mesh's buffers on the first upload and never grows them, so a batch
         // that has outgrown its allocation needs a fresh mesh rather than an update into the old one.
-        if (constellationDotMesh is null || capacity > constellationDotMeshCapacity)
+        if (constellationLineMesh is null || capacity > constellationLineMeshCapacity)
         {
-            constellationDotMesh?.Dispose();
-            constellationDotMesh = UploadMesh(clientApi, meshData);
-            constellationDotMeshCapacity = capacity;
+            constellationLineMesh?.Dispose();
+            constellationLineMesh = UploadMesh(clientApi, meshData);
+            constellationLineMeshCapacity = capacity;
         }
         else
         {
-            UpdateMesh(clientApi, constellationDotMesh, meshData);
+            UpdateMesh(clientApi, constellationLineMesh, meshData);
         }
 
-        constellationDotMeshDots = dots;
-        constellationDotMeshAngularSizeDeg = angularSizeDeg;
-        constellationDotMeshDrawnCount = Math.Min(dots.Count, capacity);
+        constellationLineMeshLines = lines;
+        constellationLineMeshWidthDeg = widthDeg;
+        constellationLineMeshDrawnCount = Math.Min(lines.Count, capacity);
     }
 
-    private static void RenderConstellationDots(
+    private static void RenderConstellationLines(
         ICoreClientAPI clientApi,
         IStandardShaderProgram shader,
         Matrix4 residualRotation,
         float[] modelMatrixBuffer)
     {
-        if (constellationDotMesh is null)
+        if (constellationLineMesh is null)
         {
             return;
         }
 
-        // The dots are laid out along the cached star positions, so they turn with them or the lines
-        // would walk off their stars.
+        // The lines are built from the cached star positions, so they turn with them or they would
+        // walk off their stars.
         var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
 
         // The tint that used to be a per-dot uniform now rides on the vertices.
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = ColorUtil.WhiteArgbVec;
         shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
-        shader.Tex2D = constellationDotTextureId;
+        shader.Tex2D = skyMarkTextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        DrawMesh(clientApi, constellationDotMesh);
+        DrawMesh(clientApi, constellationLineMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -951,7 +977,7 @@ public static class SkyStarSunMoonRenderer
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = ColorUtil.WhiteArgbVec;
         shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
-        shader.Tex2D = constellationDotTextureId;
+        shader.Tex2D = skyMarkTextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         DrawMesh(clientApi, meteorStreakMesh);
@@ -1167,9 +1193,9 @@ public static class SkyStarSunMoonRenderer
         EnsureStarTexture(clientApi, TelescopePlanetTexturePath, ref telescopePlanetTextureId, ref telescopePlanetTextureLoadFailed);
     }
 
-    private static void EnsureConstellationDotTexture(ICoreClientAPI clientApi)
+    private static void EnsureSkyMarkTexture(ICoreClientAPI clientApi)
     {
-        EnsureStarTexture(clientApi, ConstellationDotTexturePath, ref constellationDotTextureId, ref constellationDotTextureLoadFailed);
+        EnsureStarTexture(clientApi, SkyMarkTexturePath, ref skyMarkTextureId, ref skyMarkTextureLoadFailed);
     }
 
     private static void EnsureStarTexture(ICoreClientAPI clientApi, string texturePath, ref int textureId, ref bool loadFailed)

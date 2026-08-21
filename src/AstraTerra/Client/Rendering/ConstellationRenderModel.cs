@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Constellations;
+using Vintagestory.API.MathTools;
 
 namespace AstraTerra.Client.Rendering;
 
@@ -11,15 +12,6 @@ public sealed record ConstellationSegment(
     RenderedStar End);
 
 public readonly record struct ConstellationTint(float R, float G, float B, float A);
-
-public sealed record SkyConstellationDot(
-    int ConstellationId,
-    int StartHip,
-    int EndHip,
-    ConstellationTint Tint,
-    double DirectionX,
-    double DirectionY,
-    double DirectionZ);
 
 public static class ConstellationRenderModel
 {
@@ -68,59 +60,48 @@ public static class ConstellationRenderModel
         return MochaPastelPalette[index];
     }
 
-    public static IReadOnlyList<SkyConstellationDot> BuildSkyDots(
-        IEnumerable<ConstellationSegment> segments,
-        double angularSpacingDeg)
+    /// <summary>
+    /// Turns the edges of a journal's patterns into the ribbons the sky pass draws, one per edge.
+    /// </summary>
+    public static IReadOnlyList<SkyConstellationLine> BuildSkyLines(IEnumerable<ConstellationSegment> segments)
     {
-        if (angularSpacingDeg <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(angularSpacingDeg), "Angular spacing must be positive.");
-        }
+        ArgumentNullException.ThrowIfNull(segments);
 
-        return segments.SelectMany(segment => BuildSkyDots(segment, angularSpacingDeg)).ToList();
-    }
-
-    private static IEnumerable<SkyConstellationDot> BuildSkyDots(ConstellationSegment segment, double angularSpacingDeg)
-    {
-        var angularDistanceDeg = AngularDistanceDeg(segment.Start, segment.End);
-        if (angularDistanceDeg <= 0.000001)
+        var lines = new List<SkyConstellationLine>();
+        foreach (var segment in segments)
         {
-            yield break;
-        }
-
-        var tint = GetConstellationTint(segment.ConstellationId);
-        var interiorDotCount = Math.Max(1, (int)Math.Ceiling(angularDistanceDeg / angularSpacingDeg) - 1);
-        for (var i = 1; i <= interiorDotCount; i++)
-        {
-            var t = i / (double)(interiorDotCount + 1);
-            var x = Lerp(segment.Start.DirectionX, segment.End.DirectionX, t);
-            var y = Lerp(segment.Start.DirectionY, segment.End.DirectionY, t);
-            var z = Lerp(segment.Start.DirectionZ, segment.End.DirectionZ, t);
-            var length = Math.Sqrt((x * x) + (y * y) + (z * z));
-            if (length <= 0.000001)
+            // Two stars in the same place have no line between them, and no direction to build one
+            // along either.
+            if (AngularDistanceDeg(segment.Start, segment.End) <= 0.000001)
             {
                 continue;
             }
 
-            yield return new SkyConstellationDot(
-                segment.ConstellationId,
-                segment.StartHip,
-                segment.EndHip,
-                tint,
-                x / length,
-                y / length,
-                z / length);
+            lines.Add(new SkyConstellationLine(
+                segment.Start.DirectionX,
+                segment.Start.DirectionY,
+                segment.Start.DirectionZ,
+                segment.End.DirectionX,
+                segment.End.DirectionY,
+                segment.End.DirectionZ,
+                ColorFromTint(GetConstellationTint(segment.ConstellationId))));
         }
+
+        return lines;
     }
+
+    private static int ColorFromTint(ConstellationTint tint)
+        => ColorUtil.ColorFromRgba(
+            ToByte(tint.R),
+            ToByte(tint.G),
+            ToByte(tint.B),
+            ToByte(tint.A));
+
+    private static int ToByte(float channel) => (int)Math.Round(Math.Clamp(channel, 0f, 1f) * 255f);
 
     private static double AngularDistanceDeg(RenderedStar start, RenderedStar end)
     {
         var dot = (start.DirectionX * end.DirectionX) + (start.DirectionY * end.DirectionY) + (start.DirectionZ * end.DirectionZ);
         return Math.Acos(Math.Clamp(dot, -1.0, 1.0)) * 180.0 / Math.PI;
-    }
-
-    private static double Lerp(double start, double end, double t)
-    {
-        return start + ((end - start) * t);
     }
 }
