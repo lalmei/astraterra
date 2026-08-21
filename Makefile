@@ -15,7 +15,7 @@ DIST_DIR := dist
 MOD_VERSION = $(shell perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)
 PACKAGE_FILE = $(DIST_DIR)/AstraTerra-$(MOD_VERSION).zip
 
-.PHONY: help test build package deploy run deploy-run docs-build docs-serve bump-version bump-minor-version bump-patch-version bump-version-files
+.PHONY: help test build package deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy bump-version bump-minor-version bump-patch-version bump-version-files
 
 help:
 	@printf "Targets:\n"
@@ -27,6 +27,8 @@ help:
 	@printf "  make deploy-run  Deploy the mod, then launch the game\n"
 	@printf "  make docs-build  Build the documentation site\n"
 	@printf "  make docs-serve  Serve the documentation site locally\n"
+	@printf "  make moddb-preview  Render the ModDB description locally and open it\n"
+	@printf "  make moddb-copy     Copy the paste-ready ModDB description to the clipboard\n"
 	@printf "  make bump-version VERSION=0.1.2  Update, build, and deploy mod version\n"
 	@printf "  make bump-minor-version  Increment minor version, reset patch to 0, build, and deploy\n"
 	@printf "  make bump-patch-version  Increment patch version, build, and deploy\n"
@@ -60,6 +62,19 @@ docs-build:
 
 docs-serve:
 	@uv run --with-requirements docs/requirements.txt properdocs serve -f properdocs.yml
+
+MODDB_SOURCE := docs/moddb-description.html
+MODDB_PREVIEW := $(DIST_DIR)/moddb-preview.html
+
+$(MODDB_PREVIEW): $(MODDB_SOURCE) tools/moddb_preview.py
+	@python3 tools/moddb_preview.py --out "$(MODDB_PREVIEW)" >/dev/null
+
+moddb-preview: $(MODDB_PREVIEW)
+	@open "$(MODDB_PREVIEW)"
+
+moddb-copy:
+	@python3 tools/moddb_preview.py --paste | pbcopy
+	@printf "Paste-ready ModDB description copied to the clipboard\n"
 
 bump-version: bump-version-files deploy
 
