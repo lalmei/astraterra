@@ -75,6 +75,28 @@ public sealed class SkyLyingControllerTests
         Assert.DoesNotContain("LieAnimation", source);
     }
 
+    /// <summary>
+    /// Lying down plays the recline first and only settles into the idle once it has run: starting
+    /// the idle straight away is what made the seraph bridge into the pose instead of lying down.
+    /// </summary>
+    [Fact]
+    public void Lying_Down_Plays_The_Recline_Before_The_Idle()
+    {
+        var source = File.ReadAllText(ControllerSourcePath);
+
+        Assert.Contains("StartRecline(entity)", source);
+        Assert.Contains("ShouldSettleIntoIdle", source);
+        Assert.Contains("ReclineAnimation", source);
+        Assert.Contains("SkyLyingPolicy.ReclineEaseInSpeed", source);
+
+        // The recline leaves the arms out so a held instrument keeps its own pose on the way down.
+        var recline = source[source.IndexOf("CreateRecline", StringComparison.Ordinal)..];
+        recline = recline[..recline.IndexOf("CreateAnimation", StringComparison.Ordinal)];
+        Assert.Contains("Weight(meta, \"LowerTorso\")", recline);
+        Assert.DoesNotContain("Weight(meta, \"UpperArmR\")", recline);
+        Assert.DoesNotContain("Weight(meta, \"Head\")", recline);
+    }
+
     private static string ControllerSourcePath
     {
         get

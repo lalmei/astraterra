@@ -18,9 +18,27 @@ public static class SkyLyingPolicy
     /// </summary>
     public const double CollisionHeightMultiplier = 0.35;
 
-    public const float AnimationEaseInSpeed = 2f;
+    /// <summary>
+    /// The recline is driven by its own keyframes, so it has to reach full weight quickly: while a
+    /// clip is still easing in, what shows is a blend between it and standing, and a half-eased
+    /// recline is the slide into the pose the keyframes exist to avoid.
+    /// </summary>
+    public const float ReclineEaseInSpeed = 9f;
+
+    /// <summary>
+    /// The idle crossfades in as the recline fades out. Both are the same pose by then, but a slow
+    /// fade would leave the pair under-weighted for half a second, and an under-weighted supine
+    /// pose is a seraph half-way back onto its feet.
+    /// </summary>
+    public const float AnimationEaseInSpeed = 6f;
 
     public const float AnimationEaseOutSpeed = 5f;
+
+    /// <summary>
+    /// How long the recline runs before the idle takes over: its 21 frames at the engine's 30 a
+    /// second. The idle's first frame is the recline's last, so the handover does not show.
+    /// </summary>
+    public const long ReclineMilliseconds = 700L;
 
     /// <summary>
     /// Vanilla's first-person pitch floor: just short of straight up. ClientMain clamps pitch to
@@ -47,8 +65,17 @@ public static class SkyLyingPolicy
     /// </summary>
     public const string ShapeAnimationHolding = "stargaze-hold";
 
+    /// <summary>
+    /// Sitting down and reclining onto the back. Played once, on its own, before the idle: a clip
+    /// that starts from the finished pose eases in as a backbend, feet planted and hips in the air.
+    /// </summary>
+    public const string ShapeAnimationRecline = "stargaze-down";
+
     /// <summary>Our own animation code so stopping it cannot cancel a bed sleep.</summary>
     public const string AnimationCode = "astraterra-stargaze";
+
+    /// <summary>Own code for the recline as well, so the two can be started and stopped apart.</summary>
+    public const string AnimationCodeRecline = "astraterra-stargaze-down";
 
     public static double EyeHeight(double standingEyeHeight)
         => standingEyeHeight * EyeHeightMultiplier;
@@ -118,4 +145,11 @@ public static class SkyLyingPolicy
 
     public static string ShapeAnimationFor(bool handsBehindHead)
         => handsBehindHead ? ShapeAnimation : ShapeAnimationHolding;
+
+    /// <summary>
+    /// Whether the recline has played out and the idle should take over. Measured from when lying
+    /// began, so a frame drop delays the handover rather than cutting the recline short.
+    /// </summary>
+    public static bool ShouldSettleIntoIdle(long millisecondsLying)
+        => millisecondsLying >= ReclineMilliseconds;
 }

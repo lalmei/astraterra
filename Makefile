@@ -15,7 +15,7 @@ DIST_DIR := dist
 MOD_VERSION = $(shell perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)
 PACKAGE_FILE = $(DIST_DIR)/AstraTerra-$(MOD_VERSION).zip
 
-.PHONY: help test build package deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy bump-version bump-minor-version bump-patch-version bump-version-files
+.PHONY: help test build package deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy pose-build pose-preview bump-version bump-minor-version bump-patch-version bump-version-files
 
 help:
 	@printf "Targets:\n"
@@ -29,6 +29,8 @@ help:
 	@printf "  make docs-serve  Serve the documentation site locally\n"
 	@printf "  make moddb-preview  Render the ModDB description locally and open it\n"
 	@printf "  make moddb-copy     Copy the paste-ready ModDB description to the clipboard\n"
+	@printf "  make pose-build     Rebuild the seraph stargaze clips into the shape patch\n"
+	@printf "  make pose-preview CLIP=stargaze  Draw a clip as a PNG contact sheet and open it\n"
 	@printf "  make bump-version VERSION=0.1.2  Update, build, and deploy mod version\n"
 	@printf "  make bump-minor-version  Increment minor version, reset patch to 0, build, and deploy\n"
 	@printf "  make bump-patch-version  Increment patch version, build, and deploy\n"
@@ -62,6 +64,15 @@ docs-build:
 
 docs-serve:
 	@uv run --with-requirements docs/requirements.txt properdocs serve -f properdocs.yml
+
+CLIP ?= stargaze
+POSE_PREVIEW := $(DIST_DIR)/pose-preview.png
+
+pose-build:
+	@GAME_APP="$(GAME_APP)" python3 tools/build_stargaze_clips.py
+
+pose-preview:
+	@GAME_APP="$(GAME_APP)" python3 tools/preview_seraph_pose.py --clip "$(CLIP)" --tween 1 --out "$(POSE_PREVIEW)" --open
 
 MODDB_SOURCE := docs/moddb-description.html
 MODDB_PREVIEW := $(DIST_DIR)/moddb-preview.html

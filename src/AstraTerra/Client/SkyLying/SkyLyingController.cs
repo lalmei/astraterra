@@ -26,10 +26,18 @@ public sealed class SkyLyingController
 
     private static readonly AnimationMetaData HandsOccupiedAnimation = CreateAnimation(includeArms: false);
 
+    /// <summary>
+    /// The sit-down-and-recline that runs before the idle. It leaves the arms out, so a held
+    /// telescope keeps its own pose on the way down.
+    /// </summary>
+    private static readonly AnimationMetaData ReclineAnimation = CreateRecline();
+
     private ICoreClientAPI? api;
     private long tickListenerId;
     private bool? playingHandsBehindHead;
     private float? pinnedBodyYaw;
+    private long lieDownAt;
+    private bool settled;
 
     public void Start(ICoreClientAPI clientApi)
     {
@@ -120,7 +128,16 @@ public sealed class SkyLyingController
             return;
         }
 
+        // The recline plays on its own first. Only once it has reached the ground does the idle
+        // take over, so the two are never blended halfway through the motion.
+        if (!settled && !SkyLyingPolicy.ShouldSettleIntoIdle(ElapsedMilliseconds() - lieDownAt))
+        {
+            PinBodyYaw(entity);
+            return;
+        }
+
         EnsureAnimation(entity, HandsAreEmpty(entity));
+        settled = true;
         PinBodyYaw(entity);
     }
 
@@ -140,9 +157,20 @@ public sealed class SkyLyingController
             });
         }
 
-        EnsureAnimation(entity, HandsAreEmpty(entity));
+        StartRecline(entity);
         PinBodyYaw(entity);
     }
+
+    private void StartRecline(EntityPlayer entity)
+    {
+        lieDownAt = ElapsedMilliseconds();
+        settled = false;
+        entity.TpAnimManager.UseFpAnmations = false;
+        entity.AnimManager.StartAnimation(ReclineAnimation);
+        entity.TpAnimManager.StartAnimation(ReclineAnimation);
+    }
+
+    private long ElapsedMilliseconds() => api?.World?.ElapsedMilliseconds ?? 0L;
 
     private void StandUp()
     {
@@ -178,6 +206,7 @@ public sealed class SkyLyingController
         }
 
         playingHandsBehindHead = null;
+        settled = false;
     }
 
     private void PinBodyYaw(EntityPlayer entity)
@@ -204,8 +233,10 @@ public sealed class SkyLyingController
     private static void StopOn(IAnimationManager manager)
     {
         manager.StopAnimation(SkyLyingPolicy.AnimationCode);
+        manager.StopAnimation(SkyLyingPolicy.AnimationCodeRecline);
         manager.StopAnimation(SkyLyingPolicy.ShapeAnimation);
         manager.StopAnimation(SkyLyingPolicy.ShapeAnimationHolding);
+        manager.StopAnimation(SkyLyingPolicy.ShapeAnimationRecline);
     }
 
     private static bool IsStargazeActive(IAnimationManager manager)
@@ -248,6 +279,33 @@ public sealed class SkyLyingController
             flying: controls.IsFlying,
             swimming: entity.Swimming,
             mounted: entity.MountedOn is not null);
+    }
+
+    /// <summary>
+    /// The recline reaches full weight fast: until a clip is fully eased in, what shows is a blend
+    /// between it and standing, and a half-weighted recline is the backbend it exists to replace.
+    /// </summary>
+    private static AnimationMetaData CreateRecline()
+    {
+        var meta = new AnimationMetaData
+        {
+            Code = SkyLyingPolicy.AnimationCodeRecline,
+            Animation = SkyLyingPolicy.ShapeAnimationRecline,
+            BlendMode = EnumAnimationBlendMode.Average,
+            EaseInSpeed = SkyLyingPolicy.ReclineEaseInSpeed,
+            EaseOutSpeed = SkyLyingPolicy.AnimationEaseOutSpeed,
+            ClientSide = true,
+            SupressDefaultAnimation = true,
+            HoldEyePosAfterEasein = 99f
+        };
+
+        Weight(meta, "LowerTorso");
+        Weight(meta, "UpperTorso");
+        Weight(meta, "UpperFootR");
+        Weight(meta, "UpperFootL");
+        Weight(meta, "LowerFootR");
+        Weight(meta, "LowerFootL");
+        return meta.Init();
     }
 
     private static AnimationMetaData CreateAnimation(bool includeArms)

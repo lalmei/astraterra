@@ -185,5 +185,32 @@ public sealed class SkyLyingPolicyTests
         Assert.False(SkyLyingPolicy.UseHandsBehindHead(rightEmpty: true, leftEmpty: false));
         Assert.Equal("stargaze", SkyLyingPolicy.ShapeAnimationFor(handsBehindHead: true));
         Assert.Equal("stargaze-hold", SkyLyingPolicy.ShapeAnimationFor(handsBehindHead: false));
+        Assert.Equal("stargaze-down", SkyLyingPolicy.ShapeAnimationRecline);
+        Assert.NotEqual(SkyLyingPolicy.AnimationCode, SkyLyingPolicy.AnimationCodeRecline);
+    }
+
+    /// <summary>
+    /// The recline runs on its own before the idle takes over -- 21 keyframes at the engine's 30 a
+    /// second. Handing over early would blend the two halfway through the motion.
+    /// </summary>
+    [Fact]
+    public void The_Idle_Waits_For_The_Recline_To_Play_Out()
+    {
+        Assert.False(SkyLyingPolicy.ShouldSettleIntoIdle(0));
+        Assert.False(SkyLyingPolicy.ShouldSettleIntoIdle(SkyLyingPolicy.ReclineMilliseconds - 1));
+        Assert.True(SkyLyingPolicy.ShouldSettleIntoIdle(SkyLyingPolicy.ReclineMilliseconds));
+        Assert.True(SkyLyingPolicy.ShouldSettleIntoIdle(10_000));
+        Assert.Equal(700L, SkyLyingPolicy.ReclineMilliseconds);
+    }
+
+    /// <summary>
+    /// Both clips have to reach full weight quickly: an eased-in clip shows as a blend with
+    /// standing, and a half-weighted supine pose is a seraph part-way back onto its feet.
+    /// </summary>
+    [Fact]
+    public void The_Clips_Ease_In_Faster_Than_They_Play()
+    {
+        Assert.True(SkyLyingPolicy.ReclineEaseInSpeed >= SkyLyingPolicy.AnimationEaseInSpeed);
+        Assert.True(SkyLyingPolicy.AnimationEaseInSpeed > 2f);
     }
 }
