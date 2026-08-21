@@ -67,6 +67,56 @@ Venus swings between the evening and morning sky within a season, brightening an
 Chart Mars over a couple of world weeks and it will turn back on itself. Nobody scripted that
 retrograde loop: it is what the sky does when the world overtakes a slower planet on the inside.
 
+> ### Update v0.5.2 — the sky pass got cheap
+>
+> The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and
+> measured, and the numbers moved by more than a little.
+>
+> | | before | after |
+> | --- | --- | --- |
+> | Draw calls per frame, carrying a journal | 6,716 | **4** |
+> | Draw calls per frame, no journal | 2,988 | **3** |
+> | Record allocations per second | ~400,000 | **none in steady state** |
+> | Constellation line geometry | 3,728 quads | **148** |
+> | Star projections per second | 60 | **~5** |
+>
+> The before figures come from a real `client-main.log` — 2,988 stars and 3,728 constellation dots
+> visible — and the star projection alone cost over 10 ms a frame and produced about a gigabyte of
+> garbage a minute, which players saw as stutter and as a client that would not give memory back.
+>
+> Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has
+> actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.
+>
+> You can measure it yourself: `.stars render stars|constellations|deepsky|meteors|all on|off`
+> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh
+> uploads for the sky pass every 30 seconds.
+
+> ### Also in v0.5.2 — the sky looks different, and we would like to hear about it
+>
+> Getting the cost down meant changing how several things are drawn. None of it is settled, and the
+> judgements behind it are the kind that are better made by people actually observing than by anyone
+> reading a diff.
+>
+> - **Constellation lines are continuous now**, a thin ribbon per edge instead of a trail of dots, and
+>   each line stops short of the stars it joins. The dots were sized in degrees, so magnification
+>   pulled them apart into a row of specks; a ribbon holds its weight at any zoom and cannot be
+>   mistaken for a star.
+> - **The sky turns smoothly through a telescope.** It used to be redrawn only once it had moved a
+>   twentieth of a degree — under a pixel at the naked eye, but seven to fourteen through a scope,
+>   which arrived as a visible step several times a second.
+> - **Scoped stars are the size the naked eye shows them at.** Raising a telescope used to halve every
+>   bright star, because the scoped sprite fills less than half the quad the naked-eye one does.
+> - **Deep-sky plates now fade the catalogue out underneath them.** A plate is a photograph with its
+>   own stars already in it, so over the Pleiades the photograph's stars are the stars; a degree away
+>   the sky is the catalogue's again.
+> - **Star colours read slightly more saturated.** Colour rides on the mesh vertices now, where the
+>   old path applied each tint twice.
+>
+> If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its
+> edge, or a colour wrong — please say so, with a screenshot if you can. Line width, star size, and
+> how hard a plate fades are all single numbers and easy to move.
+> [Open an issue](https://github.com/lalmei/astraterra/issues/new/choose).
+
 ## Roadmap
 
 In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the [Moving Sky Objects](https://github.com/lalmei/astraterra/milestone/1) milestone.
