@@ -9,59 +9,46 @@
     reach repo paths, so upload each shot to the mod page and drop the <img> in its place.
   - Only plain tags are used (p / h3 / h4 / ul / li / table / a / strong / em) plus the
     site's own spoiler markup, so TinyMCE does not rewrite them on save.
-  - Coloured callouts: there is no admonition plugin on that editor, so a callout is a
-    one-cell borderless table with a background colour and a thick coloured left border on
-    the cell. Table cell styles are what the Table plugin itself writes, so they survive a
-    save; a bare <div style> may not. Recipe:
+  - Coloured callouts: there is no admonition plugin on that editor, but inline styles on
+    a <div> or <p> do survive a save there — the Watersheds mod page uses exactly this, and
+    that is where the pattern below and the spoiler styling came from. Recipe:
 
-        <table style="border-collapse: collapse; width: 100%; background-color: BG;" border="0">
-        <tbody><tr>
-        <td style="padding: 10px 16px; border: none; border-left: 5px solid ACCENT;">
-        <p><strong><span style="color: TITLE;">Title</span></strong></p>
-        <p>Body.</p></td>
-        </tr></tbody></table>
+        <div style="background: BG; border: 1px solid BORDER; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: TEXT; line-height: 1.6;">
+        <p style="margin: 0 0 8px;"><strong>Title</strong></p>
+        <p style="margin: 0 0 8px;">Body.</p></div>
 
-    Palette used below, taken from TinyMCE's own default swatches so the colour picker can
-    reproduce them by hand: warning #fbeeb8 / #e8a33d, success #bfedd2 / #2dc26b,
-    info #d4e6f8 / #2b7cd3, feedback #e6d0de / #b96ad9.
+    Palette used below: warning #f7e9c3 / #ddc27e / #6b4e12, success #d4edda / #a3d4ad /
+    #2d5a3a, info #dce8f5 / #a9c6e4 / #1f3b5c, feedback #e8dcf0 / #c4a8d8 / #4a2a5c.
+  - The whole description sits in one wrapper <div> that sets the parchment background and
+    a 960px reading column, and each spoiler carries its own inline styles rather than
+    trusting the site's default spoiler CSS. Both are borrowed from the same page.
   - Paste, then hit Preview before saving: if the site's valid_elements strips the styles,
     fall back to plain <span style="color: ...; background-color: ...;"> runs, which the
     existing description already proves survive.
 -->
 
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 960px; margin: 0 auto; background: #f0ebe0; padding: 24px; border-radius: 6px;">
 <!-- image: docs/screenshots/starfiel.png — banner shot for the top of the page -->
 
 <p>AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, and nine annual meteor showers, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.</p>
 
 <p>Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.</p>
 
-<table style="border-collapse: collapse; width: 100%; background-color: #fbeeb8;" border="0">
-<tbody>
-<tr>
-<td style="padding: 10px 16px; border: none; border-left: 5px solid #e8a33d;">
-<p><strong><span style="color: #8a5a00;">&#9888; Still in alpha</span></strong></p>
-<p>Many item models and recipes are placeholders, along with the UI/UX. Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div style="background: #f7e9c3; border: 1px solid #ddc27e; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #6b4e12; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9888; Still in alpha</strong></p>
+<p style="margin: 0 0 8px;">Many item models and recipes are placeholders, along with the UI/UX. Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.</p>
+</div>
 
-<table style="border-collapse: collapse; width: 100%; background-color: #bfedd2;" border="0">
-<tbody>
-<tr>
-<td style="padding: 10px 16px; border: none; border-left: 5px solid #2dc26b;">
-<p><strong><span style="color: #14532d;">&#10003; Contributions welcome</span></strong></p>
-<p>Models, code, docs, translations, screenshots &mdash; all of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div style="background: #d4edda; border: 1px solid #a3d4ad; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #2d5a3a; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#10003; Contributions welcome</strong></p>
+<p style="margin: 0 0 8px;">Models, code, docs, translations, screenshots &mdash; all of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
+</div>
 
 <h3>What is new</h3>
 
-<div class="spoiler">
-<div class="spoiler-toggle">v0.5.2 &mdash; the sky pass got cheap (click to expand)</div>
-<div class="spoiler-text">
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">v0.5.2 &mdash; the sky pass got cheap (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
 
 <table style="border-collapse: collapse; width: 100%;" border="1">
@@ -107,9 +94,9 @@
 </div>
 </div>
 
-<div class="spoiler">
-<div class="spoiler-toggle">v0.5.2 &mdash; the sky looks different, and we would like to hear about it (click to expand)</div>
-<div class="spoiler-text">
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">v0.5.2 &mdash; the sky looks different, and we would like to hear about it (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Getting the cost down meant changing how several things are drawn. None of it is settled, and the judgements behind it are the kind that are better made by people actually observing than by anyone reading a diff.</p>
 
 <ul>
@@ -120,73 +107,81 @@
 <li><strong>Star colours read slightly more saturated.</strong> Colour rides on the mesh vertices now, where the old path applied each tint twice.</li>
 </ul>
 
-<table style="border-collapse: collapse; width: 100%; background-color: #e6d0de;" border="0">
-<tbody>
-<tr>
-<td style="padding: 10px 16px; border: none; border-left: 5px solid #b96ad9;">
-<p><strong><span style="color: #5c2a6e;">&#9997; We want your eyes on this</span></strong></p>
-<p>If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong &mdash; please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9997; We want your eyes on this</strong></p>
+<p style="margin: 0 0 8px;">If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong &mdash; please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
+</div>
 </div>
 </div>
 
 <h3>Features</h3>
 
-<h3>An Earth night sky</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#127756; An Earth night sky (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <!-- image: docs/screenshots/starfiel.png — magnitude-scaled stars over a Vintage Story landscape -->
 
 <p>A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.<br />
 Star locations and images are from Stellarium's database.</p>
 
-<table style="border-collapse: collapse; width: 100%; background-color: #d4e6f8;" border="0">
-<tbody>
-<tr>
-<td style="padding: 10px 16px; border: none; border-left: 5px solid #2b7cd3;">
-<p><strong><span style="color: #123a63;">&#9432; Note for server owners and modders</span></strong></p>
-<p>Without a clear date to start from we are just using the current Earth-centered locations.</p>
-<p>Right now the star field is only defined by the star catalog configuration, found within a JSON file in the mod's assets. The current one was built using the Stellarium dataset. One could procedurally generate it during world creation, or add/edit stars.</p>
-<p>Similarly the deep sky views could be generated or use custom assets, or place an easter egg in your server ;).</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9432; Note for server owners and modders</strong></p>
+<p style="margin: 0 0 8px;">Without a clear date to start from we are just using the current Earth-centered locations.</p>
+<p style="margin: 0 0 8px;">Right now the star field is only defined by the star catalog configuration, found within a JSON file in the mod's assets. The current one was built using the Stellarium dataset. One could procedurally generate it during world creation, or add/edit stars.</p>
+<p style="margin: 0 0 8px;">Similarly the deep sky views could be generated or use custom assets, or place an easter egg in your server ;).</p>
+</div>
+</div>
+</div>
 
-<h3>Measure the sky with a Sextant</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128207; Measure the sky with a Sextant (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too &mdash; a daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.</p>
 
 <!-- image: docs/screenshots/sextant_azimuthal_grid.png — sextant sighting with the azimuthal grid -->
+</div>
+</div>
 
-<h3>Plan observations with a Calibrated Astrolabe</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#129517; Plan observations with a Calibrated Astrolabe (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.</p>
 
 <p>It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.</p>
 
 <!-- image: docs/screenshots/astrolabe.png — astrolabe readout -->
+</div>
+</div>
 
-<h3>Observe and record constellations</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128301; Observe and record constellations (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <!-- image: docs/screenshots/create_constellation.png — telescope scoped view with a recorded constellation -->
 
 <p>The Brass Telescope provides a scoped observation view with several zoom levels. Draw between guide stars, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.</p>
+</div>
+</div>
 
-<h3>Watch seasonal meteor showers</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9732; Watch seasonal meteor showers (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Nine major annual showers recur at fixed points in the world's year. Their visible rate follows the published peak strength, how high the radiant is above the horizon, sky darkness, and moonlight. Short streaks near the radiant and longer streaks farther away preserve the perspective that makes a real shower appear to radiate from one point in the sky.</p>
+</div>
+</div>
 
-<h3>Follow the wandering planets</h3>
-
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#129680; Follow the wandering planets (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Mercury, Venus, Mars, Jupiter and Saturn move against the fixed stars on real orbits, solved from published orbital elements rather than animated along a path. A world year is a year of that motion, whatever the world's day count, so Jupiter takes about twelve world years to come back around and Venus swings between the evening and morning sky within a season, brightening and fading as it goes.</p>
 
 <p>Chart Mars over a couple of world weeks and it will turn back on itself. Nobody scripted that retrograde loop: it is what the sky does when the world overtakes a slower planet on the inside.</p>
+</div>
+</div>
 
-<h3>Roadmap</h3>
 
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128506; Roadmap (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the <a href="https://github.com/lalmei/astraterra/milestone/1">Moving Sky Objects</a> milestone.</p>
 
 <ul>
@@ -206,11 +201,19 @@ Star locations and images are from Stellarium's database.</p>
 </ul>
 
 <p>Comets sit on the same <a href="https://github.com/lalmei/astraterra/issues/36">shared ephemeris foundation</a> the planets already use, since their right ascension and declination change with time. Meteor radiants are fixed like catalog stars and do not need that dependency. <a href="https://github.com/lalmei/astraterra/issues/40">Instrument targeting</a> will let the astrolabe and sextant point at moving bodies and meteor radiants.</p>
+</div>
+</div>
 
-<h3>Attribution</h3>
 
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128218; Attribution (click to expand)</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Inspired by Minecraft's <a href="https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main">Spyglass Astronomy</a>.</p>
 
 <p>The Brass Telescope item model is adapted from Fuami's MIT-licensed <a href="https://mods.vintagestory.at/spyglass">Spyglass</a> mod. Modern IAU constellation line data and selected deep-sky assets are adapted from <a href="https://github.com/stellarium/stellarium">Stellarium</a> sources. See the third party notices in the repository.</p>
 
 <p>Special thanks to Vintage Story mod <a href="https://mods.vintagestory.at/show/mod/47577">AdAstra</a>'s LadyLioness.</p>
+</div>
+</div>
+
+</div>
