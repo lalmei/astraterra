@@ -111,6 +111,12 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void AssetsFinalize(ICoreAPI api)
     {
         base.AssetsFinalize(api);
+
+        // Belt and braces with assets/astraterra/patches/book-normal-offhand.json: if that patch is
+        // ever lost -- another mod rewriting the book item type, say -- the off-hand slot silently
+        // stops accepting journals and every held-book feature goes quiet.
+        var offhandBooks = BookOffhandStorage.Apply(api);
+        api.Logger.Event("AstraTerra startup step: journal books allowed in the off-hand: items={0}", offhandBooks);
         ConstellationPreparedBooks.RegisterCreativeStacks(api, catalog, planets);
     }
 
