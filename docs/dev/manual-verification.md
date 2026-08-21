@@ -11,6 +11,10 @@
 
 ## Lying Down
 
+- Load any world and check `client-main.log`; expected result: **no** `Shape … has mixed animation
+  versions` error. An animation added to a vanilla shape must not declare a version of its own — see
+  `tools/convert-animation-version.py`.
+
 - Stand still on solid ground and press **Z**; expected result: the seraph lies on its back (not its side), hips and legs rest on the ground rather than floating, empty hands are behind the head (not on the forehead), the first-person camera drops close to the ground, and the view looks straight up.
 - Expected result: the sky, stars, and meteor streaks fill the view. The body stays on the ground and does not block the sky. The camera does not clip into the block below.
 - Switch to third person, then to the fixed overhead camera, and press **Z**; expected result: the body lies down on the ground, but the camera does not snap to the sky.
