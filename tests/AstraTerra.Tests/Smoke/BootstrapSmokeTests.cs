@@ -128,7 +128,7 @@ public sealed class BootstrapSmokeTests
         var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
         var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
         // The constellation marks are one batched draw now, not a loop over dots.
-        var constellationIndex = renderer.IndexOf("RenderConstellationDots(clientApi, shader, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
+        var constellationIndex = renderer.IndexOf("RenderConstellationDots(clientApi, shader, starResidualRotation, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
 
         Assert.True(starsIndex >= 0);
         Assert.True(foregroundBlendIndex > starsIndex);

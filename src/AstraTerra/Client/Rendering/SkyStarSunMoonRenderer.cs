@@ -142,10 +142,17 @@ public static class SkyStarSunMoonRenderer
     /// How far the sky must turn, or the observer move, before the star projection is redone.
     /// </summary>
     /// <remarks>
-    /// A star billboard is about half a degree across, so a twentieth of a degree is well inside one
-    /// sprite -- there is nothing on screen to see. At Vintage Story's default time speed the sky
-    /// turns about a quarter of a degree a second, so this refreshes a handful of times a second
-    /// instead of sixty.
+    /// At Vintage Story's default time speed the sky turns about a quarter of a degree a second, so
+    /// this refreshes a handful of times a second instead of sixty.
+    /// <para>
+    /// This no longer decides how smoothly the sky moves, only how often brightness and horizon
+    /// culling are re-evaluated. The turn itself is carried every frame by
+    /// <see cref="SkyResidualRotation"/>. It used to decide both, on the reasoning that a twentieth
+    /// of a degree sits well inside a half-degree sprite -- true at the naked eye, where it is under
+    /// a pixel, and wrong through a telescope, where the same angle is seven pixels at the brass
+    /// scope's full zoom and fourteen at the precision scope's, arriving several times a second as a
+    /// visible step.
+    /// </para>
     /// </remarks>
     private const double StarRefreshThresholdDeg = 0.05;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
@@ -456,6 +463,13 @@ public static class SkyStarSunMoonRenderer
             return false;
         }
 
+        // Everything projected above is current. The star and planet buffers are not: they are held
+        // to the sidereal angle they were last built at, and the sky has kept turning since. One
+        // rotation puts them back where they belong, per frame and per batch rather than per star.
+        var starResidualRotation = SkyResidualRotation.Build(
+            cachedStarLatitudeDeg,
+            CelestialMath.ShortestAngularDistanceDegrees(cachedStarSiderealDeg, localSiderealAngle));
+
         RenderSky(
             api,
             drawableStars,
@@ -464,6 +478,7 @@ public static class SkyStarSunMoonRenderer
             constellationDots,
             meteorStreaks,
             FindStrongestReading(meteorReadings),
+            starResidualRotation,
             quadModel,
             imageSize,
             dt,
@@ -483,6 +498,7 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<SkyConstellationDot> constellationDots,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
         MeteorShowerReading? strongestMeteorReading,
+        Matrix4 starResidualRotation,
         MeshRef quadModel,
         int imageSize,
         float deltaTime,
@@ -550,9 +566,9 @@ public static class SkyStarSunMoonRenderer
 
                 // Additive blending makes draw order between these irrelevant, which is what lets a
                 // star's glow and its core sit in different meshes.
-                drawnCount += DrawBillboardBatch(clientApi, shader, brightStarMesh, BrightStarBillboards.Count, brightStarTextureId, modelMatrixBuffer);
-                drawnCount += DrawBillboardBatch(clientApi, shader, faintStarMesh, FaintStarBillboards.Count, dimStarTextureId, modelMatrixBuffer);
-                drawnCount += DrawBillboardBatch(clientApi, shader, planetMesh, PlanetBillboards.Count, planetTextureId, modelMatrixBuffer);
+                drawnCount += DrawBillboardBatch(clientApi, shader, brightStarMesh, BrightStarBillboards.Count, brightStarTextureId, starResidualRotation, modelMatrixBuffer);
+                drawnCount += DrawBillboardBatch(clientApi, shader, faintStarMesh, FaintStarBillboards.Count, dimStarTextureId, starResidualRotation, modelMatrixBuffer);
+                drawnCount += DrawBillboardBatch(clientApi, shader, planetMesh, PlanetBillboards.Count, planetTextureId, starResidualRotation, modelMatrixBuffer);
 
                 for (var index = 0; index < visibleStars.Count; index++)
                 {
@@ -586,7 +602,7 @@ public static class SkyStarSunMoonRenderer
                 // the star scale so a line stays a fine trail at any magnification instead of
                 // swelling into blobs, which is why the scale is part of the mesh's rebuild key.
                 EnsureConstellationDotMesh(clientApi, constellationDots, starAngularScale);
-                RenderConstellationDots(clientApi, shader, modelMatrixBuffer);
+                RenderConstellationDots(clientApi, shader, starResidualRotation, modelMatrixBuffer);
             }
 
             if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors))
@@ -787,6 +803,21 @@ public static class SkyStarSunMoonRenderer
         }
     }
 
+    /// <summary>
+    /// The model matrix for sky geometry: the eye-height origin every sky pass uses, with the sky's
+    /// residual turn since the mesh was built applied first, about the observer rather than about
+    /// the world origin.
+    /// </summary>
+    private static Matrix4 BuildSkyModelMatrix(ICoreClientAPI clientApi, Matrix4 residualRotation)
+    {
+        var entity = clientApi.World.Player.Entity;
+        var verticalOrigin = (float)entity.LocalEyePos.Y
+            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
+
+        // Rotate, then translate: these are row-vector matrices, so the left operand acts first.
+        return residualRotation * Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+    }
+
     /// <summary>Draws one batch, and reports how many sprites it carried.</summary>
     private static int DrawBillboardBatch(
         ICoreClientAPI clientApi,
@@ -794,6 +825,7 @@ public static class SkyStarSunMoonRenderer
         MeshRef? mesh,
         int count,
         int textureId,
+        Matrix4 residualRotation,
         float[] modelMatrixBuffer)
     {
         if (mesh is null || count == 0 || textureId == 0)
@@ -801,10 +833,7 @@ public static class SkyStarSunMoonRenderer
             return 0;
         }
 
-        var entity = clientApi.World.Player.Entity;
-        var verticalOrigin = (float)entity.LocalEyePos.Y
-            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
-        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+        var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = ColorUtil.WhiteArgbVec;
@@ -861,6 +890,7 @@ public static class SkyStarSunMoonRenderer
     private static void RenderConstellationDots(
         ICoreClientAPI clientApi,
         IStandardShaderProgram shader,
+        Matrix4 residualRotation,
         float[] modelMatrixBuffer)
     {
         if (constellationDotMesh is null)
@@ -868,10 +898,9 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        var entity = clientApi.World.Player.Entity;
-        var verticalOrigin = (float)entity.LocalEyePos.Y
-            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
-        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+        // The dots are laid out along the cached star positions, so they turn with them or the lines
+        // would walk off their stars.
+        var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
 
         // The tint that used to be a per-dot uniform now rides on the vertices.
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
