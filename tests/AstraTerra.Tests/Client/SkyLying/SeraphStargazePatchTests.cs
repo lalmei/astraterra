@@ -6,12 +6,14 @@ namespace AstraTerra.Tests.Client.SkyLying;
 public sealed class SeraphStargazePatchTests
 {
     [Fact]
-    public void Patch_Adds_The_Recline_And_Both_Supine_Idles()
+    public void Patch_Adds_The_Recline_The_Rise_And_Both_Supine_Idles()
     {
         var patches = LoadPatches();
-        Assert.Equal(3, patches.Length);
+        Assert.Equal(4, patches.Length);
 
         var recline = AssertClip(patches, "stargaze-down");
+        var rise = AssertClip(patches, "stargaze-up");
+        AssertGroundedBack(FirstFrame(rise));
         var stargaze = AssertClip(patches, "stargaze");
         var holding = AssertClip(patches, "stargaze-hold");
         AssertGroundedBack(LastFrame(recline));

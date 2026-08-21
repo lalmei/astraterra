@@ -90,11 +90,32 @@ public sealed class SkyLyingControllerTests
         Assert.Contains("SkyLyingPolicy.ReclineEaseInSpeed", source);
 
         // The recline leaves the arms out so a held instrument keeps its own pose on the way down.
-        var recline = source[source.IndexOf("CreateRecline", StringComparison.Ordinal)..];
+        var recline = source[source.IndexOf("CreateTransition", StringComparison.Ordinal)..];
         recline = recline[..recline.IndexOf("CreateAnimation", StringComparison.Ordinal)];
         Assert.Contains("Weight(meta, \"LowerTorso\")", recline);
         Assert.DoesNotContain("Weight(meta, \"UpperArmR\")", recline);
         Assert.DoesNotContain("Weight(meta, \"Head\")", recline);
+    }
+
+    /// <summary>
+    /// Standing up plays its own clip. Stopping the idle on its own eases the supine pose out,
+    /// which is the same rigid slide as reclining into it -- and the rise has to be stopped again
+    /// afterwards, because it suppresses the default animations while it runs.
+    /// </summary>
+    [Fact]
+    public void Standing_Up_Plays_The_Rise_And_Then_Takes_It_Off()
+    {
+        var source = File.ReadAllText(ControllerSourcePath);
+
+        Assert.Contains("StartRise(entity)", source);
+        Assert.Contains("ShouldPlayRise", source);
+        Assert.Contains("ShouldFinishRising", source);
+        Assert.Contains("StandUp(voluntary: true)", source);
+        Assert.Contains("StandUp(voluntary: false)", source);
+
+        // Lying down again mid-rise has to cancel it, or the two transitions fight.
+        var recline = source[source.IndexOf("private void StartRecline", StringComparison.Ordinal)..];
+        Assert.Contains("StopRise(entity)", recline[..recline.IndexOf("private long Elapsed", StringComparison.Ordinal)]);
     }
 
     private static string ControllerSourcePath

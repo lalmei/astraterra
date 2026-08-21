@@ -21,6 +21,7 @@ public sealed class SkyLyingAnimationTests
         Assert.Equal(0, SkyLyingAnimation.Recline().Version);
         Assert.Equal(0, SkyLyingAnimation.Idle(handsBehindHead: true).Version);
         Assert.Equal(0, SkyLyingAnimation.Idle(handsBehindHead: false).Version);
+        Assert.Equal(0, SkyLyingAnimation.Rise().Version);
     }
 
     /// <summary>
@@ -68,6 +69,41 @@ public sealed class SkyLyingAnimationTests
             Assert.Equal(Value(pose.RotationZ), Value(idle[bone].RotationZ), 3);
             Assert.Equal(Value(pose.OffsetX), Value(idle[bone].OffsetX), 3);
             Assert.Equal(Value(pose.OffsetY), Value(idle[bone].OffsetY), 3);
+        }
+    }
+
+    /// <summary>
+    /// Getting up is the recline backwards: the same poses in the opposite order, on a shorter
+    /// clock. Stopping the idle on its own instead would ease the supine pose out, which is the
+    /// same rigid slide as the bridge it replaced -- fast enough to read as a snap, not as standing.
+    /// </summary>
+    [Fact]
+    public void Rise_Is_The_Recline_Backwards_And_Quicker()
+    {
+        var recline = SkyLyingAnimation.Recline();
+        var rise = SkyLyingAnimation.Rise();
+
+        Assert.Equal("stargaze-up", rise.Code);
+        Assert.Equal(recline.KeyFrames.Length, rise.KeyFrames.Length);
+        Assert.True(rise.QuantityFrames < recline.QuantityFrames, "getting up is quicker than settling down");
+        Assert.Equal(0, rise.KeyFrames[0].Frame);
+
+        // It starts in the pose the idle holds and ends standing, so it meets both without a jump.
+        Assert.Equal(SkyLyingAnimation.BackPitchZ, rise.KeyFrames[0].Elements["LowerTorso"].RotationZ);
+        Assert.All(rise.KeyFrames[^1].Elements.Values, element =>
+        {
+            Assert.Equal(0, Value(element.RotationZ));
+            Assert.Equal(0, Value(element.OffsetX));
+            Assert.Equal(0, Value(element.OffsetY));
+        });
+        for (var i = 0; i < recline.KeyFrames.Length; i++)
+        {
+            var mirrored = rise.KeyFrames[^(i + 1)].Elements;
+            foreach (var (bone, pose) in recline.KeyFrames[i].Elements)
+            {
+                Assert.Equal(Value(pose.RotationZ), Value(mirrored[bone].RotationZ), 3);
+                Assert.Equal(Value(pose.OffsetX), Value(mirrored[bone].OffsetX), 3);
+            }
         }
     }
 
@@ -123,7 +159,8 @@ public sealed class SkyLyingAnimationTests
                  {
                      SkyLyingAnimation.Recline(),
                      SkyLyingAnimation.Idle(handsBehindHead: true),
-                     SkyLyingAnimation.Idle(handsBehindHead: false)
+                     SkyLyingAnimation.Idle(handsBehindHead: false),
+                     SkyLyingAnimation.Rise()
                  })
         {
             Assert.All(clip.KeyFrames, frame =>
@@ -171,6 +208,7 @@ public sealed class SkyLyingAnimationTests
         Assert.Equal(SkyLyingAnimation.BackPitchZ, stargaze.KeyFrames[0].Elements["LowerTorso"].RotationZ);
         Assert.Contains(shape.Animations, animation => animation.Code == "stargaze-hold");
         Assert.Contains(shape.Animations, animation => animation.Code == "stargaze-down");
+        Assert.Contains(shape.Animations, animation => animation.Code == "stargaze-up");
         Assert.All(shape.Animations, animation =>
             Assert.Equal(animation.Code == "lie" ? 0u : AnimationMetaData.GetCrc32(animation.Code), animation.CodeCrc32));
     }
@@ -201,7 +239,8 @@ public sealed class SkyLyingAnimationTests
                  {
                      SkyLyingAnimation.Recline(),
                      SkyLyingAnimation.Idle(handsBehindHead: true),
-                     SkyLyingAnimation.Idle(handsBehindHead: false)
+                     SkyLyingAnimation.Idle(handsBehindHead: false),
+                     SkyLyingAnimation.Rise()
                  })
         {
             var shipped = Assert.Contains(clip.Code, patched);

@@ -398,5 +398,143 @@
         }
       ]
     }
+  },
+  {
+    "file": "game:shapes/entity/humanoid/seraph-faceless",
+    "op": "add",
+    "path": "/animations/-",
+    "value": {
+      "name": "StargazeUp",
+      "code": "stargaze-up",
+      "quantityframes": 16,
+      "onActivityStopped": "EaseOut",
+      "onAnimationEnd": "Hold",
+      "keyframes": [
+        {
+          "frame": 0,
+          "elements": {
+            "LowerFootL": {
+              "rotationZ": 10.0
+            },
+            "LowerFootR": {
+              "offsetY": 1.0,
+              "rotationZ": 86.0
+            },
+            "LowerTorso": {
+              "offsetX": 10.107,
+              "offsetY": -15.223,
+              "rotationZ": -90.0
+            },
+            "UpperFootL": {
+              "rotationY": -16.0,
+              "rotationZ": -4.0
+            },
+            "UpperFootR": {
+              "rotationY": -16.0,
+              "rotationZ": -40.0
+            },
+            "UpperTorso": {
+              "rotationZ": 6.0
+            }
+          }
+        },
+        {
+          "frame": 3,
+          "elements": {
+            "LowerFootL": {
+              "offsetY": 1.0,
+              "rotationZ": 48.0
+            },
+            "LowerFootR": {
+              "offsetY": 1.0,
+              "rotationZ": 94.0
+            },
+            "LowerTorso": {
+              "offsetX": -0.583,
+              "offsetY": -13.849,
+              "rotationZ": -62.0
+            },
+            "UpperFootL": {
+              "rotationY": 8.0,
+              "rotationZ": -26.0
+            },
+            "UpperFootR": {
+              "rotationY": -18.0,
+              "rotationZ": -54.0
+            },
+            "UpperTorso": {}
+          }
+        },
+        {
+          "frame": 7,
+          "elements": {
+            "LowerFootL": {
+              "offsetY": 1.0,
+              "rotationZ": 84.0
+            },
+            "LowerFootR": {
+              "offsetY": 1.0,
+              "rotationZ": 96.0
+            },
+            "LowerTorso": {
+              "offsetX": -6.847,
+              "offsetY": -6.808,
+              "rotationZ": -22.0
+            },
+            "UpperFootL": {
+              "rotationY": 24.0,
+              "rotationZ": -52.0
+            },
+            "UpperFootR": {
+              "rotationX": -12.0,
+              "rotationY": -20.0,
+              "rotationZ": -70.0
+            },
+            "UpperTorso": {}
+          }
+        },
+        {
+          "frame": 11,
+          "elements": {
+            "LowerFootL": {
+              "offsetY": 1.0,
+              "rotationZ": 74.0
+            },
+            "LowerFootR": {
+              "offsetY": 1.0,
+              "rotationZ": 78.0
+            },
+            "LowerTorso": {
+              "offsetX": -7.136,
+              "offsetY": 0.175,
+              "rotationZ": 14.0
+            },
+            "UpperFootL": {
+              "rotationY": 34.0,
+              "rotationZ": -44.0
+            },
+            "UpperFootR": {
+              "rotationX": -20.0,
+              "rotationY": -22.0,
+              "rotationZ": -74.0
+            },
+            "UpperTorso": {}
+          }
+        },
+        {
+          "frame": 15,
+          "elements": {
+            "LowerFootL": {},
+            "LowerFootR": {},
+            "LowerTorso": {
+              "rotationZ": 0.0
+            },
+            "UpperFootL": {},
+            "UpperFootR": {},
+            "UpperTorso": {}
+          }
+        }
+      ]
+    }
   }
 ]

@@ -30,7 +30,15 @@ public sealed class SkyLyingController
     /// The sit-down-and-recline that runs before the idle. It leaves the arms out, so a held
     /// telescope keeps its own pose on the way down.
     /// </summary>
-    private static readonly AnimationMetaData ReclineAnimation = CreateRecline();
+    private static readonly AnimationMetaData ReclineAnimation = CreateTransition(
+        SkyLyingPolicy.AnimationCodeRecline, SkyLyingPolicy.ShapeAnimationRecline);
+
+    /// <summary>
+    /// Sitting up and standing again. Started as lying ends, and it outlives that state: the tick
+    /// stops it once it has played, which is what hands the seraph back to walking and idling.
+    /// </summary>
+    private static readonly AnimationMetaData RiseAnimation = CreateTransition(
+        SkyLyingPolicy.AnimationCodeRise, SkyLyingPolicy.ShapeAnimationRise);
 
     private ICoreClientAPI? api;
     private long tickListenerId;
@@ -38,6 +46,7 @@ public sealed class SkyLyingController
     private float? pinnedBodyYaw;
     private long lieDownAt;
     private bool settled;
+    private long riseStartedAt;
 
     public void Start(ICoreClientAPI clientApi)
     {
@@ -59,7 +68,8 @@ public sealed class SkyLyingController
             api.Event.UnregisterGameTickListener(tickListenerId);
         }
 
-        StandUp();
+        StandUp(voluntary: false);
+        StopRise(LocalPlayerEntity());
         SkyLyingState.Reset();
         api = null;
         tickListenerId = 0;
@@ -90,7 +100,8 @@ public sealed class SkyLyingController
     {
         if (SkyLyingState.IsLying)
         {
-            StandUp();
+            // Standing up on purpose is worth animating; being stood up by walking or dying is not.
+            StandUp(voluntary: true);
             return true;
         }
 
@@ -116,6 +127,7 @@ public sealed class SkyLyingController
 
     private void OnGameTick(float dt)
     {
+        FinishRising();
         if (!SkyLyingState.IsLying)
         {
             return;
@@ -124,7 +136,7 @@ public sealed class SkyLyingController
         var entity = LocalPlayerEntity();
         if (entity is null || ShouldStandUp(entity))
         {
-            StandUp();
+            StandUp(voluntary: false);
             return;
         }
 
@@ -163,6 +175,7 @@ public sealed class SkyLyingController
 
     private void StartRecline(EntityPlayer entity)
     {
+        StopRise(entity);
         lieDownAt = ElapsedMilliseconds();
         settled = false;
         entity.TpAnimManager.UseFpAnmations = false;
@@ -172,12 +185,53 @@ public sealed class SkyLyingController
 
     private long ElapsedMilliseconds() => api?.World?.ElapsedMilliseconds ?? 0L;
 
-    private void StandUp()
+    private void StandUp(bool voluntary)
     {
         var entity = LocalPlayerEntity();
         ReleaseBodyYaw(entity);
         StopStargaze(entity);
         SkyLyingState.End();
+
+        if (entity is not null && SkyLyingPolicy.ShouldPlayRise(voluntary, entity.Alive))
+        {
+            StartRise(entity);
+        }
+    }
+
+    private void StartRise(EntityPlayer entity)
+    {
+        riseStartedAt = ElapsedMilliseconds();
+        entity.AnimManager.StartAnimation(RiseAnimation);
+        entity.TpAnimManager.StartAnimation(RiseAnimation);
+    }
+
+    /// <summary>
+    /// The rise suppresses the default animations while it plays, so it has to be taken off again
+    /// or the first step after standing up would be a glide.
+    /// </summary>
+    private void FinishRising()
+    {
+        if (riseStartedAt == 0L || !SkyLyingPolicy.ShouldFinishRising(ElapsedMilliseconds() - riseStartedAt))
+        {
+            return;
+        }
+
+        riseStartedAt = 0L;
+        StopRise(LocalPlayerEntity());
+    }
+
+    private void StopRise(EntityPlayer? entity)
+    {
+        riseStartedAt = 0L;
+        if (entity is null)
+        {
+            return;
+        }
+
+        entity.AnimManager.StopAnimation(SkyLyingPolicy.AnimationCodeRise);
+        entity.AnimManager.StopAnimation(SkyLyingPolicy.ShapeAnimationRise);
+        entity.TpAnimManager.StopAnimation(SkyLyingPolicy.AnimationCodeRise);
+        entity.TpAnimManager.StopAnimation(SkyLyingPolicy.ShapeAnimationRise);
     }
 
     private void EnsureAnimation(EntityPlayer entity, bool handsBehindHead)
@@ -282,15 +336,17 @@ public sealed class SkyLyingController
     }
 
     /// <summary>
-    /// The recline reaches full weight fast: until a clip is fully eased in, what shows is a blend
-    /// between it and standing, and a half-weighted recline is the backbend it exists to replace.
+    /// The two transitions, which differ only in which clip they play. Both reach full weight fast:
+    /// until a clip is eased in, what shows is a blend between it and standing, and a half-weighted
+    /// recline is the backbend it exists to replace. Neither weights the arms, so an instrument in
+    /// hand keeps its own pose on the way down and back up.
     /// </summary>
-    private static AnimationMetaData CreateRecline()
+    private static AnimationMetaData CreateTransition(string code, string animation)
     {
         var meta = new AnimationMetaData
         {
-            Code = SkyLyingPolicy.AnimationCodeRecline,
-            Animation = SkyLyingPolicy.ShapeAnimationRecline,
+            Code = code,
+            Animation = animation,
             BlendMode = EnumAnimationBlendMode.Average,
             EaseInSpeed = SkyLyingPolicy.ReclineEaseInSpeed,
             EaseOutSpeed = SkyLyingPolicy.AnimationEaseOutSpeed,
