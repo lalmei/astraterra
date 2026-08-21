@@ -81,6 +81,15 @@
   trail of dots rather than swelling into blobs as the view magnifies.
 - Draw a new constellation segment while lines are on screen; expected result: it appears
   immediately, without the existing lines flickering.
+- Run `.stars render` at night; expected result: it lists every path as on.
+- Run `.stars render constellations off`; expected result: the lines vanish, the stars, planets,
+  meteors and any scoped deep-sky plates keep drawing, and the next `AstraTerra sky cost` line in the
+  debug log shows `constellations=off` with fewer draw calls per frame.
+- Switch `stars` off as well; expected result: an empty sky, and the reported milliseconds per frame
+  fall to near zero — that is the projection being skipped, not just the draw.
+- Run `.stars render all on`; expected result: everything returns.
+- Restart the client; expected result: every path is on again, because the toggles are a diagnostic
+  and are deliberately not saved.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
 - With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.

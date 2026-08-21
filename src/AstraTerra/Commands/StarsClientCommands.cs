@@ -73,6 +73,13 @@ public sealed class StarsClientCommands
             .BeginSubCommand("sky-grid")
                 .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
                 .HandleWith(args => TextCommandResult.Success(SetSkyGridMode(api, GetStringArg(args, 0))))
+            .EndSubCommand()
+            .BeginSubCommand("render")
+                .WithDescription("Switch one sky rendering path off to see what it costs. Session only.")
+                .WithArgs(
+                    api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|all"),
+                    api.ChatCommands.Parsers.OptionalWord("on|off"))
+                .HandleWith(args => TextCommandResult.Success(SetRenderPath(api, GetStringArg(args, 0), GetStringArg(args, 1))))
             .EndSubCommand();
     }
 
@@ -247,6 +254,33 @@ public sealed class StarsClientCommands
             SkyGridMode.Both => "Sky grids set to both: horizontal is cyan; equatorial is rose.",
             _ => "Sky coordinate grids disabled."
         };
+    }
+
+    /// <summary>
+    /// Switches one rendering path off so its cost shows up as a difference in the sky-cost log line.
+    /// Deliberately session-scoped and unsaved: it is a measurement tool, not a setting.
+    /// </summary>
+    private static string SetRenderPath(ICoreClientAPI api, string? path, string? state)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+        }
+
+        if (!SkyRenderPathParser.TryParse(path, out var parsedPath))
+        {
+            return "Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+        }
+
+        if (string.IsNullOrWhiteSpace(state) || !TryParseToggle(state, out var enabled))
+        {
+            return "Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+        }
+
+        SkyRenderPaths.Set(parsedPath, enabled);
+        api.Logger.Notification("AstraTerra sky render path changed: {0}", SkyRenderPaths.Describe());
+
+        return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Costs are reported in the debug log every {SkyStarSunMoonRenderer.SkyDrawLogIntervalSeconds:0} seconds.";
     }
 
     private static bool TryParseToggle(string value, out bool enabled)

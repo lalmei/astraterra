@@ -74,6 +74,9 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 .stars sky-grid horizontal
 .stars sky-grid equatorial
 .stars sky-grid both
+.stars render
+.stars render stars|constellations|deepsky|meteors|all on
+.stars render stars|constellations|deepsky|meteors|all off
 ```
 
 `connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics. `goto-lat` helps test different sky latitudes in the current world. `daylight-stars` is intended for testing and should be turned off for normal play.
@@ -83,5 +86,11 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 - `astraterra` shows only AstraTerra's catalog-driven stars and is the default.
 - `both` shows AstraTerra and the original Vintage Story cubemap together for alignment comparisons.
 - `vanilla` shows only the original Vintage Story starfield.
+
+`render` switches one part of the sky off so you can see what it costs. If the mod is making your game stutter, this is the fastest way to say *which part*: turn one path off, play for half a minute, and see whether it helps. `.stars render` on its own lists what is drawing.
+
+Unlike `starfield` and `sky-grid`, this is not saved — everything comes back when you restart the client, because it is a measuring tool rather than a setting. The paths are `stars` (including planets), `constellations`, `deepsky` (the telescope's photographic plates) and `meteors`, plus `all`.
+
+Every 30 seconds, AstraTerra writes what the sky cost into `client-debug.log` — time per frame, worst frame, draw calls, and which paths were on. If you are reporting a performance problem, that line and the path you found is exactly what makes the report actionable.
 
 `sky-grid` projects debug coordinate lines over the visible sky and saves the choice in `ModConfig/astraterra.json`. `horizontal` draws the observer-local altitude-azimuth grid in cyan. `equatorial` draws the right-ascension/declination grid in rose and rotates it with local sidereal time. `both` overlays the two systems; `none` is the default. While using the Sextant, middle click cycles its temporary display through angle only, equatorial, azimuthal, and both without changing the saved mode.

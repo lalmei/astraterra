@@ -124,7 +124,7 @@ public sealed class BootstrapSmokeTests
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
 
-        var starsIndex = renderer.IndexOf("foreach (var star in visibleStars)", StringComparison.Ordinal);
+        var starsIndex = renderer.IndexOf("foreach (var star in ", StringComparison.Ordinal);
         var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
         var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
         // The constellation marks are one batched draw now, not a loop over dots.
@@ -147,8 +147,8 @@ public sealed class BootstrapSmokeTests
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
 
-        var starLoopIndex = renderer.IndexOf("foreach (var star in visibleStars)", StringComparison.Ordinal);
-        var planetLoopEndIndex = renderer.IndexOf("if (visibleDeepSkyObjects.Count > 0)", starLoopIndex, StringComparison.Ordinal);
+        var starLoopIndex = renderer.IndexOf("foreach (var star in ", StringComparison.Ordinal);
+        var planetLoopEndIndex = renderer.IndexOf("if (visibleDeepSkyObjects.Count > 0", starLoopIndex, StringComparison.Ordinal);
 
         Assert.True(starLoopIndex >= 0);
         Assert.True(planetLoopEndIndex > starLoopIndex);
