@@ -15,28 +15,57 @@ public sealed class StarBillboardSizingTests
     private const float BrassTelescopeFovMultiplier = 0.12f;
     private const float PrecisionTelescopeFovMultiplier = 0.06f;
 
+    /// <summary>
+    /// How much of the screen the lit part of a star covers: its billboard, scaled by how much of
+    /// that billboard its sprite actually fills, over the field of view it is seen through.
+    /// </summary>
+    private static double DrawnCoreScreenShare(double angularScale, double coreCoverage, double fovMultiplier)
+        => StarBillboardSizing.MaximumCoreDiameterPixels
+            * StarAngularSizePerPixelDeg
+            * angularScale
+            * coreCoverage
+            / fovMultiplier;
+
     [Fact]
     public void A_Star_Keeps_Its_Size_When_Not_Scoped()
     {
-        Assert.Equal(1.0f, StarBillboardSizing.CalculateStarAngularScale(scoped: false, fovMultiplier: 0.06f));
+        Assert.Equal(1.0f, StarBillboardSizing.CalculateBrightStarAngularScale(scoped: false, fovMultiplier: 0.06f));
+        Assert.Equal(1.0f, StarBillboardSizing.CalculateFaintStarAngularScale(scoped: false, fovMultiplier: 0.06f));
         Assert.Equal(1.0f, StarBillboardSizing.CalculatePlanetAngularScale(scoped: false, fovMultiplier: 0.06f));
     }
 
-    [Fact]
-    public void A_Scoped_Star_Shrinks_To_The_Size_Of_The_Stars_In_The_Plates()
+    /// <summary>
+    /// Raising the scope must not change how big a star looks. It used to: the scoped sprite fills
+    /// less than half the quad the naked-eye one does, so at an unchanged billboard size every bright
+    /// star halved the moment the telescope came up.
+    /// </summary>
+    [Theory]
+    [InlineData(BrassTelescopeFovMultiplier)]
+    [InlineData(PrecisionTelescopeFovMultiplier)]
+    [InlineData(0.45f)]
+    public void A_Star_Is_Drawn_The_Same_Size_Either_Side_Of_The_Sprite_Swap(float fovMultiplier)
     {
-        var brightestCoreDiameterPixels = StarBillboardSizing.MaximumCoreDiameterPixels;
+        var nakedBright = DrawnCoreScreenShare(
+            StarBillboardSizing.CalculateBrightStarAngularScale(scoped: false, 1.0f),
+            StarBillboardSizing.NakedEyeBrightCoreCoverage,
+            1.0);
+        var scopedBright = DrawnCoreScreenShare(
+            StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, fovMultiplier),
+            StarBillboardSizing.ScopedCoreCoverage,
+            fovMultiplier);
 
-        foreach (var fovMultiplier in new[] { BrassTelescopeFovMultiplier, PrecisionTelescopeFovMultiplier })
-        {
-            var scale = StarBillboardSizing.CalculateStarAngularScale(scoped: true, fovMultiplier);
-            var angularSizeDeg = brightestCoreDiameterPixels * StarAngularSizePerPixelDeg * scale;
+        Assert.Equal(nakedBright, scopedBright, 5);
 
-            // Unscaled this is 0.48 deg, which would cover a third of the Pleiades plate.
-            Assert.True(
-                angularSizeDeg <= WidestPlateStarDeg * 2.0,
-                $"A scoped star spans {angularSizeDeg:0.0000} deg against plate stars of {WidestPlateStarDeg:0.000} deg.");
-        }
+        var nakedFaint = DrawnCoreScreenShare(
+            StarBillboardSizing.CalculateFaintStarAngularScale(scoped: false, 1.0f),
+            StarBillboardSizing.NakedEyeFaintCoreCoverage,
+            1.0);
+        var scopedFaint = DrawnCoreScreenShare(
+            StarBillboardSizing.CalculateFaintStarAngularScale(scoped: true, fovMultiplier),
+            StarBillboardSizing.ScopedCoreCoverage,
+            fovMultiplier);
+
+        Assert.Equal(nakedFaint, scopedFaint, 5);
     }
 
     [Fact]
@@ -44,12 +73,32 @@ public sealed class StarBillboardSizingTests
     {
         // Screen size goes as angular size over the field of view, so a scale that tracks the field
         // leaves the ratio flat however far the scope is wound in.
-        var wide = StarBillboardSizing.CalculateStarAngularScale(scoped: true, 0.45f) / 0.45f;
-        var brass = StarBillboardSizing.CalculateStarAngularScale(scoped: true, BrassTelescopeFovMultiplier) / BrassTelescopeFovMultiplier;
-        var precision = StarBillboardSizing.CalculateStarAngularScale(scoped: true, PrecisionTelescopeFovMultiplier) / PrecisionTelescopeFovMultiplier;
+        var wide = StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, 0.45f) / 0.45f;
+        var brass = StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, BrassTelescopeFovMultiplier)
+            / BrassTelescopeFovMultiplier;
+        var precision = StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, PrecisionTelescopeFovMultiplier)
+            / PrecisionTelescopeFovMultiplier;
 
         Assert.Equal(wide, brass, 5);
         Assert.Equal(wide, precision, 5);
+    }
+
+    /// <summary>
+    /// A scoped star is no longer held down to the size of the stars photographed into the deep-sky
+    /// plates. It does not need to be: the plates now fade the catalog out where they are drawn,
+    /// which is the only place the two were ever in conflict.
+    /// </summary>
+    [Fact]
+    public void A_Scoped_Star_Is_No_Longer_Sized_By_The_Plates()
+    {
+        var drawnCoreDeg = StarBillboardSizing.MaximumCoreDiameterPixels
+            * StarAngularSizePerPixelDeg
+            * StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, BrassTelescopeFovMultiplier)
+            * StarBillboardSizing.ScopedCoreCoverage;
+
+        // Still the same order as a plate's own brightest stars rather than a blob across the frame,
+        // but no longer squeezed under them.
+        Assert.InRange(drawnCoreDeg, WidestPlateStarDeg, WidestPlateStarDeg * 3.0);
     }
 
     [Fact]
@@ -57,7 +106,7 @@ public sealed class StarBillboardSizingTests
     {
         foreach (var fovMultiplier in new[] { BrassTelescopeFovMultiplier, PrecisionTelescopeFovMultiplier })
         {
-            var star = StarBillboardSizing.CalculateStarAngularScale(scoped: true, fovMultiplier);
+            var star = StarBillboardSizing.CalculateBrightStarAngularScale(scoped: true, fovMultiplier);
             var planet = StarBillboardSizing.CalculatePlanetAngularScale(scoped: true, fovMultiplier);
 
             Assert.True(planet > star * 3.0, $"A planet at field {fovMultiplier} is only {planet / star:0.0} times a star.");

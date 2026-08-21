@@ -59,7 +59,6 @@ public static class SkyStarSunMoonRenderer
     /// </summary>
     private const float PlanetGlowSizeRange = 1.8f;
     private const float PlanetGlowMaxAlpha = 0.5f;
-    private const float DeepSkyBrightnessScale = 0.42f;
     /// <summary>
     /// Naked-eye width of a constellation line, scaled by the scope's field so it holds that width on
     /// screen at any magnification.
@@ -122,6 +121,8 @@ public static class SkyStarSunMoonRenderer
     private static int planetMeshCapacity;
     private static float cachedStarMeshAngularScale = float.NaN;
     private static bool cachedStarMeshScoped;
+    private static int cachedStarMeshPlateSignature;
+    private static readonly List<DeepSkyPlateField> PlateFields = new(64);
     private static bool starMeshesDirty = true;
     private static int constellationLineMeshCapacity;
     private static int constellationLineMeshDrawnCount;
@@ -241,6 +242,8 @@ public static class SkyStarSunMoonRenderer
         faintStarMeshCapacity = 0;
         planetMeshCapacity = 0;
         cachedStarMeshAngularScale = float.NaN;
+        cachedStarMeshPlateSignature = 0;
+        PlateFields.Clear();
         starMeshesDirty = true;
         BrightStarBillboards.Clear();
         FaintStarBillboards.Clear();
@@ -547,6 +550,8 @@ public static class SkyStarSunMoonRenderer
         // The star scale arrives from the caller, which also widens the constellation lines by it,
         // so a line keeps its thickness against the stars it joins at any magnification.
         var fovMultiplier = useTelescopeSprites ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
+        var brightStarAngularScale = StarBillboardSizing.CalculateBrightStarAngularScale(useTelescopeSprites, fovMultiplier);
+        var faintStarAngularScale = StarBillboardSizing.CalculateFaintStarAngularScale(useTelescopeSprites, fovMultiplier);
         var planetAngularScale = StarBillboardSizing.CalculatePlanetAngularScale(useTelescopeSprites, fovMultiplier);
         var drawnCount = 0;
         var smallestDrawnSize = double.MaxValue;
@@ -583,7 +588,15 @@ public static class SkyStarSunMoonRenderer
             // one session, without a rebuild. Everything else keeps drawing.
             if (SkyRenderPaths.IsEnabled(SkyRenderPath.Stars))
             {
-                EnsureStarMeshes(clientApi, visibleStars, visiblePlanets, starAngularScale, planetAngularScale, useTelescopeSprites);
+                EnsureStarMeshes(
+                    clientApi,
+                    visibleStars,
+                    visiblePlanets,
+                    visibleDeepSkyObjects,
+                    brightStarAngularScale,
+                    faintStarAngularScale,
+                    planetAngularScale,
+                    useTelescopeSprites);
 
                 // Additive blending makes draw order between these irrelevant, which is what lets a
                 // star's glow and its core sit in different meshes.
@@ -718,13 +731,17 @@ public static class SkyStarSunMoonRenderer
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedStar> visibleStars,
         IReadOnlyList<RenderedPlanet> visiblePlanets,
-        float starAngularScale,
+        IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
+        float brightStarAngularScale,
+        float faintStarAngularScale,
         float planetAngularScale,
         bool useTelescopeSprites)
     {
+        var plateSignature = DeepSkyPlateVisibility.GetSignature(visibleDeepSkyObjects);
         if (!starMeshesDirty &&
-            Math.Abs(starAngularScale - cachedStarMeshAngularScale) < 1e-6f &&
-            useTelescopeSprites == cachedStarMeshScoped)
+            Math.Abs(brightStarAngularScale - cachedStarMeshAngularScale) < 1e-6f &&
+            useTelescopeSprites == cachedStarMeshScoped &&
+            plateSignature == cachedStarMeshPlateSignature)
         {
             return;
         }
@@ -733,14 +750,25 @@ public static class SkyStarSunMoonRenderer
         FaintStarBillboards.Clear();
         PlanetBillboards.Clear();
 
+        // A plate is a photograph with its own stars already in it. Where one is drawn, the catalog
+        // gives way to it rather than laying a second set of stars over the first at a different
+        // scale. Reduced once here, not once per star.
+        DeepSkyPlateVisibility.BuildFields(visibleDeepSkyObjects, PlateFields);
+
         for (var index = 0; index < visibleStars.Count; index++)
         {
             var star = visibleStars[index];
             var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
             var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(star.Size);
-            var alpha = (float)Math.Clamp(star.Brightness, 0.0, 1.0);
+            var plateFactor = DeepSkyPlateVisibility.GetStarBrightnessFactor(
+                PlateFields,
+                star.DirectionX,
+                star.DirectionY,
+                star.DirectionZ);
+            var alpha = (float)Math.Clamp(star.Brightness * plateFactor, 0.0, 1.0);
             var (red, green, blue) = ColorFromTemperature(star.ColorTemperatureK);
             var target = isFaint ? FaintStarBillboards : BrightStarBillboards;
+            var starAngularScale = isFaint ? faintStarAngularScale : brightStarAngularScale;
 
             var outerAlpha = StarGlowMaxAlpha * alpha * alpha;
             if (!isFaint && outerAlpha > 0.005f)
@@ -777,8 +805,9 @@ public static class SkyStarSunMoonRenderer
         UploadBillboardBatch(clientApi, PlanetBillboards, ref planetMesh, ref planetMeshCapacity);
 
         starMeshesDirty = false;
-        cachedStarMeshAngularScale = starAngularScale;
+        cachedStarMeshAngularScale = brightStarAngularScale;
         cachedStarMeshScoped = useTelescopeSprites;
+        cachedStarMeshPlateSignature = plateSignature;
     }
 
     private static SkyBillboard Billboard(
@@ -1005,7 +1034,7 @@ public static class SkyStarSunMoonRenderer
         var verticalOrigin = (float)entity.LocalEyePos.Y
             - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
         var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
-        var alpha = (float)Math.Clamp(deepSkyObject.Brightness * DeepSkyBrightnessScale, 0.0, 0.7);
+        var alpha = DeepSkyPlateVisibility.CalculateOpacity(deepSkyObject.Brightness);
         var tint = Set(
             ScratchTint,
             Math.Clamp(deepSkyObject.TintR, 0.0f, 1.0f),
