@@ -25,7 +25,7 @@ public sealed class SkyProjectionTests
 
         Assert.NotNull(body);
         Assert.NotNull(star);
-        Assert.Equal(star!.Body, body.Value);
+        Assert.Equal(star!.Value.Body, body.Value);
     }
 
     [Fact]

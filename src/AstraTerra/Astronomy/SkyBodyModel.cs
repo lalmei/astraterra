@@ -67,11 +67,7 @@ public static class SkyBodyModel
     }
 
     public static SightedBody FromStar(RenderedStar star)
-    {
-        ArgumentNullException.ThrowIfNull(star);
-
-        return FromBody($"Star HIP {star.Hip}", star.Body);
-    }
+        => FromBody($"Star HIP {star.Hip}", star.Body);
 
     private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 }

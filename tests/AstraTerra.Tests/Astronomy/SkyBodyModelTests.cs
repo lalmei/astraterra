@@ -103,14 +103,14 @@ public sealed class SkyBodyModelTests
             brightnessBias: 1.0);
         Assert.NotNull(star);
 
-        var body = SkyBodyModel.FromStar(star!);
+        var body = SkyBodyModel.FromStar(star!.Value);
 
         Assert.Equal("Star HIP 32349", body.DisplayName);
-        Assert.Equal(star!.AltitudeDeg, body.AltitudeDeg, 6);
-        Assert.Equal(star.AzimuthDeg, body.AzimuthDeg, 6);
-        Assert.Equal(star.DirectionX, body.DirectionX, 6);
-        Assert.Equal(star.DirectionY, body.DirectionY, 6);
-        Assert.Equal(star.DirectionZ, body.DirectionZ, 6);
+        Assert.Equal(star!.Value.AltitudeDeg, body.AltitudeDeg, 6);
+        Assert.Equal(star.Value.AzimuthDeg, body.AzimuthDeg, 6);
+        Assert.Equal(star.Value.DirectionX, body.DirectionX, 6);
+        Assert.Equal(star.Value.DirectionY, body.DirectionY, 6);
+        Assert.Equal(star.Value.DirectionZ, body.DirectionZ, 6);
     }
 
     [Fact]

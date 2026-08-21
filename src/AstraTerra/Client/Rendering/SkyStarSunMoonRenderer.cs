@@ -59,6 +59,9 @@ public static class SkyStarSunMoonRenderer
     private const float ConstellationDotAngularSizeDeg = 0.14f;
     private const double FaintStarMagnitudeThreshold = 2.5;
 
+    /// <summary>How often the draw summary is written to the debug log while the sky is drawing.</summary>
+    private const double SkyDrawLogIntervalSeconds = 30.0;
+
     private static ICoreClientAPI? api;
     private static AstraTerraConfig? config;
     private static StarCatalog? catalog;
@@ -86,6 +89,34 @@ public static class SkyStarSunMoonRenderer
     private static int constellationDotTextureId;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
+
+    // The sky pass runs on the render thread every frame it draws, over a catalog of five thousand
+    // stars. Everything below exists so that pass allocates nothing and repeats no work: buffers are
+    // reused between frames, and the projection is only redone when the sky has actually turned far
+    // enough to see. Rebuilding it per frame cost over 10 ms and a gigabyte of garbage a minute,
+    // which players saw as stutter, lag spikes and a client that would not give memory back.
+    private static readonly List<RenderedStar> ProjectedStars = new(6000);
+    private static readonly List<RenderedStar> DrawableStars = new(6000);
+    private static readonly List<RenderedPlanet> DrawablePlanets = new(16);
+    private static readonly Dictionary<int, RenderedStar> VisibleStarsByHip = new(6000);
+    private static double cachedStarLatitudeDeg = double.NaN;
+    private static double cachedStarSiderealDeg = double.NaN;
+    private static double cachedStarBrightnessBias = double.NaN;
+    private static string? cachedJournalJson;
+    private static ConstellationJournal? cachedJournal;
+    private static ConstellationJournal? cachedDotsJournal;
+    private static IReadOnlyList<SkyConstellationDot>? cachedConstellationDots;
+
+    /// <summary>
+    /// How far the sky must turn, or the observer move, before the star projection is redone.
+    /// </summary>
+    /// <remarks>
+    /// A star billboard is about half a degree across, so a twentieth of a degree is well inside one
+    /// sprite -- there is nothing on screen to see. At Vintage Story's default time speed the sky
+    /// turns about a quarter of a degree a second, so this refreshes a handful of times a second
+    /// instead of sixty.
+    /// </remarks>
+    private const double StarRefreshThresholdDeg = 0.05;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
@@ -156,6 +187,17 @@ public static class SkyStarSunMoonRenderer
         planetModelDaysPerYear = 0;
         planetModelHoursPerDay = 0;
         meteorVisuals.Clear();
+        ProjectedStars.Clear();
+        DrawableStars.Clear();
+        DrawablePlanets.Clear();
+        VisibleStarsByHip.Clear();
+        cachedStarLatitudeDeg = double.NaN;
+        cachedStarSiderealDeg = double.NaN;
+        cachedStarBrightnessBias = double.NaN;
+        cachedJournalJson = null;
+        cachedJournal = null;
+        cachedDotsJournal = null;
+        cachedConstellationDots = null;
         secondsSinceLastLog = 0;
         secondsSinceLastSkipLog = 0;
         starTextureLoadFailed = false;
@@ -259,8 +301,9 @@ public static class SkyStarSunMoonRenderer
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
         var brightnessBias = config.StarBrightnessBias * (float)renderDarkness;
-        var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias);
-        var drawableStars = FilterDrawableStars(visibleStars);
+        var starsRefreshed = EnsureProjectedStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias);
+        var visibleStars = ProjectedStars;
+        var drawableStars = DrawableStars;
         var solarLongitude = CelestialMath.GetSolarLongitudeDegrees(
             calendar.TotalDays,
             Math.Max(1, calendar.DaysPerYear));
@@ -293,13 +336,26 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
-        var journal = ConstellationBookService.ReadJournal(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        // Reading the book means deserializing its journal, which is far too much work to repeat
+        // sixty times a second for a page that has not changed. The written JSON is the key.
+        var journal = ReadJournalCached(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
         IReadOnlyList<SkyConstellationDot> constellationDots = Array.Empty<SkyConstellationDot>();
         if (journal is not null)
         {
-            var visibleStarMap = drawableStars.ToDictionary(star => star.Hip);
-            var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
-            constellationDots = ConstellationRenderModel.BuildSkyDots(constellationSegments, ConstellationDotSpacingDeg);
+            if (starsRefreshed || cachedConstellationDots is null || !ReferenceEquals(journal, cachedDotsJournal))
+            {
+                VisibleStarsByHip.Clear();
+                foreach (var star in drawableStars)
+                {
+                    VisibleStarsByHip[star.Hip] = star;
+                }
+
+                var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, VisibleStarsByHip);
+                cachedConstellationDots = ConstellationRenderModel.BuildSkyDots(constellationSegments, ConstellationDotSpacingDeg);
+                cachedDotsJournal = journal;
+            }
+
+            constellationDots = cachedConstellationDots;
         }
 
         EnsureStarTextures(api);
@@ -340,7 +396,7 @@ public static class SkyStarSunMoonRenderer
             visibleDeepSkyObjects,
             constellationDots,
             meteorStreaks,
-            meteorReadings.FirstOrDefault(reading => reading.ObservedHourlyRate > 0.0),
+            FindStrongestReading(meteorReadings),
             quadModel,
             imageSize,
             dt,
@@ -503,10 +559,10 @@ public static class SkyStarSunMoonRenderer
         }
 
         secondsSinceLastLog += deltaTime;
-        if (secondsSinceLastLog >= 5)
+        if (secondsSinceLastLog >= SkyDrawLogIntervalSeconds)
         {
             secondsSinceLastLog = 0;
-            clientApi.Logger.Notification(
+            clientApi.Logger.VerboseDebug(
                 "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2}; daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
@@ -518,7 +574,7 @@ public static class SkyStarSunMoonRenderer
                 visiblePlanets.Count);
             if (visiblePlanets.Count > 0)
             {
-                clientApi.Logger.Notification(
+                clientApi.Logger.VerboseDebug(
                     "AstraTerra planet draw: {0}",
                     string.Join(
                         "; ",
@@ -527,11 +583,11 @@ public static class SkyStarSunMoonRenderer
             }
             if (visibleDeepSkyObjects.Count > 0)
             {
-                clientApi.Logger.Notification(
+                clientApi.Logger.VerboseDebug(
                     "AstraTerra telescope deep-sky draw: visible={0}",
                     visibleDeepSkyObjects.Count);
             }
-            clientApi.Logger.Notification(
+            clientApi.Logger.VerboseDebug(
                 "AstraTerra sky size: minConfigured={0:0.0}px; scale={1:0.0}; maxConfigured={2:0.0}px; drawnSizeRange={3:0.0}-{4:0.0}px; telescopeSprites={5}",
                 StarBillboardSizing.MinimumCoreDiameterPixels,
                 StarBillboardSizing.ProjectedSizeScale,
@@ -541,7 +597,7 @@ public static class SkyStarSunMoonRenderer
                 useTelescopeSprites);
             if (strongestMeteorReading is not null || meteorStreaks.Count > 0)
             {
-                clientApi.Logger.Notification(
+                clientApi.Logger.VerboseDebug(
                     "AstraTerra meteor shower: strongest={0}; rate={1:0.0}/h; radiantAz={2:0.0}; radiantAlt={3:0.0}; activeStreaks={4}",
                     strongestMeteorReading?.Shower.DisplayName ?? "none",
                     strongestMeteorReading?.ObservedHourlyRate ?? 0.0,
@@ -791,7 +847,8 @@ public static class SkyStarSunMoonRenderer
 
     private static IReadOnlyList<RenderedPlanet> FilterDrawablePlanets(IReadOnlyList<RenderedPlanet> visiblePlanets)
     {
-        var drawablePlanets = new List<RenderedPlanet>(visiblePlanets.Count);
+        var drawablePlanets = DrawablePlanets;
+        drawablePlanets.Clear();
         foreach (var planet in visiblePlanets)
         {
             if (planet.Brightness >= MinimumStarAlpha)
@@ -803,18 +860,70 @@ public static class SkyStarSunMoonRenderer
         return drawablePlanets;
     }
 
-    private static IReadOnlyList<RenderedStar> FilterDrawableStars(IReadOnlyList<RenderedStar> visibleStars)
+    /// <summary>
+    /// Refreshes the projected star buffers when the sky has turned or the observer has moved far
+    /// enough to matter, and reports whether it did.
+    /// </summary>
+    private static bool EnsureProjectedStars(
+        IReadOnlyList<StarCatalogEntry> stars,
+        double latitudeDeg,
+        double localSiderealDeg,
+        double brightnessBias)
     {
-        var drawableStars = new List<RenderedStar>(visibleStars.Count);
-        foreach (var star in visibleStars)
+        if (ProjectedStars.Count > 0 &&
+            Math.Abs(latitudeDeg - cachedStarLatitudeDeg) < StarRefreshThresholdDeg &&
+            Math.Abs(CelestialMath.ShortestAngularDistanceDegrees(cachedStarSiderealDeg, localSiderealDeg)) < StarRefreshThresholdDeg &&
+            Math.Abs(brightnessBias - cachedStarBrightnessBias) < 0.005)
+        {
+            return false;
+        }
+
+        StarRenderModel.ProjectVisibleStars(stars, latitudeDeg, localSiderealDeg, brightnessBias, ProjectedStars);
+        DrawableStars.Clear();
+        foreach (var star in ProjectedStars)
         {
             if (star.Brightness >= MinimumStarAlpha)
             {
-                drawableStars.Add(star);
+                DrawableStars.Add(star);
             }
         }
 
-        return drawableStars;
+        cachedStarLatitudeDeg = latitudeDeg;
+        cachedStarSiderealDeg = localSiderealDeg;
+        cachedStarBrightnessBias = brightnessBias;
+        return true;
+    }
+
+    private static ConstellationJournal? ReadJournalCached(ItemStack? stack)
+    {
+        var json = stack?.Attributes?.GetString(ConstellationBookService.JournalJsonAttribute, null);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            cachedJournalJson = null;
+            cachedJournal = null;
+            return null;
+        }
+
+        if (!string.Equals(json, cachedJournalJson, StringComparison.Ordinal))
+        {
+            cachedJournalJson = json;
+            cachedJournal = ConstellationBookService.ReadJournal(stack);
+        }
+
+        return cachedJournal;
+    }
+
+    private static MeteorShowerReading? FindStrongestReading(IReadOnlyList<MeteorShowerReading> readings)
+    {
+        for (var index = 0; index < readings.Count; index++)
+        {
+            if (readings[index].ObservedHourlyRate > 0.0)
+            {
+                return readings[index];
+            }
+        }
+
+        return null;
     }
 
     private static void EnsureStarTextures(ICoreClientAPI clientApi)
@@ -965,6 +1074,9 @@ public static class SkyStarSunMoonRenderer
         }
 
         secondsSinceLastSkipLog = 0;
-        api.Logger.Notification("AstraTerra sky step: " + message, args);
+
+        // Debug log, not the client's main log: this fires for as long as the sky pass is skipped,
+        // which is every frame of every day, and players were reporting client-main.log full of it.
+        api.Logger.VerboseDebug("AstraTerra sky step: " + message, args);
     }
 }

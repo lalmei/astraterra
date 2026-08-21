@@ -63,6 +63,17 @@
   result: no stars, no grid, no constellation lines, and the sextant reports no open sky.
 - Walk from that interior back out through the door; expected result: the sky returns as the doorway
   light does, and never shows through the walls on the way out.
+
+## Performance
+
+- Watch the frame time (F3) at night under open sky with the full star catalog, then sprint through
+  unloaded chunks for a minute; expected result: no repeating stutter tied to the sky pass and no
+  lag spikes as chunks load.
+- Play a full night, then check the client's memory in the task manager the next in-game day;
+  expected result: it settles rather than climbing all night.
+- Check `client-main.log` after several minutes of play; expected result: no recurring
+  `AstraTerra sky step` lines (those belong in the debug log now), and no OpenAL or sound-loading
+  errors appearing alongside them.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
 - With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.
