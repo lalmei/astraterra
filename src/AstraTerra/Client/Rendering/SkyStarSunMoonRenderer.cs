@@ -309,18 +309,18 @@ public static class SkyStarSunMoonRenderer
             return false;
         }
 
+        // No sky-exposure gate here, and none belongs here. This pass draws inside the sun/moon
+        // render (Opaque 0.3), before opaque terrain (0.37), so terrain painted afterwards occludes
+        // the stars per pixel -- which is precisely how vanilla's own starfield works:
+        // SystemRenderNightSky draws at Opaque 0.1 with the depth test off and no exposure check of
+        // any kind, and is still not visible from inside a cave.
+        //
+        // A whole-sky gate cannot express "sky visible in that direction", so it can only ever be
+        // wrong in one direction or the other: a rain-map check hid the sky under any tree, and a
+        // light-level check hid it from a player standing indoors looking out of a window. The
+        // renderers that genuinely cannot be occluded -- the grid, the overlay, the sextant readout,
+        // all of which draw after terrain -- ask SkyExposure instead.
         var playerPos = api.World.Player.Entity.Pos;
-
-        // Drawing before opaque terrain is not enough on its own: players report the starfield
-        // showing through a cave roof and through house walls, so the pass asks whether the sky is
-        // reachable from the eye. SkyExposure keeps a block overhead from taking the whole sky away,
-        // which is what a plain rain-map check used to do under any tree or porch.
-        if (!SkyExposure.CanSeeSky(api))
-        {
-            meteorVisuals.Clear();
-            LogSkyStep(dt, "skipped blocked sky: x={0:0.0}; y={1:0.0}; z={2:0.0}", playerPos.X, playerPos.Y, playerPos.Z);
-            return false;
-        }
 
         var latitude = LatitudeMapper.MapGameLatitude(playerPos.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(playerPos.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
