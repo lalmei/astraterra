@@ -2,11 +2,11 @@
 
 ![astraterra](modicon.png)
 
-AstraTerra turns the night sky into an 5000+ for Vintage Story 1.22+ The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
+AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, and nine annual meteor showers, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
 
-Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instrument to determine their location and path.
+Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.
 
-Stil in alpha. Many item models and recipes are placeholders, along with the UI/UX
+Still in alpha. Many item models and recipes are placeholders, along with the UI/UX
 
 Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.
 
@@ -19,11 +19,11 @@ Always looking for contributions, models, code, docs etc.
 ![AstraTerra's compact, magnitude-scaled stars over a Vintage Story landscape](docs/screenshots/starfiel.png)
 
 A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.  
-Star locationa and Images are from Stellarium's database.
+Star locations and images are from Stellarium's database.
 
 #### Note
 
-Without a clear date to star from we just using the current Earth-centered locations.
+Without a clear date to start from we are just using the current Earth-centered locations.
 
 Right now the star field is only defined by the star catalog configuration,
 found within a JSON file in the mod's asset. The current one was build using Stellarium dataset. One could procedurally generate it during world creation, or add/edit stars.
