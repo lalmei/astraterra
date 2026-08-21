@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using AstraTerra.Astronomy;
 using AstraTerra.Config;
@@ -59,8 +60,8 @@ public static class SkyStarSunMoonRenderer
     private const float ConstellationDotAngularSizeDeg = 0.14f;
     private const double FaintStarMagnitudeThreshold = 2.5;
 
-    /// <summary>How often the draw summary is written to the debug log while the sky is drawing.</summary>
-    private const double SkyDrawLogIntervalSeconds = 30.0;
+    /// <summary>How often the cost and draw summaries are written to the debug log while the sky is drawing.</summary>
+    public const double SkyDrawLogIntervalSeconds = 30.0;
 
     private static ICoreClientAPI? api;
     private static AstraTerraConfig? config;
@@ -71,7 +72,9 @@ public static class SkyStarSunMoonRenderer
     private static int planetModelDaysPerYear;
     private static double planetModelHoursPerDay;
     private static MeteorShowerVisualModel meteorVisuals = new();
-    private static double secondsSinceLastLog;
+    private static readonly SkyPassMetrics Metrics = new();
+    private static readonly RenderedStar[] NoStars = [];
+    private static readonly RenderedPlanet[] NoPlanets = [];
     private static double secondsSinceLastSkipLog;
     private static bool starTextureLoadFailed;
     private static bool faintStarTextureLoadFailed;
@@ -205,6 +208,8 @@ public static class SkyStarSunMoonRenderer
         planetModelDaysPerYear = 0;
         planetModelHoursPerDay = 0;
         meteorVisuals.Clear();
+        Metrics.Reset();
+        SkyRenderPaths.Reset();
         ProjectedStars.Clear();
         DrawableStars.Clear();
         DrawablePlanets.Clear();
@@ -216,7 +221,6 @@ public static class SkyStarSunMoonRenderer
         cachedJournal = null;
         cachedDotsJournal = null;
         cachedConstellationDots = null;
-        secondsSinceLastLog = 0;
         secondsSinceLastSkipLog = 0;
         starTextureLoadFailed = false;
         faintStarTextureLoadFailed = false;
@@ -259,7 +263,13 @@ public static class SkyStarSunMoonRenderer
 
         try
         {
-            PostfixCore(__instance, dt);
+            var start = Stopwatch.GetTimestamp();
+            Metrics.BeginFrame();
+            var drew = PostfixCore(__instance, dt);
+            if (drew)
+            {
+                Metrics.EndFrame(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+            }
         }
         catch (Exception exception)
         {
@@ -275,17 +285,18 @@ public static class SkyStarSunMoonRenderer
         }
     }
 
-    private static void PostfixCore(SystemRenderSunMoon __instance, float dt)
+    /// <summary>Draws the sky, and reports whether it drew anything worth timing.</summary>
+    private static bool PostfixCore(SystemRenderSunMoon __instance, float dt)
     {
         if (api is null || config is null || catalog is null)
         {
-            return;
+            return false;
         }
 
         if (!StarfieldModeParser.ShowsAstraTerra(config.GetStarfieldMode()))
         {
             meteorVisuals.Clear();
-            return;
+            return false;
         }
 
         var calendar = api.World.Calendar;
@@ -295,7 +306,7 @@ public static class SkyStarSunMoonRenderer
         {
             meteorVisuals.Clear();
             LogSkyStep(dt, "skipped daylight: daylight={0:0.00}; darkness={1:0.00}", calendar.DayLightStrength, naturalDarkness);
-            return;
+            return false;
         }
 
         var playerPos = api.World.Player.Entity.Pos;
@@ -308,7 +319,7 @@ public static class SkyStarSunMoonRenderer
         {
             meteorVisuals.Clear();
             LogSkyStep(dt, "skipped blocked sky: x={0:0.0}; y={1:0.0}; z={2:0.0}", playerPos.X, playerPos.Y, playerPos.Z);
-            return;
+            return false;
         }
 
         var latitude = LatitudeMapper.MapGameLatitude(playerPos.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
@@ -319,7 +330,13 @@ public static class SkyStarSunMoonRenderer
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
         var brightnessBias = config.StarBrightnessBias * (float)renderDarkness;
-        var starsRefreshed = EnsureProjectedStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias);
+        // The projection feeds both the stars and the constellation lines, so it is skipped only when
+        // neither will be drawn. That is what makes `.stars render stars off` plus
+        // `.stars render constellations off` measure the projection's cost and not just its draw.
+        var starsNeeded = SkyRenderPaths.IsEnabled(SkyRenderPath.Stars) || SkyRenderPaths.IsEnabled(SkyRenderPath.Constellations);
+        var starsRefreshed = starsNeeded
+            ? EnsureProjectedStars(catalog.Stars, latitude, localSiderealAngle, brightnessBias)
+            : ClearProjectedStars();
         var visibleStars = ProjectedStars;
         var drawableStars = DrawableStars;
         var solarLongitude = CelestialMath.GetSolarLongitudeDegrees(
@@ -340,7 +357,9 @@ public static class SkyStarSunMoonRenderer
             ?.ProjectVisiblePlanets(calendar.TotalDays, latitude, localSiderealAngle, brightnessBias)
             ?? (IReadOnlyList<RenderedPlanet>)Array.Empty<RenderedPlanet>();
         var drawablePlanets = FilterDrawablePlanets(visiblePlanets);
-        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && meteorStreaks.Count == 0)
+        // The scope's deep-sky plates are the one thing that can still be worth drawing with no star
+        // above the horizon, so they keep the pass alive.
+        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && meteorStreaks.Count == 0 && !TelescopeScopeState.IsScoped)
         {
             LogSkyStep(
                 dt,
@@ -351,7 +370,7 @@ public static class SkyStarSunMoonRenderer
                 latitude,
                 localSiderealAngle,
                 brightnessBias);
-            return;
+            return false;
         }
 
         // Reading the book means deserializing its journal, which is far too much work to repeat
@@ -390,7 +409,7 @@ public static class SkyStarSunMoonRenderer
                 telescopeStarTextureLoadFailed,
                 telescopeFaintStarTextureId,
                 telescopeFaintStarTextureLoadFailed);
-            return;
+            return false;
         }
 
         EnsureConstellationDotTexture(api);
@@ -404,7 +423,7 @@ public static class SkyStarSunMoonRenderer
         if (quadModel is null)
         {
             LogSkyStep(dt, "skipped missing sun/moon quad mesh: quadField={0}; imageSize={1}", QuadModelRefField?.Name ?? "<missing>", imageSize);
-            return;
+            return false;
         }
 
         RenderSky(
@@ -422,6 +441,8 @@ public static class SkyStarSunMoonRenderer
             playerPos.Yaw,
             playerPos.Pitch,
             forceDaylightStars);
+
+        return true;
     }
 
     private static void RenderSky(
@@ -491,7 +512,9 @@ public static class SkyStarSunMoonRenderer
             shader.ViewMatrix = render.CameraMatrixOriginf;
             shader.ProjectionMatrix = render.CurrentProjectionMatrix;
 
-            foreach (var star in visibleStars)
+            // Each path is switched independently so a player can answer "which one costs me?" in
+            // one session, without a rebuild. Everything else keeps drawing.
+            foreach (var star in SkyRenderPaths.IsEnabled(SkyRenderPath.Stars) ? visibleStars : NoStars)
             {
                 var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
                 var textureId = isFaint ? dimStarTextureId : brightStarTextureId;
@@ -516,7 +539,7 @@ public static class SkyStarSunMoonRenderer
             // Planets go through the same billboard path as stars, never on the faint sprite, and
             // with a glow scaled by brilliance rather than by the saturated star curve, so that
             // Venus reads as the brightest thing in the sky and Saturn does not.
-            foreach (var planet in visiblePlanets)
+            foreach (var planet in SkyRenderPaths.IsEnabled(SkyRenderPath.Stars) ? visiblePlanets : NoPlanets)
             {
                 var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
                 var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
@@ -534,7 +557,7 @@ public static class SkyStarSunMoonRenderer
                 drawnCount++;
             }
 
-            if (visibleDeepSkyObjects.Count > 0)
+            if (visibleDeepSkyObjects.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.DeepSky))
             {
                 // The telescope photographs are foreground plates. Standard alpha
                 // blending lets their dark sky attenuate the catalog sprites below;
@@ -552,7 +575,7 @@ public static class SkyStarSunMoonRenderer
                 render.GlToggleBlend(true, EnumBlendMode.Glow);
             }
 
-            if (constellationDotTextureId != 0 && constellationDots.Count > 0)
+            if (constellationDotTextureId != 0 && constellationDots.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Constellations))
             {
                 // One mesh, one draw call. The dots are overlay marks, not sky objects: they follow
                 // the star scale so a line stays a fine trail at any magnification instead of
@@ -561,7 +584,7 @@ public static class SkyStarSunMoonRenderer
                 RenderConstellationDots(clientApi, shader, modelMatrixBuffer);
             }
 
-            if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0)
+            if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && constellationDotTextureId != 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors))
             {
                 RenderMeteorStreaks(clientApi, shader, modelMatrixBuffer);
             }
@@ -575,10 +598,20 @@ public static class SkyStarSunMoonRenderer
             render.GLEnableDepthTest();
         }
 
-        secondsSinceLastLog += deltaTime;
-        if (secondsSinceLastLog >= SkyDrawLogIntervalSeconds)
+        if (Metrics.TryTakeReport(deltaTime, SkyDrawLogIntervalSeconds, out var report))
         {
-            secondsSinceLastLog = 0;
+            // Cost first, because that is the question anyone reading this log is asking. Draw calls
+            // and uploads are counted at the GL call, so they stay honest as paths are batched.
+            clientApi.Logger.VerboseDebug(
+                "AstraTerra sky cost: frames={0}; ms/frame={1:0.00} (peak {2:0.00}); drawCalls/frame={3:0} (peak {4}); meshUploads={5}; meshUpdates={6}; paths={7}",
+                report.Frames,
+                report.AverageMilliseconds,
+                report.PeakMilliseconds,
+                report.AverageDrawCalls,
+                report.PeakDrawCalls,
+                report.MeshUploads,
+                report.MeshUpdates,
+                SkyRenderPaths.Describe());
             clientApi.Logger.VerboseDebug(
                 "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
@@ -651,7 +684,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(quadModel);
+        DrawMesh(clientApi, quadModel);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -680,12 +713,12 @@ public static class SkyStarSunMoonRenderer
         if (constellationDotMesh is null || capacity > constellationDotMeshCapacity)
         {
             constellationDotMesh?.Dispose();
-            constellationDotMesh = clientApi.Render.UploadMesh(meshData);
+            constellationDotMesh = UploadMesh(clientApi, meshData);
             constellationDotMeshCapacity = capacity;
         }
         else
         {
-            clientApi.Render.UpdateMesh(constellationDotMesh, meshData);
+            UpdateMesh(clientApi, constellationDotMesh, meshData);
         }
 
         constellationDotMeshDots = dots;
@@ -715,7 +748,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = constellationDotTextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(constellationDotMesh);
+        DrawMesh(clientApi, constellationDotMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -731,11 +764,11 @@ public static class SkyStarSunMoonRenderer
         var meshData = MeteorStreakMeshBuilder.Build(meteorStreaks, MeteorSkyDistance);
         if (meteorStreakMesh is null)
         {
-            meteorStreakMesh = clientApi.Render.UploadMesh(meshData);
+            meteorStreakMesh = UploadMesh(clientApi, meshData);
         }
         else
         {
-            clientApi.Render.UpdateMesh(meteorStreakMesh, meshData);
+            UpdateMesh(clientApi, meteorStreakMesh, meshData);
         }
     }
 
@@ -760,7 +793,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = constellationDotTextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(meteorStreakMesh);
+        DrawMesh(clientApi, meteorStreakMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -774,11 +807,11 @@ public static class SkyStarSunMoonRenderer
         var meshData = DeepSkyQuadMeshBuilder.Build(deepSkyObject.QuadCorners, SkyDistance);
         if (deepSkyQuadMesh is null)
         {
-            deepSkyQuadMesh = clientApi.Render.UploadMesh(meshData);
+            deepSkyQuadMesh = UploadMesh(clientApi, meshData);
         }
         else
         {
-            clientApi.Render.UpdateMesh(deepSkyQuadMesh, meshData);
+            UpdateMesh(clientApi, deepSkyQuadMesh, meshData);
         }
 
         var entity = clientApi.World.Player.Entity;
@@ -798,7 +831,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        clientApi.Render.RenderMesh(deepSkyQuadMesh);
+        DrawMesh(clientApi, deepSkyQuadMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -947,6 +980,22 @@ public static class SkyStarSunMoonRenderer
         cachedStarLatitudeDeg = latitudeDeg;
         cachedStarSiderealDeg = localSiderealDeg;
         cachedStarBrightnessBias = brightnessBias;
+        return true;
+    }
+
+    /// <summary>Drops the projected sky when no path needs it, so a switched-off star path costs nothing.</summary>
+    private static bool ClearProjectedStars()
+    {
+        if (ProjectedStars.Count == 0 && DrawableStars.Count == 0)
+        {
+            return false;
+        }
+
+        ProjectedStars.Clear();
+        DrawableStars.Clear();
+        cachedStarLatitudeDeg = double.NaN;
+        cachedStarSiderealDeg = double.NaN;
+        cachedStarBrightnessBias = double.NaN;
         return true;
     }
 
@@ -1103,6 +1152,26 @@ public static class SkyStarSunMoonRenderer
         target.B = blue;
         target.A = alpha;
         return target;
+    }
+
+    // Every GL call the sky pass issues goes through these three, so the diagnostic line counts the
+    // work the GPU was actually asked to do rather than the length of a list that happened to match.
+    private static void DrawMesh(ICoreClientAPI clientApi, MeshRef mesh)
+    {
+        Metrics.CountDrawCall();
+        clientApi.Render.RenderMesh(mesh);
+    }
+
+    private static MeshRef UploadMesh(ICoreClientAPI clientApi, MeshData meshData)
+    {
+        Metrics.CountMeshUpload();
+        return clientApi.Render.UploadMesh(meshData);
+    }
+
+    private static void UpdateMesh(ICoreClientAPI clientApi, MeshRef mesh, MeshData meshData)
+    {
+        Metrics.CountMeshUpdate();
+        clientApi.Render.UpdateMesh(mesh, meshData);
     }
 
     private static void CopyToFloatArray(Matrix4 matrix, float[] target)

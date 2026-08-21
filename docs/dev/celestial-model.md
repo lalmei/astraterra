@@ -356,6 +356,34 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | `Vec4f` is a class | A tint built per body per frame is thousands of heap objects a second. The shader uploads its uniform the moment it is assigned, so the draw loops keep one mutable instance |
 | Recurring logs go to `VerboseDebug` | `Notification` lands in `client-main.log`; a line every five seconds for every skipped frame flooded players' logs |
 
+### Measuring it
+
+Every claim above is checkable from inside the game, in one session, without a rebuild:
+
+```
+.stars render                              # what is drawing now
+.stars render constellations off           # switch one path off
+.stars render stars off                    # ...and another
+.stars render all on                       # put it back
+```
+
+The toggles are session-scoped on purpose — a measurement tool, not a setting — and cover `stars`
+(with the planets that share its billboard path), `constellations`, `deepsky` and `meteors`. Switching
+both `stars` and `constellations` off also skips the projection they share, so its cost shows up too
+rather than hiding behind a draw that no longer happens.
+
+Every 30 seconds the debug log then reports what the pass actually cost:
+
+```text
+AstraTerra sky cost: frames=1800; ms/frame=0.31 (peak 2.44); drawCalls/frame=2989 (peak 3011);
+                     meshUploads=1; meshUpdates=7; paths=stars=on; constellations=off; deepsky=on; meteors=on
+```
+
+Draw calls and mesh uploads are counted at the GL call itself, in `SkyPassMetrics`, not inferred from
+list lengths — the old line reported "how many dots were built", which stopped being the number of
+draw calls the moment those dots were batched. Peaks sit next to means because they answer different
+questions: the mean is what the pass costs, the peak is what the player felt.
+
 !!! warning "This is a player-visible contract, not a micro-optimisation"
     A player reported the mod eating memory, stuttering while moving, and flooding the client log —
     with OpenAL failing to allocate sound sources alongside it. All of it traced back to the star
@@ -387,6 +415,8 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | The per-frame sky path allocates nothing       | `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame`                  |
 | Constellation marks are one batched draw      | `ConstellationDotMeshBuilderTests`, `BootstrapSmokeTests.Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars` |
 | Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |
+| Cost numbers mean what they say               | `SkyPassMetricsTests`                                                                                        |
+| One path goes dark, the rest keep drawing     | `SkyRenderPathsTests`                                                                                        |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |
 | A full turn per year on any year length       | `CelestialMathTests.SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length`                   |

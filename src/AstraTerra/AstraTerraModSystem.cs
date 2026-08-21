@@ -163,7 +163,7 @@ public sealed class AstraTerraModSystem : ModSystem
                 daysPerYearProvider: () => Math.Max(1, api.World.Calendar.DaysPerYear)),
             constellationBookClient,
             config).Register(api);
-        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/starfield/sky-grid");
+        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/starfield/sky-grid/render");
 
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
