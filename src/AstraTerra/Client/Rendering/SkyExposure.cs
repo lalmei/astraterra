@@ -59,13 +59,16 @@ public static class SkyExposure
         var blockPos = entity.Pos.AsBlockPos;
         var eyeHeight = entity.Pos.InternalY + entity.LocalEyePos.Y;
         var accessor = api.World.BlockAccessor;
-        var eyePos = blockPos.Copy();
-        eyePos.Y = (int)eyeHeight;
+        var rainMapHeight = accessor.GetRainMapHeightAt(blockPos);
+
+        // Reuses the one position rather than copying it: this runs on the render thread, once per
+        // sky pass per frame.
+        blockPos.Y = (int)eyeHeight;
 
         return CanSeeSky(
-            accessor.GetRainMapHeightAt(blockPos),
+            rainMapHeight,
             eyeHeight,
-            accessor.GetLightLevel(eyePos, EnumLightLevelType.OnlySunLight),
+            accessor.GetLightLevel(blockPos, EnumLightLevelType.OnlySunLight),
             // A world can be configured with its own light curve, so the top of the sunlight table is
             // what "open sky" means here rather than vanilla's 22.
             Math.Max(1, (api.World.SunLightLevels?.Length ?? 23) - 1));

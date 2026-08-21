@@ -107,9 +107,9 @@ public sealed class DeepSkyRenderModelTests
                 brightnessBias: 1);
 
             Assert.NotNull(projectedCorner);
-            Assert.Equal(projectedCorner!.DirectionX, rendered.QuadCorners[index].X, precision: 12);
-            Assert.Equal(projectedCorner.DirectionY, rendered.QuadCorners[index].Y, precision: 12);
-            Assert.Equal(projectedCorner.DirectionZ, rendered.QuadCorners[index].Z, precision: 12);
+            Assert.Equal(projectedCorner!.Value.DirectionX, rendered.QuadCorners[index].X, precision: 12);
+            Assert.Equal(projectedCorner.Value.DirectionY, rendered.QuadCorners[index].Y, precision: 12);
+            Assert.Equal(projectedCorner.Value.DirectionZ, rendered.QuadCorners[index].Z, precision: 12);
         }
     }
 }

@@ -26,7 +26,7 @@ public sealed class PlanetRenderModelTests
             localSiderealDeg: 45,
             brightnessBias: 1);
 
-        Assert.Equal(star!.Body, rendered!.Body);
+        Assert.Equal(star!.Value.Body, rendered!.Body);
     }
 
     [Fact]

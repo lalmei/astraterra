@@ -340,6 +340,27 @@ a different `hoursPerDay` the longitude offset is scaled accordingly.
     shift has nothing to stay in step with. See [Latitude And Longitude](latitude-and-longitude.md)
     for where the observer position comes from and why this is an unresolved divergence.
 
+## What The Render Thread May Do
+
+The sky pass runs inside Vintage Story's sun/moon render, on the render thread, every frame it draws.
+Five thousand stars go through it, so the ordinary costs of comfortable code are not affordable here.
+
+| Rule | Why |
+| --- | --- |
+| No LINQ on the per-frame path | `Select`/`Where`/`OrderBy` over the catalog cost **12 ms and 440 KiB per frame** — a stutter by itself, and about a gigabyte of garbage a minute |
+| Project into reused buffers | `StarRenderModel.ProjectVisibleStars(..., List<RenderedStar> destination)` fills a caller-owned list and sorts it in place; the allocating overload is for callers that are not per-frame |
+| Rendered bodies are structs | `RenderedBody` and `RenderedStar` are `readonly record struct`, so a visible sky is not three thousand heap objects a frame |
+| Redo work only when it shows | The projection refreshes when the sky has turned or the observer moved `StarRefreshThresholdDeg` (0.05°) — a tenth of a star sprite. At default time speed the sky turns about 0.25° a second, so that is a few refreshes a second rather than sixty |
+| Parse nothing per frame | A journal book's JSON is deserialized only when the written text changes |
+| Recurring logs go to `VerboseDebug` | `Notification` lands in `client-main.log`; a line every five seconds for every skipped frame flooded players' logs |
+
+!!! warning "This is a player-visible contract, not a micro-optimisation"
+    A player reported the mod eating memory, stuttering while moving, and flooding the client log —
+    with OpenAL failing to allocate sound sources alongside it. All of it traced back to the star
+    projection running the full LINQ chain every frame.
+    `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame` pins
+    the allocation, because nothing else fails when it comes back.
+
 ## Where The Invariants Are Pinned
 
 | Invariant                                     | Test                                                                                                         |
@@ -361,6 +382,7 @@ a different `hoursPerDay` the longitude offset is scaled accordingly.
 | Jupiter takes ~12 world years on any world    | `PlanetEphemerisTests.Jupiter_Takes_About_Twelve_World_Years_Whatever_A_World_Year_Is`                       |
 | Element rates match their semi-major axes     | `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law`                                                 |
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
+| The per-frame sky path allocates nothing       | `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame`                  |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |
 | A full turn per year on any year length       | `CelestialMathTests.SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length`                   |

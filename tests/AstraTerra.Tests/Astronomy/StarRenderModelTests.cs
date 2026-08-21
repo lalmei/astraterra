@@ -28,8 +28,8 @@ public sealed class StarRenderModelTests
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
         Assert.NotNull(rendered);
-        Assert.InRange(rendered!.AltitudeDeg, -11.0, -9.0);
-        Assert.True(rendered.Brightness > 0);
+        Assert.InRange(rendered!.Value.AltitudeDeg, -11.0, -9.0);
+        Assert.True(rendered.Value.Brightness > 0);
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public sealed class StarRenderModelTests
         var highStar = new StarCatalogEntry(1, 0, 0, 1, null, false);
         var lowStar = new StarCatalogEntry(2, 84, 0, 1, null, false);
 
-        var high = StarRenderModel.Project(highStar, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1)!;
-        var low = StarRenderModel.Project(lowStar, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1)!;
+        var high = StarRenderModel.Project(highStar, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1)!.Value;
+        var low = StarRenderModel.Project(lowStar, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1)!.Value;
 
         Assert.True(high.Brightness > low.Brightness);
     }
@@ -61,7 +61,7 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(rendered!.IsGuideStar);
+        Assert.True(rendered!.Value.IsGuideStar);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.Equal(5.25, rendered!.VisualMagnitude);
+        Assert.Equal(5.25, rendered!.Value.VisualMagnitude);
     }
 
     [Fact]
@@ -82,9 +82,9 @@ public sealed class StarRenderModelTests
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
         var length = Math.Sqrt(
-            (rendered!.DirectionX * rendered.DirectionX) +
-            (rendered.DirectionY * rendered.DirectionY) +
-            (rendered.DirectionZ * rendered.DirectionZ));
+            (rendered!.Value.DirectionX * rendered.Value.DirectionX) +
+            (rendered.Value.DirectionY * rendered.Value.DirectionY) +
+            (rendered.Value.DirectionZ * rendered.Value.DirectionZ));
         Assert.Equal(1.0, length, precision: 6);
     }
 
@@ -95,8 +95,8 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(polarisLikeStar, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(rendered!.DirectionZ < 0);
-        Assert.InRange(rendered.AzimuthDeg, 0.0, 1.0);
+        Assert.True(rendered!.Value.DirectionZ < 0);
+        Assert.InRange(rendered.Value.AzimuthDeg, 0.0, 1.0);
     }
 
     [Fact]
@@ -106,8 +106,8 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 100);
 
-        Assert.InRange(rendered!.Brightness, 0.0, 1.0);
-        Assert.True(rendered.Size > 0);
+        Assert.InRange(rendered!.Value.Brightness, 0.0, 1.0);
+        Assert.True(rendered.Value.Size > 0);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public sealed class StarRenderModelTests
 
         var rendered = StarRenderModel.Project(star, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.InRange(rendered!.Brightness, 0.35, 0.37);
+        Assert.InRange(rendered!.Value.Brightness, 0.35, 0.37);
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public sealed class StarRenderModelTests
         var brighter = StarRenderModel.Project(magnitudeTwo, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
         var dimmer = StarRenderModel.Project(magnitudeSix, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(brighter!.Brightness > dimmer!.Brightness * 2.2);
-        Assert.InRange(dimmer.Brightness, 0.35, 0.37);
+        Assert.True(brighter!.Value.Brightness > dimmer!.Value.Brightness * 2.2);
+        Assert.InRange(dimmer.Value.Brightness, 0.35, 0.37);
     }
 
     [Fact]
@@ -144,9 +144,9 @@ public sealed class StarRenderModelTests
         var middleRendered = StarRenderModel.Project(middle, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
         var faintRendered = StarRenderModel.Project(faint, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
-        Assert.True(brightRendered!.Size > middleRendered!.Size);
-        Assert.True(middleRendered.Size > faintRendered!.Size);
-        Assert.True(brightRendered.Size > faintRendered.Size * 1.45);
+        Assert.True(brightRendered!.Value.Size > middleRendered!.Value.Size);
+        Assert.True(middleRendered.Value.Size > faintRendered!.Value.Size);
+        Assert.True(brightRendered.Value.Size > faintRendered.Value.Size * 1.45);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public sealed class StarRenderModelTests
         var rendered = StarRenderModel.Project(polaris, latitudeDeg: 45, localSiderealDeg: 0, brightnessBias: 1);
 
         Assert.NotNull(rendered);
-        Assert.InRange(rendered!.Size, 16.6, 16.9);
+        Assert.InRange(rendered!.Value.Size, 16.6, 16.9);
     }
 
     [Fact]
@@ -170,8 +170,8 @@ public sealed class StarRenderModelTests
 
         Assert.NotNull(night);
         Assert.NotNull(twilight);
-        Assert.Equal(night!.Size, twilight!.Size);
-        Assert.True(night.Brightness > twilight.Brightness);
+        Assert.Equal(night!.Value.Size, twilight!.Value.Size);
+        Assert.True(night.Value.Brightness > twilight.Value.Brightness);
     }
 
     [Fact]
@@ -187,5 +187,59 @@ public sealed class StarRenderModelTests
         var visible = StarRenderModel.ProjectVisibleStars(stars, latitudeDeg: 0, localSiderealDeg: 0, brightnessBias: 1);
 
         Assert.Equal(new[] { 3, 2, 1 }, visible.Select(star => star.Hip));
+    }
+
+    /// <summary>
+    /// The sky pass projects the whole catalog on the render thread every frame it draws. The LINQ
+    /// chain this replaced allocated about 440 KiB a frame -- roughly a gigabyte a minute of garbage
+    /// at sixty frames a second, which players saw as stutter, lag spikes and a client that kept the
+    /// memory. Pinned here because nothing else fails when it comes back.
+    /// </summary>
+    [Fact]
+    public void ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame()
+    {
+        var stars = BuildCatalog(5000);
+        var buffer = new List<RenderedStar>(6000);
+        StarRenderModel.ProjectVisibleStars(stars, 45, 100, 1, buffer);
+        Assert.NotEmpty(buffer);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var frame = 0; frame < 30; frame++)
+        {
+            StarRenderModel.ProjectVisibleStars(stars, 45, 100 + (frame * 0.004), 1, buffer);
+        }
+
+        var allocatedPerFrame = (GC.GetAllocatedBytesForCurrentThread() - before) / 30;
+        Assert.True(allocatedPerFrame < 1024, $"Projecting into a reused buffer allocated {allocatedPerFrame} bytes per frame.");
+    }
+
+    [Fact]
+    public void Projecting_Into_A_Buffer_Gives_The_Same_Sky_As_Building_A_List()
+    {
+        var stars = BuildCatalog(500);
+        var buffer = new List<RenderedStar>();
+
+        var built = StarRenderModel.ProjectVisibleStars(stars, latitudeDeg: 52, localSiderealDeg: 217, brightnessBias: 1);
+        StarRenderModel.ProjectVisibleStars(stars, 52, 217, 1, buffer);
+
+        Assert.Equal(built, buffer);
+    }
+
+    /// <summary>A spread of positions and magnitudes, so roughly half the sky is above the horizon.</summary>
+    private static IReadOnlyList<StarCatalogEntry> BuildCatalog(int count)
+    {
+        var stars = new List<StarCatalogEntry>(count);
+        for (var index = 0; index < count; index++)
+        {
+            stars.Add(new StarCatalogEntry(
+                index,
+                index * 360.0 / count,
+                ((index * 7919 % 180) - 90) * 0.98,
+                (index % 60) / 10.0,
+                ((index % 20) / 10.0) - 0.4,
+                index % 50 == 0));
+        }
+
+        return stars;
     }
 }

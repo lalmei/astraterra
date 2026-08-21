@@ -33,6 +33,9 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private readonly PlanetCatalog? planetCatalog;
+    private readonly List<RenderedStar> overlayStars = new(6000);
+    private readonly List<RenderedStar> overlayGuideStars = new(256);
+    private readonly Dictionary<int, RenderedStar> overlayStarsByHip = new(6000);
     private PlanetRenderModel? planetModel;
     private int planetModelDaysPerYear;
     private double planetModelHoursPerDay;
@@ -216,12 +219,30 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
 
-        var visibleStars = StarRenderModel.ProjectVisibleStars(catalog.Stars, latitude, localSiderealAngle, Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength));
-        projectedGuideStars = ProjectGuideStars(visibleStars.Where(star => star.IsGuideStar));
+        // Reused buffers rather than a fresh projection, filter and dictionary each frame: this runs
+        // on the render thread whenever the scope is up, over the whole catalog.
+        StarRenderModel.ProjectVisibleStars(
+            catalog.Stars,
+            latitude,
+            localSiderealAngle,
+            Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength),
+            overlayStars);
+
+        overlayGuideStars.Clear();
+        overlayStarsByHip.Clear();
+        foreach (var star in overlayStars)
+        {
+            overlayStarsByHip[star.Hip] = star;
+            if (star.IsGuideStar)
+            {
+                overlayGuideStars.Add(star);
+            }
+        }
+
+        projectedGuideStars = ProjectGuideStars(overlayGuideStars);
         projectedPlanets = ProjectPlanets(calendar.TotalDays, latitude, localSiderealAngle);
         PollIdentifyPlanet();
-        var visibleStarMap = visibleStars.ToDictionary(star => star.Hip);
-        var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, visibleStarMap);
+        var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, overlayStarsByHip);
         var nextScreenSegments = new List<RenderedScreenSegment>();
 
         foreach (var segment in segments)
