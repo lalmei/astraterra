@@ -352,7 +352,8 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | Rendered bodies are structs | `RenderedBody` and `RenderedStar` are `readonly record struct`, so a visible sky is not three thousand heap objects a frame |
 | Redo work only when it shows | The projection refreshes when the sky has turned or the observer moved `StarRefreshThresholdDeg` (0.05°) — a tenth of a star sprite. At default time speed the sky turns about 0.25° a second, so that is a few refreshes a second rather than sixty |
 | Parse nothing per frame | A journal book's JSON is deserialized only when the written text changes |
-| Batch, do not loop draw calls | Constellation marks are ~3700 billboards — more than the star catalogue. They go into one mesh and **one** `RenderMesh`, rebuilt only when the dots or the scope's dot size change, the same way `SkyCoordinateGridRenderer` draws the grid |
+| Batch, do not loop draw calls | Every sky sprite goes through `SkyBillboardMeshBuilder`: constellation marks (~3700) into one mesh, stars and planets into one mesh **per sprite** — three at most, since only a bright, a faint and a planet sprite are ever in play. Around 6700 draw calls a frame became about four |
+| Colour rides on vertices | A per-body colour uniform forces a draw call per body. The batches carry colour in the mesh, which is what collapses them. Note this shades a star once rather than twice — see the warning below |
 | `Vec4f` is a class | A tint built per body per frame is thousands of heap objects a second. The shader uploads its uniform the moment it is assigned, so the draw loops keep one mutable instance |
 | Recurring logs go to `VerboseDebug` | `Notification` lands in `client-main.log`; a line every five seconds for every skipped frame flooded players' logs |
 
@@ -408,6 +409,18 @@ list lengths — the old line reported "how many dots were built", which stopped
 draw calls the moment those dots were batched. Peaks sit next to means because they answer different
 questions: the mean is what the pass costs, the peak is what the player felt.
 
+!!! warning "Batching changed how a star is tinted"
+    The old per-star path set the tint as **both** `RgbaTint` and `RgbaLightIn`, and the standard
+    shader computes `rgbaTint * applyLight(ambient, rgbaLightIn) * vertexColour` — so the tint was
+    applied twice, once directly and once through the light mix, which desaturates it. The batch sets
+    both uniforms to white and carries the colour on the vertices, applying it once.
+
+    Star colours therefore read slightly more saturated than they did. That is a look change, not a
+    correctness one, and it is the one part of the batching work that has to be judged by eye rather
+    than by a counter. Reproducing the old shading exactly would mean re-implementing `applyLight` on
+    the CPU, including its point-light term, which would drift with any change to Vintage Story's
+    shaders.
+
 !!! warning "This is a player-visible contract, not a micro-optimisation"
     A player reported the mod eating memory, stuttering while moving, and flooding the client log —
     with OpenAL failing to allocate sound sources alongside it. All of it traced back to the star
@@ -438,6 +451,8 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
 | The per-frame sky path allocates nothing       | `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame`                  |
 | Constellation marks are one batched draw      | `ConstellationDotMeshBuilderTests`, `BootstrapSmokeTests.Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars` |
+| Stars batch by sprite, not one draw each      | `SkyBillboardMeshBuilderTests`, `BootstrapSmokeTests.Stars_Are_Drawn_As_Batches_Rather_Than_One_Quad_Each`   |
+| A journal book can be carried in the off-hand | `BookOffhandStorageTests`                                                                                    |
 | Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |
 | Cost numbers mean what they say               | `SkyPassMetricsTests`                                                                                        |
 | One path goes dark, the rest keep drawing     | `SkyRenderPathsTests`                                                                                        |

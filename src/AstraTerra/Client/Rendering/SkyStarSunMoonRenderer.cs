@@ -93,6 +93,23 @@ public static class SkyStarSunMoonRenderer
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
     private static MeshRef? constellationDotMesh;
+
+    // One mesh per sprite in play, rebuilt only when the projection is. There is no texture atlas
+    // here and none is needed: the sky only ever draws two star sprites at a time (bright and faint,
+    // or their scoped equivalents) plus one for the planets, so grouping by sprite collapses about
+    // 3000 draw calls into three without touching the art.
+    private static readonly List<SkyBillboard> BrightStarBillboards = new(6000);
+    private static readonly List<SkyBillboard> FaintStarBillboards = new(6000);
+    private static readonly List<SkyBillboard> PlanetBillboards = new(32);
+    private static MeshRef? brightStarMesh;
+    private static MeshRef? faintStarMesh;
+    private static MeshRef? planetMesh;
+    private static int brightStarMeshCapacity;
+    private static int faintStarMeshCapacity;
+    private static int planetMeshCapacity;
+    private static float cachedStarMeshAngularScale = float.NaN;
+    private static bool cachedStarMeshScoped;
+    private static bool starMeshesDirty = true;
     private static int constellationDotMeshCapacity;
     private static int constellationDotMeshDrawnCount;
     private static float constellationDotMeshAngularSizeDeg = float.NaN;
@@ -111,7 +128,6 @@ public static class SkyStarSunMoonRenderer
     // heap objects a second. The shader uploads a uniform the moment it is assigned, so one mutable
     // instance can serve every draw.
     private static readonly Vec4f ScratchTint = new(1f, 1f, 1f, 1f);
-    private static readonly Vec4f ScratchGlowTint = new(1f, 1f, 1f, 1f);
     private static readonly Vec4f ScratchLight = new(1f, 1f, 1f, 1f);
     private static readonly Dictionary<int, RenderedStar> VisibleStarsByHip = new(6000);
     private static double cachedStarLatitudeDeg = double.NaN;
@@ -195,6 +211,20 @@ public static class SkyStarSunMoonRenderer
         meteorStreakMesh = null;
         constellationDotMesh?.Dispose();
         constellationDotMesh = null;
+        brightStarMesh?.Dispose();
+        brightStarMesh = null;
+        faintStarMesh?.Dispose();
+        faintStarMesh = null;
+        planetMesh?.Dispose();
+        planetMesh = null;
+        brightStarMeshCapacity = 0;
+        faintStarMeshCapacity = 0;
+        planetMeshCapacity = 0;
+        cachedStarMeshAngularScale = float.NaN;
+        starMeshesDirty = true;
+        BrightStarBillboards.Clear();
+        FaintStarBillboards.Clear();
+        PlanetBillboards.Clear();
         constellationDotMeshCapacity = 0;
         constellationDotMeshDrawnCount = 0;
         constellationDotMeshAngularSizeDeg = float.NaN;
@@ -514,47 +544,22 @@ public static class SkyStarSunMoonRenderer
 
             // Each path is switched independently so a player can answer "which one costs me?" in
             // one session, without a rebuild. Everything else keeps drawing.
-            foreach (var star in SkyRenderPaths.IsEnabled(SkyRenderPath.Stars) ? visibleStars : NoStars)
+            if (SkyRenderPaths.IsEnabled(SkyRenderPath.Stars))
             {
-                var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
-                var textureId = isFaint ? dimStarTextureId : brightStarTextureId;
-                var size = StarBillboardSizing.CalculateCoreDiameterPixels(star.Size);
-                var alpha = (float)Math.Clamp(star.Brightness, 0.0, 1.0);
-                var tint = SetColorFromTemperature(ScratchTint, star.ColorTemperatureK, alpha);
-                var outerAlpha = StarGlowMaxAlpha * alpha * alpha;
-                if (!isFaint && outerAlpha > 0.005f)
+                EnsureStarMeshes(clientApi, visibleStars, visiblePlanets, starAngularScale, planetAngularScale, useTelescopeSprites);
+
+                // Additive blending makes draw order between these irrelevant, which is what lets a
+                // star's glow and its core sit in different meshes.
+                drawnCount += DrawBillboardBatch(clientApi, shader, brightStarMesh, BrightStarBillboards.Count, brightStarTextureId, modelMatrixBuffer);
+                drawnCount += DrawBillboardBatch(clientApi, shader, faintStarMesh, FaintStarBillboards.Count, dimStarTextureId, modelMatrixBuffer);
+                drawnCount += DrawBillboardBatch(clientApi, shader, planetMesh, PlanetBillboards.Count, planetTextureId, modelMatrixBuffer);
+
+                for (var index = 0; index < visibleStars.Count; index++)
                 {
-                    var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(size, alpha);
-                    var glowTint = Set(ScratchGlowTint, tint.R, tint.G, tint.B, outerAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, star.Body, glowSize, imageSize, brightStarTextureId, glowTint, modelMatrixBuffer, starAngularScale);
+                    var size = StarBillboardSizing.CalculateCoreDiameterPixels(visibleStars[index].Size);
+                    smallestDrawnSize = Math.Min(smallestDrawnSize, size);
+                    largestDrawnSize = Math.Max(largestDrawnSize, size);
                 }
-
-                RenderStarQuad(clientApi, shader, quadModel, star.Body, size, imageSize, textureId, tint, modelMatrixBuffer, starAngularScale);
-
-                drawnCount++;
-                smallestDrawnSize = Math.Min(smallestDrawnSize, size);
-                largestDrawnSize = Math.Max(largestDrawnSize, size);
-            }
-
-            // Planets go through the same billboard path as stars, never on the faint sprite, and
-            // with a glow scaled by brilliance rather than by the saturated star curve, so that
-            // Venus reads as the brightest thing in the sky and Saturn does not.
-            foreach (var planet in SkyRenderPaths.IsEnabled(SkyRenderPath.Stars) ? visiblePlanets : NoPlanets)
-            {
-                var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
-                var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
-                var tint = Set(ScratchTint, planet.TintR, planet.TintG, planet.TintB, alpha);
-                var size = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
-                var glowAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
-                if (glowAlpha > 0.005f)
-                {
-                    var glowSize = size * (1f + (PlanetGlowSizeRange * brilliance));
-                    var glowTint = Set(ScratchGlowTint, planet.TintR, planet.TintG, planet.TintB, glowAlpha);
-                    RenderStarQuad(clientApi, shader, quadModel, planet.Body, glowSize, imageSize, planetTextureId, glowTint, modelMatrixBuffer, planetAngularScale);
-                }
-
-                RenderStarQuad(clientApi, shader, quadModel, planet.Body, size, imageSize, planetTextureId, tint, modelMatrixBuffer, planetAngularScale);
-                drawnCount++;
             }
 
             if (visibleDeepSkyObjects.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.DeepSky))
@@ -613,7 +618,7 @@ public static class SkyStarSunMoonRenderer
                 report.MeshUpdates,
                 SkyRenderPaths.Describe());
             clientApi.Logger.VerboseDebug(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; drawn={1}; constellationDots={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; sprites={1}; constellationDots={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
                 visibleStars.Count,
                 drawnCount,
                 constellationDots.Count,
@@ -661,32 +666,159 @@ public static class SkyStarSunMoonRenderer
     }
 
     /// <summary>
-    /// Draws one sky billboard. Takes the shared <see cref="RenderedBody"/> rather than a star, so
-    /// anything the sky projection places can be drawn through this same path.
+    /// Rebuilds the star and planet batches when the projection behind them has moved, or when the
+    /// scope changes how large a sprite should be.
     /// </summary>
-    private static void RenderStarQuad(
+    /// <remarks>
+    /// Colour rides on the vertices here, where it used to be a per-star pair of uniforms. That is
+    /// what allows one draw call per sprite, and it is also a small change in how a star is shaded:
+    /// the old path passed the tint as both <c>RgbaTint</c> and <c>RgbaLightIn</c>, so the shader
+    /// applied it twice, once directly and once through its light mix. The batch applies it once.
+    /// Star colours therefore read slightly more saturated than before — a look change to be judged
+    /// by eye, not a correctness one.
+    /// </remarks>
+    private static void EnsureStarMeshes(
         ICoreClientAPI clientApi,
-        IStandardShaderProgram shader,
-        MeshRef quadModel,
+        IReadOnlyList<RenderedStar> visibleStars,
+        IReadOnlyList<RenderedPlanet> visiblePlanets,
+        float starAngularScale,
+        float planetAngularScale,
+        bool useTelescopeSprites)
+    {
+        if (!starMeshesDirty &&
+            Math.Abs(starAngularScale - cachedStarMeshAngularScale) < 1e-6f &&
+            useTelescopeSprites == cachedStarMeshScoped)
+        {
+            return;
+        }
+
+        BrightStarBillboards.Clear();
+        FaintStarBillboards.Clear();
+        PlanetBillboards.Clear();
+
+        for (var index = 0; index < visibleStars.Count; index++)
+        {
+            var star = visibleStars[index];
+            var isFaint = star.VisualMagnitude > FaintStarMagnitudeThreshold;
+            var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(star.Size);
+            var alpha = (float)Math.Clamp(star.Brightness, 0.0, 1.0);
+            var (red, green, blue) = ColorFromTemperature(star.ColorTemperatureK);
+            var target = isFaint ? FaintStarBillboards : BrightStarBillboards;
+
+            var outerAlpha = StarGlowMaxAlpha * alpha * alpha;
+            if (!isFaint && outerAlpha > 0.005f)
+            {
+                var glowSize = StarBillboardSizing.CalculateGlowDiameterPixels(sizePixels, alpha);
+                BrightStarBillboards.Add(Billboard(star.Body, glowSize, starAngularScale, red, green, blue, outerAlpha));
+            }
+
+            target.Add(Billboard(star.Body, sizePixels, starAngularScale, red, green, blue, alpha));
+        }
+
+        // Planets take the same billboard path as stars, never the faint sprite, and get a glow
+        // scaled by brilliance rather than by the saturated star curve, so that Venus reads as the
+        // brightest thing in the sky and Saturn does not.
+        for (var index = 0; index < visiblePlanets.Count; index++)
+        {
+            var planet = visiblePlanets[index];
+            var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
+            var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
+            var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
+
+            var glowAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
+            if (glowAlpha > 0.005f)
+            {
+                var glowSize = sizePixels * (1f + (PlanetGlowSizeRange * brilliance));
+                PlanetBillboards.Add(Billboard(planet.Body, glowSize, planetAngularScale, planet.TintR, planet.TintG, planet.TintB, glowAlpha));
+            }
+
+            PlanetBillboards.Add(Billboard(planet.Body, sizePixels, planetAngularScale, planet.TintR, planet.TintG, planet.TintB, alpha));
+        }
+
+        UploadBillboardBatch(clientApi, BrightStarBillboards, ref brightStarMesh, ref brightStarMeshCapacity);
+        UploadBillboardBatch(clientApi, FaintStarBillboards, ref faintStarMesh, ref faintStarMeshCapacity);
+        UploadBillboardBatch(clientApi, PlanetBillboards, ref planetMesh, ref planetMeshCapacity);
+
+        starMeshesDirty = false;
+        cachedStarMeshAngularScale = starAngularScale;
+        cachedStarMeshScoped = useTelescopeSprites;
+    }
+
+    private static SkyBillboard Billboard(
         RenderedBody body,
         float sizePixels,
-        int imageSize,
-        int textureId,
-        Vec4f tint,
-        float[] modelMatrixBuffer,
-        float angularScale)
+        float angularScale,
+        float red,
+        float green,
+        float blue,
+        float alpha)
     {
-        var modelMatrix = BuildModelMatrix(clientApi, body, sizePixels, imageSize, angularScale);
+        var angularSizeDeg = Math.Clamp(sizePixels * StarAngularSizePerPixelDeg * angularScale, 0.001f, 2.0f);
+        return new SkyBillboard(
+            body.DirectionX,
+            body.DirectionY,
+            body.DirectionZ,
+            angularSizeDeg,
+            ColorUtil.ColorFromRgba(ToColorByte(red), ToColorByte(green), ToColorByte(blue), ToColorByte(alpha)));
+    }
+
+    private static void UploadBillboardBatch(
+        ICoreClientAPI clientApi,
+        IReadOnlyList<SkyBillboard> billboards,
+        ref MeshRef? mesh,
+        ref int capacity)
+    {
+        if (billboards.Count == 0)
+        {
+            return;
+        }
+
+        var required = SkyBillboardMeshBuilder.GetCapacityFor(billboards.Count);
+        var meshData = SkyBillboardMeshBuilder.Build(billboards, SkyDistance, Math.Max(required, capacity));
+        if (mesh is null || required > capacity)
+        {
+            mesh?.Dispose();
+            mesh = UploadMesh(clientApi, meshData);
+            capacity = Math.Max(required, capacity);
+        }
+        else
+        {
+            UpdateMesh(clientApi, mesh, meshData);
+        }
+    }
+
+    /// <summary>Draws one batch, and reports how many sprites it carried.</summary>
+    private static int DrawBillboardBatch(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        MeshRef? mesh,
+        int count,
+        int textureId,
+        float[] modelMatrixBuffer)
+    {
+        if (mesh is null || count == 0 || textureId == 0)
+        {
+            return 0;
+        }
+
+        var entity = clientApi.World.Player.Entity;
+        var verticalOrigin = (float)entity.LocalEyePos.Y
+            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
+        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
 
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
-        shader.RgbaTint = tint;
-        shader.RgbaLightIn = Set(ScratchLight, tint.R, tint.G, tint.B, 1f);
+        shader.RgbaTint = ColorUtil.WhiteArgbVec;
+        shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        DrawMesh(clientApi, quadModel);
+        DrawMesh(clientApi, mesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
+
+        return count;
     }
+
+    private static int ToColorByte(float channel) => (int)Math.Round(Math.Clamp(channel, 0f, 1f) * 255f);
 
     /// <summary>
     /// Rebuilds the batched dot mesh when the dots themselves change, or when the scope changes how
@@ -819,7 +951,8 @@ public static class SkyStarSunMoonRenderer
             - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
         var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
         var alpha = (float)Math.Clamp(deepSkyObject.Brightness * DeepSkyBrightnessScale, 0.0, 0.7);
-        var tint = new Vec4f(
+        var tint = Set(
+            ScratchTint,
             Math.Clamp(deepSkyObject.TintR, 0.0f, 1.0f),
             Math.Clamp(deepSkyObject.TintG, 0.0f, 1.0f),
             Math.Clamp(deepSkyObject.TintB, 0.0f, 1.0f),
@@ -883,43 +1016,6 @@ public static class SkyStarSunMoonRenderer
         return false;
     }
 
-    private static Matrix4 BuildModelMatrix(
-        ICoreClientAPI clientApi,
-        RenderedBody body,
-        float sizePixels,
-        int imageSize,
-        float angularScale)
-    {
-        var angularSizeDeg = Math.Clamp(sizePixels * StarAngularSizePerPixelDeg * angularScale, 0.001f, 2.0f);
-        return BuildSkyBillboardMatrix(clientApi, body.DirectionX, body.DirectionY, body.DirectionZ, angularSizeDeg, imageSize);
-    }
-
-    private static Matrix4 BuildSkyBillboardMatrix(
-        ICoreClientAPI clientApi,
-        double directionX,
-        double directionY,
-        double directionZ,
-        float angularSizeDeg,
-        int imageSize)
-    {
-        var entity = clientApi.World.Player.Entity;
-        var y = (float)(directionY * SkyDistance)
-            + (float)entity.LocalEyePos.Y
-            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
-        var position = new Vector3(
-            (float)(directionX * SkyDistance),
-            y,
-            (float)(directionZ * SkyDistance));
-        var rotation = SystemRenderSunMoon.CreateLookRotation(position);
-        var worldSize = 2f * SkyDistance * MathF.Tan(angularSizeDeg * MathF.PI / 360f);
-        var scale = Math.Max(0.0005f, worldSize / Math.Max(1, imageSize));
-
-        return Matrix4.CreateTranslation(-imageSize / 2f, -imageSize / 2f, 0f)
-            * Matrix4.CreateScale(scale)
-            * Matrix4.CreateFromQuaternion(rotation)
-            * Matrix4.CreateTranslation(position);
-    }
-
     private static FieldInfo? FindField(params string[] names)
     {
         foreach (var name in names)
@@ -980,6 +1076,7 @@ public static class SkyStarSunMoonRenderer
         cachedStarLatitudeDeg = latitudeDeg;
         cachedStarSiderealDeg = localSiderealDeg;
         cachedStarBrightnessBias = brightnessBias;
+        starMeshesDirty = true;
         return true;
     }
 
@@ -993,6 +1090,7 @@ public static class SkyStarSunMoonRenderer
 
         ProjectedStars.Clear();
         DrawableStars.Clear();
+        starMeshesDirty = true;
         cachedStarLatitudeDeg = double.NaN;
         cachedStarSiderealDeg = double.NaN;
         cachedStarBrightnessBias = double.NaN;
@@ -1113,7 +1211,7 @@ public static class SkyStarSunMoonRenderer
         return domain + ":" + rest;
     }
 
-    private static Vec4f SetColorFromTemperature(Vec4f target, double temperatureKelvin, float alpha)
+    private static (float Red, float Green, float Blue) ColorFromTemperature(double temperatureKelvin)
     {
         var kelvin = Math.Clamp(temperatureKelvin, 2500.0, 12000.0) / 100.0;
         double red;
@@ -1133,12 +1231,10 @@ public static class SkyStarSunMoonRenderer
             blue = 255.0;
         }
 
-        return Set(
-            target,
+        return (
             (float)Math.Clamp(red / 255.0, 0.55, 1.0),
             (float)Math.Clamp(green / 255.0, 0.55, 1.0),
-            (float)Math.Clamp(blue / 255.0, 0.55, 1.0),
-            alpha);
+            (float)Math.Clamp(blue / 255.0, 0.55, 1.0));
     }
 
     /// <summary>
