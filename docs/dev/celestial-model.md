@@ -352,6 +352,8 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | Rendered bodies are structs | `RenderedBody` and `RenderedStar` are `readonly record struct`, so a visible sky is not three thousand heap objects a frame |
 | Redo work only when it shows | The projection refreshes when the sky has turned or the observer moved `StarRefreshThresholdDeg` (0.05°) — a tenth of a star sprite. At default time speed the sky turns about 0.25° a second, so that is a few refreshes a second rather than sixty |
 | Parse nothing per frame | A journal book's JSON is deserialized only when the written text changes |
+| Batch, do not loop draw calls | Constellation marks are ~3700 billboards — more than the star catalogue. They go into one mesh and **one** `RenderMesh`, rebuilt only when the dots or the scope's dot size change, the same way `SkyCoordinateGridRenderer` draws the grid |
+| `Vec4f` is a class | A tint built per body per frame is thousands of heap objects a second. The shader uploads its uniform the moment it is assigned, so the draw loops keep one mutable instance |
 | Recurring logs go to `VerboseDebug` | `Notification` lands in `client-main.log`; a line every five seconds for every skipped frame flooded players' logs |
 
 !!! warning "This is a player-visible contract, not a micro-optimisation"
@@ -383,6 +385,8 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | Element rates match their semi-major axes     | `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law`                                                 |
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
 | The per-frame sky path allocates nothing       | `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame`                  |
+| Constellation marks are one batched draw      | `ConstellationDotMeshBuilderTests`, `BootstrapSmokeTests.Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars` |
+| Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |
 | A full turn per year on any year length       | `CelestialMathTests.SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length`                   |

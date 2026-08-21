@@ -74,6 +74,13 @@
 - Check `client-main.log` after several minutes of play; expected result: no recurring
   `AstraTerra sky step` lines (those belong in the debug log now), and no OpenAL or sound-loading
   errors appearing alongside them.
+- Hold a written constellation book in the off-hand at night and compare frame time with and without
+  it; expected result: no measurable difference, and the lines look exactly as they did — same dot
+  spacing, same colours, same fade near the horizon.
+- Scope the telescope while the book is held; expected result: the constellation lines stay a fine
+  trail of dots rather than swelling into blobs as the view magnifies.
+- Draw a new constellation segment while lines are on screen; expected result: it appears
+  immediately, without the existing lines flickering.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
 - With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.
