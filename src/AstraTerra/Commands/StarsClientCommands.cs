@@ -60,7 +60,7 @@ public sealed class StarsClientCommands
                 .HandleWith(args => TextCommandResult.Success(Build(GetStringArg(args, 0))))
             .EndSubCommand()
             .BeginSubCommand("debug")
-                .HandleWith(_ => TextCommandResult.Success(Debug()))
+                .HandleWith(_ => TextCommandResult.Success(Debug(api)))
             .EndSubCommand()
             .BeginSubCommand("daylight-stars")
                 .WithArgs(api.ChatCommands.Parsers.Word("on|off"))
@@ -196,10 +196,14 @@ public sealed class StarsClientCommands
         return "Authored constellation build requested.";
     }
 
-    private string Debug()
+    private string Debug(ICoreClientAPI api)
     {
         var debug = BuildService().Debug();
-        return selectedId is null ? debug : $"{debug}; selectedBookConstellation={selectedId}";
+        // Sky exposure is reported here so "I can/cannot see stars from this spot" comes back as
+        // numbers rather than a screenshot to be guessed at.
+        var exposure = SkyExposure.Describe(api);
+        var line = $"{debug}; {exposure}";
+        return selectedId is null ? line : $"{line}; selectedBookConstellation={selectedId}";
     }
 
     private StarsCommandService BuildService()

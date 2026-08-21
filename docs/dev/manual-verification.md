@@ -57,12 +57,16 @@
   match the season the game itself reports, not one a quarter of a year away.
 - At night, stand outdoors under open sky and confirm stars, the coordinate grid and constellation
   lines all draw.
-- Step under a tree, a porch, or an overhang; expected result: the sky still draws. This is the case
-  a plain rain-map check used to break.
-- Stand inside a closed building away from doors and windows, and again deep inside a cave; expected
-  result: no stars, no grid, no constellation lines, and the sextant reports no open sky.
-- Walk from that interior back out through the door; expected result: the sky returns as the doorway
-  light does, and never shows through the walls on the way out.
+- Step under a tree, a porch, or an overhang; expected result: the sky still draws.
+- Stand indoors, well back from a window or an open door, and look out at the sky through it;
+  expected result: **the stars are visible through the opening** and nowhere else. This is the case
+  that has broken twice — once by a rain-map check, once by a light-level threshold.
+- Look at the walls, floor and roof from that same spot; expected result: no stars through any of
+  them.
+- Go deep into a cave with a torch; expected result: no stars in any direction, and `.stars debug`
+  reports `skyExposure=blocked` with `sunlightAtEye=0`.
+- Run `.stars debug` in each of those spots; expected result: the reported verdict matches what you
+  can actually see, and is what to quote in a bug report.
 
 ## Performance
 

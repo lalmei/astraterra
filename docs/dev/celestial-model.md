@@ -356,6 +356,30 @@ Five thousand stars go through it, so the ordinary costs of comfortable code are
 | `Vec4f` is a class | A tint built per body per frame is thousands of heap objects a second. The shader uploads its uniform the moment it is assigned, so the draw loops keep one mutable instance |
 | Recurring logs go to `VerboseDebug` | `Notification` lands in `client-main.log`; a line every five seconds for every skipped frame flooded players' logs |
 
+### Who may draw the sky, and who must ask permission
+
+| Pass | Stage / order | Occluded by terrain? | Gate |
+| --- | --- | --- | --- |
+| Stars, planets, constellation marks, meteors | Opaque **0.3** (inside vanilla's sun/moon render) | **Yes** — terrain paints over it at 0.37 | none, by design |
+| Sky coordinate grid | Opaque **0.96** | No | `SkyExposure` |
+| Constellation overlay | Ortho | No | `SkyExposure` |
+| Sextant readout | Ortho | No | `SkyExposure` |
+
+!!! warning "The star pass must not be gated on sky exposure"
+    Vanilla's own starfield settles this: `SystemRenderNightSky` draws at Opaque **0.1** with the
+    depth test off and no exposure check of any kind, and is still not visible from inside a cave.
+    The mod's star pass sits in the same part of the frame and gets the same occlusion for free.
+
+    A whole-sky gate cannot express *"sky visible in that direction"*, so it can only be wrong one way
+    or the other. Both have shipped: a rain-map check took the sky away from anyone standing under a
+    tree (#71), and a light-level threshold took it away from a player standing indoors looking
+    straight out of a window. What survives is deliberately weak — **any** sunlight at the eye counts —
+    because skylight and line of sight come through the same openings, and it now guards only the
+    passes that draw over finished terrain.
+
+    `.stars debug` reports the numbers behind the verdict, so the next report of this comes back as
+    `skyExposure=blocked; eyeY=…; rainMapY=…; sunlightAtEye=…` rather than a screenshot.
+
 ### Measuring it
 
 Every claim above is checkable from inside the game, in one session, without a rebuild:
@@ -417,6 +441,7 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |
 | Cost numbers mean what they say               | `SkyPassMetricsTests`                                                                                        |
 | One path goes dark, the rest keep drawing     | `SkyRenderPathsTests`                                                                                        |
+| A block overhead never hides the whole sky    | `SkyExposureTests.Any_Skylight_At_All_Keeps_The_Sky`                                                        |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |
 | A full turn per year on any year length       | `CelestialMathTests.SolarLongitude_Runs_A_Full_Turn_Over_A_World_Year_Whatever_Its_Length`                   |
