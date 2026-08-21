@@ -138,21 +138,35 @@ public sealed class BootstrapSmokeTests
 
     /// <summary>
     /// <c>Vec4f</c> is a class in the Vintage Story API, so a tint built per body per frame is
-    /// thousands of heap objects a second on the render thread. The draw loops keep one instance and
-    /// write into it; this fails if a <c>new Vec4f</c> creeps back between the star loop and the end
-    /// of the planet loop.
+    /// thousands of heap objects a second on the render thread. Star and planet colour now rides on
+    /// mesh vertices instead; this fails if a per-body <c>Vec4f</c> creeps back into the batch build.
     /// </summary>
     [Fact]
-    public void The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body()
+    public void The_Star_And_Planet_Batch_Does_Not_Allocate_A_Tint_Per_Body()
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
 
-        var starLoopIndex = renderer.IndexOf("foreach (var star in ", StringComparison.Ordinal);
-        var planetLoopEndIndex = renderer.IndexOf("if (visibleDeepSkyObjects.Count > 0", starLoopIndex, StringComparison.Ordinal);
+        var batchIndex = renderer.IndexOf("private static void EnsureStarMeshes(", StringComparison.Ordinal);
+        var batchEndIndex = renderer.IndexOf("private static SkyBillboard Billboard(", batchIndex, StringComparison.Ordinal);
 
-        Assert.True(starLoopIndex >= 0);
-        Assert.True(planetLoopEndIndex > starLoopIndex);
-        Assert.DoesNotContain("new Vec4f(", renderer[starLoopIndex..planetLoopEndIndex], StringComparison.Ordinal);
+        Assert.True(batchIndex >= 0);
+        Assert.True(batchEndIndex > batchIndex);
+        Assert.DoesNotContain("new Vec4f(", renderer[batchIndex..batchEndIndex], StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Around three thousand stars used to be three thousand draw calls. They are now grouped by the
+    /// sprite they use, which is at most a handful of batches.
+    /// </summary>
+    [Fact]
+    public void Stars_Are_Drawn_As_Batches_Rather_Than_One_Quad_Each()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("DrawBillboardBatch(clientApi, shader, brightStarMesh", renderer, StringComparison.Ordinal);
+        Assert.Contains("DrawBillboardBatch(clientApi, shader, faintStarMesh", renderer, StringComparison.Ordinal);
+        Assert.Contains("DrawBillboardBatch(clientApi, shader, planetMesh", renderer, StringComparison.Ordinal);
+        Assert.DoesNotContain("RenderStarQuad(", renderer, StringComparison.Ordinal);
     }
 
     [Fact]

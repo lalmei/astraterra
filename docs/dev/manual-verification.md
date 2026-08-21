@@ -89,6 +89,15 @@
   trail of dots rather than swelling into blobs as the view magnifies.
 - Draw a new constellation segment while lines are on screen; expected result: it appears
   immediately, without the existing lines flickering.
+- **Compare star colour against the previous build**, side by side on the same night and latitude:
+  batching applies a star's tint once where the old path applied it twice, so warm stars
+  (Betelgeuse, Antares) should read slightly more saturated. Confirm the sky still looks like the
+  mod's sky rather than a christmas tree; this is the one part of the batching work that numbers
+  cannot judge.
+- Sight a planet with the telescope; expected result: it still resolves into a disc, and Venus still
+  outshines everything around it.
+- Put a Star Catalog book in the off-hand; expected result: the slot accepts it. If it does not,
+  check `client-main.log` for `journal books allowed in the off-hand` and for the mod loading at all.
 - Run `.stars render` at night; expected result: it lists every path as on.
 - Run `.stars render constellations off`; expected result: the lines vanish, the stars, planets,
   meteors and any scoped deep-sky plates keep drawing, and the next `AstraTerra sky cost` line in the
