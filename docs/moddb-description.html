@@ -7,8 +7,26 @@
   Notes:
   - Screenshots are marked with <!- - image: ... - -> comments. The ModDB editor cannot
     reach repo paths, so upload each shot to the mod page and drop the <img> in its place.
-  - Only plain tags are used (p / h3 / h4 / ul / li / table / blockquote / a / strong / em)
-    so TinyMCE does not rewrite them on save.
+  - Only plain tags are used (p / h3 / h4 / ul / li / table / a / strong / em) plus the
+    site's own spoiler markup, so TinyMCE does not rewrite them on save.
+  - Coloured callouts: there is no admonition plugin on that editor, so a callout is a
+    one-cell borderless table with a background colour and a thick coloured left border on
+    the cell. Table cell styles are what the Table plugin itself writes, so they survive a
+    save; a bare <div style> may not. Recipe:
+
+        <table style="border-collapse: collapse; width: 100%; background-color: BG;" border="0">
+        <tbody><tr>
+        <td style="padding: 10px 16px; border: none; border-left: 5px solid ACCENT;">
+        <p><strong><span style="color: TITLE;">Title</span></strong></p>
+        <p>Body.</p></td>
+        </tr></tbody></table>
+
+    Palette used below, taken from TinyMCE's own default swatches so the colour picker can
+    reproduce them by hand: warning #fbeeb8 / #e8a33d, success #bfedd2 / #2dc26b,
+    info #d4e6f8 / #2b7cd3, feedback #e6d0de / #b96ad9.
+  - Paste, then hit Preview before saving: if the site's valid_elements strips the styles,
+    fall back to plain <span style="color: ...; background-color: ...;"> runs, which the
+    existing description already proves survive.
 -->
 
 <!-- image: docs/screenshots/starfiel.png — banner shot for the top of the page -->
@@ -17,11 +35,27 @@
 
 <p>Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.</p>
 
-<p>Still in alpha. Many item models and recipes are placeholders, along with the UI/UX.</p>
+<table style="border-collapse: collapse; width: 100%; background-color: #fbeeb8;" border="0">
+<tbody>
+<tr>
+<td style="padding: 10px 16px; border: none; border-left: 5px solid #e8a33d;">
+<p><strong><span style="color: #8a5a00;">&#9888; Still in alpha</span></strong></p>
+<p>Many item models and recipes are placeholders, along with the UI/UX. Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.</p>
+</td>
+</tr>
+</tbody>
+</table>
 
-<p>Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.</p>
-
-<p>Always looking for contributions: models, code, docs etc.</p>
+<table style="border-collapse: collapse; width: 100%; background-color: #bfedd2;" border="0">
+<tbody>
+<tr>
+<td style="padding: 10px 16px; border: none; border-left: 5px solid #2dc26b;">
+<p><strong><span style="color: #14532d;">&#10003; Contributions welcome</span></strong></p>
+<p>Models, code, docs, translations, screenshots &mdash; all of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
 
 <h3>What is new</h3>
 
@@ -86,7 +120,16 @@
 <li><strong>Star colours read slightly more saturated.</strong> Colour rides on the mesh vertices now, where the old path applied each tint twice.</li>
 </ul>
 
+<table style="border-collapse: collapse; width: 100%; background-color: #e6d0de;" border="0">
+<tbody>
+<tr>
+<td style="padding: 10px 16px; border: none; border-left: 5px solid #b96ad9;">
+<p><strong><span style="color: #5c2a6e;">&#9997; We want your eyes on this</span></strong></p>
 <p>If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong &mdash; please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -99,13 +142,18 @@
 <p>A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.<br />
 Star locations and images are from Stellarium's database.</p>
 
-<h4>Note</h4>
-
+<table style="border-collapse: collapse; width: 100%; background-color: #d4e6f8;" border="0">
+<tbody>
+<tr>
+<td style="padding: 10px 16px; border: none; border-left: 5px solid #2b7cd3;">
+<p><strong><span style="color: #123a63;">&#9432; Note for server owners and modders</span></strong></p>
 <p>Without a clear date to start from we are just using the current Earth-centered locations.</p>
-
 <p>Right now the star field is only defined by the star catalog configuration, found within a JSON file in the mod's assets. The current one was built using the Stellarium dataset. One could procedurally generate it during world creation, or add/edit stars.</p>
-
 <p>Similarly the deep sky views could be generated or use custom assets, or place an easter egg in your server ;).</p>
+</td>
+</tr>
+</tbody>
+</table>
 
 <h3>Measure the sky with a Sextant</h3>
 
