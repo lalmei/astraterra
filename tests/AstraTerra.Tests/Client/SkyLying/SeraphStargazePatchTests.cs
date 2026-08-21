@@ -6,28 +6,61 @@ namespace AstraTerra.Tests.Client.SkyLying;
 public sealed class SeraphStargazePatchTests
 {
     [Fact]
-    public void Patch_Adds_A_Supine_Clip_To_The_Player_Seraph()
+    public void Patch_Adds_The_Recline_And_Both_Supine_Idles()
     {
         var patches = LoadPatches();
-        Assert.Equal(2, patches.Length);
+        Assert.Equal(3, patches.Length);
 
+        var recline = AssertClip(patches, "stargaze-down");
         var stargaze = AssertClip(patches, "stargaze");
         var holding = AssertClip(patches, "stargaze-hold");
-        AssertGroundedBack(stargaze.GetProperty("keyframes")[0].GetProperty("elements"));
-        AssertGroundedBack(holding.GetProperty("keyframes")[0].GetProperty("elements"));
+        AssertGroundedBack(LastFrame(recline));
+        AssertGroundedBack(FirstFrame(stargaze));
+        AssertGroundedBack(FirstFrame(holding));
 
-        // Arms behind the head in the free clip, mirrored left to right; at rest in the holding one,
-        // where the hands are busy with the telescope.
-        var arms = stargaze.GetProperty("keyframes")[0].GetProperty("elements");
+        // The recline starts standing: the engine eases a clip in by blending its first keyframe
+        // against the pose the seraph is in, so a first frame that is already supine plays as a
+        // slide into it -- feet planted, hips in the air.
+        Assert.All(
+            FirstFrame(recline).EnumerateObject(),
+            element => Assert.All(
+                element.Value.EnumerateObject(),
+                axis => Assert.Equal(0.0, axis.Value.GetDouble(), 3)));
+        Assert.Equal("Hold", recline.GetProperty("onAnimationEnd").GetString());
+        Assert.Equal("Repeat", stargaze.GetProperty("onAnimationEnd").GetString());
+
+        // Arms behind the head in the free clip, mirrored left to right; absent from the holding
+        // one, where the hands are busy with an instrument, and from the recline, which a held
+        // telescope has to survive.
+        var arms = FirstFrame(stargaze);
         var right = arms.GetProperty("UpperArmR");
         var left = arms.GetProperty("UpperArmL");
-        Assert.True(Math.Abs(right.GetProperty("rotationZ").GetDouble()) > 90.0);
         Assert.Equal(right.GetProperty("rotationZ").GetDouble(), left.GetProperty("rotationZ").GetDouble(), 3);
         Assert.Equal(-right.GetProperty("rotationX").GetDouble(), left.GetProperty("rotationX").GetDouble(), 3);
+        Assert.False(FirstFrame(holding).TryGetProperty("UpperArmR", out _));
+        Assert.False(LastFrame(recline).TryGetProperty("UpperArmR", out _));
+    }
 
-        var freeArms = holding.GetProperty("keyframes")[0].GetProperty("elements");
-        Assert.Equal(0.0, freeArms.GetProperty("UpperArmR").GetProperty("rotationZ").GetDouble());
-        Assert.Equal(0.0, freeArms.GetProperty("UpperArmL").GetProperty("rotationZ").GetDouble());
+    /// <summary>
+    /// Rotating a bone past its socket is what tore the elbows off the earlier pose. Vanilla's own
+    /// clips stay inside about 140 degrees on any one axis; so should these.
+    /// </summary>
+    [Fact]
+    public void No_Joint_Is_Turned_Past_Its_Socket()
+    {
+        foreach (var clip in LoadPatches().Select(patch => patch.GetProperty("value")))
+        {
+            foreach (var keyframe in clip.GetProperty("keyframes").EnumerateArray())
+            {
+                foreach (var element in keyframe.GetProperty("elements").EnumerateObject())
+                {
+                    foreach (var axis in element.Value.EnumerateObject().Where(axis => axis.Name.StartsWith("rotation", StringComparison.Ordinal)))
+                    {
+                        Assert.InRange(axis.Value.GetDouble(), -140.0, 140.0);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -101,9 +134,25 @@ public sealed class SeraphStargazePatchTests
     private static void AssertGroundedBack(JsonElement elements)
     {
         var torso = elements.GetProperty("LowerTorso");
-        Assert.Equal(-90.0, torso.GetProperty("rotationZ").GetDouble(), 3);
-        Assert.Equal(0.0, torso.GetProperty("rotationX").GetDouble(), 3);
-        Assert.Equal(-11.0, torso.GetProperty("offsetZ").GetDouble(), 3);
+        Assert.Equal(-90.0, Axis(torso, "rotationZ"), 3);
+        Assert.Equal(0.0, Axis(torso, "rotationX"), 3);
+
+        // Version 0 translates in the rotated frame, so dropping the hips of a torso pitched onto
+        // its back is mostly X. It is solved, not written by hand: tools/build_stargaze_clips.py.
+        Assert.True(Axis(torso, "offsetX") > 0.0);
+        Assert.True(Axis(torso, "offsetY") < 0.0);
+    }
+
+    private static double Axis(JsonElement pose, string name)
+        => pose.TryGetProperty(name, out var value) ? value.GetDouble() : 0.0;
+
+    private static JsonElement FirstFrame(JsonElement clip)
+        => clip.GetProperty("keyframes")[0].GetProperty("elements");
+
+    private static JsonElement LastFrame(JsonElement clip)
+    {
+        var keyframes = clip.GetProperty("keyframes");
+        return keyframes[keyframes.GetArrayLength() - 1].GetProperty("elements");
     }
 
     private static string PatchPath

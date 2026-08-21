@@ -4,152 +4,213 @@ using Vintagestory.API.Common;
 namespace AstraTerra.Client.SkyLying;
 
 /// <summary>
-/// The bed <c>lie</c> clip pitches the seraph onto its back with <c>rotationZ: -90</c>, then rolls
-/// it onto the side with <c>rotationX: -112.5</c>. Stargazing keeps the back-pitch, drops the roll,
-/// and lowers the hips onto the ground. Swim uses the opposite Z (<c>+80</c>) for a face-down
-/// stroke, which is how these axes are known.
-/// Seraph clips are animation version 0, which applies offsets after rotation — so a Y drop would
-/// slide sideways. Version 1 applies the drop first, the same space sit-on-G uses.
+/// The clips that put the seraph on its back: a recline that gets it there, and a supine idle it
+/// rests in, with and without the hands behind the head.
+///
+/// Two things about the engine shape all of this.
+///
+/// The first is animation versions. <c>ShapeElement.GetLocalTransformMatrix</c> composes a pose one
+/// way at version 0 and another at version 1: version 0 turns a bone about its rotation origin --
+/// its joint -- while version 1 turns it about the corner the cube's own coordinates start from.
+/// On the seraph those are not the same point; the shoulder joint sits seven pixels from the upper
+/// arm's corner. A version 1 pose therefore swings the arm off the shoulder and the elbow comes
+/// apart from the forearm, which is what the earlier version of this pose did. Every one of
+/// vanilla's 258 seraph clips is version 0, and so is every clip here.
+///
+/// The second is that a clip is eased in by blending its first keyframe against whatever pose the
+/// seraph is already in. A clip whose frame 0 is the finished supine pose does not play as lying
+/// down, it plays as a slide into lying down: the feet stay planted while the torso pitches back,
+/// and the seraph bridges. So the recline starts from the standing pose and lowers the hips before
+/// it pitches the torso, the way someone actually gets onto the ground.
+///
+/// The numbers come from <c>tools/build_stargaze_clips.py</c>, which solves the version 0 offsets
+/// from where the joints should end up in the world and checks that nothing sinks into the ground
+/// and no joint is pulled apart. It writes the same keyframes into
+/// <c>assets/astraterra/patches/seraph-stargaze.json</c>; a test holds the two to each other.
 /// </summary>
 public static class SkyLyingAnimation
 {
     /// <summary>
-    /// Parent-space drop, applied before the back-pitch when <see cref="AnimationVersion"/> is 1.
-    /// Sit-on-G uses the same 13-unit hip drop.
+    /// Version 0, like every clip on the shape these are added to. A shape whose clips disagree
+    /// logs "has mixed animation versions" and blends them wrongly, and version 0 is the one that
+    /// turns a bone about its joint -- see the type comment.
     /// </summary>
-    public const float GroundOffsetY = -13f;
+    public const int AnimationVersion = 0;
 
-    public const float GroundOffsetZ = -11f;
+    /// <summary>Frames in the recline. The engine runs 30 a second, so this is just under 0.7s.</summary>
+    public const int ReclineFrames = 21;
 
+    /// <summary>Frames in the breathing loop.</summary>
+    public const int IdleFrames = 42;
+
+    /// <summary>The torso pitch that lays the seraph on its back. Swim uses the opposite sign for a face-down stroke.</summary>
     public const float BackPitchZ = -90f;
 
-    /// <summary>Vanilla ClientAnimator uses the max version of active clips for offset order.</summary>
-    public const int AnimationVersion = 1;
+    private static readonly PoseFrame[] ReclinePose =
+    [
+        // Standing. The ease-in blends against this, so it has to be the pose the seraph is in.
+        new(0,
+        [
+            Bone("LowerFootL"),
+            Bone("LowerFootR"),
+            Bone("LowerTorso"),
+            Bone("UpperFootL"),
+            Bone("UpperFootR"),
+            Bone("UpperTorso"),
+        ]),
+        // Crouching: hips down, knees folded, weight forward.
+        new(5,
+        [
+            Bone("LowerFootL", oy: 1f, rz: 74f),
+            Bone("LowerFootR", oy: 1f, rz: 78f),
+            Bone("LowerTorso", ox: -7.136f, oy: 0.175f, rz: 14f),
+            Bone("UpperFootL", ry: 34f, rz: -44f),
+            Bone("UpperFootR", rx: -20f, ry: -22f, rz: -74f),
+            Bone("UpperTorso"),
+        ]),
+        // Sat on the ground, knees up, already leaning back.
+        new(11,
+        [
+            Bone("LowerFootL", oy: 1f, rz: 84f),
+            Bone("LowerFootR", oy: 1f, rz: 96f),
+            Bone("LowerTorso", ox: -6.847f, oy: -6.808f, rz: -22f),
+            Bone("UpperFootL", ry: 24f, rz: -52f),
+            Bone("UpperFootR", rx: -12f, ry: -20f, rz: -70f),
+            Bone("UpperTorso"),
+        ]),
+        // Going down: the back is most of the way to the ground and the left leg is straightening.
+        new(16,
+        [
+            Bone("LowerFootL", oy: 1f, rz: 48f),
+            Bone("LowerFootR", oy: 1f, rz: 94f),
+            Bone("LowerTorso", ox: -0.583f, oy: -13.849f, rz: -62f),
+            Bone("UpperFootL", ry: 8f, rz: -26f),
+            Bone("UpperFootR", ry: -18f, rz: -54f),
+            Bone("UpperTorso"),
+        ]),
+        // Settled, and identical to the idle's first frame so the handover is invisible.
+        new(20, [.. SupineBody(chest: 6f)]),
+    ];
 
-    public const float UpperArmRaiseZ = -192f;
+    // Hands behind the head. The shoulders turn out so the elbows fall open onto the ground beside
+    // the head rather than the arms being raised, which on a seraph flat on its back leaves them
+    // waving in the air. The forearm's one pixel nudge is the trick every vanilla clip with a
+    // folded elbow uses: it keeps the cubes meeting at the elbow.
+    private static readonly BonePose[] BehindHead =
+    [
+        Bone("LowerArmL", oy: 1f, rx: -80f, ry: 58f, rz: -83f),
+        Bone("LowerArmR", oy: 1f, rx: 80f, ry: -58f, rz: -83f),
+        Bone("UpperArmL", rx: -60f, ry: 70f, rz: -21f),
+        Bone("UpperArmR", rx: 60f, ry: -70f, rz: -21f),
+    ];
 
-    public const float UpperArmRWrapY = -48f;
+    // Breathing: the chest lifts a couple of degrees and settles. Small enough to read as alive
+    // rather than as movement, which is the difference between resting and being a dropped prop.
+    private static readonly (int Frame, float Chest)[] Breath = [(0, 6f), (14, 8.2f), (28, 6.6f)];
 
-    public const float UpperArmLWrapY = 48f;
+    /// <summary>
+    /// The recline, held on its last frame. It leaves the arms alone: during the half second it
+    /// takes, a held telescope keeps its own pose, and empty hands are folded behind the head by
+    /// the idle that follows.
+    /// </summary>
+    public static Animation Recline()
+        => Clip(
+            "StargazeRecline",
+            SkyLyingPolicy.ShapeAnimationRecline,
+            ReclinePose,
+            ReclineFrames,
+            EnumEntityAnimationEndHandling.Hold);
 
-    public const float UpperArmRBackX = 28f;
+    /// <summary>
+    /// The supine idle: on the back, one knee drawn up, breathing. With the hands free they go
+    /// behind the head; with something held, the arms are left to the item's own animation.
+    /// </summary>
+    public static Animation Idle(bool handsBehindHead)
+        => Clip(
+            handsBehindHead ? "Stargaze" : "StargazeHold",
+            SkyLyingPolicy.ShapeAnimationFor(handsBehindHead),
+            [.. Breath.Select(step => new PoseFrame(step.Frame, [.. SupineBody(step.Chest), .. handsBehindHead ? BehindHead : []]))],
+            IdleFrames,
+            EnumEntityAnimationEndHandling.Repeat);
 
-    public const float UpperArmLBackX = -28f;
-
-    public const float LowerArmRBendX = -58f;
-
-    public const float LowerArmLBendX = 58f;
-
-    public const float LowerArmRWrapY = 28f;
-
-    public const float LowerArmLWrapY = -28f;
-
-    public const float LowerArmWrapZ = 18f;
-
-    public static Animation ToSupine(Animation lie)
-        => ToSupine(lie, handsBehindHead: true);
-
-    public static Animation ToSupine(Animation lie, bool handsBehindHead)
+    /// <summary>
+    /// Adds the clips to a seraph shape, replacing any the shape already carries. The asset patch
+    /// puts the same clips on the vanilla player shape; this covers a shape that patch did not
+    /// reach, and keeps the two from drifting by using the same keyframes.
+    /// </summary>
+    public static bool EnsureSupineClips(Shape? shape)
     {
-        var stargaze = lie.Clone();
-        stargaze.Name = handsBehindHead ? "Stargaze" : "StargazeHold";
-        stargaze.Code = SkyLyingPolicy.ShapeAnimationFor(handsBehindHead);
-        stargaze.CodeCrc32 = AnimationMetaData.GetCrc32(stargaze.Code);
-        stargaze.Version = AnimationVersion;
-        if (lie.KeyFrames is not { } source)
-        {
-            return stargaze;
-        }
-
-        stargaze.KeyFrames = new AnimationKeyFrame[source.Length];
-        for (var i = 0; i < source.Length; i++)
-        {
-            var frame = new AnimationKeyFrame { Frame = source[i].Frame };
-            ApplySupinePose(frame, handsBehindHead);
-            stargaze.KeyFrames[i] = frame;
-        }
-
-        return stargaze;
-    }
-
-    public static bool EnsureSupineClip(Shape? shape)
-    {
-        if (shape?.Animations is null)
+        // Every seraph rig has 'lie'; a shape without it is not one, and the bone names below
+        // would land on nothing.
+        if (shape?.Animations is null || Find(shape.Animations, "lie") is null)
         {
             return false;
         }
 
-        var lie = Find(shape.Animations, "lie");
-        if (lie is null)
-        {
-            return false;
-        }
-
-        Upsert(shape, ToSupine(lie, handsBehindHead: true));
-        Upsert(shape, ToSupine(lie, handsBehindHead: false));
+        Upsert(shape, Recline());
+        Upsert(shape, Idle(handsBehindHead: true));
+        Upsert(shape, Idle(handsBehindHead: false));
         return true;
     }
 
-    private static void ApplySupinePose(AnimationKeyFrame frame, bool handsBehindHead)
+    /// <summary>
+    /// Flat on the back with the hips on the ground and the head roughly over where the player is
+    /// standing, one knee drawn up with the foot planted and the other leg long and turned out.
+    /// Two straight legs is what reads as a plank.
+    /// </summary>
+    private static BonePose[] SupineBody(float chest) =>
+    [
+        Bone("LowerFootL", rz: 10f),
+        Bone("LowerFootR", oy: 1f, rz: 86f),
+        Bone("LowerTorso", ox: 10.107f, oy: -15.223f, rz: BackPitchZ),
+        Bone("UpperFootL", ry: -16f, rz: -4f),
+        Bone("UpperFootR", ry: -16f, rz: -40f),
+        Bone("UpperTorso", rz: chest),
+    ];
+
+    private static Animation Clip(
+        string name,
+        string code,
+        PoseFrame[] frames,
+        int quantityFrames,
+        EnumEntityAnimationEndHandling onAnimationEnd)
     {
-        var torso = Element(frame, "LowerTorso");
-        torso.OffsetX = 0;
-        torso.OffsetY = GroundOffsetY;
-        torso.OffsetZ = GroundOffsetZ;
-        torso.RotationX = 0;
-        torso.RotationY = 0;
-        torso.RotationZ = BackPitchZ;
-
-        Zero(Element(frame, "UpperTorso"));
-        Zero(Element(frame, "UpperFootL"));
-        Zero(Element(frame, "LowerFootL"));
-        Zero(Element(frame, "UpperFootR"));
-        Zero(Element(frame, "LowerFootR"));
-
-        if (handsBehindHead)
+        var animation = new Animation
         {
-            Pose(Element(frame, "UpperArmR"), UpperArmRBackX, UpperArmRWrapY, UpperArmRaiseZ);
-            Pose(Element(frame, "UpperArmL"), UpperArmLBackX, UpperArmLWrapY, UpperArmRaiseZ);
-            Pose(Element(frame, "LowerArmR"), LowerArmRBendX, LowerArmRWrapY, LowerArmWrapZ);
-            Pose(Element(frame, "LowerArmL"), LowerArmLBendX, LowerArmLWrapY, LowerArmWrapZ);
-            return;
+            Name = name,
+            Code = code,
+            CodeCrc32 = AnimationMetaData.GetCrc32(code),
+            Version = AnimationVersion,
+            QuantityFrames = quantityFrames,
+            OnActivityStopped = EnumEntityActivityStoppedHandling.EaseOut,
+            OnAnimationEnd = onAnimationEnd,
+            KeyFrames = new AnimationKeyFrame[frames.Length]
+        };
+
+        for (var i = 0; i < frames.Length; i++)
+        {
+            var elements = new Dictionary<string, AnimationKeyFrameElement>();
+            foreach (var bone in frames[i].Bones)
+            {
+                elements[bone.Name] = new AnimationKeyFrameElement
+                {
+                    RotationX = bone.RotationX,
+                    RotationY = bone.RotationY,
+                    RotationZ = bone.RotationZ,
+                    OffsetX = bone.OffsetX,
+                    OffsetY = bone.OffsetY,
+                    OffsetZ = 0
+                };
+            }
+
+            animation.KeyFrames[i] = new AnimationKeyFrame { Frame = frames[i].Frame, Elements = elements };
         }
 
-        Zero(Element(frame, "UpperArmR"));
-        Zero(Element(frame, "UpperArmL"));
-        Zero(Element(frame, "LowerArmR"));
-        Zero(Element(frame, "LowerArmL"));
+        return animation;
     }
 
-    private static AnimationKeyFrameElement Element(AnimationKeyFrame frame, string name)
-    {
-        frame.Elements ??= new Dictionary<string, AnimationKeyFrameElement>();
-        if (!frame.Elements.TryGetValue(name, out var element) || element is null)
-        {
-            element = new AnimationKeyFrameElement();
-            frame.Elements[name] = element;
-        }
-
-        return element;
-    }
-
-    private static void Zero(AnimationKeyFrameElement element)
-    {
-        element.OffsetX = 0;
-        element.OffsetY = 0;
-        element.OffsetZ = 0;
-        element.RotationX = 0;
-        element.RotationY = 0;
-        element.RotationZ = 0;
-    }
-
-    private static void Pose(AnimationKeyFrameElement element, float rotationX, float rotationY, float rotationZ)
-    {
-        Zero(element);
-        element.RotationX = rotationX;
-        element.RotationY = rotationY;
-        element.RotationZ = rotationZ;
-    }
+    private static BonePose Bone(string name, float rx = 0f, float ry = 0f, float rz = 0f, float ox = 0f, float oy = 0f)
+        => new(name, rx, ry, rz, ox, oy);
 
     private static void Upsert(Shape shape, Animation animation)
     {
@@ -195,4 +256,8 @@ public static class SkyLyingAnimation
 
         return -1;
     }
+
+    private readonly record struct BonePose(string Name, float RotationX, float RotationY, float RotationZ, float OffsetX, float OffsetY);
+
+    private readonly record struct PoseFrame(int Frame, BonePose[] Bones);
 }

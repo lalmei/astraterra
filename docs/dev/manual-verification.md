@@ -12,10 +12,14 @@
 ## Lying Down
 
 - Load any world and check `client-main.log`; expected result: **no** `Shape … has mixed animation
-  versions` error. An animation added to a vanilla shape must not declare a version of its own — see
-  `tools/convert-animation-version.py`.
+  versions` error. An animation added to a vanilla shape must not declare a version of its own, and
+  must be authored in version 0 — version 1 turns a bone about its cube's corner instead of its
+  joint. See `docs/dev/data-pipeline.md`.
 
-- Stand still on solid ground and press **Z**; expected result: the seraph lies on its back (not its side), hips and legs rest on the ground rather than floating, empty hands are behind the head (not on the forehead), the first-person camera drops close to the ground, and the view looks straight up.
+- Stand still on solid ground and press **Z**; expected result: the seraph crouches, sits, and lowers itself onto its back over about half a second — it does not pivot at the hips with its feet planted, and it does not arch into a bridge on the way down.
+- Watch it in third person once it is down; expected result: it lies on its back (not its side), the hips, back, and both legs rest on the ground rather than floating or sinking, one knee is drawn up, the chest rises and falls, and empty hands are folded behind the head with the elbows resting on the ground — the arms stay attached at the shoulder and the elbows do not come apart from the forearms.
+- Expected result: the first-person camera drops close to the ground and the view looks straight up.
+- Preview any pose change without launching the game with `make pose-preview CLIP=stargaze-down`, which draws the clip frame by frame and reports anything sunk into the ground or pulled apart at a joint.
 - Expected result: the sky, stars, and meteor streaks fill the view. The body stays on the ground and does not block the sky. The camera does not clip into the block below.
 - Switch to third person, then to the fixed overhead camera, and press **Z**; expected result: the body lies down on the ground, but the camera does not snap to the sky.
 - Look around while lying in third person; expected result: the camera/head turns and the body stays planted.

@@ -43,3 +43,34 @@ python tools/deepsky/import_stellarium.py /path/to/stellarium/nebulae/default
 The importer requires a canonical four-corner texture registration, derives the catalog center and descriptive angular size from the source footprint, and copies the exact registered PNG into the runtime texture directory.
 
 When adding a new runtime data shape, version the filename and add asset tests for schema-level expectations.
+
+## Seraph Poses
+
+The stargaze clips are generated, not hand-written. `tools/build_stargaze_clips.py` states the pose
+as intent — torso pitch, where the hip joint should end up, how far each joint bends — solves the
+keyframe offsets against a port of the engine's own transform code, checks that nothing sinks into
+the ground and no joint is pulled apart, and writes
+`assets/astraterra/patches/seraph-stargaze.json`. `SkyLyingAnimation` carries the same keyframes for
+shapes the patch does not reach, and a test holds the two to each other.
+
+```bash
+make pose-build                      # regenerate the clips
+make pose-preview CLIP=stargaze-down # draw a clip, frame by frame, and open it
+```
+
+`tools/preview_seraph_pose.py` draws a clip as a PNG contact sheet — side, front, and top, with
+optional samples between keyframes and of the ease-in — and prints ground contact and joint gaps per
+frame. `--blend` is the one that catches a clip which plays as a slide into its own first keyframe
+rather than as a movement.
+
+Two engine details govern all of this, and both have bitten this mod:
+
+- **Author version 0.** Vintage Story composes a pose about the bone's rotation origin at animation
+  version 0 and about the cube's own corner at version 1. On the seraph those are different points,
+  so a version 1 pose swings limbs off their sockets. Every vanilla seraph clip is version 0, and a
+  shape whose clips disagree logs `Shape … has mixed animation versions`.
+  `tools/convert-animation-version.py` converts an imported version 1 export rather than relabelling
+  it, but it preserves the pose as authored — including a pose that was already wrong.
+- **Frame 0 is the pose you start from.** A clip is eased in by blending its first keyframe against
+  the pose the entity is already in, so a clip that opens on its finished pose plays as a linear
+  slide into it. Anything that should read as a movement needs the movement in its keyframes.

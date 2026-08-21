@@ -19,5 +19,5 @@ public static class PlayerStargazeAnimationPatch
 
     [HarmonyPrefix]
     public static void Prefix(ref Shape entityShape)
-        => SkyLyingAnimation.EnsureSupineClip(entityShape);
+        => SkyLyingAnimation.EnsureSupineClips(entityShape);
 }
