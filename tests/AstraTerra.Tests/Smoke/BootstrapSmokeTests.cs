@@ -98,8 +98,8 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("\"quadModelRef\"", renderer);
         Assert.Contains("GlToggleBlend(true, EnumBlendMode.Glow)", renderer);
         Assert.Contains("GLDisableDepthTest()", renderer);
-        Assert.Contains("ConstellationRenderModel.BuildSkyDots", renderer);
-        Assert.Contains("ConstellationDotTexturePath", renderer);
+        Assert.Contains("ConstellationRenderModel.BuildSkyLines", renderer);
+        Assert.Contains("SkyMarkTexturePath", renderer);
         Assert.Contains("MinimumSkyRenderDarkness", renderer);
         Assert.Contains("MinimumStarAlpha", renderer);
         Assert.Contains("ShouldRenderForDarkness(naturalDarkness, forceDaylightStars)", renderer);
@@ -127,8 +127,8 @@ public sealed class BootstrapSmokeTests
         var starsIndex = renderer.IndexOf("foreach (var star in ", StringComparison.Ordinal);
         var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
         var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
-        // The constellation marks are one batched draw now, not a loop over dots.
-        var constellationIndex = renderer.IndexOf("RenderConstellationDots(clientApi, shader, starResidualRotation, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
+        // The constellation marks are one batched draw now, a ribbon per edge.
+        var constellationIndex = renderer.IndexOf("RenderConstellationLines(clientApi, shader, starResidualRotation, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
 
         Assert.True(starsIndex >= 0);
         Assert.True(foregroundBlendIndex > starsIndex);

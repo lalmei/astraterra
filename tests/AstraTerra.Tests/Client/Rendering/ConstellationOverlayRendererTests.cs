@@ -1,6 +1,7 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Constellations;
+using Vintagestory.API.MathTools;
 using Xunit;
 
 namespace AstraTerra.Tests.Client.Rendering;
@@ -27,7 +28,7 @@ public sealed class ConstellationOverlayRendererTests
     }
 
     [Fact]
-    public void BuildSkyDots_Returns_Normalized_Interior_Dots()
+    public void BuildSkyLines_Carries_Each_Edge_As_One_Tinted_Line()
     {
         var segment = new ConstellationSegment(
             ConstellationId: 7,
@@ -36,17 +37,34 @@ public sealed class ConstellationOverlayRendererTests
             Start: Star(10, directionX: 1, directionY: 0, directionZ: 0),
             End: Star(20, directionX: 0, directionY: 1, directionZ: 0));
 
-        var dot = Assert.Single(ConstellationRenderModel.BuildSkyDots([segment], angularSpacingDeg: 45));
-        var length = Math.Sqrt((dot.DirectionX * dot.DirectionX) + (dot.DirectionY * dot.DirectionY) + (dot.DirectionZ * dot.DirectionZ));
+        var line = Assert.Single(ConstellationRenderModel.BuildSkyLines([segment]));
+        var tint = ConstellationRenderModel.GetConstellationTint(7);
 
-        Assert.Equal(7, dot.ConstellationId);
-        Assert.Equal(10, dot.StartHip);
-        Assert.Equal(20, dot.EndHip);
-        Assert.Equal(ConstellationRenderModel.GetConstellationTint(7), dot.Tint);
-        Assert.Equal(1.0, length, precision: 6);
-        Assert.Equal(Math.Sqrt(0.5), dot.DirectionX, precision: 6);
-        Assert.Equal(Math.Sqrt(0.5), dot.DirectionY, precision: 6);
-        Assert.Equal(0, dot.DirectionZ, precision: 6);
+        Assert.Equal(1.0, line.StartX, precision: 6);
+        Assert.Equal(0.0, line.StartY, precision: 6);
+        Assert.Equal(0.0, line.EndX, precision: 6);
+        Assert.Equal(1.0, line.EndY, precision: 6);
+        Assert.Equal(
+            ColorUtil.ColorFromRgba(
+                (int)Math.Round(tint.R * 255f),
+                (int)Math.Round(tint.G * 255f),
+                (int)Math.Round(tint.B * 255f),
+                (int)Math.Round(tint.A * 255f)),
+            line.Color);
+    }
+
+    /// <summary>An edge whose stars sit on top of each other has no direction to draw a line along.</summary>
+    [Fact]
+    public void BuildSkyLines_Drops_An_Edge_With_No_Length()
+    {
+        var segment = new ConstellationSegment(
+            ConstellationId: 7,
+            StartHip: 10,
+            EndHip: 20,
+            Start: Star(10, directionX: 1, directionY: 0, directionZ: 0),
+            End: Star(20, directionX: 1, directionY: 0, directionZ: 0));
+
+        Assert.Empty(ConstellationRenderModel.BuildSkyLines([segment]));
     }
 
     [Fact]
