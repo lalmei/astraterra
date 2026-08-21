@@ -22,6 +22,9 @@
 
     Palette used below: warning #f7e9c3 / #ddc27e / #6b4e12, success #d4edda / #a3d4ad /
     #2d5a3a, info #dce8f5 / #a9c6e4 / #1f3b5c, feedback #e8dcf0 / #c4a8d8 / #4a2a5c.
+  - Every spoiler title starts with a literal &#9662; triangle. The site gives the toggle
+    no affordance of its own, so the arrow is what tells readers the bar is clickable; it
+    has to be text, since a CSS ::after cannot be pasted in.
   - The whole description sits in one wrapper <div> that sets the parchment background and
     a 960px reading column, and each spoiler carries its own inline styles rather than
     trusting the site's default spoiler CSS. Both are borrowed from the same page.
@@ -49,11 +52,9 @@
 
 <h3>What is new</h3>
 
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">v0.5.2 &mdash; the sky pass got cheap (click to expand)</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
-
+<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9889; v0.5.2 &mdash; the sky pass got cheap</strong></p>
+<p style="margin: 0 0 8px;">The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
 <table style="border-collapse: collapse; width: 100%;" border="1">
 <tbody>
 <tr>
@@ -88,20 +89,14 @@
 </tr>
 </tbody>
 </table>
-
-<p>The before figures come from a real <code>client-main.log</code> &mdash; 2,988 stars and 3,728 constellation dots visible &mdash; and the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
-
-<p>Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.</p>
-
-<p>You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
-</div>
+<p style="margin: 0 0 8px;">The before figures come from a real <code>client-main.log</code> &mdash; 2,988 stars and 3,728 constellation dots visible &mdash; and the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
+<p style="margin: 0 0 8px;">Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.</p>
+<p style="margin: 0 0 8px;">You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
 </div>
 
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">v0.5.2 &mdash; the sky looks different, and we would like to hear about it (click to expand)</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Getting the cost down meant changing how several things are drawn. None of it is settled, and the judgements behind it are the kind that are better made by people actually observing than by anyone reading a diff.</p>
-
+<div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9997; v0.5.2 &mdash; the sky looks different, and we would like to hear about it</strong></p>
+<p style="margin: 0 0 8px;">Getting the cost down meant changing how several things are drawn. None of it is settled, and the judgements behind it are the kind that are better made by people actually observing than by anyone reading a diff.</p>
 <ul>
 <li><strong>Constellation lines are continuous now</strong>, a thin ribbon per edge instead of a trail of dots, and each line stops short of the stars it joins. The dots were sized in degrees, so magnification pulled them apart into a row of specks; a ribbon holds its weight at any zoom and cannot be mistaken for a star.</li>
 <li><strong>The sky turns smoothly through a telescope.</strong> It used to be redrawn only once it had moved a twentieth of a degree &mdash; under a pixel at the naked eye, but seven to fourteen through a scope, which arrived as a visible step several times a second.</li>
@@ -109,18 +104,13 @@
 <li><strong>Deep-sky plates now fade the catalogue out underneath them.</strong> A plate is a photograph with its own stars already in it, so over the Pleiades the photograph's stars are the stars; a degree away the sky is the catalogue's again.</li>
 <li><strong>Star colours read slightly more saturated.</strong> Colour rides on the mesh vertices now, where the old path applied each tint twice.</li>
 </ul>
-
-<div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9997; We want your eyes on this</strong></p>
 <p style="margin: 0 0 8px;">If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong &mdash; please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
-</div>
-</div>
 </div>
 
 <h3>Features</h3>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#127756; An Earth night sky (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127756; An Earth night sky.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <!-- image: docs/screenshots/starfiel.png — magnitude-scaled stars over a Vintage Story landscape -->
 
@@ -137,7 +127,7 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128207; Measure the sky with a Sextant (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128207; Measure the sky with a Sextant.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too &mdash; a daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.</p>
 
@@ -146,7 +136,7 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#129517; Plan observations with a Calibrated Astrolabe (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#129517; Plan observations with a Calibrated Astrolabe.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.</p>
 
@@ -157,7 +147,7 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128301; Observe and record constellations (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128301; Observe and record constellations.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <!-- image: docs/screenshots/create_constellation.png — telescope scoped view with a recorded constellation -->
 
@@ -166,14 +156,14 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9732; Watch seasonal meteor showers (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9732; Watch seasonal meteor showers.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Nine major annual showers recur at fixed points in the world's year. Their visible rate follows the published peak strength, how high the radiant is above the horizon, sky darkness, and moonlight. Short streaks near the radiant and longer streaks farther away preserve the perspective that makes a real shower appear to radiate from one point in the sky.</p>
 </div>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#129680; Follow the wandering planets (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#129680; Follow the wandering planets.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Mercury, Venus, Mars, Jupiter and Saturn move against the fixed stars on real orbits, solved from published orbital elements rather than animated along a path. A world year is a year of that motion, whatever the world's day count, so Jupiter takes about twelve world years to come back around and Venus swings between the evening and morning sky within a season, brightening and fading as it goes.</p>
 
@@ -183,7 +173,7 @@ Star locations and images are from Stellarium's database.</p>
 
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128506; Roadmap (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128506; Roadmap.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the <a href="https://github.com/lalmei/astraterra/milestone/1">Moving Sky Objects</a> milestone.</p>
 
@@ -209,7 +199,7 @@ Star locations and images are from Stellarium's database.</p>
 
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#128218; Attribution (click to expand)</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128218; Attribution.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Inspired by Minecraft's <a href="https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main">Spyglass Astronomy</a>.</p>
 

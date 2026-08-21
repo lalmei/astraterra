@@ -36,8 +36,6 @@ PAGE = """<!doctype html>
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }}
   .spoiler-toggle {{ cursor: pointer; user-select: none; }}
-  .spoiler-toggle::after {{ content: ' \\25be'; opacity: 0.6; }}
-  .spoiler.is-open .spoiler-toggle::after {{ content: ' \\25b4'; }}
   .spoiler-text {{ display: none; }}
   .spoiler.is-open .spoiler-text {{ display: block; }}
   img {{ max-width: 100%; height: auto; border-radius: 4px; }}
