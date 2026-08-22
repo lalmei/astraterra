@@ -98,6 +98,8 @@ A planet is forecast where it will actually be, not where it is now: scroll a se
 
 Press **Z** to lie on your back on the ground, the same kind of toggle as sit-on-G. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view instead of the seraph. Third person and the fixed overhead camera keep their current view; only the body lies down. Looking around turns your view, not the body on the ground. Empty hands rest behind the head. Move, jump, or press **Z** again to stand. The binding is remappable under Controls as **Lie down**. **X** stays vanilla off-hand swap.
 
+![The seraph lying on its back in a meadow, hands folded behind the head](../screenshots/stargazing.png)
+
 Telescopes, the Sextant, and the Calibrated Astrolabe still work while you are lying down.
 
 ## Observation Conditions

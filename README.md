@@ -52,6 +52,12 @@ An astrolabe is engraved for one latitude, so a new one is blank until you cut i
 
 The Brass Telescope provides a scoped observation view with several zoom levels. Draw between guide stars, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.
 
+### Lie down and watch the sky
+
+![The seraph lying on its back in a meadow, hands folded behind the head](docs/screenshots/stargazing.png)
+
+Press **Z** to lie on your back on the ground, the same kind of toggle as sit-on-G. The seraph crouches, sits, and lowers itself down over about half a second, then rests with one knee drawn up and empty hands folded behind the head. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view. Move, jump, or press **Z** again to stand. Telescopes, the Sextant, and the Astrolabe all still work while you are lying down. The binding is remappable under Controls as **Lie down**.
+
 ### Watch seasonal meteor showers
 
 Nine major annual showers recur at fixed points in the world's year. Their visible rate follows the
@@ -133,7 +139,6 @@ The Astrolabe lists every comet whether or not it is here. One that is away read
 
 In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the [Moving Sky Objects](https://github.com/lalmei/astraterra/milestone/1) milestone.
 
-- Ability to lay down looking up.
 - New models astrological instruments.
 - Redo recipes for instruments and calibration.
 - Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap)
