@@ -34,9 +34,9 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
-    private readonly PlanetCatalog? planetCatalog;
-    private readonly CometCatalog? cometCatalog;
-    private readonly Dictionary<string, CometEntry> cometsById;
+    private PlanetCatalog? planetCatalog;
+    private CometCatalog? cometCatalog;
+    private Dictionary<string, CometEntry> cometsById;
     private IReadOnlyList<AstrolabeTarget>? planetTargets;
     private IReadOnlyList<AstrolabeTarget>? cometTargets;
     private int cometTargetsDaysPerYear;
@@ -83,6 +83,26 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     {
         ArgumentNullException.ThrowIfNull(replacement);
         catalog = replacement;
+    }
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplacePlanetCatalog"/>.</summary>
+    public void ReplacePlanetCatalog(PlanetCatalog? replacement)
+    {
+        planetCatalog = replacement;
+        planetTargets = null;
+        planetTargetsDaysPerYear = 0;
+        planetTargetsHoursPerDay = 0;
+    }
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCometCatalog"/>.</summary>
+    public void ReplaceCometCatalog(CometCatalog? replacement)
+    {
+        cometCatalog = replacement;
+        cometsById = replacement?.Comets.ToDictionary(comet => comet.Id, StringComparer.Ordinal)
+                     ?? new Dictionary<string, CometEntry>(StringComparer.Ordinal);
+        cometTargets = null;
+        cometTargetsDaysPerYear = 0;
+        cometTargetsHoursPerDay = 0;
     }
 
     public void OnMouseDown(MouseEvent args)

@@ -258,6 +258,48 @@ public sealed class AstraTerraModSystem : ModSystem
         return true;
     }
 
+    /// <summary>
+    /// Replaces the planets, or passes null for a sky that has none.
+    /// </summary>
+    /// <remarks>
+    /// The shipped planets are this solar system's, with orbits authored against it, so a mod that
+    /// moves the world elsewhere has to either supply its own or say there are none. Passing null
+    /// takes the same path as a planet catalog that failed to load, which every consumer already
+    /// handles by leaving planets out.
+    /// </remarks>
+    public void ReplacePlanetCatalog(PlanetCatalog? replacement)
+    {
+        planets = replacement;
+        SkyStarSunMoonRenderer.ReplacePlanetCatalog(replacement);
+        constellationOverlayRenderer?.ReplacePlanetCatalog(replacement);
+        astrolabePlannerRenderer?.ReplacePlanetCatalog(replacement);
+        sextantReadingRenderer?.ReplacePlanetCatalog(replacement);
+    }
+
+    /// <summary>Replaces the comets, or passes null for a sky that has none.</summary>
+    public void ReplaceCometCatalog(CometCatalog? replacement)
+    {
+        comets = replacement;
+        SkyStarSunMoonRenderer.ReplaceCometCatalog(replacement);
+        astrolabePlannerRenderer?.ReplaceCometCatalog(replacement);
+        sextantReadingRenderer?.ReplaceCometCatalog(replacement);
+    }
+
+    /// <summary>
+    /// Replaces the meteor showers; an empty list is a sky with none.
+    /// </summary>
+    /// <remarks>
+    /// The shipped showers are named for the constellations their radiants sit in, so they depend on
+    /// a sky culture as well as on the debris streams of the shipped comets. Under a replaced sky
+    /// both of those are gone, and a radiant named for a figure nobody can point to reads as a bug.
+    /// </remarks>
+    public void ReplaceMeteorShowers(IReadOnlyList<MeteorShowerEntry> replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        meteorShowers = replacement;
+        SkyStarSunMoonRenderer.ReplaceMeteorShowers(replacement);
+    }
+
     public override void StartServerSide(ICoreServerAPI api)
     {
         new ConstellationBookServer(() => catalog).Register(api);
