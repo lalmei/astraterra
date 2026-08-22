@@ -34,7 +34,7 @@ through the Makefile rather than editing either by hand.
 
 !!! note "The bump targets deploy"
     `bump-version`, and therefore `bump-minor-version` and `bump-patch-version`, chain into
-    `deploy`, which copies the built mod into your local Vintage Story install. Use
+    `deploy`, which installs the zip package into your local Vintage Story Mods folder. Use
     `make bump-version-files VERSION=x.y.z` to update the version without deploying.
 
 ### What happens on merge to `main`

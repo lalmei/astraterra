@@ -22,7 +22,7 @@ help:
 	@printf "  make test        Run the test suite\n"
 	@printf "  make build       Build the mod in $(CONFIGURATION)\n"
 	@printf "  make package     Build and zip the mod into $(DIST_DIR)/\n"
-	@printf "  make deploy      Build and install into Vintage Story Mods\n"
+	@printf "  make deploy      Package the mod and install the zip into Vintage Story Mods\n"
 	@printf "  make run         Launch Vintage Story.app\n"
 	@printf "  make deploy-run  Deploy the mod, then launch the game\n"
 	@printf "  make docs-build  Build the documentation site\n"
@@ -47,10 +47,12 @@ package: build
 	@cd "$(BUILD_OUTPUT_DIR)" && zip -qr "$(CURDIR)/$(PACKAGE_FILE)" .
 	@printf "Packaged $(PACKAGE_FILE)\n"
 
-deploy: build
-	@rm -rf "$(DEPLOY_DIR)"
+deploy: package
 	@mkdir -p "$(MODS_DIR)"
-	@cp -R "$(BUILD_OUTPUT_DIR)" "$(DEPLOY_DIR)"
+	@rm -rf "$(DEPLOY_DIR)"
+	@rm -f "$(MODS_DIR)"/AstraTerra-*.zip(N)
+	@cp "$(PACKAGE_FILE)" "$(MODS_DIR)/"
+	@printf "Deployed $(PACKAGE_FILE) to $(MODS_DIR)/\n"
 
 run:
 	@open -a "$(GAME_APP)"
@@ -87,7 +89,9 @@ moddb-copy:
 	@python3 tools/moddb_preview.py --paste | pbcopy
 	@printf "Paste-ready ModDB description copied to the clipboard\n"
 
-bump-version: bump-version-files deploy
+# Re-invoke make after rewriting the version so PACKAGE_FILE picks up the new number.
+bump-version: bump-version-files
+	@$(MAKE) deploy
 
 bump-version-files:
 	@if [[ -z "$(VERSION)" ]]; then printf "Usage: make bump-version VERSION=0.1.2\n"; exit 2; fi
