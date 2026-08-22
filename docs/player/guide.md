@@ -2,6 +2,10 @@
 
 AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Stars change with latitude, seasons, (future: longitude) telescope zoom reveals more sky detail, and saved constellation lines can be used as a seasonal memory aid.
 
+## In-Game Handbook
+
+Everything below is also written into the Vintage Story handbook. Press **H** and open the **Astronomy** tab for eight pages covering the night sky, each instrument, the constellation journal, wandering stars, and meteor showers and comets. Pressing **H** while hovering an AstraTerra item opens its own page.
+
 ## What You Can Do
 
 - Watch an 5000+ fixed-star sky that changes as you travel north or south.
