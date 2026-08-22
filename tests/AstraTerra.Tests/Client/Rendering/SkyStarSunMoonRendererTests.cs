@@ -1,3 +1,4 @@
+using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using Xunit;
 
@@ -5,6 +6,37 @@ namespace AstraTerra.Tests.Client.Rendering;
 
 public sealed class SkyStarSunMoonRendererTests
 {
+    /// <summary>
+    /// A mod that authors the starfield from the world seed can only supply it after the server has
+    /// said which world this is, which is long after the shipped catalog loads.
+    /// </summary>
+    [Fact]
+    public void ReplaceCatalog_Swaps_The_Stars_The_Sky_Draws_From()
+    {
+        SkyStarSunMoonRenderer.Reset();
+        Assert.Equal(0, SkyStarSunMoonRenderer.CatalogStarCount);
+
+        SkyStarSunMoonRenderer.ReplaceCatalog(CatalogOf(3));
+        Assert.Equal(3, SkyStarSunMoonRenderer.CatalogStarCount);
+
+        SkyStarSunMoonRenderer.ReplaceCatalog(CatalogOf(7));
+        Assert.Equal(7, SkyStarSunMoonRenderer.CatalogStarCount);
+
+        SkyStarSunMoonRenderer.Reset();
+        Assert.Equal(0, SkyStarSunMoonRenderer.CatalogStarCount);
+    }
+
+    [Fact]
+    public void ReplaceCatalog_Rejects_A_Missing_Catalog()
+        => Assert.Throws<ArgumentNullException>(() => SkyStarSunMoonRenderer.ReplaceCatalog(null!));
+
+    private static StarCatalog CatalogOf(int stars)
+        => new(
+            Enumerable.Range(1, stars)
+                .Select(hip => new StarCatalogEntry(hip, hip * 10.0, 0.0, 2.0, 0.5, false))
+                .ToList(),
+            []);
+
     [Theory]
     [InlineData(0.00, false, false)]
     [InlineData(0.04, false, false)]

@@ -196,6 +196,10 @@ public static class SkyStarSunMoonRenderer
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
     public static bool ForceDaylightStars => forceDaylightStars;
+
+    /// <summary>Stars in the catalog the sky is currently drawing from, zero when astronomy is off.</summary>
+    public static int CatalogStarCount => catalog?.Stars.Count ?? 0;
+
     public static bool ShouldRenderVanillaStarfield
         => config is null || StarfieldModeParser.ShowsVanilla(config.GetStarfieldMode());
 
@@ -224,6 +228,28 @@ public static class SkyStarSunMoonRenderer
             meteorShowers.Count,
             planetCatalog?.Planets.Count ?? 0,
             cometCatalog?.Comets.Count ?? 0);
+    }
+
+    /// <summary>
+    /// Swaps in a different set of stars while the sky is already drawing, for mods that author the
+    /// starfield from the world seed rather than shipping it as an asset. Those catalogs only exist
+    /// once the server has told the client which sky this save has, which is long after
+    /// <see cref="Initialize"/> runs.
+    /// </summary>
+    /// <remarks>
+    /// The projected buffers are keyed on latitude, sidereal angle and brightness bias, none of
+    /// which change when the catalog does, so they have to be dropped explicitly or the old sky
+    /// keeps drawing until the player walks far enough to move the cache.
+    /// </remarks>
+    public static void ReplaceCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        catalog = replacement;
+        ClearProjectedStars();
+        api?.Logger.Notification(
+            "AstraTerra sky renderer catalog replaced: stars={0}; deepSkyObjects={1}",
+            replacement.Stars.Count,
+            replacement.DeepSkyObjects.Count);
     }
 
     /// <summary>
