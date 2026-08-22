@@ -17,7 +17,6 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 ## Non-Goals For Current Scope
 
 - Multiplayer synchronization of constellation journals.
-- Planets, comets, or other moving bodies.
 - Milky Way rendering.
 - Real star names in normal player UI.
 - Import/export of constellation journals.
@@ -34,7 +33,7 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 
 - Multiplayer constellation sync.
 - Catalog import/export.
-- Moving bodies and event objects.
+- Event objects beyond comets and meteor showers.
 - Graphical rotating rete and placed tabletop astrolabe interface.
 - Sharing constellation catalogs with other players.
 - Tapestry or decorative constellation output.

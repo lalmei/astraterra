@@ -6,6 +6,8 @@
 
 Position and projection are kept apart on purpose. `ISkyEphemeris` answers *where a body is at a world time* — constant for a catalog star, an orbit for a planet — and `SkyProjection` answers *where that lands for this observer*, identically for every kind of body. `RenderedStar` and `RenderedPlanet` are both the shared `RenderedBody` plus the things only that kind of body has, and anything else that moves is expected to wrap it the same way rather than grow a second projection path. `CachedSkyEphemeris` keeps the first half off the per-frame budget.
 
+Comets take the third route through the same seam. `CometEphemeris` satisfies `ISkyEphemeris` from an *authored* apparition rather than from an orbit: `CometApparitionSchedule` turns a world time into a signed phase against the nearest perihelion, and one closeness curve off that phase drives both brightness and tail length, so an apparition builds and fades as one thing. The track is interpolated on the sphere rather than in right ascension, because a comet authored across 0h would otherwise be dragged the long way round the sky. Route (1) of the design sketch was taken deliberately — a near-parabolic orbit would need Barker's equation and would change nothing a player experiences, while an authored file is something a server owner can actually write. Visibility has to be an explicit window gate rather than a faint magnitude: the mod's brightness curve is compressed and never reaches zero, so an absent comet made faint would still draw.
+
 `KeplerianOrbit`, `PlanetEphemeris` and `WorldEpoch` are the planet half of that: orbital elements in, geocentric right ascension and declination out, with `WorldEpoch` owning the one mapping from the world clock to the real calendar the elements are published against. `PlanetRenderModel` is an instance rather than a static class because it holds a cached ephemeris per planet.
 
 The convention here is narrower than "no Vintage Story types", which the asset loaders in this folder have never followed. It is: **the model is pure, and the loaders that feed it are the only exception.** A loader may take `ICoreAPI` to reach the game's asset system, but it must also expose a pure parse entry point over a string so the shipped asset's shape can be tested without a running game — see `MeteorShowerCatalogLoader.Parse`. Everything else in this folder takes plain numbers and returns plain numbers, which is what keeps it testable outside the Vintage Story runtime.
@@ -47,6 +49,8 @@ assets/astraterra/
 Runtime catalog assets are versioned by filename.
 
 `assets/astraterra/data/star_catalog.v1.json` : Contains the defined stars. Modifing this file can change which stars you see.
+
+`assets/astraterra/data/comets.v1.json` : Authored comet apparitions — period and phase in world years, a window, a brightness curve, and a track of keyframes across the apparition. Server owners can add their own; the loader rejects a comet that could never be seen rather than letting it fail silently, because on a body due once every thirteen years "never appears" and "not due yet" look identical.
 
 `assets/astraterra/data/deep-sky.v1.json` : Contains the defined sky images, in our reserved for nebulas, galaxy and other deep sky objects. We use real astronomy photograhs, but these can also be pre-generated.
 

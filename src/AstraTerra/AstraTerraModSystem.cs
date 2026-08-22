@@ -19,6 +19,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private StarCatalog? catalog;
     private IReadOnlyList<MeteorShowerEntry> meteorShowers = Array.Empty<MeteorShowerEntry>();
     private PlanetCatalog? planets;
+    private CometCatalog? comets;
     private TelescopeZoomPatcher? telescopeZoomPatcher;
     private SkyLyingController? skyLyingController;
     private ICoreClientAPI? clientApi;
@@ -106,6 +107,19 @@ public sealed class AstraTerraModSystem : ModSystem
             planets = null;
             api.Logger.Warning("AstraTerra planets disabled: {0}", exception);
         }
+
+        try
+        {
+            comets = CometCatalogLoader.Load(api);
+            api.Logger.Event(
+                "AstraTerra startup step: comet catalog loaded: comets={0}",
+                comets.Comets.Count);
+        }
+        catch (Exception exception)
+        {
+            comets = null;
+            api.Logger.Warning("AstraTerra comets disabled: {0}", exception);
+        }
     }
 
     public override void AssetsFinalize(ICoreAPI api)
@@ -169,15 +183,16 @@ public sealed class AstraTerraModSystem : ModSystem
                 dayOfYearProvider: () => api.World.Calendar.DayOfYear,
                 daysPerYearProvider: () => Math.Max(1, api.World.Calendar.DaysPerYear)),
             constellationBookClient,
-            config).Register(api);
-        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/debug/daylight-stars/starfield/sky-grid/render");
+            config,
+            comets).Register(api);
+        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/comets/debug/daylight-stars/starfield/sky-grid/render");
 
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
 
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
-        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets);
+        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
         api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
@@ -188,7 +203,7 @@ public sealed class AstraTerraModSystem : ModSystem
             return;
         }
 
-        SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets);
+        SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets);
         constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, planets);
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
@@ -196,17 +211,18 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Event.MouseMove += constellationOverlayRenderer.OnMouseMove;
         api.Event.MouseUp += constellationOverlayRenderer.OnMouseUp;
         api.Event.RegisterRenderer(new TelescopeScopeRenderer(api), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
-        astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient, planets);
+        astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient, planets, comets);
         api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
         api.Logger.Event(
-            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; skyGrid=AstraTerraSkyCoordinateGrid; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}; meteorShowers={4}; planets={5}",
+            "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; skyGrid=AstraTerraSkyCoordinateGrid; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}; meteorShowers={4}; planets={5}; comets={6}",
             catalog.Stars.Count,
             catalog.GuideGroups.Count,
             catalog.SkyCultures.Count,
             catalog.DeepSkyObjects.Count,
             meteorShowers.Count,
-            planets?.Planets.Count ?? 0);
+            planets?.Planets.Count ?? 0,
+            comets?.Comets.Count ?? 0);
     }
 
     public override void StartServerSide(ICoreServerAPI api)

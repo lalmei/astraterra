@@ -62,6 +62,7 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 ## Recovery And Debug Commands
 
 ```text
+.stars comets
 .stars connect <hipA> <hipB>
 .stars debug
 .stars goto-lat <degrees>
@@ -75,8 +76,8 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 .stars sky-grid equatorial
 .stars sky-grid both
 .stars render
-.stars render stars|constellations|deepsky|meteors|all on
-.stars render stars|constellations|deepsky|meteors|all off
+.stars render stars|constellations|deepsky|meteors|comets|all on
+.stars render stars|constellations|deepsky|meteors|comets|all off
 ```
 
 `connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics. `goto-lat` helps test different sky latitudes in the current world. `daylight-stars` is intended for testing and should be turned off for normal play.
@@ -87,9 +88,11 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 - `both` shows AstraTerra and the original Vintage Story cubemap together for alignment comparisons.
 - `vanilla` shows only the original Vintage Story starfield.
 
+`comets` reports every comet in the catalog: whether it is up now — with its phase through the apparition, magnitude, tail length and position — or how many days until its next one begins. A comet is the one thing in the mod you cannot check by looking up, since the rarest is due about once every seventy-five world years, so this turns the whole catalog into four lines.
+
 `render` switches one part of the sky off so you can see what it costs. If the mod is making your game stutter, this is the fastest way to say *which part*: turn one path off, play for half a minute, and see whether it helps. `.stars render` on its own lists what is drawing.
 
-Unlike `starfield` and `sky-grid`, this is not saved — everything comes back when you restart the client, because it is a measuring tool rather than a setting. The paths are `stars` (including planets), `constellations`, `deepsky` (the telescope's photographic plates) and `meteors`, plus `all`.
+Unlike `starfield` and `sky-grid`, this is not saved — everything comes back when you restart the client, because it is a measuring tool rather than a setting. The paths are `stars` (including planets), `constellations`, `deepsky` (the telescope's photographic plates), `meteors` and `comets`, plus `all`.
 
 Every 30 seconds, AstraTerra writes what the sky cost into `client-debug.log` — time per frame, worst frame, draw calls, and which paths were on. If you are reporting a performance problem, that line and the path you found is exactly what makes the report actionable.
 

@@ -9,7 +9,8 @@ public enum SkyRenderPath
     Constellations = 2,
     DeepSky = 4,
     Meteors = 8,
-    All = Stars | Constellations | DeepSky | Meteors
+    Comets = 16,
+    All = Stars | Constellations | DeepSky | Meteors | Comets
 }
 
 /// <summary>
@@ -46,7 +47,7 @@ public static class SkyRenderPaths
 
 public static class SkyRenderPathParser
 {
-    public static readonly string[] Names = ["stars", "constellations", "deepsky", "meteors"];
+    public static readonly string[] Names = ["stars", "constellations", "deepsky", "meteors", "comets"];
 
     public static bool TryParse(string? value, out SkyRenderPath path)
     {
@@ -68,6 +69,10 @@ public static class SkyRenderPathParser
             case "meteors":
             case "meteor":
                 path = SkyRenderPath.Meteors;
+                return true;
+            case "comets":
+            case "comet":
+                path = SkyRenderPath.Comets;
                 return true;
             case "all":
                 path = SkyRenderPath.All;
