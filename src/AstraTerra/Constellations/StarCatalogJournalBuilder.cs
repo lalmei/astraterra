@@ -8,6 +8,23 @@ public static class StarCatalogJournalBuilder
     public static readonly IReadOnlyList<string> TraditionalZodiacCodes =
         ["Ari", "Tau", "Gem", "Cnc", "Leo", "Vir", "Lib", "Sco", "Sgr", "Cap", "Aqr", "Psc"];
 
+    /// <summary>
+    /// Whether the catalog carries the named sky culture at all.
+    /// </summary>
+    /// <remarks>
+    /// A catalog with no sky cultures is a legitimate state, not a packaging fault: a mod that
+    /// authors the starfield from the world seed has no inherited figures to hand over, because
+    /// Earth's are drawn between Earth's star ids. Callers building culture-dependent content check
+    /// here first, which keeps <see cref="BuildSelected"/> free to treat a culture that should be
+    /// present but is not as the bug it would be.
+    /// </remarks>
+    public static bool HasCulture(StarCatalog catalog, string cultureId = ModernIauCultureId)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        return catalog.SkyCultures.Any(candidate =>
+            string.Equals(candidate.Id, cultureId, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static ConstellationJournal Build(StarCatalog catalog, string cultureId = ModernIauCultureId)
         => BuildSelected(catalog, constellationCodes: null, cultureId);
 

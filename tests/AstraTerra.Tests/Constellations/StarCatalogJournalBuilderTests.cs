@@ -6,6 +6,36 @@ namespace AstraTerra.Tests.Constellations;
 
 public sealed class StarCatalogJournalBuilderTests
 {
+    /// <summary>
+    /// A procedurally authored sky hands over stars with no inherited figures, so culture-dependent
+    /// content has to be able to ask whether there is a culture instead of finding out by exception.
+    /// </summary>
+    [Fact]
+    public void HasCulture_Separates_An_Uncultured_Sky_From_A_Missing_Culture()
+    {
+        var stars = new[] { new StarCatalogEntry(1, 0, 0, 1, null, true) };
+        var procedural = new StarCatalog(stars, [], [], []);
+        var earthlike = new StarCatalog(
+            stars,
+            [],
+            [
+                new SkyCultureConstellationSet(
+                    1,
+                    StarCatalogJournalBuilder.ModernIauCultureId,
+                    "Modern IAU",
+                    ["single"],
+                    new SkyCultureSource("Test", "https://example.com", "Test", "Test"),
+                    [new SkyCultureConstellation("One", "First", [[1, 1]])])
+            ]);
+
+        Assert.False(StarCatalogJournalBuilder.HasCulture(procedural));
+        Assert.True(StarCatalogJournalBuilder.HasCulture(earthlike));
+        Assert.False(StarCatalogJournalBuilder.HasCulture(earthlike, "not_a_culture"));
+
+        // Still a bug worth shouting about when a caller asks for a culture regardless.
+        Assert.Throws<InvalidOperationException>(() => StarCatalogJournalBuilder.Build(procedural));
+    }
+
     [Fact]
     public void Build_Creates_One_Named_Record_Per_Usable_Authored_Constellation()
     {
