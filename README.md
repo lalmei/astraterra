@@ -42,6 +42,8 @@ Hold a written constellation book in your left hand and use the Calibrated Astro
 
 It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.
 
+An astrolabe is engraved for one latitude, so a new one is blank until you cut its plate: stand under open sky after dusk and sneak-hold right click while it sights the pole. It needs no star catalog and no brass to do this, only the sky. Afterwards every reading answers for the latitude it was cut at — travel far enough and it tells you how far you have strayed, and eventually asks to be recut. Its clock is not engraved and follows you wherever you go.
+
 ![Astrolabe usage](docs/screenshots/astrolabe.png)
 
 ### Observe and record constellations
@@ -122,7 +124,6 @@ retrograde loop: it is what the sky does when the world overtakes a slower plane
 In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the [Moving Sky Objects](https://github.com/lalmei/astraterra/milestone/1) milestone.
 
 - Ability to lay down looking up.
-- Ability to keep astrolabe calibrated to a specific latitude, or recalibrate it to a different lattitude without the star catalog.
 - New models astrological instruments.
 - Redo recipes for instruments and calibration.
 - Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap)

@@ -119,6 +119,12 @@
 - Point away from every body and confirm the readout lists what is available to aim at rather than reporting stars are not visible.
 - With the star catalog asset missing or failing to load, confirm the Sextant still sights the sun and moon and offers only those two.
 - Hold the Astrolabe steady for a minute of world time and confirm the clock line advances without the frame rate dropping; the sky clock is cached per world minute rather than recomputed each frame.
+- Hold a freshly crafted Calibrated Astrolabe and hold right click; expected result: it reads **no plate** and refuses to place anything, whatever book is in the left hand.
+- Sneak and hold right click under open sky at night; expected result: a bar fills over about three seconds and the readout then shows a plate at your latitude.
+- Repeat indoors, and again in daylight; expected result: the bar stays empty and the readout names the obstacle — cover in one case, a too-bright sky in the other. Step out from under the roof without releasing the button; expected result: the bar starts filling from empty rather than jumping.
+- Release the button halfway through; expected result: no plate is cut and the next attempt starts from zero.
+- On a dedicated server, cut a plate and then rejoin; expected result: the plate survives, because the server wrote it to the itemstack.
+- Drop a cut astrolabe and pick it up, or hand it to another player; expected result: the plate is unchanged and still reads the latitude it was cut at, not the new holder's.
 - Hold the written constellation book in the left hand and the Calibrated Astrolabe in the main hand.
 - Hold right click and confirm the astrolabe shows latitude, world day, compass direction, altitude, motion state, and time until transit for a recorded constellation.
 - Confirm the astrolabe's clock line shows the hour, the phase of the day, the sun's angle, and the time to the next sunrise or sunset, and that the hour agrees with the game's own clock.
@@ -129,6 +135,10 @@
 - Repeat the astrolabe check indoors or during daylight and confirm planning remains available.
 - At a high latitude, confirm the astrolabe distinguishes a circumpolar constellation from one that never rises.
 - At an extreme latitude during a polar day or night, confirm the astrolabe reports that the sun does not set or does not rise instead of showing an hour.
+- Travel a few degrees of latitude from where the plate was cut; expected result: the readout says how far north or south of the plate you are, and the altitudes and transit times still answer for the plate rather than for where you stand.
+- Travel more than eight degrees; expected result: the readout asks you to recut the plate, and still reads rather than going blank.
+- Recut the plate there; expected result: the drift note disappears and the readings change to the new latitude.
+- Confirm the clock line does not drift with the plate: at a longitude far from where the plate was cut, the hour still agrees with the game's own clock.
 
 ## Creative Inventory
 

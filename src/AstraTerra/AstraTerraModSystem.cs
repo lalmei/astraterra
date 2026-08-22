@@ -124,6 +124,7 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
+        AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyLyingState.Reset();
         clientApi = api;
@@ -221,6 +222,7 @@ public sealed class AstraTerraModSystem : ModSystem
         skyLyingController?.Stop();
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
+        AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
