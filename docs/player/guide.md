@@ -5,12 +5,12 @@ AstraTerra turns the night sky into an dynamic starfield for Vintage Story. Star
 ## What You Can Do
 
 - Watch an 5000+ fixed-star sky that changes as you travel north or south.
-- Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear.
+- Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear, and comets that return on their own periods with an anti-sunward tail.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
-- Use the Sextant to read the angle of a star, a planet, the sun, or the moon above the horizon, day or night.
+- Use the Sextant to read the angle of a star, a planet, a comet, the sun, or the moon above the horizon, day or night.
 - Lie on your back with **Z** to watch the sky from the ground, the same kind of toggle as sit-on-G.
-- Use the Calibrated Astrolabe to predict where and when recorded constellations and the planets will appear, tell the time of night, and see what day of the year it is.
+- Use the Calibrated Astrolabe to predict where and when recorded constellations, the planets, and the comets will appear, tell the time of night, and see what day of the year it is.
 - Two prebuilt constellation catalogs, that could be used to debug, or used in builds. `Catalog` the 88 Internationally (IAU) defined constalations and the `Zodiac` containes just the 12 constallations in the Zodiac.
 
 ### Extension
@@ -127,6 +127,37 @@ check the latitude reported by AstraTerra.
 
 Each streak points back toward its shower's radiant. Streaks close to that point are short, while
 streaks farther across the sky are longer because the parallel meteor paths are seen in perspective.
+
+## Comets
+
+Four comets return on their real orbital periods, counted in world years so a period means the same
+thing whatever your world's day count is: Machholz about every 5 years, Tuttle about every 14,
+Tempel-Tuttle about every 33, and Halley about every 75. Each is the parent of a meteor shower
+already in the sky — the Quadrantids, the Ursids, the Leonids, and both the Eta Aquariids and the
+Orionids.
+
+An apparition lasts a couple of world weeks. Across it the comet moves along its own track against
+the stars, and brightens as it rounds perihelion before fading again. Its tail and its coma build and
+fade together, so it arrives gradually rather than switching on — for the first nights it is a faint
+smudge, and only near perihelion is it the most interesting thing in the sky.
+
+The tail points **away from the sun**, not along the comet's motion, and swings right around as the
+comet passes perihelion. Sunlight and the solar wind push it, so it always leans anti-sunward
+whichever way the comet is travelling.
+
+The Sextant sights a comet like anything else once it is up, and it keeps its name without a book:
+where a planet is a discovery you make by watching a star wander, a comet is an event the sky
+announces.
+
+The Astrolabe lists every comet whether it is here or not. One that is away reads
+`away, returns in 340 days`, and scrolling the forecast that far ahead turns the line into a real
+position — so you can find out where to be, and when, long before it arrives. `.stars comets` reports
+the same thing for the whole catalog at once.
+
+The periods and the parent showers are real. The tracks across the sky and the peak brightnesses are
+authored for the game rather than computed from an orbit, in the same spirit as the stylised star
+brightness: a comet you can predict and watch build is worth more here than an eccentricity solved to
+four decimal places.
 
 ## Constellation Visibility
 

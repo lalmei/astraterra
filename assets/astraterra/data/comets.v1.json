@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "comets": [
+    {
+      "id": "halley",
+      "displayName": "Halley",
+      "periodYears": 75.32,
+      "firstPerihelionYear": 3.2,
+      "windowHalfWidthYears": 0.09,
+      "peakMagnitude": -1.0,
+      "edgeMagnitude": 6.5,
+      "brighteningExponent": 0.55,
+      "peakTailLengthDeg": 22.0,
+      "tintR": 0.80,
+      "tintG": 0.92,
+      "tintB": 1.0,
+      "path": [
+        { "phase": -1.0, "rightAscensionDeg": 150.0, "declinationDeg": -25.0 },
+        { "phase": -0.45, "rightAscensionDeg": 168.0, "declinationDeg": -9.0 },
+        { "phase": -0.12, "rightAscensionDeg": 181.0, "declinationDeg": 6.0 },
+        { "phase": 0.0, "rightAscensionDeg": 192.0, "declinationDeg": 18.0 },
+        { "phase": 0.12, "rightAscensionDeg": 202.0, "declinationDeg": 27.0 },
+        { "phase": 0.45, "rightAscensionDeg": 216.0, "declinationDeg": 37.0 },
+        { "phase": 1.0, "rightAscensionDeg": 232.0, "declinationDeg": 44.0 }
+      ]
+    },
+    {
+      "id": "tempel-tuttle",
+      "displayName": "Tempel-Tuttle",
+      "periodYears": 33.24,
+      "firstPerihelionYear": 9.1,
+      "windowHalfWidthYears": 0.05,
+      "peakMagnitude": 2.5,
+      "edgeMagnitude": 7.0,
+      "brighteningExponent": 0.6,
+      "peakTailLengthDeg": 10.0,
+      "tintR": 0.82,
+      "tintG": 0.94,
+      "tintB": 1.0,
+      "path": [
+        { "phase": -1.0, "rightAscensionDeg": 20.0, "declinationDeg": 12.0 },
+        { "phase": -0.4, "rightAscensionDeg": 34.0, "declinationDeg": 19.0 },
+        { "phase": 0.0, "rightAscensionDeg": 49.0, "declinationDeg": 26.0 },
+        { "phase": 0.4, "rightAscensionDeg": 64.0, "declinationDeg": 31.0 },
+        { "phase": 1.0, "rightAscensionDeg": 78.0, "declinationDeg": 34.0 }
+      ]
+    },
+    {
+      "id": "tuttle",
+      "displayName": "Tuttle",
+      "periodYears": 13.61,
+      "firstPerihelionYear": 4.35,
+      "windowHalfWidthYears": 0.05,
+      "peakMagnitude": 3.5,
+      "edgeMagnitude": 7.5,
+      "brighteningExponent": 0.7,
+      "peakTailLengthDeg": 7.0,
+      "tintR": 0.84,
+      "tintG": 0.95,
+      "tintB": 1.0,
+      "path": [
+        { "phase": -1.0, "rightAscensionDeg": 300.0, "declinationDeg": 5.0 },
+        { "phase": -0.35, "rightAscensionDeg": 312.0, "declinationDeg": 19.0 },
+        { "phase": 0.0, "rightAscensionDeg": 321.0, "declinationDeg": 31.0 },
+        { "phase": 0.35, "rightAscensionDeg": 330.0, "declinationDeg": 41.0 },
+        { "phase": 1.0, "rightAscensionDeg": 340.0, "declinationDeg": 48.0 }
+      ]
+    },
+    {
+      "id": "machholz",
+      "displayName": "Machholz",
+      "periodYears": 5.28,
+      "firstPerihelionYear": 1.7,
+      "windowHalfWidthYears": 0.04,
+      "peakMagnitude": 4.2,
+      "edgeMagnitude": 8.0,
+      "brighteningExponent": 0.75,
+      "peakTailLengthDeg": 5.0,
+      "tintR": 0.74,
+      "tintG": 0.98,
+      "tintB": 0.88,
+      "path": [
+        { "phase": -1.0, "rightAscensionDeg": 60.0, "declinationDeg": -12.0 },
+        { "phase": -0.35, "rightAscensionDeg": 70.0, "declinationDeg": -2.0 },
+        { "phase": 0.0, "rightAscensionDeg": 77.0, "declinationDeg": 7.0 },
+        { "phase": 0.35, "rightAscensionDeg": 84.0, "declinationDeg": 15.0 },
+        { "phase": 1.0, "rightAscensionDeg": 92.0, "declinationDeg": 22.0 }
+      ]
+    }
+  ]
+}

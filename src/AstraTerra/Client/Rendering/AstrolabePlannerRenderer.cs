@@ -35,7 +35,12 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private readonly PlanetCatalog? planetCatalog;
+    private readonly CometCatalog? cometCatalog;
+    private readonly Dictionary<string, CometEntry> cometsById;
     private IReadOnlyList<AstrolabeTarget>? planetTargets;
+    private IReadOnlyList<AstrolabeTarget>? cometTargets;
+    private int cometTargetsDaysPerYear;
+    private double cometTargetsHoursPerDay;
     private int planetTargetsDaysPerYear;
     private double planetTargetsHoursPerDay;
     private LoadedTexture? titleTexture;
@@ -52,16 +57,21 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private bool renderingDisabledAfterFailure;
 
     /// <param name="planetCatalog">Null when the planet catalog failed to load. Constellations still plan.</param>
+    /// <param name="cometCatalog">Null when the comet catalog failed to load. Everything else still plans.</param>
     public AstrolabePlannerRenderer(
         ICoreClientAPI api,
         StarCatalog catalog,
         ConstellationBookClient bookClient,
-        PlanetCatalog? planetCatalog = null)
+        PlanetCatalog? planetCatalog = null,
+        CometCatalog? cometCatalog = null)
     {
         this.api = api;
         this.catalog = catalog;
         this.bookClient = bookClient;
         this.planetCatalog = planetCatalog;
+        this.cometCatalog = cometCatalog;
+        cometsById = cometCatalog?.Comets.ToDictionary(comet => comet.Id, StringComparer.Ordinal)
+                     ?? new Dictionary<string, CometEntry>(StringComparer.Ordinal);
     }
 
     public double RenderOrder => 0.99;
@@ -163,6 +173,8 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             api.World.BlockAccessor.MapSizeX,
             api.World.BlockAccessor.MapSizeZ);
         var selectedIndex = AstrolabeReadingState.NormalizeTargetIndex(targets.Count);
+        var selectedTarget = targets[selectedIndex];
+        var awayComet = FormatAwayComet(selectedTarget, forecastTotalDays, daysPerYear);
         var reading = AstrolabeService.Read(
             targets[selectedIndex],
             latitude,
@@ -174,7 +186,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         var forecastDay = PositiveModulo((int)Math.Floor(forecastTotalDays), daysPerYear) + 1;
         var plate = AstrolabeCalibrationPolicy.DescribePlate(latitude, ObserverLatitude());
         var title = $"{InstrumentTitle} — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {plate} — day {forecastDay}/{daysPerYear}";
-        var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — {FormatReading(reading)}";
+        var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — {awayComet ?? FormatReading(reading)}";
         var help = "Middle click: next target   Scroll: 1 hour   Sneak + scroll: 7 days   Sneak + right click: recut the plate";
         RenderLines(title, details, ReadSkyClockLine(forecastTotalDays), help);
     }
@@ -291,6 +303,14 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// </summary>
     private string FormatTargetName(AstrolabeTarget target)
     {
+        // A comet keeps its catalogued name without a book, where a planet does not. A wandering
+        // star is a discovery an observer makes by watching one; a comet is an event, and the
+        // catalog authors the name it arrives under.
+        if (target.Kind == AstrolabeTargetKind.Comet)
+        {
+            return $"{target.DisplayName} · comet";
+        }
+
         if (target.Kind != AstrolabeTargetKind.Planet)
         {
             return target.DisplayName;
@@ -315,7 +335,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// where a player expects before it reaches the planets.
     /// </remarks>
     private IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal)
-        => [.. AstrolabeService.BuildTargets(journal, catalog), .. ResolvePlanetTargets()];
+        => [.. AstrolabeService.BuildTargets(journal, catalog), .. ResolvePlanetTargets(), .. ResolveCometTargets()];
 
     /// <summary>
     /// Built once and kept. Each planet target owns a cached ephemeris, and the astrolabe asks about
@@ -342,6 +362,61 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
         return planetTargets;
     }
+
+    /// <summary>
+    /// Built once and kept, like the planet targets: each comet's ephemeris caches its last sample,
+    /// and rebuilding per frame would throw that away.
+    /// </summary>
+    private IReadOnlyList<AstrolabeTarget> ResolveCometTargets()
+    {
+        if (cometCatalog is null)
+        {
+            return [];
+        }
+
+        var daysPerYear = Math.Max(1, api.World.Calendar.DaysPerYear);
+        var hoursPerDay = Math.Max(1.0, api.World.Calendar.HoursPerDay);
+        if (cometTargets is null
+            || daysPerYear != cometTargetsDaysPerYear
+            || Math.Abs(hoursPerDay - cometTargetsHoursPerDay) > 1e-9)
+        {
+            cometTargets = AstrolabeService.BuildCometTargets(cometCatalog, daysPerYear, hoursPerDay);
+            cometTargetsDaysPerYear = daysPerYear;
+            cometTargetsHoursPerDay = hoursPerDay;
+        }
+
+        return cometTargets;
+    }
+
+    /// <summary>
+    /// The line for a comet that is not here at the forecast time, or null for anything that is.
+    /// </summary>
+    /// <remarks>
+    /// A comet away from perihelion has no position worth reporting — its authored track only covers
+    /// the apparition — so reporting a compass bearing and an altitude for one would be inventing a
+    /// place for it to be. What it does have is a date, and the forecast dial is already the way a
+    /// player reaches other dates: scroll far enough ahead and this line gives way to a real reading.
+    /// </remarks>
+    private string? FormatAwayComet(AstrolabeTarget target, double forecastTotalDays, int daysPerYear)
+    {
+        if (target.Kind != AstrolabeTargetKind.Comet
+            || !cometsById.TryGetValue(target.SourceId, out var comet))
+        {
+            return null;
+        }
+
+        var days = CometApparitionSchedule.DaysUntilVisible(comet, forecastTotalDays, daysPerYear);
+        return days <= 0 ? null : $"away, returns in {FormatReturn(days, daysPerYear)}";
+    }
+
+    /// <summary>
+    /// A wait measured in days for anything within a couple of years, and in years past that. A
+    /// comet with a seventy-five year period is thousands of days out, and no player counts those.
+    /// </summary>
+    private static string FormatReturn(double days, int daysPerYear)
+        => days >= daysPerYear * 2
+            ? $"{days / daysPerYear:0.0} years"
+            : $"{days:0} days";
 
     private bool IsReadingAstrolabe()
     {

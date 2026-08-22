@@ -21,7 +21,8 @@ public enum AstrolabeHorizonClass
 public enum AstrolabeTargetKind
 {
     Constellation,
-    Planet
+    Planet,
+    Comet
 }
 
 /// <summary>
@@ -139,6 +140,37 @@ public static class AstrolabeService
                 planet.Id,
                 PlanetJournal.UnidentifiedDisplayName,
                 new CachedSkyEphemeris(new PlanetEphemeris(planet, planets.Observer, daysPerYear), hoursPerDay),
+                StarCount: 0))
+            .ToList();
+    }
+
+    /// <summary>
+    /// The authored comets as astrolabe targets, in catalog order.
+    /// </summary>
+    /// <remarks>
+    /// Every comet is listed, including the ones that are years away — which is the point. A comet
+    /// that is simply absent from the list teaches an observer nothing; one the instrument says is
+    /// three hundred days out is something to plan a journey around. The caller decides how to
+    /// present a comet that is not here yet; what it gets from here is the same target a planet is.
+    /// </remarks>
+    public static IReadOnlyList<AstrolabeTarget> BuildCometTargets(
+        CometCatalog comets,
+        int daysPerYear,
+        double hoursPerDay)
+    {
+        ArgumentNullException.ThrowIfNull(comets);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(daysPerYear);
+        if (hoursPerDay <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
+        }
+
+        return comets.Comets
+            .Select(comet => new AstrolabeTarget(
+                AstrolabeTargetKind.Comet,
+                comet.Id,
+                comet.DisplayName,
+                new CachedSkyEphemeris(new CometEphemeris(comet, daysPerYear), hoursPerDay),
                 StarCount: 0))
             .ToList();
     }

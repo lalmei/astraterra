@@ -2,7 +2,7 @@
 
 ![astraterra](modicon.png)
 
-AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, and nine annual meteor showers, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
+AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, nine annual meteor showers, and comets that return on their own schedule, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
 
 Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.
 
@@ -69,7 +69,17 @@ Venus swings between the evening and morning sky within a season, brightening an
 Chart Mars over a couple of world weeks and it will turn back on itself. Nobody scripted that
 retrograde loop: it is what the sky does when the world overtakes a slower planet on the inside.
 
-> ### Update v0.5.2 — the sky pass got cheap
+> ### Wait for a comet
+
+Four comets return on their real orbital periods — Machholz about every five years, Halley about every seventy-five. Each is up for a couple of world weeks, and across those nights it crosses the sky, brightens as it rounds perihelion, and fades again.
+
+Its tail points **away from the sun**, never along its motion, and swings right around as it passes perihelion — which is the thing about a comet that most pictures get wrong. Tail length and coma brightness build and fade together, so an apparition arrives gradually rather than switching on.
+
+The Astrolabe lists every comet whether or not it is here. One that is away reads `away, returns in 340 days`, and scrolling the forecast that far ahead turns the line into a real position — so a comet is something you can plan a journey around rather than something you happen to catch.
+
+`.stars comets` reports every comet's state: up now, or how long until it returns.
+
+### Update v0.5.2 — the sky pass got cheap
 >
 > The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and
 > measured, and the numbers moved by more than a little.
@@ -89,7 +99,7 @@ retrograde loop: it is what the sky does when the world overtakes a slower plane
 > Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has
 > actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.
 >
-> You can measure it yourself: `.stars render stars|constellations|deepsky|meteors|all on|off`
+> You can measure it yourself: `.stars render stars|constellations|deepsky|meteors|comets|all on|off`
 > switches each path off independently, and the debug log reports milliseconds, draw calls and mesh
 > uploads for the sky pass every 30 seconds.
 
@@ -130,10 +140,9 @@ In no order what so ever. Items with an issue have a design sketch and a suggest
 - Milky Way rendering.
 - Modify architecture for more easier customization. Such as custom deep sky objects.
 - Star Catalog randomizer loot tables for chest and ruins. (i.e. create a star catalog with Maya constellations for a Mayan Ruin, or other sky cultures.) much of the backend is there since sterallarium already contains much of this datasets.
-- [Comets](https://github.com/lalmei/astraterra/issues/38). Authored apparitions with an anti-sunward tail.
 - New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41) — sighting a mountain to get its distance and height.
 
-Comets sit on the same [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) the planets already use, since their right ascension and declination change with time. Meteor radiants are fixed like catalog stars and do not need that dependency. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
+Meteor radiants are fixed like catalog stars and do not need the [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) that the planets and comets are built on. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
 
 ## Docs
 

@@ -19,9 +19,12 @@ public sealed class SextantReadingRenderer : IRenderer
     private readonly AstraTerraConfig config;
     private readonly StarCatalog? catalog;
     private readonly PlanetCatalog? planetCatalog;
+    private readonly CometCatalog? cometCatalog;
     private PlanetRenderModel? planetModel;
     private int planetModelDaysPerYear;
     private double planetModelHoursPerDay;
+    private CometRenderModel? cometModel;
+    private int cometModelDaysPerYear;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
     private LoadedTexture? readingTexture;
@@ -29,16 +32,19 @@ public sealed class SextantReadingRenderer : IRenderer
 
     /// <param name="catalog">Null when the star catalog failed to load. Sun and moon sighting still works.</param>
     /// <param name="planetCatalog">Null when the planet catalog failed to load. Everything else still sights.</param>
+    /// <param name="cometCatalog">Null when the comet catalog failed to load. Everything else still sights.</param>
     public SextantReadingRenderer(
         ICoreClientAPI api,
         AstraTerraConfig config,
         StarCatalog? catalog,
-        PlanetCatalog? planetCatalog = null)
+        PlanetCatalog? planetCatalog = null,
+        CometCatalog? cometCatalog = null)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
         this.planetCatalog = planetCatalog;
+        this.cometCatalog = cometCatalog;
     }
 
     public double RenderOrder => 0.99;
@@ -152,6 +158,27 @@ public sealed class SextantReadingRenderer : IRenderer
 
         // Planets sight under the same dark-sky rule as stars, because that is when the sky renderer
         // draws them: the sextant should only measure what an observer can actually see.
+        // A comet sights like anything else once it is up: it is a body with an altitude, and the
+        // whole point of the instrument is reading that angle. Unlike a planet it keeps its name
+        // without a book — the catalog authors one for it, because a comet is not a discovery a
+        // player makes by watching a star wander, it is an event the sky announces.
+        var comets = ResolveCometModel(Math.Max(1, calendar.DaysPerYear));
+        if (comets is not null)
+        {
+            var cometSunVector = calendar.GetSunPosition(position.XYZ, calendar.TotalDays);
+            var visibleComets = comets.ProjectVisibleComets(
+                calendar.TotalDays,
+                latitude,
+                localSiderealAngle,
+                config.StarBrightnessBias,
+                new SkyDirection(cometSunVector.X, cometSunVector.Y, cometSunVector.Z),
+                visualHorizonCutoffDeg: 0.0);
+            foreach (var comet in visibleComets)
+            {
+                yield return SkyBodyModel.FromBody($"{comet.DisplayName} · comet", comet.Body);
+            }
+        }
+
         var planets = ResolvePlanetModel(Math.Max(1, calendar.DaysPerYear), Math.Max(1.0, calendar.HoursPerDay));
         if (planets is null)
         {
@@ -180,6 +207,23 @@ public sealed class SextantReadingRenderer : IRenderer
     /// Built on demand and kept, because a client only learns the world's <c>daysPerYear</c> when the
     /// server hands it over, and because each planet's ephemeris caches its last sample.
     /// </summary>
+    /// <summary>Built on demand and kept, for the same reasons the planet model is.</summary>
+    private CometRenderModel? ResolveCometModel(int daysPerYear)
+    {
+        if (cometCatalog is null)
+        {
+            return null;
+        }
+
+        if (cometModel is null || daysPerYear != cometModelDaysPerYear)
+        {
+            cometModel = new CometRenderModel(cometCatalog, daysPerYear);
+            cometModelDaysPerYear = daysPerYear;
+        }
+
+        return cometModel;
+    }
+
     private PlanetRenderModel? ResolvePlanetModel(int daysPerYear, double hoursPerDay)
     {
         if (planetCatalog is null)

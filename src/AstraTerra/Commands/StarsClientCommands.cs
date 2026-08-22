@@ -1,3 +1,4 @@
+using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Config;
 using AstraTerra.Constellations;
@@ -11,16 +12,19 @@ public sealed class StarsClientCommands
     private readonly System.Func<ConstellationJournal, StarsCommandService> serviceFactory;
     private readonly ConstellationBookClient bookClient;
     private readonly AstraTerraConfig config;
+    private readonly CometCatalog? cometCatalog;
     private int? selectedId;
 
     public StarsClientCommands(
         System.Func<ConstellationJournal, StarsCommandService> serviceFactory,
         ConstellationBookClient bookClient,
-        AstraTerraConfig config)
+        AstraTerraConfig config,
+        CometCatalog? cometCatalog = null)
     {
         this.serviceFactory = serviceFactory;
         this.bookClient = bookClient;
         this.config = config;
+        this.cometCatalog = cometCatalog;
     }
 
     public void Register(ICoreClientAPI api)
@@ -59,6 +63,10 @@ public sealed class StarsClientCommands
                 .WithArgs(api.ChatCommands.Parsers.Word("iau|name"))
                 .HandleWith(args => TextCommandResult.Success(Build(GetStringArg(args, 0))))
             .EndSubCommand()
+            .BeginSubCommand("comets")
+                .WithDescription("Report every comet: whether it is up now, or how long until it returns.")
+                .HandleWith(_ => TextCommandResult.Success(Comets(api)))
+            .EndSubCommand()
             .BeginSubCommand("debug")
                 .HandleWith(_ => TextCommandResult.Success(Debug(api)))
             .EndSubCommand()
@@ -77,11 +85,17 @@ public sealed class StarsClientCommands
             .BeginSubCommand("render")
                 .WithDescription("Switch one sky rendering path off to see what it costs. Session only.")
                 .WithArgs(
-                    api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|all"),
+                    api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|comets|all"),
                     api.ChatCommands.Parsers.OptionalWord("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetRenderPath(api, GetStringArg(args, 0), GetStringArg(args, 1))))
             .EndSubCommand();
     }
+
+    private string Comets(ICoreClientAPI api)
+        => CometReport.Describe(
+            cometCatalog,
+            api.World.Calendar.TotalDays,
+            Math.Max(1, api.World.Calendar.DaysPerYear));
 
     private string List()
     {
@@ -268,17 +282,17 @@ public sealed class StarsClientCommands
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+            return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
         }
 
         if (!SkyRenderPathParser.TryParse(path, out var parsedPath))
         {
-            return "Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
         }
 
         if (string.IsNullOrWhiteSpace(state) || !TryParseToggle(state, out var enabled))
         {
-            return "Usage: .stars render stars|constellations|deepsky|meteors|all on|off";
+            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
         }
 
         SkyRenderPaths.Set(parsedPath, enabled);

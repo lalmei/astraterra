@@ -59,6 +59,21 @@ public static class SkyStarSunMoonRenderer
     /// </summary>
     private const float PlanetGlowSizeRange = 1.8f;
     private const float PlanetGlowMaxAlpha = 0.5f;
+
+    /// <summary>
+    /// A comet sits just inside the star sphere, on the meteors' side. Its tail is drawn as geometry
+    /// rather than as a sprite, and a ribbon coplanar with the billboards it starts from would fight
+    /// them for depth along its whole length.
+    /// </summary>
+    private const float CometSkyDistance = 39.9f;
+
+    /// <summary>
+    /// A comet is a fuzzy object, not a point. The glow runs much wider than a planet's and carries
+    /// most of the coma, which is what stops a comet reading as a slightly odd star with a streak
+    /// attached.
+    /// </summary>
+    private const float CometGlowSizeRange = 3.4f;
+    private const float CometGlowMaxAlpha = 0.55f;
     /// <summary>
     /// Naked-eye width of a constellation line, scaled by the scope's field so it holds that width on
     /// screen at any magnification.
@@ -80,13 +95,17 @@ public static class SkyStarSunMoonRenderer
     private static StarCatalog? catalog;
     private static IReadOnlyList<MeteorShowerEntry> meteorShowers = Array.Empty<MeteorShowerEntry>();
     private static PlanetCatalog? planetCatalog;
+    private static CometCatalog? cometCatalog;
     private static PlanetRenderModel? planetModel;
+    private static CometRenderModel? cometModel;
+    private static int cometModelDaysPerYear;
     private static int planetModelDaysPerYear;
     private static double planetModelHoursPerDay;
     private static MeteorShowerVisualModel meteorVisuals = new();
     private static readonly SkyPassMetrics Metrics = new();
     private static readonly RenderedStar[] NoStars = [];
     private static readonly RenderedPlanet[] NoPlanets = [];
+    private static readonly RenderedComet[] NoComets = [];
     private static double secondsSinceLastSkipLog;
     private static bool starTextureLoadFailed;
     private static bool faintStarTextureLoadFailed;
@@ -104,6 +123,7 @@ public static class SkyStarSunMoonRenderer
     private static int skyMarkTextureId;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
+    private static MeshRef? cometTailMesh;
     private static MeshRef? constellationLineMesh;
 
     // One mesh per sprite in play, rebuilt only when the projection is. There is no texture atlas
@@ -113,12 +133,15 @@ public static class SkyStarSunMoonRenderer
     private static readonly List<SkyBillboard> BrightStarBillboards = new(6000);
     private static readonly List<SkyBillboard> FaintStarBillboards = new(6000);
     private static readonly List<SkyBillboard> PlanetBillboards = new(32);
+    private static readonly List<SkyBillboard> CometBillboards = new(16);
     private static MeshRef? brightStarMesh;
     private static MeshRef? faintStarMesh;
     private static MeshRef? planetMesh;
+    private static MeshRef? cometMesh;
     private static int brightStarMeshCapacity;
     private static int faintStarMeshCapacity;
     private static int planetMeshCapacity;
+    private static int cometMeshCapacity;
     private static float cachedStarMeshAngularScale = float.NaN;
     private static bool cachedStarMeshScoped;
     private static int cachedStarMeshPlateSignature;
@@ -181,7 +204,8 @@ public static class SkyStarSunMoonRenderer
         AstraTerraConfig loadedConfig,
         StarCatalog loadedCatalog,
         IReadOnlyList<MeteorShowerEntry> loadedMeteorShowers,
-        PlanetCatalog? loadedPlanets = null)
+        PlanetCatalog? loadedPlanets = null,
+        CometCatalog? loadedComets = null)
     {
         ArgumentNullException.ThrowIfNull(loadedMeteorShowers);
         Reset();
@@ -190,14 +214,16 @@ public static class SkyStarSunMoonRenderer
         catalog = loadedCatalog;
         meteorShowers = loadedMeteorShowers;
         planetCatalog = loadedPlanets;
+        cometCatalog = loadedComets;
         meteorVisuals = new MeteorShowerVisualModel((ulong)Environment.TickCount64);
         clientApi.Logger.Notification(
-            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px; meteorShowers={3}; planets={4}",
+            "AstraTerra sky renderer initialized: renderPass=sunMoon3D; minSize={0:0.0}px; maxSize={1:0.0}px; angularScale={2:0.000}deg/px; meteorShowers={3}; planets={4}; comets={5}",
             StarBillboardSizing.MinimumCoreDiameterPixels,
             StarBillboardSizing.MaximumCoreDiameterPixels,
             StarAngularSizePerPixelDeg,
             meteorShowers.Count,
-            planetCatalog?.Planets.Count ?? 0);
+            planetCatalog?.Planets.Count ?? 0,
+            cometCatalog?.Comets.Count ?? 0);
     }
 
     /// <summary>
@@ -224,12 +250,35 @@ public static class SkyStarSunMoonRenderer
         return planetModel;
     }
 
+    /// <summary>
+    /// Built on demand for the same reason the planet model is: a client only learns the world's
+    /// <c>daysPerYear</c> from the server, and that is the clock every apparition is authored
+    /// against.
+    /// </summary>
+    private static CometRenderModel? ResolveCometModel(int daysPerYear)
+    {
+        if (cometCatalog is null)
+        {
+            return null;
+        }
+
+        if (cometModel is null || daysPerYear != cometModelDaysPerYear)
+        {
+            cometModel = new CometRenderModel(cometCatalog, daysPerYear);
+            cometModelDaysPerYear = daysPerYear;
+        }
+
+        return cometModel;
+    }
+
     public static void Reset()
     {
         deepSkyQuadMesh?.Dispose();
         deepSkyQuadMesh = null;
         meteorStreakMesh?.Dispose();
         meteorStreakMesh = null;
+        cometTailMesh?.Dispose();
+        cometTailMesh = null;
         constellationLineMesh?.Dispose();
         constellationLineMesh = null;
         brightStarMesh?.Dispose();
@@ -238,9 +287,12 @@ public static class SkyStarSunMoonRenderer
         faintStarMesh = null;
         planetMesh?.Dispose();
         planetMesh = null;
+        cometMesh?.Dispose();
+        cometMesh = null;
         brightStarMeshCapacity = 0;
         faintStarMeshCapacity = 0;
         planetMeshCapacity = 0;
+        cometMeshCapacity = 0;
         cachedStarMeshAngularScale = float.NaN;
         cachedStarMeshPlateSignature = 0;
         PlateFields.Clear();
@@ -248,6 +300,7 @@ public static class SkyStarSunMoonRenderer
         BrightStarBillboards.Clear();
         FaintStarBillboards.Clear();
         PlanetBillboards.Clear();
+        CometBillboards.Clear();
         constellationLineMeshCapacity = 0;
         constellationLineMeshDrawnCount = 0;
         constellationLineMeshWidthDeg = float.NaN;
@@ -258,6 +311,9 @@ public static class SkyStarSunMoonRenderer
         meteorShowers = Array.Empty<MeteorShowerEntry>();
         planetCatalog = null;
         planetModel = null;
+        cometCatalog = null;
+        cometModel = null;
+        cometModelDaysPerYear = 0;
         planetModelDaysPerYear = 0;
         planetModelHoursPerDay = 0;
         meteorVisuals.Clear();
@@ -410,9 +466,22 @@ public static class SkyStarSunMoonRenderer
             ?.ProjectVisiblePlanets(calendar.TotalDays, latitude, localSiderealAngle, brightnessBias)
             ?? (IReadOnlyList<RenderedPlanet>)Array.Empty<RenderedPlanet>();
         var drawablePlanets = FilterDrawablePlanets(visiblePlanets);
+
+        // The sun's own direction is what aims every tail, so it is read here once and handed down
+        // rather than resolved per comet. Below the horizon is the normal case and works the same:
+        // what matters is the angle from the comet to the sun, not whether the sun has risen.
+        var sunPosition = calendar.GetSunPosition(playerPos.XYZ, calendar.TotalDays);
+        var visibleComets = ResolveCometModel(Math.Max(1, calendar.DaysPerYear))
+            ?.ProjectVisibleComets(
+                calendar.TotalDays,
+                latitude,
+                localSiderealAngle,
+                brightnessBias,
+                new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z))
+            ?? (IReadOnlyList<RenderedComet>)NoComets;
         // The scope's deep-sky plates are the one thing that can still be worth drawing with no star
         // above the horizon, so they keep the pass alive.
-        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && meteorStreaks.Count == 0 && !TelescopeScopeState.IsScoped)
+        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && visibleComets.Count == 0 && meteorStreaks.Count == 0 && !TelescopeScopeState.IsScoped)
         {
             LogSkyStep(
                 dt,
@@ -495,6 +564,7 @@ public static class SkyStarSunMoonRenderer
             api,
             drawableStars,
             drawablePlanets,
+            visibleComets,
             visibleDeepSkyObjects,
             constellationLines,
             meteorStreaks,
@@ -516,6 +586,7 @@ public static class SkyStarSunMoonRenderer
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedStar> visibleStars,
         IReadOnlyList<RenderedPlanet> visiblePlanets,
+        IReadOnlyList<RenderedComet> visibleComets,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
         IReadOnlyList<SkyConstellationLine> constellationLines,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
@@ -559,6 +630,7 @@ public static class SkyStarSunMoonRenderer
         var modelMatrixBuffer = new float[16];
 
         UpdateMeteorStreakMesh(clientApi, meteorStreaks);
+        UpdateCometMeshes(clientApi, visibleComets, planetAngularScale);
 
         render.GlToggleBlend(true, EnumBlendMode.Glow);
         render.GlDisableCullFace();
@@ -642,6 +714,23 @@ public static class SkyStarSunMoonRenderer
             if (meteorStreakMesh is not null && meteorStreaks.Count > 0 && skyMarkTextureId != 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors))
             {
                 RenderMeteorStreaks(clientApi, shader, modelMatrixBuffer);
+            }
+
+            if (visibleComets.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Comets))
+            {
+                // No residual rotation: unlike the star and planet batches, a comet is projected
+                // fresh every frame at the sidereal angle being drawn, so it is already where it
+                // belongs. Rotating it again would carry it off the sky by however far the cached
+                // star mesh had fallen behind — and the tail, built in the same place, with it.
+                drawnCount += DrawBillboardBatch(
+                    clientApi,
+                    shader,
+                    cometMesh,
+                    CometBillboards.Count,
+                    planetTextureId,
+                    Matrix4.Identity,
+                    modelMatrixBuffer);
+                RenderCometTails(clientApi, shader, modelMatrixBuffer);
             }
         }
         finally
@@ -1010,6 +1099,84 @@ public static class SkyStarSunMoonRenderer
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         DrawMesh(clientApi, meteorStreakMesh);
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+    }
+
+    /// <summary>
+    /// Rebuilds both halves of every comet — the coma billboards and the one batched tail mesh —
+    /// from scratch each frame.
+    /// </summary>
+    /// <remarks>
+    /// The stars are cached and rotated because there are five thousand of them. There are never
+    /// more than a handful of comets, so the cache would buy nothing and cost the one thing that
+    /// matters here: the coma and its tail are built from the same projection in the same place, and
+    /// so cannot drift apart.
+    /// </remarks>
+    private static void UpdateCometMeshes(
+        ICoreClientAPI clientApi,
+        IReadOnlyList<RenderedComet> comets,
+        float angularScale)
+    {
+        CometBillboards.Clear();
+        if (comets.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var comet in comets)
+        {
+            // Prominence rides on top of brightness so an apparition fades in and out over its weeks
+            // rather than appearing at full strength the moment it clears the horizon.
+            var alpha = (float)Math.Clamp(comet.Brightness * comet.Prominence, 0.0, 1.0);
+            if (alpha <= 0.002f)
+            {
+                continue;
+            }
+
+            var prominence = (float)Math.Clamp(comet.Prominence, 0.0, 1.0);
+            var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(comet.Size);
+            var glowAlpha = CometGlowMaxAlpha * alpha;
+            if (glowAlpha > 0.005f)
+            {
+                var glowSize = sizePixels * (1f + (CometGlowSizeRange * prominence));
+                CometBillboards.Add(Billboard(comet.Body, glowSize, angularScale, comet.TintR, comet.TintG, comet.TintB, glowAlpha));
+            }
+
+            CometBillboards.Add(Billboard(comet.Body, sizePixels, angularScale, comet.TintR, comet.TintG, comet.TintB, alpha));
+        }
+
+        UploadBillboardBatch(clientApi, CometBillboards, ref cometMesh, ref cometMeshCapacity);
+
+        var meshData = CometTailMeshBuilder.Build(comets, CometSkyDistance);
+        if (cometTailMesh is null)
+        {
+            cometTailMesh = UploadMesh(clientApi, meshData);
+        }
+        else
+        {
+            UpdateMesh(clientApi, cometTailMesh, meshData);
+        }
+    }
+
+    private static void RenderCometTails(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        float[] modelMatrixBuffer)
+    {
+        if (cometTailMesh is null || skyMarkTextureId == 0)
+        {
+            return;
+        }
+
+        var modelMatrix = BuildSkyModelMatrix(clientApi, Matrix4.Identity);
+
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+        shader.RgbaTint = ColorUtil.WhiteArgbVec;
+        shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
+        shader.Tex2D = skyMarkTextureId;
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
+        DrawMesh(clientApi, cometTailMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 

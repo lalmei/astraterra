@@ -73,7 +73,7 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerraSkyCoordinateGrid", modSystem);
         Assert.Contains("AstraTerra.Items.ItemAstrolabe", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
-        Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets)", modSystem);
+        Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);
     }
 

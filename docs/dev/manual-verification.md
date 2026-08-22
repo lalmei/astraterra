@@ -47,6 +47,28 @@
   stale streak remains frozen overhead; return outdoors at night and confirm spawning resumes.
 - Move away from the shower's activity window and confirm no meteor streaks appear during the same
   observation interval.
+- Run `.stars comets`; expected result: four comets are listed, each either up with a phase,
+  magnitude, tail length and position, or away with a day count and the world year its next window
+  opens. This is the only practical way to find an apparition — Machholz is the frequent one, and
+  Halley is due once in about seventy-five world years.
+- Set the calendar to a world day inside an apparition (take it from `.stars comets`) and watch open
+  sky at night; expected result: the comet is up, with a visible coma and a tail, and it is dimmer and
+  shorter-tailed near the edges of its window than at perihelion.
+- Watch across the apparition — a few world days at a time — and confirm it moves against the stars
+  along its own track, brightens toward perihelion, and fades again, rather than appearing and
+  vanishing at full strength.
+- Check the tail direction against the sun: expected result: it points directly away from where the
+  sun is, not along the direction the comet is travelling, and it swings around as the comet passes
+  perihelion. Comparing an evening apparition with a pre-dawn one is the clearest test.
+- Sight the comet with the Sextant; expected result: it reads as `<name> · comet` with an altitude,
+  and it keeps its name with no book in the left hand.
+- Hold the Astrolabe and middle click past the planets; expected result: every comet is listed, one
+  that is away reads `away, returns in N days`, and scrolling the forecast past that point turns the
+  line into a real compass bearing and altitude.
+- Run `.stars render comets off` during an apparition; expected result: the comet and its tail stop
+  drawing while the stars, planets and meteors keep going, and `.stars render` lists `comets=off`.
+- Confirm the coma and the tail stay joined while the sky turns: watch for several minutes without
+  moving; expected result: the tail stays attached to the comet rather than drifting off it.
 - Put a blank normal book in the left hand and keep ink and quill in inventory.
 - Use `.stars list` before drawing; expected result: no saved constellations for the held book.
 - Scope with the Brass Telescope, switch to Draw mode, and drag from one guide star to another; expected result: a constellation segment is written into the held book and the naming dialog opens.
