@@ -17,7 +17,7 @@ public sealed class SextantReadingRenderer : IRenderer
 
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
-    private readonly StarCatalog? catalog;
+    private StarCatalog? catalog;
     private readonly PlanetCatalog? planetCatalog;
     private readonly CometCatalog? cometCatalog;
     private PlanetRenderModel? planetModel;
@@ -50,6 +50,13 @@ public sealed class SextantReadingRenderer : IRenderer
     public double RenderOrder => 0.99;
 
     public int RenderRange => 9999;
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCatalog"/>.</summary>
+    public void ReplaceCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        catalog = replacement;
+    }
 
     public void OnMouseDown(MouseEvent args)
     {

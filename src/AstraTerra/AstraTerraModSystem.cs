@@ -225,6 +225,39 @@ public sealed class AstraTerraModSystem : ModSystem
             comets?.Comets.Count ?? 0);
     }
 
+    /// <summary>
+    /// Replaces the star catalog for the rest of the session, for mods that author a starfield from
+    /// the world seed instead of shipping it as an asset.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The asset catalog is loaded in <c>AssetsLoaded</c>, well before a client knows which world it
+    /// is joining, so a procedural sky cannot be supplied that early. Such a mod lets the shipped
+    /// catalog load, then calls this once the server has told it what this save's sky is.
+    /// </para>
+    /// <para>
+    /// Constellations are stored as edges between <c>Hip</c> ids, so a caller that swaps the catalog
+    /// owns the stability of those ids: the same world has to keep numbering the same stars, or
+    /// every figure a player has recorded will point somewhere else.
+    /// </para>
+    /// </remarks>
+    /// <returns>False when astronomy is disabled because no catalog loaded at startup.</returns>
+    public bool ReplaceStarCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        if (catalog is null)
+        {
+            return false;
+        }
+
+        catalog = replacement;
+        SkyStarSunMoonRenderer.ReplaceCatalog(replacement);
+        constellationOverlayRenderer?.ReplaceCatalog(replacement);
+        astrolabePlannerRenderer?.ReplaceCatalog(replacement);
+        sextantReadingRenderer?.ReplaceCatalog(replacement);
+        return true;
+    }
+
     public override void StartServerSide(ICoreServerAPI api)
     {
         new ConstellationBookServer(() => catalog).Register(api);

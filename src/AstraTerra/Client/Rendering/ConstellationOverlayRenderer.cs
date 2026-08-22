@@ -30,7 +30,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
-    private readonly StarCatalog catalog;
+    private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private readonly PlanetCatalog? planetCatalog;
     private readonly List<RenderedStar> overlayStars = new(6000);
@@ -73,6 +73,17 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     public double RenderOrder => 0.95;
 
     public int RenderRange => 9999;
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCatalog"/>.</summary>
+    public void ReplaceCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        catalog = replacement;
+        overlayStars.Clear();
+        overlayGuideStars.Clear();
+        overlayStarsByHip.Clear();
+        screenSegments = [];
+    }
 
     public void OnMouseDown(MouseEvent args)
     {

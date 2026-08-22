@@ -32,7 +32,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private const int ProgressBarWidth = 24;
 
     private readonly ICoreClientAPI api;
-    private readonly StarCatalog catalog;
+    private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private readonly PlanetCatalog? planetCatalog;
     private readonly CometCatalog? cometCatalog;
@@ -77,6 +77,13 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     public double RenderOrder => 0.99;
 
     public int RenderRange => 9999;
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCatalog"/>.</summary>
+    public void ReplaceCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        catalog = replacement;
+    }
 
     public void OnMouseDown(MouseEvent args)
     {
