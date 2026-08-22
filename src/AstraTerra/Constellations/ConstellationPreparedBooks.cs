@@ -91,7 +91,10 @@ public static class ConstellationPreparedBooks
         }
 
         var stacks = new List<JsonItemStack>();
-        if (catalog is not null)
+
+        // Both books are records of an inherited sky culture, so they have nothing to say about a
+        // procedurally authored sky, where the figures are the players' to invent.
+        if (catalog is not null && StarCatalogJournalBuilder.HasCulture(catalog))
         {
             TryAddCreativeBook(api, stacks, ConstellationBookService.StarCatalogTitle, () => CreateStarCatalog(api, catalog));
             TryAddCreativeBook(api, stacks, ConstellationBookService.ZodiacTitle, () => CreateZodiac(api, catalog));
