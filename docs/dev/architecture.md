@@ -18,6 +18,8 @@ The convention here is narrower than "no Vintage Story types", which the asset l
 
 `Items/` is the Vintage Story item entry point. Item classes should start and stop observation/readout state, not own sky calculations.
 
+The astrolabe is the one item with a second interaction: sneak and right click cuts its plate. `AstrolabeCalibrationPolicy` holds the pure half — how far the observer has strayed from the plate, whether the sky allows a sighting, how far along one is — and `AstrolabeCalibrationStore` keeps the cut latitude in the itemstack's own attributes, so the plate belongs to the instrument rather than to whoever is holding it. The server is the side that writes it, because the server owns the stack; `AstrolabeCalibrationState` is only the client's progress bar. Every planner reading is then answered for the plate's latitude, never for the player's live position — that substitution is the whole feature, and a source-level test pins it because a regression to live latitude would look like the instrument simply working. Longitude stays live: it shifts the hour of transit, not where the horizon falls.
+
 `Constellations/` owns the client-local journal model, graph merge/split behavior, stable saved IDs, and persistence.
 
 A book carries two journals in two separate item attributes: `astraterraJournalJson` for drawn figures and `astraterraPlanetJson` for identified planets. They are kept apart so that writing one cannot disturb the other, and so a book written before planets existed still reads. Only the readable page is shared, rebuilt from both whenever either is written.

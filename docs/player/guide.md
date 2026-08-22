@@ -61,7 +61,17 @@ Sighting the sun currently costs you nothing. A real navigator would use a shade
 
 ### Calibrated Astrolabe
 
-Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to calibrate it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
+Recover a vanilla Astrolabe from ruins, then combine it with a brass plate to fit it for AstraTerra. Hold the Calibrated Astrolabe in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout.
+
+#### Cutting its plate
+
+An astrolabe is engraved for one latitude. A newly made one is blank and will not place a star: it reads **no plate** and tells you so. To cut its plate, stand under open sky after dusk, then **sneak and hold right click** for a few seconds while it sights the pole. A bar fills as it works, and if it will not fill the readout says why — a roof overhead or a sky still too bright.
+
+You need nothing but the sky for this. No star catalog, no brass, no crafting grid.
+
+Once cut, every reading the astrolabe gives is answered *for that latitude*, not for wherever you happen to be standing. Walk far enough north or south and the readout starts telling you how far you have strayed from the plate — and past about eight degrees it asks you to recut it. Until you do, its answers are the sky over the place it was engraved for. The instrument is not broken; it is describing somewhere else.
+
+Its clock is not engraved and does not drift: the hour comes from the sun overhead wherever you carry it.
 
 The top-center readout shows the selected target's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
 
@@ -78,6 +88,7 @@ The time of day is also shown when no book is held, so the Astrolabe is still us
 - Middle click to select the next target: the constellations in the held book, then the planets.
 - Scroll to forecast one hour at a time.
 - Sneak and scroll to forecast seven days at a time.
+- Sneak and hold right click to recut the plate for your current latitude.
 
 Forecasting spans one world year and uses that world's configured year and day lengths. Releasing right click returns the forecast to the current time.
 

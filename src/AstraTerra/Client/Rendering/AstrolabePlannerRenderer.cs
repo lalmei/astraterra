@@ -18,6 +18,19 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// <summary>How far the player must travel before the sky clock is worth recomputing.</summary>
     private const double ClockCacheBlockSize = 32.0;
 
+    /// <summary>
+    /// The item is called a Calibrated Astrolabe, but the HUD cannot be: a freshly crafted one is
+    /// not calibrated, and "Calibrated Astrolabe — no plate" is nonsense. The plain noun reads
+    /// correctly in both states, and the plate line says which one this is.
+    /// </summary>
+    private const string InstrumentTitle = "Astrolabe";
+
+    private const string CalibrationHelp =
+        "Sneak + hold right click under an open night sky to cut its plate for this latitude.";
+
+    /// <summary>Characters across the sighting progress bar.</summary>
+    private const int ProgressBarWidth = 24;
+
     private readonly ICoreClientAPI api;
     private readonly StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
@@ -94,11 +107,31 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
     private void RenderPlanner()
     {
+        if (AstrolabeCalibrationState.IsCalibrating)
+        {
+            RenderCalibration();
+            return;
+        }
+
+        // Every reading below is answered for the plate, not for where the player is standing. An
+        // astrolabe that has never been sighted has no plate and can place nothing.
+        var plateLatitude = AstrolabeCalibrationStore.ReadLatitude(
+            api.World.Player.InventoryManager?.ActiveHotbarSlot?.Itemstack);
+        if (plateLatitude is null)
+        {
+            RenderLines(
+                $"{InstrumentTitle} — no plate",
+                "Nothing is engraved on this astrolabe yet, so it cannot place a star.",
+                ReadSkyClockLine(api.World.Calendar.TotalDays),
+                CalibrationHelp);
+            return;
+        }
+
         var journal = bookClient.ReadCurrentJournal();
         if (journal is null)
         {
             RenderLines(
-                "Calibrated Astrolabe",
+                InstrumentTitle,
                 "Hold a written constellation book in your left hand.",
                 ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
@@ -109,7 +142,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         if (targets.Count == 0)
         {
             RenderLines(
-                "Calibrated Astrolabe",
+                InstrumentTitle,
                 "No readable constellations are recorded in this book.",
                 ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
@@ -121,9 +154,10 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         var daysPerYear = Math.Max(1, calendar.DaysPerYear);
         var forecastTotalDays = calendar.TotalDays + (AstrolabeReadingState.ForecastHours / hoursPerDay);
         var position = api.World.Player.Entity.Pos;
-        var latitude = LatitudeMapper.MapGameLatitude(
-            position.Z,
-            calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
+        var latitude = plateLatitude.Value;
+
+        // Longitude is not engraved on a plate — it only shifts what hour a star transits, not where
+        // the horizon falls — so the instrument keeps reading it live wherever it is carried.
         var longitude = LatitudeMapper.MapWorldLongitude(
             position.X,
             api.World.BlockAccessor.MapSizeX,
@@ -138,10 +172,46 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             longitude);
 
         var forecastDay = PositiveModulo((int)Math.Floor(forecastTotalDays), daysPerYear) + 1;
-        var title = $"Calibrated Astrolabe — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {FormatLatitude(latitude)} — day {forecastDay}/{daysPerYear}";
+        var plate = AstrolabeCalibrationPolicy.DescribePlate(latitude, ObserverLatitude());
+        var title = $"{InstrumentTitle} — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {plate} — day {forecastDay}/{daysPerYear}";
         var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — {FormatReading(reading)}";
-        var help = "Middle click: next target   Scroll: 1 hour   Sneak + scroll: 7 days";
+        var help = "Middle click: next target   Scroll: 1 hour   Sneak + scroll: 7 days   Sneak + right click: recut the plate";
         RenderLines(title, details, ReadSkyClockLine(forecastTotalDays), help);
+    }
+
+    /// <summary>
+    /// What the HUD shows while the plate is being cut: how far along the sighting is, or what is
+    /// stopping it. The sky clock stays on screen throughout, because the one thing an astrolabe
+    /// can always tell you is the hour.
+    /// </summary>
+    private void RenderCalibration()
+    {
+        var obstacle = AstrolabeCalibrationState.Obstacle;
+        var reading = obstacle
+                      ?? $"{FormatProgressBar(AstrolabeCalibrationState.Progress)}  sighting the pole at {AstrolabeCalibrationPolicy.FormatLatitude(ObserverLatitude())}";
+
+        RenderLines(
+            $"{InstrumentTitle} — cutting the plate",
+            reading,
+            ReadSkyClockLine(api.World.Calendar.TotalDays),
+            obstacle is null
+                ? "Keep sneaking and holding right click."
+                : CalibrationHelp);
+    }
+
+    /// <summary>Where the player actually is, which is only the same as the plate until they travel.</summary>
+    private double ObserverLatitude()
+    {
+        var calendar = api.World.Calendar;
+        return LatitudeMapper.MapGameLatitude(
+            api.World.Player.Entity.Pos.Z,
+            calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
+    }
+
+    private static string FormatProgressBar(float progress)
+    {
+        var filled = (int)Math.Round(Math.Clamp(progress, 0f, 1f) * ProgressBarWidth);
+        return $"[{new string('\u2588', filled)}{new string('\u00b7', ProgressBarWidth - filled)}]";
     }
 
     /// <summary>
@@ -390,16 +460,6 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         => hoursUntilTransit < 0.05
             ? "transiting now"
             : $"transit in {hoursUntilTransit:0.0} h";
-
-    private static string FormatLatitude(double latitudeDeg)
-    {
-        if (Math.Abs(latitudeDeg) < 0.05)
-        {
-            return "latitude 0.0°";
-        }
-
-        return $"latitude {Math.Abs(latitudeDeg):0.0}° {(latitudeDeg > 0 ? "N" : "S")}";
-    }
 
     private static string FormatForecastOffset(double forecastHours, double hoursPerDay)
     {

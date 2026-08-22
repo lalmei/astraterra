@@ -1,5 +1,6 @@
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 
 namespace AstraTerra.Client.Rendering;
 
@@ -36,15 +37,22 @@ public static class SkyExposure
     {
         ArgumentNullException.ThrowIfNull(api);
 
-        var entity = api.World.Player?.Entity;
-        if (entity is null)
+        return CanSeeSky(api.World?.BlockAccessor, api.World?.Player?.Entity);
+    }
+
+    /// <summary>
+    /// The same verdict for any entity on either side. The astrolabe asks this on the server, where
+    /// there is no local player to read the position off, before it will cut a plate.
+    /// </summary>
+    public static bool CanSeeSky(IBlockAccessor? accessor, Entity? entity)
+    {
+        if (accessor is null || entity is null)
         {
             return false;
         }
 
         var blockPos = entity.Pos.AsBlockPos;
         var eyeHeight = entity.Pos.InternalY + entity.LocalEyePos.Y;
-        var accessor = api.World.BlockAccessor;
         var rainMapHeight = accessor.GetRainMapHeightAt(blockPos);
 
         // Reuses the one position rather than copying it: this runs on the render thread, once per
