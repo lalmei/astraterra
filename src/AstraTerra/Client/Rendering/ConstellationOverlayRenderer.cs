@@ -32,7 +32,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private readonly AstraTerraConfig config;
     private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
-    private readonly PlanetCatalog? planetCatalog;
+    private PlanetCatalog? planetCatalog;
     private readonly List<RenderedStar> overlayStars = new(6000);
     private readonly List<RenderedStar> overlayGuideStars = new(256);
     private readonly Dictionary<int, RenderedStar> overlayStarsByHip = new(6000);
@@ -83,6 +83,15 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         overlayGuideStars.Clear();
         overlayStarsByHip.Clear();
         screenSegments = [];
+    }
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplacePlanetCatalog"/>.</summary>
+    public void ReplacePlanetCatalog(PlanetCatalog? replacement)
+    {
+        planetCatalog = replacement;
+        planetModel = null;
+        planetModelDaysPerYear = 0;
+        planetModelHoursPerDay = 0;
     }
 
     public void OnMouseDown(MouseEvent args)

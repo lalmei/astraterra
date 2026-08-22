@@ -197,8 +197,14 @@ public static class SkyStarSunMoonRenderer
 
     public static bool ForceDaylightStars => forceDaylightStars;
 
-    /// <summary>Stars in the catalog the sky is currently drawing from, zero when astronomy is off.</summary>
+    /// <summary>
+    /// What the sky is currently drawing from, which is worth being able to read back when two mods
+    /// hand catalogs to each other and the question is which one won.
+    /// </summary>
     public static int CatalogStarCount => catalog?.Stars.Count ?? 0;
+    public static int CatalogPlanetCount => planetCatalog?.Planets.Count ?? 0;
+    public static int CatalogCometCount => cometCatalog?.Comets.Count ?? 0;
+    public static int CatalogMeteorShowerCount => meteorShowers.Count;
 
     public static bool ShouldRenderVanillaStarfield
         => config is null || StarfieldModeParser.ShowsVanilla(config.GetStarfieldMode());
@@ -250,6 +256,53 @@ public static class SkyStarSunMoonRenderer
             "AstraTerra sky renderer catalog replaced: stars={0}; deepSkyObjects={1}",
             replacement.Stars.Count,
             replacement.DeepSkyObjects.Count);
+    }
+
+    /// <summary>
+    /// Replaces the planets, or passes null for a sky that has none. See
+    /// <see cref="ReplaceCatalog"/> for why this happens after startup.
+    /// </summary>
+    /// <remarks>
+    /// The render model is derived from the catalog and the world's calendar, so it is dropped along
+    /// with its calendar cache keys; the next frame rebuilds it against whatever is here now.
+    /// </remarks>
+    public static void ReplacePlanetCatalog(PlanetCatalog? replacement)
+    {
+        planetCatalog = replacement;
+        planetModel = null;
+        planetModelDaysPerYear = 0;
+        planetModelHoursPerDay = 0;
+        api?.Logger.Notification(
+            "AstraTerra sky renderer planets replaced: planets={0}",
+            replacement?.Planets.Count ?? 0);
+    }
+
+    /// <summary>Replaces the comets, or passes null for a sky that has none.</summary>
+    public static void ReplaceCometCatalog(CometCatalog? replacement)
+    {
+        cometCatalog = replacement;
+        cometModel = null;
+        cometModelDaysPerYear = 0;
+        api?.Logger.Notification(
+            "AstraTerra sky renderer comets replaced: comets={0}",
+            replacement?.Comets.Count ?? 0);
+    }
+
+    /// <summary>
+    /// Replaces the meteor showers; an empty list is a sky with none.
+    /// </summary>
+    /// <remarks>
+    /// Showers in flight are cleared too. They were spawned from the old streams, and a radiant that
+    /// no longer exists has nowhere to fall from.
+    /// </remarks>
+    public static void ReplaceMeteorShowers(IReadOnlyList<MeteorShowerEntry> replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        meteorShowers = replacement;
+        meteorVisuals.Clear();
+        api?.Logger.Notification(
+            "AstraTerra sky renderer meteor showers replaced: showers={0}",
+            replacement.Count);
     }
 
     /// <summary>

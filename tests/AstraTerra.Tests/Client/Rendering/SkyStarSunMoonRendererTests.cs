@@ -30,6 +30,33 @@ public sealed class SkyStarSunMoonRendererTests
     public void ReplaceCatalog_Rejects_A_Missing_Catalog()
         => Assert.Throws<ArgumentNullException>(() => SkyStarSunMoonRenderer.ReplaceCatalog(null!));
 
+    /// <summary>
+    /// The shipped planets, comets and showers all belong to this solar system, so a mod that moves
+    /// the world elsewhere needs to be able to say the sky has none of them.
+    /// </summary>
+    [Fact]
+    public void The_Solar_System_Can_Be_Emptied_For_A_Sky_That_Has_None()
+    {
+        SkyStarSunMoonRenderer.Reset();
+        SkyStarSunMoonRenderer.ReplaceMeteorShowers([
+            new MeteorShowerEntry("test", "Test", 45.0, 20.0, 120.0, 5.0, 40.0)
+        ]);
+        Assert.Equal(1, SkyStarSunMoonRenderer.CatalogMeteorShowerCount);
+
+        SkyStarSunMoonRenderer.ReplacePlanetCatalog(null);
+        SkyStarSunMoonRenderer.ReplaceCometCatalog(null);
+        SkyStarSunMoonRenderer.ReplaceMeteorShowers([]);
+
+        Assert.Equal(0, SkyStarSunMoonRenderer.CatalogPlanetCount);
+        Assert.Equal(0, SkyStarSunMoonRenderer.CatalogCometCount);
+        Assert.Equal(0, SkyStarSunMoonRenderer.CatalogMeteorShowerCount);
+        SkyStarSunMoonRenderer.Reset();
+    }
+
+    [Fact]
+    public void ReplaceMeteorShowers_Rejects_A_Missing_List()
+        => Assert.Throws<ArgumentNullException>(() => SkyStarSunMoonRenderer.ReplaceMeteorShowers(null!));
+
     private static StarCatalog CatalogOf(int stars)
         => new(
             Enumerable.Range(1, stars)

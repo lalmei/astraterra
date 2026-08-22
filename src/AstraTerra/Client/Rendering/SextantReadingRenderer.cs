@@ -18,8 +18,8 @@ public sealed class SextantReadingRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
     private StarCatalog? catalog;
-    private readonly PlanetCatalog? planetCatalog;
-    private readonly CometCatalog? cometCatalog;
+    private PlanetCatalog? planetCatalog;
+    private CometCatalog? cometCatalog;
     private PlanetRenderModel? planetModel;
     private int planetModelDaysPerYear;
     private double planetModelHoursPerDay;
@@ -56,6 +56,23 @@ public sealed class SextantReadingRenderer : IRenderer
     {
         ArgumentNullException.ThrowIfNull(replacement);
         catalog = replacement;
+    }
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplacePlanetCatalog"/>.</summary>
+    public void ReplacePlanetCatalog(PlanetCatalog? replacement)
+    {
+        planetCatalog = replacement;
+        planetModel = null;
+        planetModelDaysPerYear = 0;
+        planetModelHoursPerDay = 0;
+    }
+
+    /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCometCatalog"/>.</summary>
+    public void ReplaceCometCatalog(CometCatalog? replacement)
+    {
+        cometCatalog = replacement;
+        cometModel = null;
+        cometModelDaysPerYear = 0;
     }
 
     public void OnMouseDown(MouseEvent args)
