@@ -149,6 +149,27 @@ public sealed class StarCatalogAssetTests
         Assert.All(zodiac.Constellations, record => Assert.NotEmpty(record.Edges));
     }
 
+    /// <summary>
+    /// The creative shelf now only prepares the Star Catalog and Zodiac books when the catalog
+    /// carries a sky culture, so that a mod-authored starfield with no inherited figures skips them.
+    /// Playing AstraTerra on its own must never take that branch: the shipped culture is the sky.
+    /// </summary>
+    [Fact]
+    public void The_Shipped_Catalog_Carries_The_Culture_The_Prepared_Books_Need()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        var stars = JsonSerializer.Deserialize<StarCatalogEntry[]>(
+            File.ReadAllText("assets/astraterra/data/star-catalog.v1.json"),
+            options);
+        var culture = JsonSerializer.Deserialize<SkyCultureConstellationSet>(
+            File.ReadAllText("assets/astraterra/data/sky-cultures/modern-iau.constellations.v1.json"),
+            options);
+        Assert.NotNull(stars);
+        Assert.NotNull(culture);
+
+        Assert.True(StarCatalogJournalBuilder.HasCulture(new StarCatalog(stars, [], [culture])));
+    }
+
     [Fact]
     public void SkyCultureManifest_Registers_ModernIau()
     {
