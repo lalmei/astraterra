@@ -91,17 +91,20 @@ public static class ConstellationPreparedBooks
         }
 
         var stacks = new List<JsonItemStack>();
+        var attempted = 0;
 
         // Both books are records of an inherited sky culture, so they have nothing to say about a
         // procedurally authored sky, where the figures are the players' to invent.
         if (catalog is not null && StarCatalogJournalBuilder.HasCulture(catalog))
         {
+            attempted += 2;
             TryAddCreativeBook(api, stacks, ConstellationBookService.StarCatalogTitle, () => CreateStarCatalog(api, catalog));
             TryAddCreativeBook(api, stacks, ConstellationBookService.ZodiacTitle, () => CreateZodiac(api, catalog));
         }
 
         if (planets is not null)
         {
+            attempted++;
             TryAddCreativeBook(
                 api,
                 stacks,
@@ -112,7 +115,20 @@ public static class ConstellationPreparedBooks
         if (stacks.Count == 0)
         {
             host.CreativeInventoryStacks = [];
-            api.Logger.Warning("AstraTerra creative shelf disabled: no prepared books could be created.");
+
+            // An empty shelf is only a fault if something was there to prepare and could not be. A
+            // sky with no inherited culture and no planets has no prepared books by definition, and
+            // saying so at warning level would put a healthy state in the startup issue list.
+            if (attempted == 0)
+            {
+                api.Logger.Notification(
+                    "AstraTerra creative shelf empty: this sky has no inherited books to prepare.");
+            }
+            else
+            {
+                api.Logger.Warning("AstraTerra creative shelf disabled: no prepared books could be created.");
+            }
+
             return;
         }
 
