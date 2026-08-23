@@ -52,6 +52,18 @@
 
 <h3>What is new</h3>
 
+<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#127756; Next update &mdash; the Milky Way, and what it costs</strong></p>
+<p style="margin: 0 0 8px;">The stars will stand against the galaxy's own glow: a broad band with a bright core towards Sagittarius, split down its length by the dark dust lanes of the Great Rift, turning with the rest of the sky and sitting at whatever angle your latitude puts it.</p>
+<ul>
+<li><strong>It is generated, not photographed.</strong> The glow map is a galaxy &mdash; an exponential disc with four spiral arms and a flattened bulge &mdash; integrated along every line of sight from the Sun's place inside it, dimmed by a layer of dust in front. The rift, the clouds and the amber reddening of the core fall out of that model rather than being painted, so the asset is the mod's own and its shape can be tuned by parameter.</li>
+<li><strong>It behaves like the real one.</strong> Gone in twilight, back only once the night is properly dark, and mostly washed out by a bright moon &mdash; a glow spread across a quarter of the sky is the first thing any sky brightness takes away, where a star survives it. Best near new moon.</li>
+<li><strong>It is close to free.</strong> Measured in a real session, lying on your back with the band at full strength filling the screen: 0.16&ndash;0.55 ms per frame with it on, 0.50&ndash;0.55 ms with it off. The two cannot be told apart &mdash; the cost is smaller than the frame-to-frame noise of everything else &mdash; and draw calls are unchanged. If you would rather not have it, <code>MilkyWayBrightness</code> in <code>ModConfig/astraterra.json</code> takes <code>0</code>, and <code>.stars render milkyway off</code> switches it off for a session.</li>
+</ul>
+<p style="margin: 0 0 8px;"><strong>Two things we are unsure about, and would like to hear on:</strong> how bright the band should be, and how dark the night has to get before it appears. Both are single numbers and easy to move, and both are judgements better made by someone actually out there looking than by anyone reading a diff. Screenshots welcome.</p>
+<p style="margin: 0 0 8px;"><strong>One known problem, found while measuring this.</strong> Raising a telescope where many deep-sky plates are above the horizon is expensive &mdash; around 10 ms a frame with roughly forty plates up, with occasional long frames &mdash; because every visible plate re-uploads its geometry every frame. It is not new and it is not the Milky Way; it is the first time it has been measured properly. Tracked as <a href="https://github.com/lalmei/astraterra/issues/105">issue #105</a> and next on the list.</p>
+</div>
+
 <div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
 <p style="margin: 0 0 8px;"><strong>&#127769; v0.5.3 &mdash; lying down looks like lying down</strong></p>
 <p style="margin: 0 0 8px;">Pressing <strong>Z</strong> used to tip the seraph backwards in one piece, feet still planted, until it arched into a bridge and landed flat &mdash; and with empty hands the arms came off their shoulders and the elbows separated.</p>
@@ -63,8 +75,9 @@
 <!-- image: docs/screenshots/stargazing.png — the seraph resting on its back, hands folded behind the head -->
 </div>
 
-<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9889; v0.5.2 &mdash; the sky pass got cheap</strong></p>
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9889; v0.5.2 &mdash; the sky pass got cheap</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p style="margin: 0 0 8px;">The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
 <table style="border-collapse: collapse; width: 100%;" border="1">
 <tbody>
@@ -102,7 +115,8 @@
 </table>
 <p style="margin: 0 0 8px;">The before figures come from a real <code>client-main.log</code> &mdash; 2,988 stars and 3,728 constellation dots visible &mdash; and the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
 <p style="margin: 0 0 8px;">Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.</p>
-<p style="margin: 0 0 8px;">You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
+<p style="margin: 0 0 8px;">You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
+</div>
 </div>
 
 <div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
@@ -208,7 +222,6 @@ Star locations and images are from Stellarium's database.</p>
 <li>Redo recipes for instruments and calibration.</li>
 <li>Using a simple sextant on the sun will damage one of your eyes, requiring an eye patch for non-blurry vision.</li>
 <li>Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap).</li>
-<li>Milky Way rendering.</li>
 <li>Modify architecture for easier customization, such as custom deep sky objects.</li>
 <li>Star Catalog randomizer loot tables for chests and ruins (i.e. create a star catalog with Maya constellations for a Mayan ruin, or other sky cultures). Much of the backend is there since Stellarium already contains much of these datasets.</li>
 <li><a href="https://github.com/lalmei/astraterra/issues/38">Comets</a>. Authored apparitions with an anti-sunward tail.</li>

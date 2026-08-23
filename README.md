@@ -85,29 +85,67 @@ The Astrolabe lists every comet whether or not it is here. One that is away read
 
 `.stars comets` reports every comet's state: up now, or how long until it returns.
 
-### Update v0.5.2 — the sky pass got cheap
+> ### Next update — the Milky Way, and what it costs
 >
-> The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and
-> measured, and the numbers moved by more than a little.
+> The stars will stand against the galaxy's own glow: a broad band with a bright core towards
+> Sagittarius, split down its length by the dark dust lanes of the Great Rift, turning with the rest
+> of the sky and sitting at whatever angle your latitude puts it.
 >
-> | | before | after |
-> | --- | --- | --- |
-> | Draw calls per frame, carrying a journal | 6,716 | **4** |
-> | Draw calls per frame, no journal | 2,988 | **3** |
-> | Record allocations per second | ~400,000 | **none in steady state** |
-> | Constellation line geometry | 3,728 quads | **148** |
-> | Star projections per second | 60 | **~5** |
+> **It is generated, not photographed.** The glow map is a galaxy — an exponential disc with four
+> spiral arms and a flattened bulge — integrated along every line of sight from the Sun's place
+> inside it, dimmed by a layer of dust in front. The rift, the clouds and the amber reddening of the
+> core fall out of that model rather than being painted, so the asset is the mod's own and its shape
+> can be tuned by parameter rather than repainted.
 >
-> The before figures come from a real `client-main.log` — 2,988 stars and 3,728 constellation dots
-> visible — and the star projection alone cost over 10 ms a frame and produced about a gigabyte of
-> garbage a minute, which players saw as stutter and as a client that would not give memory back.
+> **It behaves like the real one.** It is gone in twilight and comes back only once the night is
+> properly dark, and a bright moon washes most of it out — a glow spread across a quarter of the sky
+> is the first thing any sky brightness takes away, where a star survives it. The best nights for it
+> are dark ones near new moon.
 >
-> Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has
-> actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.
+> **It is close to free.** Measured in a real session, lying on your back with the band at full
+> strength filling the screen: 0.16–0.55 ms per frame with it on, 0.50–0.55 ms with it off — the two
+> cannot be told apart, because the cost is smaller than the frame-to-frame noise of everything else.
+> Draw calls are unchanged. If you would still rather not have it, `MilkyWayBrightness` in
+> `ModConfig/astraterra.json` takes `0`, and `.stars render milkyway off` switches it off for a
+> session.
 >
-> You can measure it yourself: `.stars render stars|constellations|deepsky|meteors|comets|all on|off`
-> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh
-> uploads for the sky pass every 30 seconds.
+> **Two things we are unsure about, and would like to hear on.** How bright the band should be, and
+> how dark the night has to get before it appears — both are single numbers and easy to move, and
+> both are judgements better made by someone actually out there looking than by anyone reading a
+> diff. Screenshots welcome.
+>
+> **One known problem, found while measuring this.** Raising a telescope where many deep-sky plates
+> are above the horizon is expensive — around 10 ms a frame with roughly forty plates up, with
+> occasional long frames — because every visible plate re-uploads its geometry every frame. It is not
+> new and it is not the Milky Way, it is just the first time it has been measured properly. Tracked
+> as [#105](https://github.com/lalmei/astraterra/issues/105) and next on the list.
+
+<details>
+<summary><strong>⚡ Update v0.5.2 — the sky pass got cheap</strong></summary>
+<br>
+The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and
+measured, and the numbers moved by more than a little.
+
+| | before | after |
+| --- | --- | --- |
+| Draw calls per frame, carrying a journal | 6,716 | **4** |
+| Draw calls per frame, no journal | 2,988 | **3** |
+| Record allocations per second | ~400,000 | **none in steady state** |
+| Constellation line geometry | 3,728 quads | **148** |
+| Star projections per second | 60 | **~5** |
+
+The before figures come from a real `client-main.log` — 2,988 stars and 3,728 constellation dots
+visible — and the star projection alone cost over 10 ms a frame and produced about a gigabyte of
+garbage a minute, which players saw as stutter and as a client that would not give memory back.
+
+Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has
+actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.
+
+You can measure it yourself: `.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off`
+switches each path off independently, and the debug log reports milliseconds, draw calls and mesh
+uploads for the sky pass every 30 seconds.
+
+</details>
 
 > ### Also in v0.5.2 — the sky looks different, and we would like to hear about it
 >
