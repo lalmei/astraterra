@@ -9,6 +9,7 @@ Everything below is also written into the Vintage Story handbook. Press **H** an
 ## What You Can Do
 
 - Watch an 5000+ fixed-star sky that changes as you travel north or south.
+- See the Milky Way behind it on a properly dark night, arching across the sky and turning with it.
 - Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear, and comets that return on their own periods with an anti-sunward tail.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
@@ -118,6 +119,24 @@ Astronomy interaction works best when:
 The telescope overlay can still open when those conditions are not met, but drawing and star-specific readouts may be unavailable.
 
 The astrolabe is predictive rather than observational, so it works in daylight, indoors, during bad weather, and when its selected target is below the horizon.
+
+## The Milky Way
+
+On a dark night the stars stand against the galaxy's own glow: a broad band with a bright core
+towards Sagittarius, split along its length by the dust lanes of the Great Rift, and it turns with
+the rest of the sky.
+
+It is the faintest thing AstraTerra draws, and it behaves like the real one:
+
+- It is gone in twilight, and comes back only once the night is properly dark. Stars survive a bright
+  sky far better than a glow spread across a quarter of it does.
+- A bright moon washes most of it out. The best nights for it are dark ones near new moon.
+- Its height and angle depend on your latitude and the time of night, the same way a constellation's
+  does. In the far north it can lie along the horizon for hours; nearer the equator it stands up.
+
+If you would rather have a plain star field, set `MilkyWayBrightness` to `0` in
+`ModConfig/astraterra.json` — or raise it above `1` if you want it stronger. `.stars render milkyway
+off` switches it off for the session only.
 
 ## Meteor Showers
 

@@ -85,7 +85,7 @@ public sealed class StarsClientCommands
             .BeginSubCommand("render")
                 .WithDescription("Switch one sky rendering path off to see what it costs. Session only.")
                 .WithArgs(
-                    api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|comets|all"),
+                    api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|comets|milkyway|all"),
                     api.ChatCommands.Parsers.OptionalWord("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetRenderPath(api, GetStringArg(args, 0), GetStringArg(args, 1))))
             .EndSubCommand();
@@ -282,17 +282,17 @@ public sealed class StarsClientCommands
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
+            return $"Sky rendering paths: {SkyRenderPaths.Describe()}. Usage: .stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off";
         }
 
         if (!SkyRenderPathParser.TryParse(path, out var parsedPath))
         {
-            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
+            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off";
         }
 
         if (string.IsNullOrWhiteSpace(state) || !TryParseToggle(state, out var enabled))
         {
-            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|all on|off";
+            return "Usage: .stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off";
         }
 
         SkyRenderPaths.Set(parsedPath, enabled);

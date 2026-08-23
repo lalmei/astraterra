@@ -76,8 +76,8 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 .stars sky-grid equatorial
 .stars sky-grid both
 .stars render
-.stars render stars|constellations|deepsky|meteors|comets|all on
-.stars render stars|constellations|deepsky|meteors|comets|all off
+.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on
+.stars render stars|constellations|deepsky|meteors|comets|milkyway|all off
 ```
 
 `connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics. `goto-lat` helps test different sky latitudes in the current world. `daylight-stars` is intended for testing and should be turned off for normal play.
@@ -92,7 +92,7 @@ Planets are otherwise anonymous: without a book that names them, every instrumen
 
 `render` switches one part of the sky off so you can see what it costs. If the mod is making your game stutter, this is the fastest way to say *which part*: turn one path off, play for half a minute, and see whether it helps. `.stars render` on its own lists what is drawing.
 
-Unlike `starfield` and `sky-grid`, this is not saved — everything comes back when you restart the client, because it is a measuring tool rather than a setting. The paths are `stars` (including planets), `constellations`, `deepsky` (the telescope's photographic plates), `meteors` and `comets`, plus `all`.
+Unlike `starfield` and `sky-grid`, this is not saved — everything comes back when you restart the client, because it is a measuring tool rather than a setting. The paths are `stars` (including planets), `constellations`, `deepsky` (the telescope's photographic plates), `meteors`, `comets` and `milkyway` (the galaxy's own glow behind everything else), plus `all`.
 
 Every 30 seconds, AstraTerra writes what the sky cost into `client-debug.log` — time per frame, worst frame, draw calls, and which paths were on. If you are reporting a performance problem, that line and the path you found is exactly what makes the report actionable.
 

@@ -12,12 +12,12 @@ AstraTerra makes the night sky mechanically meaningful. Players should be able t
 - Provide a sextant readout for a star's angle above the horizon.
 - Turn a recovered vanilla astrolabe into a planner for recorded constellations across time and latitude.
 - Let players save, name, inspect, and delete local per-world constellations.
+- Draw the unresolved glow of the Milky Way behind the catalog stars, from a generated model rather than a photograph.
 - Ship reproducible committed catalog assets and a developer-only generation pipeline.
 
 ## Non-Goals For Current Scope
 
 - Multiplayer synchronization of constellation journals.
-- Milky Way rendering.
 - Real star names in normal player UI.
 - Import/export of constellation journals.
 - Visual regression infrastructure.
