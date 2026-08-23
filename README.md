@@ -142,7 +142,6 @@ In no order what so ever. Items with an issue have a design sketch and a suggest
 - New models astrological instruments.
 - Redo recipes for instruments and calibration.
 - Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap)
-- Milky Way rendering.
 - Modify architecture for more easier customization. Such as custom deep sky objects.
 - Star Catalog randomizer loot tables for chest and ruins. (i.e. create a star catalog with Maya constellations for a Mayan Ruin, or other sky cultures.) much of the backend is there since sterallarium already contains much of this datasets.
 - New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41) — sighting a mountain to get its distance and height.

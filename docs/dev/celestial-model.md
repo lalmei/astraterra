@@ -280,6 +280,49 @@ into a tapered four-section ribbon on the sky sphere and submits all active stre
 Transient positions are client-local visual state; the shared astronomical conditions remain fully
 deterministic.
 
+## The Milky Way
+
+The band is the one part of the sky that is not a position. Everything else in the model — a star, a
+plate, a planet, a meteor radiant — is projected one body at a time through `SkyProjection`. The
+Milky Way is the light of the stars the catalog stops short of, spread over a quarter of the sky at
+once, so it is drawn as the sphere itself rather than as an object on it.
+
+### Galactic coordinates, once
+
+`GalacticFrame` holds the J2000 rotation between galactic and equatorial coordinates, and it is the
+only place in the mod that knows about it. `MilkyWayRenderModel.ProjectBand` walks a coarse grid in
+galactic longitude and latitude, rotates each vertex into the equatorial frame, and hands it to the
+same horizontal-coordinate and world-direction code every other body uses.
+
+Two landmarks pin the rotation, in `GalacticFrameTests`: galactic (0, 0) has to land on Sagittarius A*
+at 17h 45m, -29°, and galactic (180, 0) on the anticentre at 05h 46m, +29°. Get the rotation wrong by
+a sign and the band still looks like a band — it simply rises in the wrong season, over the wrong
+horizon, and nothing else in the sky disagrees with it.
+
+### The glow is a texture, the mesh is only a sphere
+
+Every feature of the band — the bulge, the Great Rift, the clouds, the reddening — lives in
+`assets/astraterra/textures/environment/milky-way.png`, an equirectangular map in galactic
+coordinates. So the mesh carries none of it: 72 by 36 cells is enough that a great circle does not
+read as a polygon and that the horizon fade is smooth along it, and the texture is sampled per pixel
+regardless.
+
+The map is generated, not photographed. `tools/milkywaygen` integrates an exponential disc with four
+logarithmic arms and a flattened bulge along every line of sight from the Sun's place in it, dimmed
+by a thinner, flatter dust layer in front, and tone-maps the result. That keeps the asset ours, and
+it means the band's shape can be argued with in parameters — a scale height, a dust opacity — rather
+than repainted.
+
+### It answers to the night, not to the star bias
+
+`MilkyWayVisibility.CalculateOpacity` is deliberately not the star pass's brightness bias. A star is
+a point source and survives a bright sky; surface brightness is the first thing any sky glow takes
+away. So the band is gone below `TwilightFloor` darkness, and a full moon removes most of what is
+left. A Milky Way that ignored either would read as a decal painted on the sky.
+
+`MilkyWayBrightness` in `ModConfig/astraterra.json` scales the result, and zero switches the band off
+entirely.
+
 ## The Sun And The Moon
 
 The sun and moon are **not** modelled by AstraTerra. They come from Vintage Story itself, via
@@ -393,7 +436,8 @@ Every claim above is checkable from inside the game, in one session, without a r
 ```
 
 The toggles are session-scoped on purpose — a measurement tool, not a setting — and cover `stars`
-(with the planets that share its billboard path), `constellations`, `deepsky` and `meteors`. Switching
+(with the planets that share its billboard path), `constellations`, `deepsky`, `meteors`, `comets`
+and `milkyway`. Switching
 both `stars` and `constellations` off also skips the projection they share, so its cost shows up too
 rather than hiding behind a draw that no longer happens.
 
@@ -456,6 +500,9 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |
 | Cost numbers mean what they say               | `SkyPassMetricsTests`                                                                                        |
 | One path goes dark, the rest keep drawing     | `SkyRenderPathsTests`                                                                                        |
+| The band lands on Sagittarius and the anticentre | `GalacticFrameTests`                                                                                     |
+| The band's glow map wraps without a seam      | `MilkyWayRenderModelTests.The_Seam_Column_Repeats_The_First_One_At_The_Far_Edge_Of_The_Map`                  |
+| The band goes before the stars do             | `MilkyWayVisibilityTests`                                                                                    |
 | A block overhead never hides the whole sky    | `SkyExposureTests.Any_Skylight_At_All_Keeps_The_Sky`                                                        |
 | Day phases and polar cases                    | `SkyClockTests`                                                                                              |
 | Solar longitude is the sidereal seasonal term | `CelestialMathTests.SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle`                               |

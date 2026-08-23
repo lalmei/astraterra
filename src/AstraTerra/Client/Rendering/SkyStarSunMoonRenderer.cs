@@ -44,11 +44,19 @@ public static class SkyStarSunMoonRenderer
     /// than as a sprite: constellation ribbons and meteor streaks.
     /// </summary>
     private const string SkyMarkTexturePath = "astraterra:environment/star-pixel";
+
+    /// <summary>The galaxy's own glow, wrapped over the sky in galactic coordinates.</summary>
+    public const string MilkyWayTexturePath = "astraterra:environment/milky-way";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
     private const double MinimumSkyRenderDarkness = 0.10;
     private const float MinimumStarAlpha = 0.035f;
     private const float SkyDistance = 40.0f;
+
+    // Outside every other sky object. Additive blending makes draw order irrelevant to the picture,
+    // but the band is the background the rest of the sky stands in front of, and putting it there in
+    // the geometry too means nothing has to be remembered about the order it is drawn in.
+    private const float MilkyWaySkyDistance = 40.6f;
     private const float MeteorSkyDistance = 39.8f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
     private const float StarGlowMaxAlpha = 0.35f;
@@ -113,6 +121,7 @@ public static class SkyStarSunMoonRenderer
     private static bool telescopeFaintStarTextureLoadFailed;
     private static bool telescopePlanetTextureLoadFailed;
     private static bool skyMarkTextureLoadFailed;
+    private static bool milkyWayTextureLoadFailed;
     private static bool forceDaylightStars;
     private static bool renderingDisabledAfterFailure;
     private static int starTextureId;
@@ -121,6 +130,8 @@ public static class SkyStarSunMoonRenderer
     private static int telescopeFaintStarTextureId;
     private static int telescopePlanetTextureId;
     private static int skyMarkTextureId;
+    private static int milkyWayTextureId;
+    private static MeshRef? milkyWayMesh;
     private static MeshRef? deepSkyQuadMesh;
     private static MeshRef? meteorStreakMesh;
     private static MeshRef? cometTailMesh;
@@ -192,6 +203,13 @@ public static class SkyStarSunMoonRenderer
     /// </para>
     /// </remarks>
     private const double StarRefreshThresholdDeg = 0.05;
+
+    // The band's own threshold is five times the stars'. Its mesh carries no detail of its own —
+    // every feature in it is a texel, carried along by the same rotation the star batches use — so
+    // rebuilding it only re-evaluates the horizon fade, which moves a degree in four minutes.
+    private const double MilkyWayRefreshThresholdDeg = 0.25;
+    private static double cachedMilkyWayLatitudeDeg = double.NaN;
+    private static double cachedMilkyWaySiderealDeg = double.NaN;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
 
@@ -352,6 +370,8 @@ public static class SkyStarSunMoonRenderer
 
     public static void Reset()
     {
+        milkyWayMesh?.Dispose();
+        milkyWayMesh = null;
         deepSkyQuadMesh?.Dispose();
         deepSkyQuadMesh = null;
         meteorStreakMesh?.Dispose();
@@ -416,6 +436,7 @@ public static class SkyStarSunMoonRenderer
         telescopeFaintStarTextureLoadFailed = false;
         telescopePlanetTextureLoadFailed = false;
         skyMarkTextureLoadFailed = false;
+        milkyWayTextureLoadFailed = false;
         forceDaylightStars = false;
         renderingDisabledAfterFailure = false;
         starTextureId = 0;
@@ -424,6 +445,9 @@ public static class SkyStarSunMoonRenderer
         telescopeFaintStarTextureId = 0;
         telescopePlanetTextureId = 0;
         skyMarkTextureId = 0;
+        milkyWayTextureId = 0;
+        cachedMilkyWayLatitudeDeg = double.NaN;
+        cachedMilkyWaySiderealDeg = double.NaN;
         DeepSkyTextureIds.Clear();
         FailedDeepSkyTexturePaths.Clear();
     }
@@ -518,6 +542,14 @@ public static class SkyStarSunMoonRenderer
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
         var brightnessBias = config.StarBrightnessBias * (float)renderDarkness;
+        // The band answers to the night rather than to the star brightness bias: it is surface
+        // brightness, and it goes first when the sky is anything but properly dark.
+        var milkyWayAlpha = SkyRenderPaths.IsEnabled(SkyRenderPath.MilkyWay)
+            ? MilkyWayVisibility.CalculateOpacity(
+                renderDarkness,
+                calendar.MoonPhaseBrightness,
+                config.GetMilkyWayBrightness())
+            : 0f;
         // The projection feeds both the stars and the constellation lines, so it is skipped only when
         // neither will be drawn. That is what makes `.stars render stars off` plus
         // `.stars render constellations off` measure the projection's cost and not just its draw.
@@ -560,7 +592,7 @@ public static class SkyStarSunMoonRenderer
             ?? (IReadOnlyList<RenderedComet>)NoComets;
         // The scope's deep-sky plates are the one thing that can still be worth drawing with no star
         // above the horizon, so they keep the pass alive.
-        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && visibleComets.Count == 0 && meteorStreaks.Count == 0 && !TelescopeScopeState.IsScoped)
+        if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && visibleComets.Count == 0 && meteorStreaks.Count == 0 && milkyWayAlpha <= 0f && !TelescopeScopeState.IsScoped)
         {
             LogSkyStep(
                 dt,
@@ -639,6 +671,8 @@ public static class SkyStarSunMoonRenderer
             cachedStarLatitudeDeg,
             CelestialMath.ShortestAngularDistanceDegrees(cachedStarSiderealDeg, localSiderealAngle));
 
+        var milkyWay = PrepareMilkyWay(api, milkyWayAlpha, latitude, localSiderealAngle);
+
         RenderSky(
             api,
             drawableStars,
@@ -648,6 +682,7 @@ public static class SkyStarSunMoonRenderer
             constellationLines,
             meteorStreaks,
             FindStrongestReading(meteorReadings),
+            milkyWay,
             starResidualRotation,
             starAngularScale,
             quadModel,
@@ -670,6 +705,7 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<SkyConstellationLine> constellationLines,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
         MeteorShowerReading? strongestMeteorReading,
+        MilkyWayDraw milkyWay,
         Matrix4 starResidualRotation,
         float starAngularScale,
         MeshRef quadModel,
@@ -734,6 +770,10 @@ public static class SkyStarSunMoonRenderer
             shader.AlphaTest = 0.01f;
             shader.ViewMatrix = render.CameraMatrixOriginf;
             shader.ProjectionMatrix = render.CurrentProjectionMatrix;
+
+            // The band goes down before anything else: it is the sky the stars are seen against,
+            // and drawing it after them would be drawing a haze over the top of them.
+            RenderMilkyWay(clientApi, shader, milkyWay, modelMatrixBuffer);
 
             // Each path is switched independently so a player can answer "which one costs me?" in
             // one session, without a rebuild. Everything else keeps drawing.
@@ -836,7 +876,7 @@ public static class SkyStarSunMoonRenderer
                 report.MeshUpdates,
                 SkyRenderPaths.Describe());
             clientApi.Logger.VerboseDebug(
-                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; sprites={1}; constellationLines={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}",
+                "AstraTerra sky draw: pass=sunMoon3D; visible={0}; planets={7}; sprites={1}; constellationLines={2} (batched={8}/{9} in 1 draw); daylight={3:0.00}; forceDaylight={4}; azimuth={5:0.0}; altitude={6:0.0}; milkyWayAlpha={10:0.000}",
                 visibleStars.Count,
                 drawnCount,
                 constellationLines.Count,
@@ -846,7 +886,8 @@ public static class SkyStarSunMoonRenderer
                 Math.Clamp(-ToDegrees(pitch), -89.0, 89.0),
                 visiblePlanets.Count,
                 constellationLineMeshDrawnCount,
-                constellationLineMeshCapacity);
+                constellationLineMeshCapacity,
+                milkyWay.Alpha);
             if (visiblePlanets.Count > 0)
             {
                 clientApi.Logger.VerboseDebug(
@@ -1256,6 +1297,89 @@ public static class SkyStarSunMoonRenderer
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         DrawMesh(clientApi, cometTailMesh);
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+    }
+
+    /// <summary>What the band needs at draw time: how strongly it draws, and how far the sky has turned since its mesh was built.</summary>
+    private readonly record struct MilkyWayDraw(float Alpha, Matrix4 ResidualRotation);
+
+    /// <summary>
+    /// Gets the band's mesh and texture ready, and works out the turn its cached geometry still owes
+    /// the current sky.
+    /// </summary>
+    /// <remarks>
+    /// Rebuilt on the same terms as the star batches and carried forward the same way, just at a
+    /// coarser threshold: the geometry is a bare sphere, so the only thing a rebuild decides is
+    /// where the band meets the horizon.
+    /// </remarks>
+    private static MilkyWayDraw PrepareMilkyWay(
+        ICoreClientAPI clientApi,
+        float alpha,
+        double latitudeDeg,
+        double localSiderealDeg)
+    {
+        if (alpha <= 0f)
+        {
+            return new MilkyWayDraw(0f, Matrix4.Identity);
+        }
+
+        EnsureStarTexture(clientApi, MilkyWayTexturePath, ref milkyWayTextureId, ref milkyWayTextureLoadFailed);
+        if (milkyWayTextureId == 0)
+        {
+            return new MilkyWayDraw(0f, Matrix4.Identity);
+        }
+
+        var siderealDelta = CelestialMath.ShortestAngularDistanceDegrees(cachedMilkyWaySiderealDeg, localSiderealDeg);
+        var stale = milkyWayMesh is null ||
+            !double.IsFinite(cachedMilkyWayLatitudeDeg) ||
+            Math.Abs(latitudeDeg - cachedMilkyWayLatitudeDeg) > MilkyWayRefreshThresholdDeg ||
+            !double.IsFinite(siderealDelta) ||
+            Math.Abs(siderealDelta) > MilkyWayRefreshThresholdDeg;
+        if (stale)
+        {
+            var meshData = MilkyWayBandMeshBuilder.Build(
+                MilkyWayRenderModel.ProjectBand(latitudeDeg, localSiderealDeg),
+                MilkyWaySkyDistance);
+            if (milkyWayMesh is null)
+            {
+                milkyWayMesh = UploadMesh(clientApi, meshData);
+            }
+            else
+            {
+                UpdateMesh(clientApi, milkyWayMesh, meshData);
+            }
+
+            cachedMilkyWayLatitudeDeg = latitudeDeg;
+            cachedMilkyWaySiderealDeg = localSiderealDeg;
+            siderealDelta = 0.0;
+        }
+
+        return new MilkyWayDraw(alpha, SkyResidualRotation.Build(cachedMilkyWayLatitudeDeg, siderealDelta));
+    }
+
+    private static void RenderMilkyWay(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        MilkyWayDraw milkyWay,
+        float[] modelMatrixBuffer)
+    {
+        if (milkyWayMesh is null || milkyWayTextureId == 0 || milkyWay.Alpha <= 0f)
+        {
+            return;
+        }
+
+        var modelMatrix = BuildSkyModelMatrix(clientApi, milkyWay.ResidualRotation);
+
+        // White tint carrying only the alpha: the glow map holds the band's own colour, from the
+        // amber of the reddened bulge to the neutral outer arms, and a tint would push all of it the
+        // same way. How far the band has set is on the vertices instead.
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+        shader.RgbaTint = Set(ScratchTint, 1f, 1f, 1f, milkyWay.Alpha);
+        shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
+        shader.Tex2D = milkyWayTextureId;
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
+        DrawMesh(clientApi, milkyWayMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 

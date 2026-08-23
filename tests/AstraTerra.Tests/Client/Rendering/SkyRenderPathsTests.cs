@@ -21,6 +21,7 @@ public sealed class SkyRenderPathsTests : IDisposable
         Assert.True(SkyRenderPaths.IsEnabled(SkyRenderPath.Constellations));
         Assert.True(SkyRenderPaths.IsEnabled(SkyRenderPath.DeepSky));
         Assert.True(SkyRenderPaths.IsEnabled(SkyRenderPath.Meteors));
+        Assert.True(SkyRenderPaths.IsEnabled(SkyRenderPath.MilkyWay));
     }
 
     [Fact]
@@ -66,6 +67,7 @@ public sealed class SkyRenderPathsTests : IDisposable
         Assert.Contains("constellations=on", description, StringComparison.Ordinal);
         Assert.Contains("deepsky=off", description, StringComparison.Ordinal);
         Assert.Contains("meteors=on", description, StringComparison.Ordinal);
+        Assert.Contains("milkyway=on", description, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -75,6 +77,8 @@ public sealed class SkyRenderPathsTests : IDisposable
     [InlineData("constellation", SkyRenderPath.Constellations)]
     [InlineData("deep-sky", SkyRenderPath.DeepSky)]
     [InlineData("meteor", SkyRenderPath.Meteors)]
+    [InlineData("milkyway", SkyRenderPath.MilkyWay)]
+    [InlineData("milky-way", SkyRenderPath.MilkyWay)]
     [InlineData("all", SkyRenderPath.All)]
     public void The_Parser_Accepts_The_Names_A_Player_Would_Type(string value, SkyRenderPath expected)
     {
