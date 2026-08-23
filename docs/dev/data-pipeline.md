@@ -16,6 +16,19 @@ The committed v1 star catalog is generated from local HYG v4.2 source data. Sour
 
 Pass the Modern IAU asset through `--required-sky-culture-json` when regenerating the runtime catalog. This retains every star referenced by an authored figure even when it falls beyond the normal brightness or count cutoff; `hipparcos-supplement.v1.json` supplies exceptional referenced entries absent from HYG.
 
+## Milky Way Texture Generator
+
+The band's glow map has its own generator in `tools/milkywaygen/`, and it needs no source dataset: it integrates a galaxy model along every line of sight rather than resampling a survey or repainting a photograph, so the committed texture carries no third-party licence.
+
+```bash
+cd tools/milkywaygen
+python -m milkywaygen.main --help
+python -m milkywaygen.main            # rewrites assets/astraterra/textures/environment/milky-way.png
+python -m unittest tests.test_galaxy
+```
+
+Regenerating with the committed defaults reproduces the committed texture; the seed is one of them.
+
 ## Runtime Assets
 
 - `star-catalog.v1.json`: baked fixed-star catalog.
@@ -24,6 +37,7 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 - `sky-cultures/*.json`: authored constellation line data.
 - `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
 - `meteor-showers.v1.json`: annual meteor showers. Radiant, peak solar longitude, activity half-width, and peak ZHR, hand-authored from the IMO Meteor Shower Calendar working list.
+- `textures/environment/milky-way.png`: the galaxy's unresolved glow, equirectangular in galactic coordinates, +90 deg on the first row and longitude running +180 to -180 left to right.
 - `planets.v1.json`: the five naked-eye planets and the observer's own orbit. Six Keplerian elements and their per-century rates per body, hand-authored from JPL's *Approximate Positions of the Major Planets* Table 1 (valid 1800–2050), plus a magnitude zero point, a linear phase coefficient, and a tint.
 
 Like the shower catalog, the planet table is hand-authored rather than generated: it is six rows of published constants, and a generator would add a build step without removing a source of error. The error it would not catch is a mistyped digit, so `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law` checks each body's semi-major axis against its mean-motion rate — two numbers that are independent in the file and physically locked together — and `PlanetEphemerisTests` checks the resulting positions against real oppositions.
