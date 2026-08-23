@@ -122,6 +122,32 @@ public sealed class ConstellationBookClient
         });
     }
 
+    /// <summary>
+    /// Sends a sighting to be written down. The body's identity is deliberately not sent: what the
+    /// observer measured is a direction and a moment, and what stood there is theirs to work out.
+    /// </summary>
+    public void SendRecordObservation(
+        double altitudeDeg,
+        double azimuthDeg,
+        double? visualMagnitude,
+        int day,
+        double hour,
+        double latitudeDeg,
+        double resolutionDeg)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.RecordObservation,
+            AltitudeDeg = altitudeDeg,
+            AzimuthDeg = azimuthDeg,
+            VisualMagnitude = visualMagnitude ?? double.NaN,
+            Day = day,
+            Hour = hour,
+            LatitudeDeg = latitudeDeg,
+            ResolutionDeg = resolutionDeg
+        });
+    }
+
     public void SendBuild(string target)
     {
         SendMutation(new ConstellationBookMutationPacket
