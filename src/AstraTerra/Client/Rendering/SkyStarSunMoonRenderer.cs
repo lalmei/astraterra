@@ -883,7 +883,7 @@ public static class SkyStarSunMoonRenderer
                 daylight,
                 forceDaylight,
                 CelestialMath.NormalizeDegrees(ToDegrees(yaw)),
-                Math.Clamp(-ToDegrees(pitch), -89.0, 89.0),
+                Math.Clamp(SkyBodyModel.GetCameraAltitudeDeg(pitch), -89.0, 89.0),
                 visiblePlanets.Count,
                 constellationLineMeshDrawnCount,
                 constellationLineMeshCapacity,
