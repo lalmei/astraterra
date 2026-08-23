@@ -1,0 +1,9 @@
+[project]
+name = "milkywaygen"
+version = "0.1.0"
+description = "Developer-only AstraTerra Milky Way glow texture generation tool."
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.24", "pillow>=10.0"]
+
+[project.scripts]
+milkywaygen = "milkywaygen.main:main"
