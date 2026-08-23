@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Observation;
 using Xunit;
 
 namespace AstraTerra.Tests.Astronomy;
@@ -141,5 +142,27 @@ public sealed class SkyBodyModelTests
         var altitude = altitudeDeg * Math.PI / 180.0;
         var horizontal = Math.Cos(altitude);
         return (horizontal * Math.Sin(azimuth), Math.Sin(altitude), -horizontal * Math.Cos(azimuth));
+    }
+
+    /// <summary>
+    /// The sky log's camera altitude used to read -89 wherever the player looked, because vanilla's
+    /// pitch is measured down from the zenith rather than up from the horizon. A reading that is
+    /// always the same number is worse than no reading: it looks like data.
+    /// </summary>
+    [Theory]
+    [InlineData(Math.PI / 2, 90.0)]
+    [InlineData(Math.PI, 0.0)]
+    [InlineData(3 * Math.PI / 2, -90.0)]
+    public void Camera_Altitude_Reads_Up_From_The_Horizon(double pitchRadians, double expectedDeg)
+    {
+        Assert.Equal(expectedDeg, SkyBodyModel.GetCameraAltitudeDeg(pitchRadians), precision: 6);
+    }
+
+    [Fact]
+    public void Lying_On_Your_Back_Reads_As_Very_Nearly_Straight_Up()
+    {
+        var altitude = SkyBodyModel.GetCameraAltitudeDeg(SkyLyingPolicy.LookUpPitch);
+
+        Assert.InRange(altitude, 89.0, 90.0);
     }
 }
