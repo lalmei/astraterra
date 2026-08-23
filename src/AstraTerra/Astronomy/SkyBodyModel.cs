@@ -1,13 +1,18 @@
 namespace AstraTerra.Astronomy;
 
 /// <param name="AzimuthDeg">Clockwise from north, matching <see cref="CelestialMath.GetHorizontalCoordinates"/>.</param>
+/// <param name="VisualMagnitude">
+/// How bright the body reads, or null when there is no scale to judge it against — the sun and the
+/// moon come straight from Vintage Story and carry no magnitude.
+/// </param>
 public sealed record SightedBody(
     string DisplayName,
     double AzimuthDeg,
     double AltitudeDeg,
     double DirectionX,
     double DirectionY,
-    double DirectionZ);
+    double DirectionZ,
+    double? VisualMagnitude = null);
 
 /// <summary>
 /// Turns sky objects into a single shape the sextant can sight, so the sun and moon are measured
@@ -80,7 +85,8 @@ public static class SkyBodyModel
             body.AltitudeDeg,
             body.DirectionX,
             body.DirectionY,
-            body.DirectionZ);
+            body.DirectionZ,
+            body.VisualMagnitude);
     }
 
     public static SightedBody FromStar(RenderedStar star)

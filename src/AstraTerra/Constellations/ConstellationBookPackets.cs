@@ -29,6 +29,33 @@ public sealed class ConstellationBookMutationPacket
     /// <summary>Catalog id of the planet being identified or named. Empty for constellation actions.</summary>
     [ProtoMember(8)]
     public string PlanetId = string.Empty;
+
+    /// <summary>
+    /// The sighting itself, for <see cref="ConstellationBookMutationActions.RecordObservation"/>.
+    /// Deliberately carries no identity: the observer measured a direction, not an object.
+    /// </summary>
+    [ProtoMember(9)]
+    public double AltitudeDeg;
+
+    [ProtoMember(10)]
+    public double AzimuthDeg;
+
+    /// <summary>How bright it looked, or NaN when there was nothing to judge it against.</summary>
+    [ProtoMember(11)]
+    public double VisualMagnitude = double.NaN;
+
+    [ProtoMember(12)]
+    public int Day;
+
+    [ProtoMember(13)]
+    public double Hour;
+
+    [ProtoMember(14)]
+    public double LatitudeDeg;
+
+    /// <summary>What the sighting instrument reads to. See <see cref="Observation.InstrumentResolution"/>.</summary>
+    [ProtoMember(15)]
+    public double ResolutionDeg;
 }
 
 [ProtoContract]
@@ -60,8 +87,13 @@ public static class ConstellationBookMutationActions
     public const string Build = "build";
     public const string IdentifyPlanet = "identifyPlanet";
     public const string RenamePlanet = "renamePlanet";
+    public const string RecordObservation = "recordObservation";
 
     /// <summary>Actions that write the planet half of the book rather than the constellation half.</summary>
     public static bool IsPlanetAction(string action)
         => action is IdentifyPlanet or RenamePlanet;
+
+    /// <summary>Actions that write the ledger of sightings rather than either journal.</summary>
+    public static bool IsObservationAction(string action)
+        => action is RecordObservation;
 }

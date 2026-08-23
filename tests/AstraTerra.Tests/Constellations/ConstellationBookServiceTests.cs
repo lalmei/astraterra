@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AstraTerra.Constellations;
+using AstraTerra.Observation;
 using Vintagestory.API.Datastructures;
 using Xunit;
 
@@ -26,6 +27,61 @@ public sealed class ConstellationBookServiceTests
         var loaded = ConstellationBookService.ReadJournal(attributes);
         Assert.NotNull(loaded);
         Assert.Equal("Lantern", loaded.Constellations.Single().Name);
+    }
+
+    [Fact]
+    public void WriteObservationLog_Stores_A_Dated_Ledger_Page()
+    {
+        var log = new ObservationLog();
+        log.Record(34.2, 118.0, 1.4, 412, 21.5, 51.0, InstrumentResolution.BrassSextantDeg);
+        var attributes = new TreeAttribute();
+
+        ConstellationBookService.WriteObservationLog(attributes, log);
+
+        var text = attributes.GetString(ConstellationBookService.VanillaTextAttribute);
+        Assert.Contains("Sightings", text);
+        Assert.Contains("day 412, 21:30 — alt +34° 12′", text);
+        Assert.Equal(ConstellationBookService.AstraTerraSignerUid, attributes.GetString(ConstellationBookService.LockedByAttribute));
+
+        var loaded = ConstellationBookService.ReadObservationLog(attributes);
+        Assert.NotNull(loaded);
+        Assert.Equal(412, loaded.Observations.Single().Day);
+    }
+
+    [Fact]
+    public void WriteObservationLog_Says_Nothing_About_What_Was_Sighted()
+    {
+        var log = new ObservationLog();
+        log.Record(34.2, 118.0, 1.4, 412, 21.5, 51.0, InstrumentResolution.BrassSextantDeg);
+        var attributes = new TreeAttribute();
+
+        ConstellationBookService.WriteObservationLog(attributes, log);
+
+        var text = attributes.GetString(ConstellationBookService.VanillaTextAttribute);
+        Assert.DoesNotContain("Wandering", text);
+        Assert.DoesNotContain("HIP", text);
+    }
+
+    [Fact]
+    public void Writing_One_Half_Of_A_Book_Leaves_The_Others_On_The_Page()
+    {
+        var attributes = new TreeAttribute();
+        var log = new ObservationLog();
+        log.Record(34.2, 118.0, 1.4, 412, 21.5, 51.0, InstrumentResolution.BrassSextantDeg);
+        ConstellationBookService.WriteObservationLog(attributes, log);
+
+        var planets = new PlanetJournal();
+        planets.Rename("mars", "Ember");
+        ConstellationBookService.WritePlanetJournal(attributes, planets);
+
+        var journal = new ConstellationJournal();
+        journal.Replace(journal.CreateFromEdge(100, 200) with { Name = "Lantern" });
+        ConstellationBookService.WriteJournal(attributes, journal);
+
+        var text = attributes.GetString(ConstellationBookService.VanillaTextAttribute);
+        Assert.Contains("Lantern", text);
+        Assert.Contains("Ember", text);
+        Assert.Contains("day 412", text);
     }
 
     [Fact]

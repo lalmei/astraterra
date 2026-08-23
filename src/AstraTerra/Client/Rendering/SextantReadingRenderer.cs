@@ -27,24 +27,30 @@ public sealed class SextantReadingRenderer : IRenderer
     private int cometModelDaysPerYear;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
+    private readonly ConstellationBookClient? bookClient;
     private LoadedTexture? readingTexture;
     private string? readingText;
+    private bool sneakWasDown;
+    private bool sneakPressed;
 
     /// <param name="catalog">Null when the star catalog failed to load. Sun and moon sighting still works.</param>
     /// <param name="planetCatalog">Null when the planet catalog failed to load. Everything else still sights.</param>
     /// <param name="cometCatalog">Null when the comet catalog failed to load. Everything else still sights.</param>
+    /// <param name="bookClient">Null when there is no book channel. Sighting still reads; it just cannot be written down.</param>
     public SextantReadingRenderer(
         ICoreClientAPI api,
         AstraTerraConfig config,
         StarCatalog? catalog,
         PlanetCatalog? planetCatalog = null,
-        CometCatalog? cometCatalog = null)
+        CometCatalog? cometCatalog = null,
+        ConstellationBookClient? bookClient = null)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
         this.planetCatalog = planetCatalog;
         this.cometCatalog = cometCatalog;
+        this.bookClient = bookClient;
     }
 
     public double RenderOrder => 0.99;
@@ -92,6 +98,7 @@ public sealed class SextantReadingRenderer : IRenderer
         if (stage == EnumRenderStage.Opaque)
         {
             CacheCameraMatrices();
+            TrackSneak();
             return;
         }
 
@@ -100,7 +107,9 @@ public sealed class SextantReadingRenderer : IRenderer
             return;
         }
 
-        RenderReading(BuildReadingText());
+        var target = ResolveTarget(out var status);
+        RenderReading(status);
+        PollRecordObservation(target);
     }
 
     public void Dispose()
@@ -108,27 +117,84 @@ public sealed class SextantReadingRenderer : IRenderer
         DeleteReadingTexture();
     }
 
-    private string BuildReadingText()
+    /// <summary>What the sight is on, and what the readout says about it either way.</summary>
+    private SightedBody? ResolveTarget(out string status)
     {
         if (cachedViewMatrix is null || cachedProjectionMatrix is null)
         {
-            return "Sextant: no sight line";
+            status = "Sextant: no sight line";
+            return null;
         }
 
         if (!HasOpenSkyAbovePlayer())
         {
-            return "Sextant: sky blocked";
+            status = "Sextant: sky blocked";
+            return null;
         }
 
         var target = FindTargetBody(CollectSightableBodies());
         if (target is null)
         {
-            return CanSightStars()
+            status = CanSightStars()
                 ? "Sextant: align with a star, the sun, or the moon"
                 : "Sextant: align with the sun or the moon";
+            return null;
         }
 
-        return $"{target.DisplayName} — angle above horizon: {target.AltitudeDeg:+0.0;-0.0;0.0} deg";
+        status = $"{target.DisplayName} — angle above horizon: {target.AltitudeDeg:+0.0;-0.0;0.0} deg";
+        return target;
+    }
+
+    /// <summary>
+    /// Writes the current sight into the book when the observer sneaks, the same key the telescope
+    /// writes with and for the same reason: right mouse is already held to keep the instrument up.
+    /// </summary>
+    /// <remarks>
+    /// What travels is the reading, never the identity: an altitude, an azimuth, a brightness, the
+    /// day and hour, and the latitude the observer stood at. The book keeps a dated entry about a
+    /// position; deciding what stood there is the observer's own work, done later by comparing
+    /// entries.
+    /// </remarks>
+    private void PollRecordObservation(SightedBody? target)
+    {
+        if (!sneakPressed)
+        {
+            return;
+        }
+
+        sneakPressed = false;
+        if (target is null || bookClient is null)
+        {
+            return;
+        }
+
+        if (!bookClient.CanMutate(out var message))
+        {
+            api.ShowChatMessage(message);
+            return;
+        }
+
+        var calendar = api.World.Calendar;
+        var position = api.World.Player.Entity.Pos;
+        var latitude = LatitudeMapper.MapGameLatitude(
+            position.Z,
+            calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
+
+        bookClient.SendRecordObservation(
+            target.AltitudeDeg,
+            target.AzimuthDeg,
+            target.VisualMagnitude,
+            (int)Math.Floor(calendar.TotalDays),
+            calendar.HourOfDay,
+            latitude,
+            InstrumentResolution.BrassSextantDeg);
+    }
+
+    private void TrackSneak()
+    {
+        var down = api.World.Player.Entity.Controls.Sneak;
+        sneakPressed = down && !sneakWasDown;
+        sneakWasDown = down;
     }
 
     /// <summary>

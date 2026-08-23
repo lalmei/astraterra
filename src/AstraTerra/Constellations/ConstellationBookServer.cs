@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Commands;
+using AstraTerra.Observation;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
@@ -52,6 +53,11 @@ public sealed class ConstellationBookServer
         if (ConstellationBookMutationActions.IsPlanetAction(packet.Action))
         {
             return HandlePlanetMutation(slot, packet);
+        }
+
+        if (ConstellationBookMutationActions.IsObservationAction(packet.Action))
+        {
+            return HandleObservationMutation(slot, packet);
         }
 
         var wasConstellationBook = ConstellationBookService.IsConstellationBook(slot.Itemstack);
@@ -152,6 +158,55 @@ public sealed class ConstellationBookServer
         catch (Exception exception)
         {
             return Error($"Could not update the planet book: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Writes a sighting into the ledger, leaving the figures and the wanderers alone.
+    /// </summary>
+    /// <remarks>
+    /// Nothing is checked against the sky model, because there is nothing to check: the observer
+    /// reports where they pointed and what the scale read, and the book's job is to keep that
+    /// faithfully rather than to grade it. The angles are truncated to the instrument's resolution
+    /// on the way in, so a fine reading cannot be smuggled in by a crude instrument.
+    /// </remarks>
+    private static ConstellationBookResponsePacket HandleObservationMutation(
+        ItemSlot slot,
+        ConstellationBookMutationPacket packet)
+    {
+        if (slot.Itemstack is not { } stack)
+        {
+            return Error("Hold a writable or written constellation book in your left hand.");
+        }
+
+        if (!double.IsFinite(packet.AltitudeDeg) || !double.IsFinite(packet.AzimuthDeg))
+        {
+            return Error("That sighting has no angle to write down.");
+        }
+
+        try
+        {
+            var log = ConstellationBookService.ReadObservationLogOrEmpty(stack);
+            var record = log.Record(
+                packet.AltitudeDeg,
+                packet.AzimuthDeg,
+                double.IsFinite(packet.VisualMagnitude) ? packet.VisualMagnitude : null,
+                packet.Day,
+                packet.Hour,
+                packet.LatitudeDeg,
+                packet.ResolutionDeg > 0.0 ? packet.ResolutionDeg : InstrumentResolution.BrassSextantDeg);
+
+            ConstellationBookService.WriteObservationLog(stack, log);
+            slot.MarkDirty();
+            return new ConstellationBookResponsePacket
+            {
+                Success = true,
+                Message = $"Sighting #{record.Id} written down: {record.Describe()}."
+            };
+        }
+        catch (Exception exception)
+        {
+            return Error($"Could not write the sighting down: {exception.Message}");
         }
     }
 

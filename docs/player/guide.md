@@ -59,6 +59,10 @@ The sun and the moon can be shot whenever they are above the horizon, so the Sex
 
 Planets sight by whatever *you* call them. With no book naming them the readout says **Wandering star**, because from the ground that is all a planet is: a star that does not keep its place. Put a book that names them in your left hand and the readout uses those names. Since planets are usually among the brightest things up, they are the easiest sights in the sky after the sun and the moon.
 
+**Sneak while sighting to write the reading down.** With a writable book in your left hand and ink and quill somewhere in your inventory, sneak while holding the Sextant up and the book gains a dated entry: the angle above the horizon, the bearing, how bright it looked, the day and hour, and the latitude you stood at.
+
+The entry does not say what you sighted, and that is the point. The book records that *something* stood at that angle at that hour — what it was is yours to work out by sighting the same patch of sky again on another night and seeing whether it stayed put. Angles are written to what the instrument can actually read, an arcminute for the brass Sextant, so a reading is never finer than the scale that produced it.
+
 If nothing readable is near the center, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
 
 !!! note "Sun safety"
