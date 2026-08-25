@@ -214,6 +214,21 @@ public sealed class SkyLyingAnimationTests
     }
 
     [Fact]
+    public void EnsureSupineClips_Leaves_Matching_Clips_In_Place()
+    {
+        var shape = new Shape
+        {
+            Animations = [new Animation { Code = "lie", Name = "Lie", QuantityFrames = 50, KeyFrames = [] }]
+        };
+
+        Assert.True(SkyLyingAnimation.EnsureSupineClips(shape));
+        var stargaze = Assert.Single(shape.Animations, animation => animation.Code == "stargaze");
+
+        Assert.True(SkyLyingAnimation.EnsureSupineClips(shape));
+        Assert.Same(stargaze, Assert.Single(shape.Animations, animation => animation.Code == "stargaze"));
+    }
+
+    [Fact]
     public void EnsureSupineClips_Ignores_A_Shape_That_Is_Not_A_Seraph()
     {
         Assert.False(SkyLyingAnimation.EnsureSupineClips(null));

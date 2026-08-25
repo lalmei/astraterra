@@ -25,6 +25,8 @@ public sealed class PlayerEyeHeightPatchTests
         var source = File.ReadAllText(SourcePath);
 
         Assert.Contains("[HarmonyTargetMethod]", source);
+        Assert.Contains("[HarmonyPrefix]", source);
+        Assert.Contains("out (double EyeY, float CollisionY2) __state", source);
         Assert.DoesNotContain("[HarmonyPatch(typeof(EntityPlayer)", source);
     }
 

@@ -159,6 +159,11 @@ public static class SkyLyingAnimation
     /// puts the same clips on the vanilla player shape; this covers a shape that patch did not
     /// reach, and keeps the two from drifting by using the same keyframes.
     /// </summary>
+    /// <remarks>
+    /// This runs from player tesselation. Replacing clips that are already ours would hand the
+    /// animator new objects every rebuild — CarryOn and held-item updates tesselate often — and
+    /// the camera would hitch as the pose restarted.
+    /// </remarks>
     public static bool EnsureSupineClips(Shape? shape)
     {
         // Every seraph rig has 'lie'; a shape without it is not one, and the bone names below
@@ -166,6 +171,14 @@ public static class SkyLyingAnimation
         if (shape?.Animations is null || Find(shape.Animations, "lie") is null)
         {
             return false;
+        }
+
+        if (IsOurs(shape, SkyLyingPolicy.ShapeAnimationRecline, ReclineFrames)
+            && IsOurs(shape, SkyLyingPolicy.ShapeAnimation, IdleFrames)
+            && IsOurs(shape, SkyLyingPolicy.ShapeAnimationHolding, IdleFrames)
+            && IsOurs(shape, SkyLyingPolicy.ShapeAnimationRise, RiseFrames))
+        {
+            return true;
         }
 
         Upsert(shape, Recline());
@@ -251,6 +264,14 @@ public static class SkyLyingAnimation
 
         shape.AnimationsByCrc32 ??= new Dictionary<uint, Animation>();
         shape.AnimationsByCrc32[animation.CodeCrc32] = animation;
+    }
+
+    private static bool IsOurs(Shape shape, string code, int quantityFrames)
+    {
+        var existing = Find(shape.Animations, code);
+        return existing is not null
+            && existing.Version == AnimationVersion
+            && existing.QuantityFrames == quantityFrames;
     }
 
     private static Animation? Find(Animation[] animations, string code)
