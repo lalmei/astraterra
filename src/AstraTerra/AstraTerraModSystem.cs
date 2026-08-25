@@ -184,7 +184,8 @@ public sealed class AstraTerraModSystem : ModSystem
                 daysPerYearProvider: () => Math.Max(1, api.World.Calendar.DaysPerYear)),
             constellationBookClient,
             config,
-            comets).Register(api);
+            comets,
+            planets).Register(api);
         api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/comets/debug/daylight-stars/starfield/sky-grid/render");
 
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);

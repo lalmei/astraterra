@@ -32,6 +32,12 @@ The book does the arithmetic and stops there. `.stars classify` is where you say
 .stars classify #4 comet
 ```
 
+Calling a set a **wanderer** does one more thing. Your own entries are looked up against the wandering
+bodies, and if exactly one of them was in all of those places on all of those nights, the conclusion
+binds to it: your name for it is what the Sextant and the Astrolabe call it from then on. If two
+bodies fit, or none do, the conclusion still stands but nothing is bound — sight it again and the
+record will settle.
+
 Nothing checks your answer against the sky, and that is deliberate: a classification the game has
 already graded is a quiz, not a discovery. Being wrong is allowed, and you find out the way an
 observer does — by sighting it again and watching your own numbers stop making sense. Changing your

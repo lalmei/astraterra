@@ -63,7 +63,7 @@ Planets sight by whatever *you* call them. With no book naming them the readout 
 
 The entry does not say what you sighted, and that is the point. The book records that *something* stood at that angle at that hour — what it was is yours to work out by sighting the same patch of sky again on another night and seeing whether it stayed put. Angles are written to what the instrument can actually read, an arcminute for the brass Sextant, so a reading is never finer than the scale that produced it.
 
-Once there are two entries in the book, `.stars sightings` lays them out, gathers them into the sets it takes to be the same body, and says how far apart the nights put them — held its place, or moved so far, so fast. Say what a set was with `.stars classify <set> star|wanderer|comet [name]`. Nothing grades the answer; that is what makes it yours.
+Once there are two entries in the book, `.stars sightings` lays them out, gathers them into the sets it takes to be the same body, and says how far apart the nights put them — held its place, or moved so far, so fast. Say what a set was with `.stars classify <set> star|wanderer|comet [name]`. Nothing grades the answer; that is what makes it yours. Call a set a wanderer and your entries are matched against the wandering bodies — if exactly one of them was in all those places on all those nights, your name for it becomes the name every instrument uses.
 
 If nothing readable is near the center, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
 

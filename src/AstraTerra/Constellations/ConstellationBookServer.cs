@@ -246,12 +246,25 @@ public sealed class ConstellationBookServer
             var claim = log.Claim((SkyClass)packet.SkyClass, packet.Name, packet.RecordIds, packet.Day);
 
             ConstellationBookService.WriteObservationLog(stack, log);
+
+            // A conclusion the observer's own entries pinned to one wandering body earns its place
+            // in the half of the book the instruments read, so their name for it is the name the
+            // sky answers to. Unbound conclusions still stand; they just have nothing to aim with.
+            var bound = claim.Class == SkyClass.Wanderer && !string.IsNullOrWhiteSpace(packet.PlanetId);
+            if (bound)
+            {
+                var planets = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
+                planets.Rename(packet.PlanetId, claim.Name);
+                ConstellationBookService.WritePlanetJournal(stack, planets);
+            }
+
             slot.MarkDirty();
             return new ConstellationBookResponsePacket
             {
                 Success = true,
                 Message = $"Written down as {SightingClaim.Describe(claim.Class).ToLowerInvariant()}: "
                           + $"{claim.DisplayName}, {claim.Provenance}."
+                          + (bound ? " Your instruments call it that from now on." : string.Empty)
             };
         }
         catch (Exception exception)

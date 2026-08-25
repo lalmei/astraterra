@@ -155,7 +155,16 @@ public sealed class ConstellationBookClient
         => ConstellationBookService.ReadObservationLogOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
 
     /// <summary>Sends what the observer says a set of their own sightings was.</summary>
-    public void SendClassifySighting(SkyClass skyClass, string? name, IReadOnlyList<long> recordIds, int day)
+    /// <param name="planetId">
+    /// The wandering body the observer's own entries turned out to fit, when they fit exactly one.
+    /// Empty leaves the conclusion unbound, which is what an ambiguous record deserves.
+    /// </param>
+    public void SendClassifySighting(
+        SkyClass skyClass,
+        string? name,
+        IReadOnlyList<long> recordIds,
+        int day,
+        string? planetId = null)
     {
         SendMutation(new ConstellationBookMutationPacket
         {
@@ -163,7 +172,8 @@ public sealed class ConstellationBookClient
             SkyClass = (int)skyClass,
             Name = name ?? string.Empty,
             RecordIds = recordIds.ToArray(),
-            Day = day
+            Day = day,
+            PlanetId = planetId ?? string.Empty
         });
     }
 
