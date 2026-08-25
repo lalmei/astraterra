@@ -77,7 +77,12 @@ public sealed class ObservationLog
     /// changing your mind about what you saw is the whole exercise — the entries themselves are
     /// never touched, so the evidence outlives every reading of it.
     /// </remarks>
-    public SightingClaim Claim(SkyClass skyClass, string? name, IEnumerable<long> recordIds, int day)
+    public SightingClaim Claim(
+        SkyClass skyClass,
+        string? name,
+        IEnumerable<long> recordIds,
+        int day,
+        string? boundId = null)
     {
         ArgumentNullException.ThrowIfNull(recordIds);
 
@@ -97,7 +102,8 @@ public sealed class ObservationLog
             skyClass,
             string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
             known,
-            day);
+            day,
+            string.IsNullOrWhiteSpace(boundId) ? null : boundId.Trim());
         claims.Add(record);
         return record;
     }
@@ -105,6 +111,20 @@ public sealed class ObservationLog
     /// <summary>What the observer concluded about an entry, if they have concluded anything yet.</summary>
     public SightingClaim? FindClaimFor(long recordId)
         => claims.FirstOrDefault(claim => claim.RecordIds.Contains(recordId));
+
+    /// <summary>The conclusion pinned to a body in the sky, if the observer's entries pinned one.</summary>
+    public SightingClaim? FindClaimBoundTo(string bodyId)
+        => string.IsNullOrWhiteSpace(bodyId)
+            ? null
+            : claims.LastOrDefault(claim => string.Equals(claim.BoundId, bodyId, StringComparison.Ordinal));
+
+    /// <summary>The entries a conclusion rests on, which is what any answer drawn from it is worth.</summary>
+    public IReadOnlyList<ObservationRecord> EvidenceFor(SightingClaim claim)
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+
+        return observations.Where(record => claim.RecordIds.Contains(record.Id)).ToList();
+    }
 
     public bool RemoveClaim(long claimId)
     {

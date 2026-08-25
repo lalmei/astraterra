@@ -1,4 +1,5 @@
 using AstraTerra.Constellations;
+using AstraTerra.Observation;
 
 namespace AstraTerra.Astronomy;
 
@@ -36,12 +37,19 @@ public enum AstrolabeTargetKind
 /// </remarks>
 /// <param name="SourceId">Stable within its kind: the journal record's id, or the planet's catalog id.</param>
 /// <param name="StarCount">Stars in the recorded figure. Zero for anything that is not a constellation.</param>
+/// <param name="Provenance">
+/// What the answer rests on, in one phrase. Filled in by whoever holds the observer's book, because
+/// that is where the evidence lives; empty means the instrument is not claiming any.
+/// </param>
+/// <param name="Confidence">How far this target's answers should be trusted. See <see cref="ObservationConfidence"/>.</param>
 public sealed record AstrolabeTarget(
     AstrolabeTargetKind Kind,
     string SourceId,
     string DisplayName,
     ISkyEphemeris Ephemeris,
-    int StarCount)
+    int StarCount,
+    string Provenance = "",
+    ObservationConfidence Confidence = ObservationConfidence.None)
 {
     /// <summary>A target that does not move, which is every target the astrolabe used to have.</summary>
     public static AstrolabeTarget Fixed(

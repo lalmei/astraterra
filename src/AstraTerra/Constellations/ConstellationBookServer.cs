@@ -243,18 +243,19 @@ public sealed class ConstellationBookServer
         try
         {
             var log = ConstellationBookService.ReadObservationLogOrEmpty(stack);
-            var claim = log.Claim((SkyClass)packet.SkyClass, packet.Name, packet.RecordIds, packet.Day);
+            var boundId = (SkyClass)packet.SkyClass == SkyClass.Wanderer ? packet.PlanetId : null;
+            var claim = log.Claim((SkyClass)packet.SkyClass, packet.Name, packet.RecordIds, packet.Day, boundId);
 
             ConstellationBookService.WriteObservationLog(stack, log);
 
             // A conclusion the observer's own entries pinned to one wandering body earns its place
             // in the half of the book the instruments read, so their name for it is the name the
             // sky answers to. Unbound conclusions still stand; they just have nothing to aim with.
-            var bound = claim.Class == SkyClass.Wanderer && !string.IsNullOrWhiteSpace(packet.PlanetId);
+            var bound = !string.IsNullOrWhiteSpace(claim.BoundId);
             if (bound)
             {
                 var planets = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
-                planets.Rename(packet.PlanetId, claim.Name);
+                planets.Rename(claim.BoundId!, claim.Name);
                 ConstellationBookService.WritePlanetJournal(stack, planets);
             }
 
