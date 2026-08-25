@@ -12,7 +12,30 @@ AstraTerra uses the `.stars` command group.
 .stars delete <id|selected>
 ```
 
+```text
+.stars sightings
+.stars classify <set|#entry> <star|wanderer|comet> [name]
+```
+
 Use `.stars list` to see constellations in the book held in your left hand. Use `.stars info selected` after drawing or selecting a constellation to see its star count, segment count, best visibility window, season summary, and current state. Mutating commands require ink and quill in your inventory.
+
+## Sightings
+
+`.stars sightings` lists every sighting written down in the book in your left hand, then gathers them
+into the sets it thinks are the same body and says what comparing each set shows — whether it held
+its place, or how far and how fast it moved.
+
+The book does the arithmetic and stops there. `.stars classify` is where you say what a set was:
+
+```text
+.stars classify 2 wanderer Ember
+.stars classify #4 comet
+```
+
+Nothing checks your answer against the sky, and that is deliberate: a classification the game has
+already graded is a quiz, not a discovery. Being wrong is allowed, and you find out the way an
+observer does — by sighting it again and watching your own numbers stop making sense. Changing your
+mind rewrites the conclusion and leaves every sighting it rested on untouched.
 
 ## Authored Constellations
 

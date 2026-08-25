@@ -49,6 +49,28 @@ public sealed class ConstellationBookServiceTests
     }
 
     [Fact]
+    public void WriteObservationLog_Lays_The_Comparison_Out_And_Records_The_Observers_Reading_Of_It()
+    {
+        var log = new ObservationLog();
+        var first = log.Record(34.2, 118.0, 1.4, 412, 21.5, 51.0, InstrumentResolution.BrassSextantDeg, siderealAngleDeg: 90.0);
+        var second = log.Record(34.3, 118.1, 1.4, 415, 21.5, 51.0, InstrumentResolution.BrassSextantDeg, siderealAngleDeg: 90.0);
+        log.Claim(SkyClass.Wanderer, "Ember", [first.Id, second.Id], day: 416);
+        var attributes = new TreeAttribute();
+
+        ConstellationBookService.WriteObservationLog(attributes, log);
+
+        var text = attributes.GetString(ConstellationBookService.VanillaTextAttribute);
+        Assert.Contains("Comparisons", text);
+        Assert.Contains("Set 1: #1, #2", text);
+        Assert.Contains("Findings", text);
+        Assert.Contains("Ember — wandering star, from 2 sightings (#1, #2), concluded day 416", text);
+
+        var loaded = ConstellationBookService.ReadObservationLog(attributes);
+        Assert.NotNull(loaded);
+        Assert.Equal("Ember", loaded.Claims.Single().Name);
+    }
+
+    [Fact]
     public void WriteObservationLog_Says_Nothing_About_What_Was_Sighted()
     {
         var log = new ObservationLog();

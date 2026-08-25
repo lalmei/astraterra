@@ -26,6 +26,10 @@ namespace AstraTerra.Observation;
 /// <param name="Hour">Hour of that day, so two nights can be compared at the same hour.</param>
 /// <param name="LatitudeDeg">Where the observer stood. Marks taken elsewhere do not compare.</param>
 /// <param name="ResolutionDeg">What the instrument reads to. See <see cref="InstrumentResolution"/>.</param>
+/// <param name="SiderealAngleDeg">
+/// How far the sky had turned when the sighting was taken. Null for an entry written before the
+/// book kept it, which can still be read but cannot be compared with another night.
+/// </param>
 public sealed record ObservationRecord(
     long Id,
     double AltitudeDeg,
@@ -34,9 +38,23 @@ public sealed record ObservationRecord(
     int Day,
     double Hour,
     double LatitudeDeg,
-    double ResolutionDeg
+    double ResolutionDeg,
+    double? SiderealAngleDeg = null
 )
 {
+    /// <summary>
+    /// Where this sighting falls among the fixed stars, which is the only frame two nights can be
+    /// compared in. Null when the entry predates the book keeping the sky's angle.
+    /// </summary>
+    public Astronomy.EquatorialCoordinates? ToEquatorial()
+        => SiderealAngleDeg is not { } siderealAngleDeg
+            ? null
+            : Astronomy.CelestialMath.GetEquatorialCoordinates(
+                AzimuthDeg,
+                AltitudeDeg,
+                LatitudeDeg,
+                siderealAngleDeg);
+
     /// <summary>The entry as it reads on the page, to no more digits than the instrument earned.</summary>
     public string Describe()
     {

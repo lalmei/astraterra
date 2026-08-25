@@ -1,4 +1,5 @@
 using AstraTerra.Client.Hud;
+using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -133,7 +134,8 @@ public sealed class ConstellationBookClient
         int day,
         double hour,
         double latitudeDeg,
-        double resolutionDeg)
+        double resolutionDeg,
+        double? siderealAngleDeg = null)
     {
         SendMutation(new ConstellationBookMutationPacket
         {
@@ -144,7 +146,24 @@ public sealed class ConstellationBookClient
             Day = day,
             Hour = hour,
             LatitudeDeg = latitudeDeg,
-            ResolutionDeg = resolutionDeg
+            ResolutionDeg = resolutionDeg,
+            SiderealAngleDeg = siderealAngleDeg ?? double.NaN
+        });
+    }
+
+    public ObservationLog ReadCurrentObservationLogOrEmpty()
+        => ConstellationBookService.ReadObservationLogOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+
+    /// <summary>Sends what the observer says a set of their own sightings was.</summary>
+    public void SendClassifySighting(SkyClass skyClass, string? name, IReadOnlyList<long> recordIds, int day)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.ClassifySighting,
+            SkyClass = (int)skyClass,
+            Name = name ?? string.Empty,
+            RecordIds = recordIds.ToArray(),
+            Day = day
         });
     }
 

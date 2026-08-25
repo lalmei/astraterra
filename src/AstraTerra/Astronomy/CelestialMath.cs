@@ -150,6 +150,40 @@ public static class CelestialMath
     }
 
     /// <summary>
+    /// Reads a sighting back into the fixed sky: where a body at this altitude and bearing, seen
+    /// from this latitude at this sidereal angle, sits among the stars.
+    /// </summary>
+    /// <remarks>
+    /// The exact inverse of <see cref="GetHorizontalCoordinates"/>, and the arithmetic that makes a
+    /// ledger of sightings worth keeping. Two entries taken nights apart are only comparable once
+    /// the sky's turning has been divided out, because a fixed star sits at a different altitude and
+    /// bearing every hour while never leaving its place.
+    /// </remarks>
+    public static EquatorialCoordinates GetEquatorialCoordinates(
+        double azimuthDeg,
+        double altitudeDeg,
+        double latitudeDeg,
+        double localSiderealDeg)
+    {
+        var azimuth = ToRadians(NormalizeDegrees(azimuthDeg));
+        var altitude = ToRadians(altitudeDeg);
+        var latitude = ToRadians(latitudeDeg);
+
+        var sinDeclination = (Math.Sin(altitude) * Math.Sin(latitude))
+                             + (Math.Cos(altitude) * Math.Cos(latitude) * Math.Cos(azimuth));
+        var declination = Math.Asin(Math.Clamp(sinDeclination, -1.0, 1.0));
+
+        var hourAngleY = -Math.Sin(azimuth) * Math.Cos(altitude);
+        var hourAngleX = (Math.Sin(altitude) * Math.Cos(latitude))
+                         - (Math.Cos(altitude) * Math.Sin(latitude) * Math.Cos(azimuth));
+        var hourAngleDeg = ToDegrees(Math.Atan2(hourAngleY, hourAngleX));
+
+        return new EquatorialCoordinates(
+            NormalizeDegrees(localSiderealDeg - hourAngleDeg),
+            ToDegrees(declination));
+    }
+
+    /// <summary>
     /// Rotates a position from the ecliptic frame, where the planets are computed, into the
     /// equatorial frame the sky is drawn in.
     /// </summary>

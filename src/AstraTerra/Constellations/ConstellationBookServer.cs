@@ -179,6 +179,11 @@ public sealed class ConstellationBookServer
             return Error("Hold a writable or written constellation book in your left hand.");
         }
 
+        if (packet.Action == ConstellationBookMutationActions.ClassifySighting)
+        {
+            return HandleClassifySighting(slot, stack, packet);
+        }
+
         if (!double.IsFinite(packet.AltitudeDeg) || !double.IsFinite(packet.AzimuthDeg))
         {
             return Error("That sighting has no angle to write down.");
@@ -194,7 +199,8 @@ public sealed class ConstellationBookServer
                 packet.Day,
                 packet.Hour,
                 packet.LatitudeDeg,
-                packet.ResolutionDeg > 0.0 ? packet.ResolutionDeg : InstrumentResolution.BrassSextantDeg);
+                packet.ResolutionDeg > 0.0 ? packet.ResolutionDeg : InstrumentResolution.BrassSextantDeg,
+                double.IsFinite(packet.SiderealAngleDeg) ? packet.SiderealAngleDeg : null);
 
             ConstellationBookService.WriteObservationLog(stack, log);
             slot.MarkDirty();
@@ -207,6 +213,50 @@ public sealed class ConstellationBookServer
         catch (Exception exception)
         {
             return Error($"Could not write the sighting down: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Writes down what the observer concluded a set of sightings was.
+    /// </summary>
+    /// <remarks>
+    /// The conclusion is taken at face value. Nothing here checks it against the sky, because a
+    /// classification that the game has already validated is not a discovery — it is a quiz with the
+    /// answer printed underneath. Being wrong is allowed, and it shows up later as an instrument
+    /// that forecasts badly from the record it was given.
+    /// </remarks>
+    private static ConstellationBookResponsePacket HandleClassifySighting(
+        ItemSlot slot,
+        ItemStack stack,
+        ConstellationBookMutationPacket packet)
+    {
+        if (packet.RecordIds.Length == 0)
+        {
+            return Error("Say which sightings the conclusion rests on.");
+        }
+
+        if (!Enum.IsDefined(typeof(SkyClass), packet.SkyClass) || (SkyClass)packet.SkyClass == SkyClass.Unclassified)
+        {
+            return Error("Say what those sightings were: a fixed star, a wanderer, or a comet.");
+        }
+
+        try
+        {
+            var log = ConstellationBookService.ReadObservationLogOrEmpty(stack);
+            var claim = log.Claim((SkyClass)packet.SkyClass, packet.Name, packet.RecordIds, packet.Day);
+
+            ConstellationBookService.WriteObservationLog(stack, log);
+            slot.MarkDirty();
+            return new ConstellationBookResponsePacket
+            {
+                Success = true,
+                Message = $"Written down as {SightingClaim.Describe(claim.Class).ToLowerInvariant()}: "
+                          + $"{claim.DisplayName}, {claim.Provenance}."
+            };
+        }
+        catch (Exception exception)
+        {
+            return Error($"Could not write the conclusion down: {exception.Message}");
         }
     }
 
