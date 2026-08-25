@@ -66,6 +66,71 @@ public sealed class SeraphStargazePatchTests
     }
 
     /// <summary>
+    /// The engine pairs each keyframe with the next one naming the same element and reads every
+    /// axis off both without checking whether the second one names it. An axis named on one side
+    /// of that pair only is a null it dereferences, which crashed the client with "Nullable object
+    /// must have a value" the first time the recline was played. Every keyframe of a clip must
+    /// therefore name the same axes for an element as every other keyframe of that clip.
+    /// </summary>
+    [Fact]
+    public void Every_Keyframe_Poses_An_Element_On_The_Same_Axes()
+    {
+        foreach (var clip in LoadPatches().Select(patch => patch.GetProperty("value")))
+        {
+            var code = clip.GetProperty("code").GetString();
+            var axesByElement = new Dictionary<string, string[]>(StringComparer.Ordinal);
+
+            foreach (var keyframe in clip.GetProperty("keyframes").EnumerateArray())
+            {
+                var frame = keyframe.GetProperty("frame").GetInt32();
+                foreach (var element in keyframe.GetProperty("elements").EnumerateObject())
+                {
+                    var axes = element.Value.EnumerateObject().Select(axis => axis.Name).Order(StringComparer.Ordinal).ToArray();
+                    Assert.NotEmpty(axes);
+
+                    if (axesByElement.TryGetValue(element.Name, out var expected))
+                    {
+                        Assert.True(
+                            expected.SequenceEqual(axes),
+                            $"{code} f{frame}: {element.Name} poses [{string.Join(", ", axes)}], " +
+                            $"but elsewhere in the clip it poses [{string.Join(", ", expected)}].");
+                    }
+                    else
+                    {
+                        axesByElement[element.Name] = axes;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Every keyframe of a clip also has to name every element the clip touches: an element left
+    /// out of a keyframe is not held where it is, it is interpolated from wherever it is named
+    /// next, so an incomplete frame 0 would start the recline from the supine legs.
+    /// </summary>
+    [Fact]
+    public void Every_Keyframe_Poses_Every_Element_The_Clip_Touches()
+    {
+        foreach (var clip in LoadPatches().Select(patch => patch.GetProperty("value")))
+        {
+            var code = clip.GetProperty("code").GetString();
+            var keyframes = clip.GetProperty("keyframes").EnumerateArray().ToArray();
+            var touched = keyframes
+                .SelectMany(keyframe => keyframe.GetProperty("elements").EnumerateObject().Select(element => element.Name))
+                .ToHashSet(StringComparer.Ordinal);
+
+            foreach (var keyframe in keyframes)
+            {
+                var posed = keyframe.GetProperty("elements").EnumerateObject().Select(element => element.Name);
+                Assert.True(
+                    touched.SetEquals(posed),
+                    $"{code} f{keyframe.GetProperty("frame").GetInt32()} does not pose every element the clip touches.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Vintage Story logs "Shape … has mixed animation versions. This will cause incorrect animation
     /// blending." when the animations in one shape do not agree on a version, and players saw exactly
     /// that on every world load. Vanilla's seraph carries 258 animations, none of which declares a
