@@ -199,28 +199,32 @@ def idle_frames(model, arms):
     ]
 
 
-def fill(frames):
-    """Give every keyframe the same elements, and every element the same axes.
+# The engine reads a keyframe in transform groups, not axes: a group counts as posed when
+# any one of its axes is named, and it then casts all three off the nullable fields. Naming
+# one axis of a group and leaving its siblings out is a null it dereferences, which crashed
+# the client the moment the clip was first played -- so a group that is touched is written
+# whole. Every one of vanilla's own 258 seraph clips does the same.
+GROUPS = [("offsetX", "offsetY", "offsetZ"), ("rotationX", "rotationY", "rotationZ")]
 
-    Vanilla's own habit, and not cosmetic: the engine pairs each keyframe with the next one
-    that names the same element, then reads the axis off both. An element named in one
-    keyframe and left out of the next is interpolated from wherever it turns up rather than
-    held at rest -- an incomplete frame 0 would start the recline from the supine legs -- and
-    an axis named on one side of that pair but not the other is a null the engine reads
-    without checking, which crashed the client the moment the clip was first played.
+
+def fill(frames):
+    """Give every keyframe the same elements, and every element every axis, whole groups.
+
+    An element missing from a keyframe is not held where it is either -- it is interpolated
+    from wherever it is named next, so an incomplete frame 0 would start the recline from the
+    supine legs.
 
     An axis a keyframe does not name is that bone at rest on that axis, which is the same
     thing the C# copy of these clips in SkyLyingAnimation says by leaving it at zero. Writing
-    the zero out keeps the two in step and gives the engine both halves of every pair.
+    the zeros out keeps the two in step and gives the engine every field it reads.
     """
     touched = sorted({element for _, pose in frames for element in pose})
     frames = [(number, {element: dict(pose.get(element, {})) for element in touched}) for number, pose in frames]
 
-    for element in touched:
-        axes = sorted({axis for _, pose in frames for axis in pose[element]})
-        for _, pose in frames:
-            for axis in axes:
-                pose[element].setdefault(axis, 0.0)
+    for _, pose in frames:
+        for values in pose.values():
+            for axis in (axis for group in GROUPS for axis in group):
+                values.setdefault(axis, 0.0)
 
     return frames
 

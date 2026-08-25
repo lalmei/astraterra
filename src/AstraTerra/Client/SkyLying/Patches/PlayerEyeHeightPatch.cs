@@ -19,8 +19,18 @@ public static class PlayerEyeHeightPatch
                 modifiers: null)
             ?? throw new MissingMethodException(typeof(EntityPlayer).FullName, "updateEyeHeight");
 
+    /// <summary>
+    /// Vanilla always lerps the eye toward standing (or sneak/sit) height. A postfix that then
+    /// lerps that result toward the ground fights it: both use the same 5·dt factor, so the camera
+    /// settles at a dt-dependent midpoint and bounces whenever the frame time changes. Capture the
+    /// pose before vanilla runs, and ease from that.
+    /// </summary>
+    [HarmonyPrefix]
+    public static void Prefix(EntityPlayer __instance, out (double EyeY, float CollisionY2) __state)
+        => __state = (__instance.LocalEyePos.Y, __instance.CollisionBox.Y2);
+
     [HarmonyPostfix]
-    public static void Postfix(EntityPlayer __instance, float dt)
+    public static void Postfix(EntityPlayer __instance, float dt, (double EyeY, float CollisionY2) __state)
     {
         if (!SkyLyingState.IsLying)
         {
@@ -38,11 +48,11 @@ public static class PlayerEyeHeightPatch
         var eyeTarget = SkyLyingPolicy.EyeHeight(standingEyeHeight);
         var collisionTarget = SkyLyingPolicy.CollisionHeight(standingCollisionHeight);
 
-        __instance.LocalEyePos.Y = SkyLyingPolicy.StepToward(__instance.LocalEyePos.Y, eyeTarget, dt);
+        __instance.LocalEyePos.Y = SkyLyingPolicy.StepToward(__state.EyeY, eyeTarget, dt);
         __instance.LocalEyePos.X = 0.0;
         __instance.LocalEyePos.Z = 0.0;
 
-        var nextCollision = (float)SkyLyingPolicy.StepToward(__instance.CollisionBox.Y2, collisionTarget, dt);
+        var nextCollision = (float)SkyLyingPolicy.StepToward(__state.CollisionY2, collisionTarget, dt);
         __instance.OriginSelectionBox.Y2 = __instance.SelectionBox.Y2 = nextCollision;
         __instance.OriginCollisionBox.Y2 = __instance.CollisionBox.Y2 = nextCollision;
     }

@@ -66,43 +66,58 @@ public sealed class SeraphStargazePatchTests
     }
 
     /// <summary>
-    /// The engine pairs each keyframe with the next one naming the same element and reads every
-    /// axis off both without checking whether the second one names it. An axis named on one side
-    /// of that pair only is a null it dereferences, which crashed the client with "Nullable object
-    /// must have a value" the first time the recline was played. Every keyframe of a clip must
-    /// therefore name the same axes for an element as every other keyframe of that clip.
+    /// The engine reads a keyframe in transform groups, not axes. A group counts as posed when
+    /// any one of its axes is named -- <c>PositionSet</c> is <c>OffsetX != null || OffsetY != null
+    /// || OffsetZ != null</c> -- and <c>lerpKeyFrameElement</c> then casts all three off the
+    /// nullable fields without checking. A bone posed on <c>rotationZ</c> alone is therefore two
+    /// nulls the engine dereferences, which crashed the client with "Nullable object must have a
+    /// value" the first time the recline was played. All 258 of vanilla's own seraph clips name
+    /// every group they touch whole; so must ours.
     /// </summary>
     [Fact]
-    public void Every_Keyframe_Poses_An_Element_On_The_Same_Axes()
+    public void Every_Posed_Bone_Names_Whole_Transform_Groups()
     {
-        foreach (var clip in LoadPatches().Select(patch => patch.GetProperty("value")))
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepositoryRoot, "assets", "astraterra", "patches"), "*.json"))
         {
-            var code = clip.GetProperty("code").GetString();
-            var axesByElement = new Dictionary<string, string[]>(StringComparer.Ordinal);
-
-            foreach (var keyframe in clip.GetProperty("keyframes").EnumerateArray())
+            using var document = JsonDocument.Parse(File.ReadAllText(file));
+            foreach (var clip in Animations(document.RootElement))
             {
-                var frame = keyframe.GetProperty("frame").GetInt32();
-                foreach (var element in keyframe.GetProperty("elements").EnumerateObject())
+                var code = clip.GetProperty("code").GetString();
+                foreach (var keyframe in clip.GetProperty("keyframes").EnumerateArray())
                 {
-                    var axes = element.Value.EnumerateObject().Select(axis => axis.Name).Order(StringComparer.Ordinal).ToArray();
-                    Assert.NotEmpty(axes);
-
-                    if (axesByElement.TryGetValue(element.Name, out var expected))
+                    var frame = keyframe.GetProperty("frame").GetInt32();
+                    foreach (var element in keyframe.GetProperty("elements").EnumerateObject())
                     {
-                        Assert.True(
-                            expected.SequenceEqual(axes),
-                            $"{code} f{frame}: {element.Name} poses [{string.Join(", ", axes)}], " +
-                            $"but elsewhere in the clip it poses [{string.Join(", ", expected)}].");
-                    }
-                    else
-                    {
-                        axesByElement[element.Name] = axes;
+                        foreach (var group in TransformGroups)
+                        {
+                            var named = group.Where(axis => element.Value.TryGetProperty(axis, out _)).ToArray();
+                            Assert.True(
+                                named.Length is 0 or 3,
+                                $"{Path.GetFileName(file)} {code} f{frame}: {element.Name} names " +
+                                $"[{string.Join(", ", named)}] and not the rest of the group -- " +
+                                "the engine reads all three and the missing ones are null.");
+                        }
                     }
                 }
             }
         }
     }
+
+    private static readonly string[][] TransformGroups =
+    [
+        ["offsetX", "offsetY", "offsetZ"],
+        ["rotationX", "rotationY", "rotationZ"],
+        ["stretchX", "stretchY", "stretchZ"]
+    ];
+
+    /// <summary>Animations added by any patch operation in a patch file.</summary>
+    private static IEnumerable<JsonElement> Animations(JsonElement patches)
+        => patches.EnumerateArray()
+            .Where(patch => patch.TryGetProperty("path", out var path)
+                            && path.GetString()!.StartsWith("/animations", StringComparison.Ordinal)
+                            && patch.TryGetProperty("value", out var value)
+                            && value.ValueKind == JsonValueKind.Object)
+            .Select(patch => patch.GetProperty("value"));
 
     /// <summary>
     /// Every keyframe of a clip also has to name every element the clip touches: an element left
