@@ -14,18 +14,21 @@ public sealed class StarsClientCommands
     private readonly ConstellationBookClient bookClient;
     private readonly AstraTerraConfig config;
     private readonly CometCatalog? cometCatalog;
+    private readonly PlanetCatalog? planetCatalog;
     private int? selectedId;
 
     public StarsClientCommands(
         System.Func<ConstellationJournal, StarsCommandService> serviceFactory,
         ConstellationBookClient bookClient,
         AstraTerraConfig config,
-        CometCatalog? cometCatalog = null)
+        CometCatalog? cometCatalog = null,
+        PlanetCatalog? planetCatalog = null)
     {
         this.serviceFactory = serviceFactory;
         this.bookClient = bookClient;
         this.config = config;
         this.cometCatalog = cometCatalog;
+        this.planetCatalog = planetCatalog;
     }
 
     public void Register(ICoreClientAPI api)
@@ -138,8 +141,42 @@ public sealed class StarsClientCommands
             return error;
         }
 
-        bookClient.SendClassifySighting(parsedClass, name, entries, (int)Math.Floor(api.World.Calendar.TotalDays));
-        return $"Writing {string.Join(", ", entries.Select(id => $"#{id}"))} down as {skyClass.ToLowerInvariant()}...";
+        var planetId = parsedClass == SkyClass.Wanderer ? MatchWanderer(api, log, entries) : null;
+        bookClient.SendClassifySighting(
+            parsedClass,
+            name,
+            entries,
+            (int)Math.Floor(api.World.Calendar.TotalDays),
+            planetId);
+
+        var written = string.Join(", ", entries.Select(id => $"#{id}"));
+        return parsedClass == SkyClass.Wanderer && planetId is null
+            ? $"Writing {written} down as a wanderer. These sightings do not settle on one body yet, "
+              + "so nothing can be aimed at it — sight it again."
+            : $"Writing {written} down as {skyClass.ToLowerInvariant()}...";
+    }
+
+    /// <summary>
+    /// Looks up which wandering body the observer's own entries fit, once they have said it wanders.
+    /// </summary>
+    private string? MatchWanderer(ICoreClientAPI api, ObservationLog log, IReadOnlyList<long> entries)
+    {
+        if (planetCatalog is null || planetCatalog.Planets.Count == 0)
+        {
+            return null;
+        }
+
+        var daysPerYear = Math.Max(1, api.World.Calendar.DaysPerYear);
+        var candidates = planetCatalog.Planets
+            .Select(planet => (
+                planet.Id,
+                Ephemeris: (ISkyEphemeris)new PlanetEphemeris(planet, planetCatalog.Observer, daysPerYear)))
+            .ToList();
+
+        return SightingIdentification.Match(
+            log.Observations.Where(record => entries.Contains(record.Id)),
+            candidates,
+            Math.Max(1.0, api.World.Calendar.HoursPerDay));
     }
 
     private string Comets(ICoreClientAPI api)
