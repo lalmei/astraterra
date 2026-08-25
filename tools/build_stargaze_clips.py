@@ -199,12 +199,34 @@ def idle_frames(model, arms):
     ]
 
 
-def clip(name, code, frames, quantity, on_end):
-    # Every keyframe lists every element the clip touches, vanilla's own habit: an element
-    # missing from a keyframe is not held at rest, it is interpolated from wherever it is
-    # named next, so an incomplete frame 0 would start the recline from the supine legs.
+def fill(frames):
+    """Give every keyframe the same elements, and every element the same axes.
+
+    Vanilla's own habit, and not cosmetic: the engine pairs each keyframe with the next one
+    that names the same element, then reads the axis off both. An element named in one
+    keyframe and left out of the next is interpolated from wherever it turns up rather than
+    held at rest -- an incomplete frame 0 would start the recline from the supine legs -- and
+    an axis named on one side of that pair but not the other is a null the engine reads
+    without checking, which crashed the client the moment the clip was first played.
+
+    An axis a keyframe does not name is that bone at rest on that axis, which is the same
+    thing the C# copy of these clips in SkyLyingAnimation says by leaving it at zero. Writing
+    the zero out keeps the two in step and gives the engine both halves of every pair.
+    """
     touched = sorted({element for _, pose in frames for element in pose})
-    frames = [(number, {element: pose.get(element, {}) for element in touched}) for number, pose in frames]
+    frames = [(number, {element: dict(pose.get(element, {})) for element in touched}) for number, pose in frames]
+
+    for element in touched:
+        axes = sorted({axis for _, pose in frames for axis in pose[element]})
+        for _, pose in frames:
+            for axis in axes:
+                pose[element].setdefault(axis, 0.0)
+
+    return frames
+
+
+def clip(name, code, frames, quantity, on_end):
+    frames = fill(frames)
     return {
         "name": name,
         "code": code,

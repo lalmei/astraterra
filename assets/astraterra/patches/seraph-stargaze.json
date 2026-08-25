@@ -13,14 +13,31 @@
         {
           "frame": 0,
           "elements": {
-            "LowerFootL": {},
-            "LowerFootR": {},
-            "LowerTorso": {
+            "LowerFootL": {
+              "offsetY": 0.0,
               "rotationZ": 0.0
             },
-            "UpperFootL": {},
-            "UpperFootR": {},
-            "UpperTorso": {}
+            "LowerFootR": {
+              "offsetY": 0.0,
+              "rotationZ": 0.0
+            },
+            "LowerTorso": {
+              "offsetX": 0.0,
+              "offsetY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperFootL": {
+              "rotationY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperFootR": {
+              "rotationX": 0.0,
+              "rotationY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
@@ -48,7 +65,9 @@
               "rotationY": -22.0,
               "rotationZ": -74.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
@@ -76,7 +95,9 @@
               "rotationY": -20.0,
               "rotationZ": -70.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
@@ -100,16 +121,20 @@
               "rotationZ": -26.0
             },
             "UpperFootR": {
+              "rotationX": 0.0,
               "rotationY": -18.0,
               "rotationZ": -54.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
           "frame": 20,
           "elements": {
             "LowerFootL": {
+              "offsetY": 0.0,
               "rotationZ": 10.0
             },
             "LowerFootR": {
@@ -126,6 +151,7 @@
               "rotationZ": -4.0
             },
             "UpperFootR": {
+              "rotationX": 0.0,
               "rotationY": -16.0,
               "rotationZ": -40.0
             },
@@ -414,6 +440,7 @@
           "frame": 0,
           "elements": {
             "LowerFootL": {
+              "offsetY": 0.0,
               "rotationZ": 10.0
             },
             "LowerFootR": {
@@ -430,6 +457,7 @@
               "rotationZ": -4.0
             },
             "UpperFootR": {
+              "rotationX": 0.0,
               "rotationY": -16.0,
               "rotationZ": -40.0
             },
@@ -459,10 +487,13 @@
               "rotationZ": -26.0
             },
             "UpperFootR": {
+              "rotationX": 0.0,
               "rotationY": -18.0,
               "rotationZ": -54.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
@@ -490,7 +521,9 @@
               "rotationY": -20.0,
               "rotationZ": -70.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
@@ -518,20 +551,39 @@
               "rotationY": -22.0,
               "rotationZ": -74.0
             },
-            "UpperTorso": {}
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         },
         {
           "frame": 15,
           "elements": {
-            "LowerFootL": {},
-            "LowerFootR": {},
-            "LowerTorso": {
+            "LowerFootL": {
+              "offsetY": 0.0,
               "rotationZ": 0.0
             },
-            "UpperFootL": {},
-            "UpperFootR": {},
-            "UpperTorso": {}
+            "LowerFootR": {
+              "offsetY": 0.0,
+              "rotationZ": 0.0
+            },
+            "LowerTorso": {
+              "offsetX": 0.0,
+              "offsetY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperFootL": {
+              "rotationY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperFootR": {
+              "rotationX": 0.0,
+              "rotationY": 0.0,
+              "rotationZ": 0.0
+            },
+            "UpperTorso": {
+              "rotationZ": 0.0
+            }
           }
         }
       ]
