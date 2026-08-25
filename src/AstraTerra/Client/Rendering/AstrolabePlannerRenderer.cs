@@ -164,8 +164,9 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             return;
         }
 
-        var journal = bookClient.ReadCurrentJournal();
-        if (journal is null)
+        // Any book of ours will do, not only one with figures drawn in it: a book holding nothing
+        // but sightings of a wanderer is a model of the sky, and this instrument runs on that model.
+        if (!bookClient.HasLeftHandJournalBook())
         {
             RenderLines(
                 InstrumentTitle,
@@ -175,12 +176,12 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             return;
         }
 
-        var targets = BuildTargets(journal);
+        var targets = BuildTargets(bookClient.ReadCurrentJournalOrEmpty());
         if (targets.Count == 0)
         {
             RenderLines(
                 InstrumentTitle,
-                "No readable constellations are recorded in this book.",
+                "Nothing in this book can be aimed at yet: no figures drawn, and no wanderer picked out.",
                 ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
             return;
@@ -213,7 +214,11 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         var forecastDay = PositiveModulo((int)Math.Floor(forecastTotalDays), daysPerYear) + 1;
         var plate = AstrolabeCalibrationPolicy.DescribePlate(latitude, ObserverLatitude());
         var title = $"{InstrumentTitle} — {FormatForecastOffset(AstrolabeReadingState.ForecastHours, hoursPerDay)} — {plate} — day {forecastDay}/{daysPerYear}";
-        var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — {awayComet ?? FormatReading(reading)}";
+        var provenance = string.IsNullOrWhiteSpace(reading.Target.Provenance)
+            ? string.Empty
+            : $" · {reading.Target.Provenance}";
+        var details = $"{FormatTargetName(reading.Target)} ({selectedIndex + 1}/{targets.Count}) — "
+                      + $"{awayComet ?? FormatReading(reading)}{provenance}";
         var help = "Middle click: next target   Scroll: 1 hour   Sneak + scroll: 7 days   Sneak + right click: recut the plate";
         RenderLines(title, details, ReadSkyClockLine(forecastTotalDays), help);
     }
@@ -362,7 +367,20 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// where a player expects before it reaches the planets.
     /// </remarks>
     private IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal)
-        => [.. AstrolabeService.BuildTargets(journal, catalog), .. ResolvePlanetTargets(), .. ResolveCometTargets()];
+    {
+        // Resolved from the held book every time rather than cached with the targets, so putting a
+        // different book in your off-hand changes what the instrument can aim at, immediately.
+        var stack = api.World.Player.Entity.LeftHandItemSlot?.Itemstack;
+        var observations = ConstellationBookService.ReadObservationLogOrEmpty(stack);
+        var planetJournal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
+
+        return
+        [
+            .. AstrolabeJournalTargets.Drawn(AstrolabeService.BuildTargets(journal, catalog)),
+            .. AstrolabeJournalTargets.KnownWanderers(ResolvePlanetTargets(), observations, planetJournal),
+            .. AstrolabeJournalTargets.FromAlmanac(ResolveCometTargets())
+        ];
+    }
 
     /// <summary>
     /// Built once and kept. Each planet target owns a cached ephemeris, and the astrolabe asks about

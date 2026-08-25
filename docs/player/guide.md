@@ -86,9 +86,13 @@ Its clock is not engraved and does not drift: the hour comes from the sun overhe
 
 The top-center readout shows the selected target's compass direction, angle above the horizon, rising or setting state, time until transit, and whether it is circumpolar or can never rise at the current latitude.
 
-Middle click cycles through the constellations recorded in the book and then through the five planets, which are marked `· planet` so they are not mistaken for a figure you drew. Every planet is listed whether or not it is currently up — being told that Saturn is below the horizon and transits in nine hours is exactly the sort of thing the instrument is for.
+Middle click cycles through the constellations recorded in the book and then through the wanderers you have picked out, which are marked `· planet` so they are not mistaken for a figure you drew. A wanderer that is listed is listed whether or not it is currently up — being told that it is below the horizon and transits in nine hours is exactly the sort of thing the instrument is for.
 
-A planet you have not written down reads as **Wandering star**. Swapping books renames the sky immediately, so a borrowed book brings its author's names with it.
+**The Astrolabe aims with your book, not with the sky's own catalog.** A wandering body nobody has picked out is not a target that reads "unknown" — it is not on the list at all, because there is nothing in your record for the instrument to aim with. Sight one across a few nights, say it wanders, and it appears.
+
+Every answer says what it rests on: `from 3 sightings over 11 days, to 0° 01′` for a wanderer you established yourself, `drawn from 7 stars` for one of your figures, and `from the almanac, not your sightings` for a comet, whose returns are somebody else's arithmetic. A planet written down under an older version, with no sightings behind it, still aims but says `recorded without sightings — low confidence until re-observed`. A thin answer that sounds as confident as a thick one is a broken answer, whatever its numbers say.
+
+Swapping books changes what the instrument can aim at, immediately, so a borrowed book brings its author's work — and their names — with it.
 
 Below that, the Astrolabe tells you the time. It reads the hour off the sky the way a nocturnal does — from where the sun actually is — and reports the hour of the world day, whether it is daylight, dusk, night, or dawn, the sun's angle above or below the horizon, and how long until the next sunrise or sunset.
 

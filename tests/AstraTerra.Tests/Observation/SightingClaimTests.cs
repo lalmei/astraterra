@@ -36,6 +36,20 @@ public sealed class SightingClaimTests
     }
 
     [Fact]
+    public void A_Conclusion_Remembers_Which_Body_It_Was_Pinned_To()
+    {
+        var log = new ObservationLog();
+        var record = Sight(log, 412);
+        log.Claim(SkyClass.Wanderer, "Ember", [record.Id], day: 413, boundId: "mars");
+
+        var loaded = ObservationLogPersistence.Deserialize(ObservationLogPersistence.Serialize(log));
+
+        Assert.Equal("Ember", loaded.FindClaimBoundTo("mars")?.Name);
+        Assert.Null(loaded.FindClaimBoundTo("saturn"));
+        Assert.Equal([record.Id], loaded.EvidenceFor(loaded.Claims.Single()).Select(entry => entry.Id));
+    }
+
+    [Fact]
     public void An_Unnamed_Conclusion_Still_Reads_As_Something()
     {
         var log = new ObservationLog();

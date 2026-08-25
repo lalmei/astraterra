@@ -33,12 +33,18 @@ public enum SkyClass
 /// entries it rests on so the book can always say how much was behind it.
 /// </remarks>
 /// <param name="Day">The world day the observer made the call, not the day of any sighting.</param>
+/// <param name="BoundId">
+/// The body in the sky the observer's own entries turned out to fit, when they fit exactly one.
+/// Null while the record cannot tell one body from another — the conclusion still stands, it just
+/// has nothing for an instrument to aim at yet.
+/// </param>
 public sealed record SightingClaim(
     long Id,
     SkyClass Class,
     string? Name,
     IReadOnlyList<long> RecordIds,
-    int Day
+    int Day,
+    string? BoundId = null
 )
 {
     public string DisplayName
