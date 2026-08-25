@@ -179,6 +179,19 @@ public sealed class SextantReadingRenderer : IRenderer
         var latitude = LatitudeMapper.MapGameLatitude(
             position.Z,
             calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
+        var longitude = LatitudeMapper.MapWorldLongitude(
+            position.X,
+            api.World.BlockAccessor.MapSizeX,
+            api.World.BlockAccessor.MapSizeZ);
+
+        // How far the sky had turned goes into the entry alongside the angles. Without it the book
+        // could only ever compare two sightings taken at the same moment of the same night, which is
+        // to say it could not compare anything at all.
+        var siderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            calendar.TotalDays,
+            Math.Max(1, calendar.DaysPerYear),
+            Math.Max(1.0, calendar.HoursPerDay),
+            longitude);
 
         bookClient.SendRecordObservation(
             target.AltitudeDeg,
@@ -187,7 +200,8 @@ public sealed class SextantReadingRenderer : IRenderer
             (int)Math.Floor(calendar.TotalDays),
             calendar.HourOfDay,
             latitude,
-            InstrumentResolution.BrassSextantDeg);
+            InstrumentResolution.BrassSextantDeg,
+            siderealAngle);
     }
 
     private void TrackSneak()

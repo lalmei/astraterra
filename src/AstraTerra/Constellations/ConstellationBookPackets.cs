@@ -56,6 +56,18 @@ public sealed class ConstellationBookMutationPacket
     /// <summary>What the sighting instrument reads to. See <see cref="Observation.InstrumentResolution"/>.</summary>
     [ProtoMember(15)]
     public double ResolutionDeg;
+
+    /// <summary>How far the sky had turned, so the entry can be placed among the fixed stars later.</summary>
+    [ProtoMember(16)]
+    public double SiderealAngleDeg = double.NaN;
+
+    /// <summary>The entries a conclusion rests on, for <see cref="ConstellationBookMutationActions.ClassifySighting"/>.</summary>
+    [ProtoMember(17)]
+    public long[] RecordIds = [];
+
+    /// <summary>What the observer says those entries were. See <see cref="Observation.SkyClass"/>.</summary>
+    [ProtoMember(18)]
+    public int SkyClass;
 }
 
 [ProtoContract]
@@ -88,6 +100,7 @@ public static class ConstellationBookMutationActions
     public const string IdentifyPlanet = "identifyPlanet";
     public const string RenamePlanet = "renamePlanet";
     public const string RecordObservation = "recordObservation";
+    public const string ClassifySighting = "classifySighting";
 
     /// <summary>Actions that write the planet half of the book rather than the constellation half.</summary>
     public static bool IsPlanetAction(string action)
@@ -95,5 +108,5 @@ public static class ConstellationBookMutationActions
 
     /// <summary>Actions that write the ledger of sightings rather than either journal.</summary>
     public static bool IsObservationAction(string action)
-        => action is RecordObservation;
+        => action is RecordObservation or ClassifySighting;
 }

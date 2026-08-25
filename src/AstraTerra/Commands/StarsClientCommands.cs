@@ -2,6 +2,7 @@ using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Config;
 using AstraTerra.Constellations;
+using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -63,6 +64,19 @@ public sealed class StarsClientCommands
                 .WithArgs(api.ChatCommands.Parsers.Word("iau|name"))
                 .HandleWith(args => TextCommandResult.Success(Build(GetStringArg(args, 0))))
             .EndSubCommand()
+            .BeginSubCommand("sightings")
+                .WithDescription("List the sightings in the book in your left hand, and what comparing them shows.")
+                .HandleWith(_ => TextCommandResult.Success(Sightings()))
+            .EndSubCommand()
+            .BeginSubCommand("classify")
+                .WithDescription("Say what a set of your own sightings was.")
+                .WithArgs(
+                    api.ChatCommands.Parsers.Word("set|#entry"),
+                    api.ChatCommands.Parsers.Word("star|wanderer|comet"),
+                    api.ChatCommands.Parsers.OptionalAll("name"))
+                .HandleWith(args => TextCommandResult.Success(
+                    Classify(api, GetStringArg(args, 0), GetStringArg(args, 1), GetStringArg(args, 2))))
+            .EndSubCommand()
             .BeginSubCommand("comets")
                 .WithDescription("Report every comet: whether it is up now, or how long until it returns.")
                 .HandleWith(_ => TextCommandResult.Success(Comets(api)))
@@ -89,6 +103,43 @@ public sealed class StarsClientCommands
                     api.ChatCommands.Parsers.OptionalWord("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetRenderPath(api, GetStringArg(args, 0), GetStringArg(args, 1))))
             .EndSubCommand();
+    }
+
+    private string Sightings()
+    {
+        if (!bookClient.HasLeftHandJournalBook())
+        {
+            return "Hold a writable or written constellation book in your left hand.";
+        }
+
+        return SightingReport.Describe(bookClient.ReadCurrentObservationLogOrEmpty());
+    }
+
+    /// <summary>
+    /// Records the observer's own reading of their entries. Nothing here weighs the conclusion
+    /// against the sky: what the numbers show is on the page, and the call is theirs.
+    /// </summary>
+    private string Classify(ICoreClientAPI api, string target, string skyClass, string? name)
+    {
+        if (!bookClient.HasLeftHandJournalBook())
+        {
+            return "Hold a writable or written constellation book in your left hand.";
+        }
+
+        if (!SightingReport.TryParseClass(skyClass, out var parsedClass))
+        {
+            return "Say what it was: star, wanderer, or comet.";
+        }
+
+        var log = bookClient.ReadCurrentObservationLogOrEmpty();
+        var entries = SightingReport.ResolveEntries(log, target, out var error);
+        if (entries is null)
+        {
+            return error;
+        }
+
+        bookClient.SendClassifySighting(parsedClass, name, entries, (int)Math.Floor(api.World.Calendar.TotalDays));
+        return $"Writing {string.Join(", ", entries.Select(id => $"#{id}"))} down as {skyClass.ToLowerInvariant()}...";
     }
 
     private string Comets(ICoreClientAPI api)

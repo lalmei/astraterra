@@ -276,6 +276,36 @@ public static class ConstellationBookService
             {
                 lines.Add($"- #{record.Id} {record.Describe()}");
             }
+
+            // The arithmetic, laid out but not concluded. The page says how far and how fast; what
+            // that means is the observer's to decide, and their decision goes below it.
+            var groups = SightingComparison.Group(observationLog.Observations);
+            if (groups.Count > 0)
+            {
+                lines.Add(string.Empty);
+                lines.Add("Comparisons");
+                foreach (var group in groups)
+                {
+                    lines.Add($"- Set {group.Number}: {group.Describe()}");
+                }
+            }
+        }
+
+        if (observationLog.Claims.Count > 0)
+        {
+            if (lines.Count > 0)
+            {
+                lines.Add(string.Empty);
+            }
+
+            lines.Add("Findings");
+            foreach (var claim in observationLog.Claims.OrderBy(claim => claim.Id))
+            {
+                var entries = string.Join(", ", claim.RecordIds.Select(id => $"#{id}"));
+                lines.Add(
+                    $"- {claim.DisplayName} — {SightingClaim.Describe(claim.Class).ToLowerInvariant()}, "
+                    + $"{claim.Provenance} ({entries}), concluded day {claim.Day}");
+            }
         }
 
         return string.Join(Environment.NewLine, lines);
