@@ -1,8 +1,7 @@
 {
   "code": "sky-disc",
   "class": "AstraTerra.Items.ItemSkyDisc",
-  "shape": { "base": "game:item/resource/metalplate" },
-  "texture": { "base": "game:block/metal/plate/tinbronze" },
+  "shape": { "base": "astraterra:item/sky-disc" },
   "maxstacksize": 1,
   "creativeinventory": {
     "general": ["*"],
