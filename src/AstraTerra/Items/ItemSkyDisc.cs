@@ -2,6 +2,7 @@ using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Observation;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace AstraTerra.Items;
 
@@ -27,6 +28,19 @@ public sealed class ItemSkyDisc : Item
         bool firstEvent,
         ref EnumHandHandling handling)
     {
+        // Sneaking at the ground sets the disc down; sneaking at the sky scratches it. Ground
+        // storage is a collectible behaviour, and behaviours only ever run through the base call,
+        // so hand the click over before claiming it. Aiming at the horizon selects no block, which
+        // is where marking happens anyway.
+        if (byEntity?.Controls?.Sneak == true && blockSel?.Face == BlockFacing.UP)
+        {
+            base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+            if (handling != EnumHandHandling.NotHandled)
+            {
+                return;
+            }
+        }
+
         handling = EnumHandHandling.PreventDefault;
 
         // Decided once at the start, for the reason ItemAstrolabe spells out: an Item is one shared

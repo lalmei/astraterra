@@ -64,6 +64,8 @@ The mark records the sun crossing the *true* horizon rather than the moment you 
 
 The disc will not announce a solstice on the day one happens: at the time, nobody can know an extreme was one, and having a suspicion is the correct state to be in. Only once the band has turned back and reached its far edge does it say anything — and then it gives you the length of the year, how far you are from the equator (the width of the band is a clean function of latitude), and from then on the day the sun will next stand still. That last one is planting information, and it is why the disc is worth building for a player who has never looked up.
 
+**Set it down where you work.** Sneak and right click the ground and the disc lies there, face up, scratches and all — a marker on the spot it is bound to, and something to leave beside the hearth rather than carry. Marking still happens with the sky in the reticle, so aiming at a block puts the disc down instead of scratching it; an empty hand and a right click pick it back up.
+
 **It binds to its place.** The first mark fixes where the disc belongs; carry it far enough north or south and it refuses the mark rather than quietly spoiling the band, because you cannot un-scratch bronze. Inside the polar circles the sun stops setting for part of the year and there is no band of sunsets to measure at all.
 
 The Astrolabe gets you the same latitude in a three-second sighting. The disc is the slow road to it, and it is open to you on the first evening of a new world.

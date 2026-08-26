@@ -3,6 +3,23 @@
   "class": "AstraTerra.Items.ItemSkyDisc",
   "shape": { "base": "astraterra:item/sky-disc" },
   "maxstacksize": 1,
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": {
+        "layout": "SingleCenter",
+        "collisionBox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.1, "z2": 0.875 }
+      }
+    }
+  ],
+  "attributes": {
+    "groundStorageTransform": {
+      "translation": { "x": 0, "y": 0, "z": 0 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+      "scale": 1
+    }
+  },
   "creativeinventory": {
     "general": ["*"],
     "items": ["*"],
@@ -18,9 +35,9 @@
     "scale": 2
   },
   "guiTransform": {
-    "rotation": { "x": 0, "y": 0, "z": 0 },
-    "origin": { "x": 0.5, "y": 0.4, "z": 0.5 },
-    "scale": 3
+    "rotation": { "x": -74, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.05, "z": 0.5 },
+    "scale": 1.2
   },
   "groundTransform": {
     "rotation": { "x": 90, "y": 0, "z": 0 },
