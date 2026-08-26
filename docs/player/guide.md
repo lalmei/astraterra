@@ -54,7 +54,7 @@ The Precision Telescope uses the same observation workflow as the Brass Telescop
 
 ### Sky Disc
 
-Copper or bronze, and a little gold. It reads no angles, needs no writing and no ink, and it is the slowest instrument in the mod: what it measures takes a world year.
+Clay, copper or bronze, and — on the metal ones — a little gold. It reads no angles, needs no writing and no ink, and it is the slowest instrument in the mod: what it measures takes a world year.
 
 Stand somewhere with a clear horizon. As the sun touches it, **sneak and hold right click**: the disc comes up against the horizon and tells you the notch the mark would fall on, and a moment later it scratches the rim there. Let go before then and nothing is marked — the one chance you get to call a scratch off. Come back another evening and mark again. Sunrises are kept on their own rim, so either end of the day works.
 
@@ -68,9 +68,13 @@ The disc will not announce a solstice on the day one happens: at the time, nobod
 
 **Set it down where you work.** Sneak and right click the ground and the disc lies there, face up, scratches and all — a marker on the spot it is bound to, and something to leave beside the hearth rather than carry. Marking still happens with the sky in the reticle, so aiming at a block puts the disc down instead of scratching it; an empty hand and a right click pick it back up.
 
-**It binds to its place.** The first mark fixes where the disc belongs; carry it far enough north or south and it refuses the mark rather than quietly spoiling the band, because you cannot un-scratch bronze. Inside the polar circles the sun stops setting for part of the year and there is no band of sunsets to measure at all.
+**It binds to its place.** The first mark fixes where the disc belongs; carry it far enough north or south and it refuses the mark rather than quietly spoiling the band, because a scratch cannot be undone. How far is far enough depends on the disc: moving a degree of latitude moves the setting sun about a degree along the horizon, so a rim notched at five degrees cannot see a move of three and does not pretend to. A clay disc wanders further than a metal one before it objects. Inside the polar circles the sun stops setting for part of the year and there is no band of sunsets to measure at all.
 
-**Copper or bronze.** Either metal makes a disc, and copper comes years earlier — before you have tin. It finds everything the bronze one finds: its rim is graduated twice as coarsely, so more evenings land on the same notch, the sun stands still for longer, and the year and latitude it hands back are rounder. That is the trade the whole instrument ladder is built on — patience buys what fineness buys.
+**Clay, copper or bronze.** Form a disc on a clay forming surface, set it down and fire it in a pit kiln, and you have one on your first day in a new world — before ore, before smelting, before there is any other way at all to know when the year turns. Copper comes next, bronze last.
+
+All three find the same solstice. Clay holds a notch of **five degrees** and metal one of **two and a half**, so a clay rim means more evenings landing on one notch, a sun that appears to stand still for longer, and a year and a latitude handed back rounder. That is the trade the whole instrument ladder is built on — patience buys what fineness buys — and every reading tells you which notch it was read at, so a coarse answer never passes itself off as a fine one.
+
+Past copper the rim stops getting better, and what a disc is worth after that is what can be put on it rather than what it can measure.
 
 The Astrolabe gets you the same latitude in a three-second sighting. The disc is the slow road to it, and it is open to you on the first evening of a new world.
 
