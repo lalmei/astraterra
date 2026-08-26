@@ -1,0 +1,31 @@
+{
+  "code": "sky-disc",
+  "class": "AstraTerra.Items.ItemSkyDisc",
+  "shape": { "base": "game:item/resource/metalplate" },
+  "texture": { "base": "game:block/metal/plate/tinbronze" },
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": ["*"],
+    "items": ["*"],
+    "tools": ["*"],
+    "astraterra": ["*"]
+  },
+  "materialDensity": 900,
+  "heldPriorityInteract": true,
+  "fpHandTransform": {
+    "translation": { "x": -0.15, "y": -0.12, "z": 0 },
+    "rotation": { "x": 4, "y": 90, "z": -30 },
+    "origin": { "x": 0.5, "y": 0.2, "z": 0.5 },
+    "scale": 2
+  },
+  "guiTransform": {
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.4, "z": 0.5 },
+    "scale": 3
+  },
+  "groundTransform": {
+    "rotation": { "x": 90, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.56 },
+    "scale": 3.6
+  }
+}

@@ -1,0 +1,244 @@
+using System.Text.Json;
+
+namespace AstraTerra.Observation;
+
+/// <summary>One scratch on the rim: the day, and the notch the sun crossed the horizon at.</summary>
+public sealed record SolarMark(int Day, double NotchDeg, SolarEvent Event);
+
+public enum SolarMarkOutcome
+{
+    /// <summary>The mark went on the rim.</summary>
+    Scratched = 0,
+
+    /// <summary>This end of this day is already on the disc. Bronze does not take a mark twice.</summary>
+    AlreadyMarked = 1,
+
+    /// <summary>Carried too far from where it was scribed. The disc refuses rather than drifting.</summary>
+    WrongPlace = 2
+}
+
+public sealed record SolarMarkResult(SolarMarkOutcome Outcome, SolarMark? Mark, string Message);
+
+/// <summary>
+/// What one arc of the disc shows: where the notches stop, and what stopping there means.
+/// </summary>
+/// <param name="EarlyEdgeConfirmed">
+/// Whether a later mark has fallen short of that edge. Until one has, the observer has a suspicion
+/// rather than a turning point, which is the correct thing for them to have.
+/// </param>
+public sealed record SolarBandReading(
+    SolarEvent Event,
+    int MarkCount,
+    double? LowNotchDeg,
+    int? LowDay,
+    bool LowConfirmed,
+    double? HighNotchDeg,
+    int? HighDay,
+    bool HighConfirmed,
+    double? SwingDeg,
+    double? LatitudeDeg,
+    double? YearDays
+)
+{
+    /// <summary>Both ends found and both seen to turn back: a year has actually been measured.</summary>
+    public bool IsComplete => LowConfirmed && HighConfirmed;
+
+    /// <summary>
+    /// The next day the sun should stand still, counted on from the last turn the disc caught.
+    /// This is the payout that matters to somebody who has never looked up: when to sow.
+    /// </summary>
+    public int? NextTurnDay(int fromDay)
+    {
+        if (!IsComplete || YearDays is not { } year || year <= 0)
+        {
+            return null;
+        }
+
+        var halfYear = year / 2.0;
+        var lastTurn = Math.Max(LowDay!.Value, HighDay!.Value);
+        var turnsSince = Math.Ceiling((fromDay - lastTurn) / halfYear);
+        return (int)Math.Round(lastTurn + (Math.Max(turnsSince, 0) * halfYear));
+    }
+
+    /// <summary>
+    /// What the disc says, without saying more than it knows. It never announces a solstice at the
+    /// extreme: at the time, nobody can know an extreme was one. It shows the band, and it names the
+    /// year only once the sun has gone out and come back.
+    /// </summary>
+    public string Describe()
+    {
+        if (MarkCount == 0)
+        {
+            return "No marks on this rim yet.";
+        }
+
+        var arc = $"{MarkCount} marks between {LowNotchDeg:0.#}° and {HighNotchDeg:0.#}°";
+        if (!IsComplete)
+        {
+            var turned = LowConfirmed || HighConfirmed;
+            return turned
+                ? $"{arc}. One end has stopped moving; the other has not been found yet."
+                : $"{arc}. The band is still widening.";
+        }
+
+        var latitude = LatitudeDeg is { } degrees
+            ? $"{degrees:0.#}° from the equator"
+            : "a latitude this band cannot resolve";
+        return $"{arc} — a full turn of the year: {YearDays:0.#} days, {latitude}.";
+    }
+}
+
+/// <summary>
+/// The bronze disc's record: two arcs of scratches, and the place it was scribed at.
+/// </summary>
+/// <remarks>
+/// An accumulator, not a ledger. It holds no dated entries an observer could read back and no
+/// numbers they could transcribe — only where the marks stopped — and that is exactly enough to
+/// yield a latitude, the length of the year, and when the seasons turn, from bronze and patience
+/// alone. It is the slow road to what the astrolabe answers in three seconds, and it needs neither
+/// literacy nor ink.
+/// <para>
+/// It binds to the place of its first mark. Marks taken materially further away are refused rather
+/// than folded in, because a plate that reads wrong can be recut and a scratch cannot be undone.
+/// </para>
+/// </remarks>
+public sealed class SolarBand
+{
+    private readonly List<SolarMark> marks;
+
+    public SolarBand()
+        : this(null, null, null, [])
+    {
+    }
+
+    internal SolarBand(double? boundLatitudeDeg, int? boundX, int? boundZ, IEnumerable<SolarMark> marks)
+    {
+        BoundLatitudeDeg = boundLatitudeDeg;
+        BoundX = boundX;
+        BoundZ = boundZ;
+        this.marks = marks.ToList();
+    }
+
+    /// <summary>The latitude of the first mark. Every later mark is measured against it.</summary>
+    public double? BoundLatitudeDeg { get; private set; }
+
+    public int? BoundX { get; private set; }
+
+    public int? BoundZ { get; private set; }
+
+    public IReadOnlyList<SolarMark> Marks => marks;
+
+    public bool IsBound => BoundLatitudeDeg is not null;
+
+    /// <summary>Scratches where the sun crossed the horizon today, if this disc will take the mark.</summary>
+    public SolarMarkResult Scratch(int day, double azimuthDeg, SolarEvent solarEvent, double latitudeDeg, int x, int z)
+    {
+        if (BoundLatitudeDeg is { } bound
+            && Math.Abs(latitudeDeg - bound) > SolarBandPolicy.MaxLatitudeDriftDeg)
+        {
+            return new SolarMarkResult(
+                SolarMarkOutcome.WrongPlace,
+                null,
+                "The sun does not set where this disc was scribed. Carry it home, or scribe another.");
+        }
+
+        if (marks.Any(mark => mark.Day == day && mark.Event == solarEvent))
+        {
+            return new SolarMarkResult(
+                SolarMarkOutcome.AlreadyMarked,
+                null,
+                "This day is already scratched on that rim.");
+        }
+
+        BoundLatitudeDeg ??= latitudeDeg;
+        BoundX ??= x;
+        BoundZ ??= z;
+
+        var mark = new SolarMark(day, SolarBandPolicy.Notch(azimuthDeg), solarEvent);
+        marks.Add(mark);
+        return new SolarMarkResult(SolarMarkOutcome.Scratched, mark, $"Scratched at {mark.NotchDeg:0.#}°.");
+    }
+
+    /// <summary>What one arc of the rim shows.</summary>
+    public SolarBandReading Read(SolarEvent solarEvent)
+    {
+        var arc = marks.Where(mark => mark.Event == solarEvent).OrderBy(mark => mark.Day).ToList();
+        if (arc.Count == 0)
+        {
+            return new SolarBandReading(solarEvent, 0, null, null, false, null, null, false, null, null, null);
+        }
+
+        var low = arc.OrderBy(mark => mark.NotchDeg).ThenBy(mark => mark.Day).First();
+        var high = arc.OrderByDescending(mark => mark.NotchDeg).ThenBy(mark => mark.Day).First();
+
+        // An edge becomes a turning point only when the marks approached it and then fell back:
+        // short of it before, short of it after. An edge that is merely where the observer started
+        // watching is not a turn, and the disc must not mistake the two — which is also why it
+        // cannot announce anything on the day it happens.
+        var lowConfirmed = Turned(arc, low, mark => mark.NotchDeg >= low.NotchDeg + SolarBandPolicy.ArcNotchDeg);
+        var highConfirmed = Turned(arc, high, mark => mark.NotchDeg <= high.NotchDeg - SolarBandPolicy.ArcNotchDeg);
+
+        var complete = lowConfirmed && highConfirmed;
+        var swing = complete ? high.NotchDeg - low.NotchDeg : (double?)null;
+        var latitude = swing is { } width ? SolarBandPolicy.LatitudeFromSwingDeg(width) : null;
+
+        // Solstice to solstice is half a year, so the two ends of the band measure the whole of it.
+        var year = complete ? Math.Abs(high.Day - low.Day) * 2.0 : (double?)null;
+
+        return new SolarBandReading(
+            solarEvent,
+            arc.Count,
+            low.NotchDeg,
+            low.Day,
+            lowConfirmed,
+            high.NotchDeg,
+            high.Day,
+            highConfirmed,
+            swing,
+            latitude,
+            year is > 0 ? year : null);
+    }
+
+    private static bool Turned(IReadOnlyList<SolarMark> arc, SolarMark edge, Func<SolarMark, bool> fallsShort)
+        => arc.Any(mark => mark.Day < edge.Day && fallsShort(mark))
+           && arc.Any(mark => mark.Day > edge.Day && fallsShort(mark));
+
+    internal SolarBandSnapshot ToSnapshot() => new(1, BoundLatitudeDeg, BoundX, BoundZ, marks.ToList());
+
+    internal static SolarBand FromSnapshot(SolarBandSnapshot snapshot)
+        => new(
+            snapshot.BoundLatitudeDeg,
+            snapshot.BoundX,
+            snapshot.BoundZ,
+            (snapshot.Marks ?? []).Where(mark => mark is not null && double.IsFinite(mark.NotchDeg)));
+}
+
+internal sealed record SolarBandSnapshot(
+    int SchemaVersion,
+    double? BoundLatitudeDeg,
+    int? BoundX,
+    int? BoundZ,
+    IReadOnlyList<SolarMark> Marks
+);
+
+public static class SolarBandPersistence
+{
+    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true
+    };
+
+    public static string Serialize(SolarBand band)
+    {
+        ArgumentNullException.ThrowIfNull(band);
+
+        return JsonSerializer.Serialize(band.ToSnapshot(), SerializerOptions);
+    }
+
+    public static SolarBand Deserialize(string json)
+    {
+        var snapshot = JsonSerializer.Deserialize<SolarBandSnapshot>(json, SerializerOptions)
+                       ?? throw new InvalidOperationException("Sky disc JSON was empty.");
+        return SolarBand.FromSnapshot(snapshot);
+    }
+}

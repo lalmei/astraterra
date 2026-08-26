@@ -193,6 +193,9 @@ public sealed class AstraTerraModSystem : ModSystem
 
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
+        // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
+        api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
+
         sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");

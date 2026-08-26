@@ -13,6 +13,7 @@ Everything below is also written into the Vintage Story handbook. Press **H** an
 - Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear, and comets that return on their own periods with an anti-sunward tail.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
+- Use the Bronze Sky Disc to mark where the sun crosses the horizon, and read your latitude, the length of the year, and the next turn of the seasons out of a year of marks.
 - Use the Sextant to read the angle of a star, a planet, a comet, the sun, or the moon above the horizon, day or night.
 - Lie on your back with **Z** to watch the sky from the ground, the same kind of toggle as sit-on-G.
 - Use the Calibrated Astrolabe to predict where and when recorded constellations, the planets, and the comets will appear, tell the time of night, and see what day of the year it is.
@@ -50,6 +51,22 @@ The name is yours. Nothing in the sky will ever tell you it was called Mars — 
 ### Precision Telescope
 
 The Precision Telescope uses the same observation workflow as the Brass Telescope, with stronger zoom levels for careful stargazing.
+
+### Bronze Sky Disc
+
+Bronze and a little gold. It reads no angles, needs no writing and no ink, and it is the slowest instrument in the mod: what it measures takes a world year.
+
+Stand somewhere with a clear horizon. As the sun touches it, **sneak and right click** to scratch the rim where it went down. Come back another evening and mark again. Sunrises are kept on their own rim, so either end of the day works.
+
+The mark records the sun crossing the *true* horizon rather than the moment you clicked, so a hill in the way costs you nothing and there is a window either side to get it done. Missing evenings to rain, sleep or a cave costs nothing either — you need enough marks to find the ends of the band, not every day of the year.
+
+**Right click** holds the disc up to read it. Two marks bracket a band, and the band widens as you keep marking — until an evening when the mark falls *short* of the edge. It never went further than that. Around such an evening several days land on the same notch and the sun visibly stands still, which is what *solstitium* means.
+
+The disc will not announce a solstice on the day one happens: at the time, nobody can know an extreme was one, and having a suspicion is the correct state to be in. Only once the band has turned back and reached its far edge does it say anything — and then it gives you the length of the year, how far you are from the equator (the width of the band is a clean function of latitude), and from then on the day the sun will next stand still. That last one is planting information, and it is why the disc is worth building for a player who has never looked up.
+
+**It binds to its place.** The first mark fixes where the disc belongs; carry it far enough north or south and it refuses the mark rather than quietly spoiling the band, because you cannot un-scratch bronze. Inside the polar circles the sun stops setting for part of the year and there is no band of sunsets to measure at all.
+
+The Astrolabe gets you the same latitude in a three-second sighting. The disc is the slow road to it, and it is open to you on the first evening of a new world.
 
 ### Sextant
 
