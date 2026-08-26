@@ -1,0 +1,25 @@
+{
+  "ingredient": {
+    "type": "item",
+    "code": "game:clay-*",
+    "name": "color",
+    "allowedVariants": ["blue", "fire", "red"]
+  },
+  "pattern": [
+    [
+      "____###____",
+      "__#######__",
+      "_#########_",
+      "_#########_",
+      "###########",
+      "###########",
+      "###########",
+      "_#########_",
+      "_#########_",
+      "__#######__",
+      "____###____"
+    ]
+  ],
+  "name": "Sky Disc",
+  "output": { "type": "item", "code": "astraterra:sky-disc-clay-{color}-raw" }
+}

@@ -178,6 +178,42 @@ public sealed class SolarBandTests
     }
 
     [Fact]
+    public void A_Clay_Rim_Finds_The_Year_Too_And_Says_How_Roughly()
+    {
+        var clay = MarkYear(new SolarBand(SolarBandPolicy.RoughArcNotchDeg), fromDay: 0, days: YearDays + 20);
+
+        var reading = clay.Read(SolarEvent.Sunset);
+
+        // P1 again, at the bottom of the ladder: clay finds the solstice a bronze disc finds.
+        Assert.True(reading.IsComplete);
+        Assert.NotNull(reading.LatitudeDeg);
+        Assert.InRange(reading.LatitudeDeg!.Value, LatitudeDeg - 8.0, LatitudeDeg + 8.0);
+
+        // P5: an answer this rough is never allowed to sound like a fine one.
+        Assert.Contains("notches of 10", reading.Describe());
+    }
+
+    [Fact]
+    public void A_Rough_Disc_Travels_Further_Than_A_Fine_One()
+    {
+        var clay = new SolarBand(SolarBandPolicy.RoughArcNotchDeg);
+        var bronze = new SolarBand();
+        clay.Scratch(400, 240.0, SolarEvent.Sunset, LatitudeDeg, 0, 0);
+        bronze.Scratch(400, 240.0, SolarEvent.Sunset, LatitudeDeg, 0, 0);
+
+        // Four degrees north: past what a bronze rim will accept, and under what a clay rim could
+        // have noticed in the first place. An instrument must not refuse what it cannot measure.
+        var carried = LatitudeDeg + 4.0;
+
+        Assert.Equal(
+            SolarMarkOutcome.Scratched,
+            clay.Scratch(401, 244.0, SolarEvent.Sunset, carried, 0, 400).Outcome);
+        Assert.Equal(
+            SolarMarkOutcome.WrongPlace,
+            bronze.Scratch(401, 244.0, SolarEvent.Sunset, carried, 0, 400).Outcome);
+    }
+
+    [Fact]
     public void A_Rim_Keeps_Its_Own_Scale_Across_A_Save()
     {
         var copper = new SolarBand(SolarBandPolicy.CoarseArcNotchDeg);

@@ -29,6 +29,7 @@ public sealed record SolarMarkResult(SolarMarkOutcome Outcome, SolarMark? Mark, 
 public sealed record SolarBandReading(
     SolarEvent Event,
     int MarkCount,
+    double NotchDeg,
     double? LowNotchDeg,
     int? LowDay,
     bool LowConfirmed,
@@ -72,7 +73,7 @@ public sealed record SolarBandReading(
             return "No marks on this rim yet.";
         }
 
-        var arc = $"{MarkCount} marks between {LowNotchDeg:0.#}° and {HighNotchDeg:0.#}°";
+        var arc = $"{MarkCount} marks between {LowNotchDeg:0.#}° and {HighNotchDeg:0.#}°, on notches of {NotchDeg:0.#}°";
         if (!IsComplete)
         {
             var turned = LowConfirmed || HighConfirmed;
@@ -152,7 +153,7 @@ public sealed class SolarBand
     public SolarMarkResult Scratch(int day, double azimuthDeg, SolarEvent solarEvent, double latitudeDeg, int x, int z)
     {
         if (BoundLatitudeDeg is { } bound
-            && Math.Abs(latitudeDeg - bound) > SolarBandPolicy.MaxLatitudeDriftDeg)
+            && Math.Abs(latitudeDeg - bound) > SolarBandPolicy.MaxDriftDegFor(NotchDeg))
         {
             return new SolarMarkResult(
                 SolarMarkOutcome.WrongPlace,
@@ -183,7 +184,7 @@ public sealed class SolarBand
         var arc = marks.Where(mark => mark.Event == solarEvent).OrderBy(mark => mark.Day).ToList();
         if (arc.Count == 0)
         {
-            return new SolarBandReading(solarEvent, 0, null, null, false, null, null, false, null, null, null);
+            return new SolarBandReading(solarEvent, 0, NotchDeg, null, null, false, null, null, false, null, null, null);
         }
 
         // An edge becomes a turning point only when the marks approached it and then fell back:
@@ -216,6 +217,7 @@ public sealed class SolarBand
         return new SolarBandReading(
             solarEvent,
             arc.Count,
+            NotchDeg,
             low.NotchDeg,
             low.Day,
             lowConfirmed,

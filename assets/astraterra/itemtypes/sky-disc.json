@@ -2,13 +2,41 @@
   "code": "sky-disc",
   "class": "AstraTerra.Items.ItemSkyDisc",
   "variantgroups": [
-    { "code": "metal", "states": ["copper", "tinbronze"] }
+    {
+      "code": "material",
+      "states": [
+        "clay",
+        "copper",
+        "tinbronze"
+      ]
+    }
   ],
-  "shape": { "base": "astraterra:item/sky-disc" },
-  "textures": {
-    "bronze": { "base": "game:block/metal/plate/{metal}" },
-    "bronze-dark": { "base": "game:block/metal/tarnished/{metal}" },
-    "gold": { "base": "game:block/metal/plate/gold" }
+  "texturesByType": {
+    "*-clay": {
+      "bronze": {
+        "base": "game:block/clay/ceramic"
+      },
+      "bronze-dark": {
+        "base": "game:block/clay/ceramic"
+      },
+      "gold": {
+        "base": "game:block/clay/ceramic-dark"
+      }
+    },
+    "*": {
+      "bronze": {
+        "base": "game:block/metal/plate/{material}"
+      },
+      "bronze-dark": {
+        "base": "game:block/metal/tarnished/{material}"
+      },
+      "gold": {
+        "base": "game:block/metal/plate/gold"
+      }
+    }
+  },
+  "shape": {
+    "base": "astraterra:item/sky-disc"
   },
   "maxstacksize": 1,
   "behaviors": [
@@ -16,47 +44,110 @@
       "name": "GroundStorable",
       "properties": {
         "layout": "SingleCenter",
-        "collisionBox": { "x1": 0.125, "y1": 0, "z1": 0.125, "x2": 0.875, "y2": 0.1, "z2": 0.875 }
+        "collisionBox": {
+          "x1": 0.125,
+          "y1": 0,
+          "z1": 0.125,
+          "x2": 0.875,
+          "y2": 0.1,
+          "z2": 0.875
+        }
       }
     }
   ],
   "attributes": {
     "arcNotchDegByType": {
-      "*-copper": 5,
+      "*-clay": 5,
       "*": 2.5
     },
     "displaycaseable": true,
     "shelvable": true,
     "groundStorageTransform": {
-      "translation": { "x": 0, "y": 0, "z": 0 },
-      "rotation": { "x": 0, "y": 0, "z": 0 },
-      "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+      "translation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0,
+        "z": 0.5
+      },
       "scale": 1
+    },
+    "engravedFiguresByType": {
+      "*-clay": 0,
+      "*-copper": 1,
+      "*": 2
     }
   },
   "creativeinventory": {
-    "general": ["*"],
-    "items": ["*"],
-    "tools": ["*"],
-    "astraterra": ["*"]
+    "general": [
+      "*"
+    ],
+    "items": [
+      "*"
+    ],
+    "tools": [
+      "*"
+    ],
+    "astraterra": [
+      "*"
+    ]
   },
-  "materialDensity": 900,
   "heldPriorityInteract": true,
   "heldTpUseAnimation": "interactstatic",
   "fpHandTransform": {
-    "translation": { "x": -0.15, "y": -0.12, "z": 0 },
-    "rotation": { "x": 4, "y": 90, "z": -30 },
-    "origin": { "x": 0.5, "y": 0.2, "z": 0.5 },
+    "translation": {
+      "x": -0.15,
+      "y": -0.12,
+      "z": 0
+    },
+    "rotation": {
+      "x": 4,
+      "y": 90,
+      "z": -30
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.2,
+      "z": 0.5
+    },
     "scale": 2
   },
   "guiTransform": {
-    "rotation": { "x": -74, "y": 0, "z": 0 },
-    "origin": { "x": 0.5, "y": 0.05, "z": 0.5 },
+    "rotation": {
+      "x": -74,
+      "y": 0,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.05,
+      "z": 0.5
+    },
     "scale": 1.2
   },
   "groundTransform": {
-    "rotation": { "x": 90, "y": 0, "z": 0 },
-    "origin": { "x": 0.5, "y": 0.5, "z": 0.56 },
+    "rotation": {
+      "x": 90,
+      "y": 0,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0.56
+    },
     "scale": 3.6
+  },
+  "materialDensityByType": {
+    "*-clay": 600,
+    "*": 900
   }
 }

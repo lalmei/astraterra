@@ -28,19 +28,39 @@ public static class SolarBandPolicy
     public const double ArcNotchDeg = 2.5;
 
     /// <summary>
-    /// What a softer metal will hold. Copper takes a scratch as readily as bronze and keeps it less
-    /// crisply, so its rim is graduated at twice the width — and by <b>P1</b> that costs patience,
-    /// never access: a copper disc finds the same solstice, from more evenings, and fixes its date
-    /// and its latitude less finely. It is the disc you can make before you have tin.
+    /// What metal will hold, copper as well as bronze. Metal is where the rim stops getting better:
+    /// past copper a disc buys nothing in accuracy, and what it buys instead is room to be engraved.
     /// </summary>
-    public const double CoarseArcNotchDeg = 5.0;
+    public const double MetalArcNotchDeg = ArcNotchDeg;
 
     /// <summary>
-    /// How far an observer may carry the disc and still add to its band. Deliberately the tolerance
-    /// the astrolabe treats as still-on-plate: a plate that is wrong can be recut, and a scratch in
-    /// bronze cannot, so the disc refuses rather than drifts.
+    /// What a thumb can press into wet clay and a kiln will keep. Twice bronze's notch, and the disc
+    /// a world can build on its first day — before ore, before smelting, before there is any other
+    /// way at all to know when the year turns. It finds the same solstice a fortnight less exactly.
+    /// </summary>
+    public const double RoughArcNotchDeg = 5.0;
+
+    /// <summary>
+    /// The closest a disc is ever asked to hold its place. Deliberately the tolerance the astrolabe
+    /// treats as still-on-plate: a plate that is wrong can be recut, and a scratch cannot be undone,
+    /// so the disc refuses rather than drifts.
     /// </summary>
     public const double MaxLatitudeDriftDeg = AstrolabeCalibrationPolicy.OnPlateToleranceDeg;
+
+    /// <summary>
+    /// How far this disc may be carried and still take a mark, which depends on how finely it reads.
+    /// </summary>
+    /// <remarks>
+    /// Moving a degree of latitude moves the setting sun about a degree along the horizon, so a rim
+    /// notched at ten degrees cannot see a move of five — and an instrument must not refuse what it
+    /// could not have noticed. A rough disc therefore travels further than a fine one, which is the
+    /// same bargain as everywhere else on this ladder read backwards: what bronze buys in precision
+    /// it pays for in having to be brought home.
+    /// </remarks>
+    public static double MaxDriftDegFor(double notchDeg)
+        => Math.Max(
+            MaxLatitudeDriftDeg,
+            notchDeg > 0.0 && double.IsFinite(notchDeg) ? notchDeg : ArcNotchDeg);
 
     /// <summary>
     /// Tilt of the sun's yearly swing, which is what makes the band have edges at all. Shared with

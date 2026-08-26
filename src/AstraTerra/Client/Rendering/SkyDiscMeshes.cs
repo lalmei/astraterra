@@ -31,9 +31,12 @@ public sealed class SkyDiscMeshes : IDisposable
     private const double MarkCeiling = 1.32;
     private const double EdgeMarkCeiling = 1.44;
 
-    // No hash: the shape loader strips it off face textures when it resolves them, and a code
-    // written the way the JSON writes it arrives here as "##gold" and maps to nothing.
-    private const string GoldTexture = "gold";
+    /// <summary>
+    /// The shape's ornament slot, which each disc fills with what it is made of: gold inlay on
+    /// metal, a burnt impression on clay. No hash on the code — the shape loader strips it off face
+    /// textures when it resolves them, and "##gold" maps to nothing.
+    /// </summary>
+    private const string MarkTexture = "gold";
     private const string ShapePath = "astraterra:shapes/item/sky-disc.json";
 
     private readonly ICoreClientAPI api;
@@ -161,7 +164,7 @@ public sealed class SkyDiscMeshes : IDisposable
                 ? null
                 : new ShapeElementFace
                 {
-                    Texture = GoldTexture,
+                    Texture = MarkTexture,
                     Uv = existing.Uv is null ? null : (float[])existing.Uv.Clone(),
                     Rotation = existing.Rotation,
                     Enabled = existing.Enabled,

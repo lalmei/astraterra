@@ -95,24 +95,62 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void Copper_Is_Graduated_More_Coarsely_Than_Bronze()
+    public void The_Rougher_The_Material_The_Coarser_The_Rim()
     {
         using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
         var root = document.RootElement;
 
         Assert.Equal(
-            ["copper", "tinbronze"],
+            ["clay", "copper", "tinbronze"],
             root.GetProperty("variantgroups")
                 .EnumerateArray()
-                .Single(group => group.GetProperty("code").GetString() == "metal")
+                .Single(group => group.GetProperty("code").GetString() == "material")
                 .GetProperty("states")
                 .EnumerateArray()
                 .Select(state => state.GetString()));
 
-        // P1: the softer metal buys patience, not access. Same discovery, rounder answers.
+        // P1: a rougher disc buys patience, not access. Same solstice, rounder answers — and metal
+        // is where the rim stops getting better.
         var notches = root.GetProperty("attributes").GetProperty("arcNotchDegByType");
-        Assert.Equal(SolarBandPolicy.CoarseArcNotchDeg, notches.GetProperty("*-copper").GetDouble());
-        Assert.Equal(SolarBandPolicy.ArcNotchDeg, notches.GetProperty("*").GetDouble());
+        Assert.Equal(SolarBandPolicy.RoughArcNotchDeg, notches.GetProperty("*-clay").GetDouble());
+        Assert.Equal(SolarBandPolicy.MetalArcNotchDeg, notches.GetProperty("*").GetDouble());
+    }
+
+    [Fact]
+    public void Past_Copper_What_A_Disc_Buys_Is_Room_To_Be_Engraved()
+    {
+        using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
+        var figures = document.RootElement.GetProperty("attributes").GetProperty("engravedFiguresByType");
+
+        // Clay holds marks, not a memory: you inlay a figure into metal, and the disc worth keeping
+        // is the one that can carry the constellations you drew.
+        Assert.Equal(0, figures.GetProperty("*-clay").GetInt32());
+        Assert.Equal(1, figures.GetProperty("*-copper").GetInt32());
+        Assert.Equal(SkyDiscEngraving.MaxFigures, figures.GetProperty("*").GetInt32());
+    }
+
+    [Fact]
+    public void The_Clay_Disc_Is_Formed_And_Fired_Rather_Than_Crafted()
+    {
+        using var recipe = ReadJson("assets", "astraterra", "recipes", "clayforming", "sky-disc.json");
+        var pattern = recipe.RootElement.GetProperty("pattern").EnumerateArray().Single();
+        var rows = pattern.EnumerateArray().Select(row => row.GetString() ?? string.Empty).ToList();
+
+        // One layer, and round: a disc is formed flat and fired flat.
+        Assert.All(rows, row => Assert.Equal(rows.Count, row.Length));
+        Assert.Equal(3, rows[0].Count(voxel => voxel == '#'));
+        Assert.Equal(rows.Count, rows[rows.Count / 2].Count(voxel => voxel == '#'));
+        Assert.Equal(
+            "astraterra:sky-disc-clay-{color}-raw",
+            recipe.RootElement.GetProperty("output").GetProperty("code").GetString());
+
+        using var raw = ReadJson("assets", "astraterra", "itemtypes", "sky-disc-clay-raw.json");
+        var combustible = raw.RootElement.GetProperty("combustibleProps");
+
+        Assert.Equal("fire", combustible.GetProperty("smeltingType").GetString());
+        Assert.Equal(
+            "astraterra:sky-disc-clay",
+            combustible.GetProperty("smeltedStack").GetProperty("code").GetString());
     }
 
     private static JsonDocument ReadJson(params string[] relativePath)
