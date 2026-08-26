@@ -10,6 +10,7 @@ public sealed class CreativeLibraryAssetTests
     [InlineData("precision-telescope.json")]
     [InlineData("sextant.json")]
     [InlineData("calibrated-astrolabe.json")]
+    [InlineData("sky-disc.json")]
     public void Instrument_Items_Appear_In_The_AstraTerra_Creative_Tab(string fileName)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(
