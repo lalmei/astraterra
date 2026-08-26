@@ -16,6 +16,40 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
+    public void The_Disc_Can_Be_Set_Down_On_The_Ground()
+    {
+        using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
+        var root = document.RootElement;
+        var behaviour = root.GetProperty("behaviors")
+            .EnumerateArray()
+            .Single(entry => entry.GetProperty("name").GetString() == "GroundStorable");
+
+        Assert.Equal("SingleCenter", behaviour.GetProperty("properties").GetProperty("layout").GetString());
+
+        // Laid flat, unturned: the face the player reads is the face that looks up.
+        var transform = root.GetProperty("attributes").GetProperty("groundStorageTransform");
+        var rotation = transform.GetProperty("rotation");
+        Assert.Equal(0, rotation.GetProperty("x").GetInt32());
+        Assert.Equal(0, rotation.GetProperty("y").GetInt32());
+        Assert.Equal(0, rotation.GetProperty("z").GetInt32());
+        Assert.Equal(1, transform.GetProperty("scale").GetInt32());
+    }
+
+    [Fact]
+    public void The_Inventory_Icon_Faces_The_Disc_Toward_The_Camera()
+    {
+        using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
+        var rotation = document.RootElement
+            .GetProperty("guiTransform")
+            .GetProperty("rotation");
+
+        // The shape lies flat in the horizontal plane, and the inventory camera looks at the
+        // vertical one: leave this near zero and the icon is a disc seen edge on, which reads as an
+        // item with no model at all. Negative tips the marked face toward the viewer.
+        Assert.InRange(rotation.GetProperty("x").GetDouble(), -105.0, -45.0);
+    }
+
+    [Fact]
     public void The_Shape_Has_Two_Notched_Rims_And_A_Gold_Sun_Cluster()
     {
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
