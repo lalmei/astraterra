@@ -168,15 +168,25 @@ public sealed class SolarBand
             return new SolarBandReading(solarEvent, 0, null, null, false, null, null, false, null, null, null);
         }
 
-        var low = arc.OrderBy(mark => mark.NotchDeg).ThenBy(mark => mark.Day).First();
-        var high = arc.OrderByDescending(mark => mark.NotchDeg).ThenBy(mark => mark.Day).First();
-
         // An edge becomes a turning point only when the marks approached it and then fell back:
         // short of it before, short of it after. An edge that is merely where the observer started
         // watching is not a turn, and the disc must not mistake the two — which is also why it
-        // cannot announce anything on the day it happens.
-        var lowConfirmed = Turned(arc, low, mark => mark.NotchDeg >= low.NotchDeg + SolarBandPolicy.ArcNotchDeg);
-        var highConfirmed = Turned(arc, high, mark => mark.NotchDeg <= high.NotchDeg - SolarBandPolicy.ArcNotchDeg);
+        // cannot announce anything on the day it happens. Several days can share an extreme notch,
+        // and the first mark on a new disc may be one of them. Pick the first occurrence that really
+        // has an approach and retreat around it; otherwise that unlucky first scratch would shadow
+        // the same edge when it comes round next year and the rim could never finish.
+        var lowNotch = arc.Min(mark => mark.NotchDeg);
+        var highNotch = arc.Max(mark => mark.NotchDeg);
+        var low = FindEdge(
+            arc,
+            lowNotch,
+            mark => mark.NotchDeg >= lowNotch + SolarBandPolicy.ArcNotchDeg,
+            out var lowConfirmed);
+        var high = FindEdge(
+            arc,
+            highNotch,
+            mark => mark.NotchDeg <= highNotch - SolarBandPolicy.ArcNotchDeg,
+            out var highConfirmed);
 
         var complete = lowConfirmed && highConfirmed;
         var swing = complete ? high.NotchDeg - low.NotchDeg : (double?)null;
@@ -202,6 +212,18 @@ public sealed class SolarBand
     private static bool Turned(IReadOnlyList<SolarMark> arc, SolarMark edge, Func<SolarMark, bool> fallsShort)
         => arc.Any(mark => mark.Day < edge.Day && fallsShort(mark))
            && arc.Any(mark => mark.Day > edge.Day && fallsShort(mark));
+
+    private static SolarMark FindEdge(
+        IReadOnlyList<SolarMark> arc,
+        double edgeNotchDeg,
+        Func<SolarMark, bool> fallsShort,
+        out bool confirmed)
+    {
+        var candidates = arc.Where(mark => mark.NotchDeg == edgeNotchDeg).OrderBy(mark => mark.Day).ToList();
+        var turned = candidates.FirstOrDefault(candidate => Turned(arc, candidate, fallsShort));
+        confirmed = turned is not null;
+        return turned ?? candidates[0];
+    }
 
     internal SolarBandSnapshot ToSnapshot() => new(1, BoundLatitudeDeg, BoundX, BoundZ, marks.ToList());
 

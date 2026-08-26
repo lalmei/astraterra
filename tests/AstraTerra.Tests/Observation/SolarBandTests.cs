@@ -47,6 +47,20 @@ public sealed class SolarBandTests
     }
 
     [Fact]
+    public void A_First_Mark_At_An_Extreme_Can_Be_Confirmed_When_That_Extreme_Comes_Round_Again()
+    {
+        const int northernSolsticeDay = YearDays / 4;
+        var band = MarkYear(new SolarBand(), fromDay: northernSolsticeDay, days: YearDays + 20);
+
+        var reading = band.Read(SolarEvent.Sunset);
+
+        Assert.True(reading.IsComplete);
+        Assert.NotNull(reading.YearDays);
+        Assert.InRange(reading.YearDays!.Value, YearDays - 10, YearDays + 10);
+        Assert.True(reading.HighDay > northernSolsticeDay);
+    }
+
+    [Fact]
     public void One_End_Found_Reads_As_One_End_Found()
     {
         var band = MarkYear(new SolarBand(), fromDay: 0, days: 140);
