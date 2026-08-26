@@ -13,7 +13,7 @@ Everything below is also written into the Vintage Story handbook. Press **H** an
 - Watch annual meteor showers whose timing, radiant height, moonlight, and darkness determine how many streaks appear, and comets that return on their own periods with an anti-sunward tail.
 - Use the Brass Telescope to zoom in, draw constellation lines, inspect saved constellations, and remove segments.
 - Use the Precision Telescope for slight stronger zoom, maybe clear view.
-- Use the Bronze Sky Disc to mark where the sun crosses the horizon, and read your latitude, the length of the year, and the next turn of the seasons out of a year of marks.
+- Use the Sky Disc to mark where the sun crosses the horizon, and read your latitude, the length of the year, and the next turn of the seasons out of a year of marks.
 - Use the Sextant to read the angle of a star, a planet, a comet, the sun, or the moon above the horizon, day or night.
 - Lie on your back with **Z** to watch the sky from the ground, the same kind of toggle as sit-on-G.
 - Use the Calibrated Astrolabe to predict where and when recorded constellations, the planets, and the comets will appear, tell the time of night, and see what day of the year it is.
@@ -52,11 +52,13 @@ The name is yours. Nothing in the sky will ever tell you it was called Mars — 
 
 The Precision Telescope uses the same observation workflow as the Brass Telescope, with stronger zoom levels for careful stargazing.
 
-### Bronze Sky Disc
+### Sky Disc
 
-Bronze and a little gold. It reads no angles, needs no writing and no ink, and it is the slowest instrument in the mod: what it measures takes a world year.
+Copper or bronze, and a little gold. It reads no angles, needs no writing and no ink, and it is the slowest instrument in the mod: what it measures takes a world year.
 
-Stand somewhere with a clear horizon. As the sun touches it, **sneak and right click** to scratch the rim where it went down. Come back another evening and mark again. Sunrises are kept on their own rim, so either end of the day works.
+Stand somewhere with a clear horizon. As the sun touches it, **sneak and hold right click**: the disc comes up against the horizon and tells you the notch the mark would fall on, and a moment later it scratches the rim there. Let go before then and nothing is marked — the one chance you get to call a scratch off. Come back another evening and mark again. Sunrises are kept on their own rim, so either end of the day works.
+
+The marks are on the disc itself. Every notch you have scratched shows as gold on the rim, the two ends of each band standing longer than the rest, so a disc carried for a year is visibly somebody's working instrument rather than a blank plate — in hand, in the inventory, and lying on the ground where you set it down.
 
 The mark records the sun crossing the *true* horizon rather than the moment you clicked, so a hill in the way costs you nothing and there is a window either side to get it done. Missing evenings to rain, sleep or a cave costs nothing either — you need enough marks to find the ends of the band, not every day of the year.
 
@@ -67,6 +69,8 @@ The disc will not announce a solstice on the day one happens: at the time, nobod
 **Set it down where you work.** Sneak and right click the ground and the disc lies there, face up, scratches and all — a marker on the spot it is bound to, and something to leave beside the hearth rather than carry. Marking still happens with the sky in the reticle, so aiming at a block puts the disc down instead of scratching it; an empty hand and a right click pick it back up.
 
 **It binds to its place.** The first mark fixes where the disc belongs; carry it far enough north or south and it refuses the mark rather than quietly spoiling the band, because you cannot un-scratch bronze. Inside the polar circles the sun stops setting for part of the year and there is no band of sunsets to measure at all.
+
+**Copper or bronze.** Either metal makes a disc, and copper comes years earlier — before you have tin. It finds everything the bronze one finds: its rim is graduated twice as coarsely, so more evenings land on the same notch, the sun stands still for longer, and the year and latitude it hands back are rounder. That is the trade the whole instrument ladder is built on — patience buys what fineness buys.
 
 The Astrolabe gets you the same latitude in a three-second sighting. The disc is the slow road to it, and it is open to you on the first evening of a new world.
 

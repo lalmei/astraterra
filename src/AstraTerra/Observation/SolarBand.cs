@@ -107,17 +107,35 @@ public sealed class SolarBand
     private readonly List<SolarMark> marks;
 
     public SolarBand()
-        : this(null, null, null, [])
+        : this(SolarBandPolicy.ArcNotchDeg)
     {
     }
 
-    internal SolarBand(double? boundLatitudeDeg, int? boundX, int? boundZ, IEnumerable<SolarMark> marks)
+    public SolarBand(double notchDeg)
+        : this(null, null, null, [], notchDeg)
+    {
+    }
+
+    internal SolarBand(
+        double? boundLatitudeDeg,
+        int? boundX,
+        int? boundZ,
+        IEnumerable<SolarMark> marks,
+        double notchDeg = SolarBandPolicy.ArcNotchDeg)
     {
         BoundLatitudeDeg = boundLatitudeDeg;
         BoundX = boundX;
         BoundZ = boundZ;
+        NotchDeg = notchDeg > 0.0 && double.IsFinite(notchDeg) ? notchDeg : SolarBandPolicy.ArcNotchDeg;
         this.marks = marks.ToList();
     }
+
+    /// <summary>
+    /// How wide a notch is on this rim, which is a property of the metal it was scratched into. It
+    /// travels with the band rather than with the item: a disc carries its own scale, so marks made
+    /// on it stay comparable to each other for as long as it exists.
+    /// </summary>
+    public double NotchDeg { get; }
 
     /// <summary>The latitude of the first mark. Every later mark is measured against it.</summary>
     public double? BoundLatitudeDeg { get; private set; }
@@ -154,7 +172,7 @@ public sealed class SolarBand
         BoundX ??= x;
         BoundZ ??= z;
 
-        var mark = new SolarMark(day, SolarBandPolicy.Notch(azimuthDeg), solarEvent);
+        var mark = new SolarMark(day, SolarBandPolicy.Notch(azimuthDeg, NotchDeg), solarEvent);
         marks.Add(mark);
         return new SolarMarkResult(SolarMarkOutcome.Scratched, mark, $"Scratched at {mark.NotchDeg:0.#}°.");
     }
@@ -180,12 +198,12 @@ public sealed class SolarBand
         var low = FindEdge(
             arc,
             lowNotch,
-            mark => mark.NotchDeg >= lowNotch + SolarBandPolicy.ArcNotchDeg,
+            mark => mark.NotchDeg >= lowNotch + NotchDeg,
             out var lowConfirmed);
         var high = FindEdge(
             arc,
             highNotch,
-            mark => mark.NotchDeg <= highNotch - SolarBandPolicy.ArcNotchDeg,
+            mark => mark.NotchDeg <= highNotch - NotchDeg,
             out var highConfirmed);
 
         var complete = lowConfirmed && highConfirmed;
@@ -225,14 +243,16 @@ public sealed class SolarBand
         return turned ?? candidates[0];
     }
 
-    internal SolarBandSnapshot ToSnapshot() => new(1, BoundLatitudeDeg, BoundX, BoundZ, marks.ToList());
+    internal SolarBandSnapshot ToSnapshot() => new(2, BoundLatitudeDeg, BoundX, BoundZ, marks.ToList(), NotchDeg);
 
     internal static SolarBand FromSnapshot(SolarBandSnapshot snapshot)
         => new(
             snapshot.BoundLatitudeDeg,
             snapshot.BoundX,
             snapshot.BoundZ,
-            (snapshot.Marks ?? []).Where(mark => mark is not null && double.IsFinite(mark.NotchDeg)));
+            (snapshot.Marks ?? []).Where(mark => mark is not null && double.IsFinite(mark.NotchDeg)),
+            // A disc scratched before rims came in more than one metal is a bronze one.
+            snapshot.NotchDeg ?? SolarBandPolicy.ArcNotchDeg);
 }
 
 internal sealed record SolarBandSnapshot(
@@ -240,7 +260,8 @@ internal sealed record SolarBandSnapshot(
     double? BoundLatitudeDeg,
     int? BoundX,
     int? BoundZ,
-    IReadOnlyList<SolarMark> Marks
+    IReadOnlyList<SolarMark> Marks,
+    double? NotchDeg = null
 );
 
 public static class SolarBandPersistence

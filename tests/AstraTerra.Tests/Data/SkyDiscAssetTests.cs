@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AstraTerra.Observation;
 using Xunit;
 
 namespace AstraTerra.Tests.Data;
@@ -72,21 +73,46 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void The_Recipe_Is_A_Bronze_Plate_Between_Two_Gold_Bits()
+    public void The_Recipe_Is_A_Plate_Of_Either_Metal_Between_Two_Gold_Bits()
     {
         using var document = ReadJson("assets", "astraterra", "recipes", "grid", "sky-disc.json");
         var root = document.RootElement;
+        var plate = root.GetProperty("ingredients").GetProperty("P");
 
         Assert.Equal("GPG", root.GetProperty("ingredientPattern").GetString());
+        Assert.Equal("game:metalplate-*", plate.GetProperty("code").GetString());
         Assert.Equal(
-            "game:metalplate-tinbronze",
-            root.GetProperty("ingredients").GetProperty("P").GetProperty("code").GetString());
+            ["copper", "tinbronze"],
+            plate.GetProperty("allowedVariants").EnumerateArray().Select(variant => variant.GetString()));
         Assert.Equal(
             "game:metalbit-gold",
             root.GetProperty("ingredients").GetProperty("G").GetProperty("code").GetString());
+
+        // The disc you get is made of the plate you put in.
         Assert.Equal(
-            "astraterra:sky-disc",
+            "astraterra:sky-disc-{metal}",
             root.GetProperty("output").GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public void Copper_Is_Graduated_More_Coarsely_Than_Bronze()
+    {
+        using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
+        var root = document.RootElement;
+
+        Assert.Equal(
+            ["copper", "tinbronze"],
+            root.GetProperty("variantgroups")
+                .EnumerateArray()
+                .Single(group => group.GetProperty("code").GetString() == "metal")
+                .GetProperty("states")
+                .EnumerateArray()
+                .Select(state => state.GetString()));
+
+        // P1: the softer metal buys patience, not access. Same discovery, rounder answers.
+        var notches = root.GetProperty("attributes").GetProperty("arcNotchDegByType");
+        Assert.Equal(SolarBandPolicy.CoarseArcNotchDeg, notches.GetProperty("*-copper").GetDouble());
+        Assert.Equal(SolarBandPolicy.ArcNotchDeg, notches.GetProperty("*").GetDouble());
     }
 
     private static JsonDocument ReadJson(params string[] relativePath)

@@ -1,6 +1,7 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Observation;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -19,6 +20,14 @@ namespace AstraTerra.Items;
 public sealed class ItemSkyDisc : Item
 {
     private const string MarkingAttribute = "astraterraDiscMarking";
+    private const string ScratchedAttribute = "astraterraDiscScratched";
+
+    /// <summary>
+    /// How long the disc is held to the horizon before the scratch goes on. A mark cannot be taken
+    /// off again, so it is worth a moment's deliberation — and the moment is what the gesture is:
+    /// the disc comes up, is lined up against where the sun went down, and only then is scratched.
+    /// </summary>
+    private const float ScratchHoldSeconds = 1.2f;
 
     public override void OnHeldInteractStart(
         ItemSlot slot,
@@ -53,10 +62,67 @@ public sealed class ItemSkyDisc : Item
             SkyDiscReadingState.Begin();
         }
 
+        byEntity?.Attributes?.SetBool(ScratchedAttribute, false);
         if (marking && byEntity is not null)
         {
-            Scratch(slot, byEntity);
+            Preflight(slot, byEntity);
         }
+    }
+
+    /// <summary>
+    /// Draws this disc with its own marks on it, wherever it is being shown.
+    /// </summary>
+    /// <remarks>
+    /// The band belongs to the itemstack, so two discs are two different objects: the model has to
+    /// come from the stack rather than from the item. An unscratched disc falls through to the
+    /// shipped model, which is what it looks like.
+    /// </remarks>
+    public override void OnBeforeRender(
+        ICoreClientAPI capi,
+        ItemStack itemstack,
+        EnumItemRenderTarget target,
+        ref ItemRenderInfo renderinfo)
+    {
+        base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
+
+        if (SkyDiscMeshes.Active?.Get(this, SolarBandStore.Read(itemstack)) is { } marked)
+        {
+            renderinfo.ModelRef = marked;
+        }
+
+        if (target == EnumItemRenderTarget.HandFp)
+        {
+            Raise(ref renderinfo);
+        }
+    }
+
+    /// <summary>
+    /// Brings the disc up in front of its holder while they are reading or marking it, and lets it
+    /// back down when they lower it.
+    /// </summary>
+    /// <remarks>
+    /// You do not read an instrument like this at your hip. The transform is copied before it is
+    /// changed: the one on the item is shared by every disc in the world, and moving it would raise
+    /// all of them for good.
+    /// </remarks>
+    private static void Raise(ref ItemRenderInfo renderinfo)
+    {
+        SkyDiscReadingState.AdvanceRaise(renderinfo.dt);
+
+        var raised = SkyDiscReadingState.RaiseFraction;
+        if (raised <= 0f || renderinfo.Transform is null)
+        {
+            return;
+        }
+
+        // Eased so the disc comes up and settles rather than snapping to the eye.
+        var amount = raised * raised * (3f - (2f * raised));
+        var transform = renderinfo.Transform.Clone();
+        transform.Translation.X += 0.28f * amount;
+        transform.Translation.Y += 0.16f * amount;
+        transform.Translation.Z -= 0.12f * amount;
+        transform.Rotation.Z -= 22f * amount;
+        renderinfo.Transform = transform;
     }
 
     public override bool OnHeldInteractStep(
@@ -69,6 +135,14 @@ public sealed class ItemSkyDisc : Item
         if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
         {
             SkyDiscReadingState.Begin();
+        }
+
+        if (byEntity?.Attributes?.GetBool(MarkingAttribute) == true
+            && byEntity.Attributes.GetBool(ScratchedAttribute) != true
+            && secondsUsed >= ScratchHoldSeconds)
+        {
+            byEntity.Attributes.SetBool(ScratchedAttribute, true);
+            Scratch(slot, byEntity);
         }
 
         return true;
@@ -95,26 +169,45 @@ public sealed class ItemSkyDisc : Item
     }
 
     /// <summary>
-    /// Scratches today's mark, if the sun is within a window of the horizon and the disc will take it.
+    /// Says what the disc is about to be scratched with, before the hold that scratches it.
     /// </summary>
     /// <remarks>
-    /// The server owns the itemstack, so the server owns the rim. The client runs the same check only
-    /// to say something immediately — a scratch that the server refuses is refused on both sides,
-    /// because both are reading the same sun.
+    /// Nothing is written here. The point is that the observer sees where the mark will fall while
+    /// they are still holding the disc up against the horizon, and can let go if the sun is not
+    /// where they wanted it — the one moment a permanent mark can still be called off.
     /// </remarks>
-    private static void Scratch(ItemSlot slot, EntityAgent byEntity)
+    private static void Preflight(ItemSlot slot, EntityAgent byEntity)
+    {
+        if (!LocalObservationGate.IsLocalPlayerInteraction(byEntity))
+        {
+            return;
+        }
+
+        if (FindCrossing(slot, byEntity) is not { } sighting)
+        {
+            return;
+        }
+
+        SkyDiscReadingState.ReportMark(
+            $"The sun crosses at {SolarBandPolicy.Notch(sighting.Crossing.AzimuthDeg, SolarBandStore.NotchOf(slot.Itemstack)):0.#}° — hold the disc up to scratch it.");
+    }
+
+    /// <summary>
+    /// Where the sun crossed the horizon today, or nothing — with the reason said out loud, once.
+    /// </summary>
+    private static SkyDiscSighting? FindCrossing(ItemSlot slot, EntityAgent byEntity)
     {
         var world = byEntity.World;
         if (world is null || slot?.Itemstack is null)
         {
-            return;
+            return null;
         }
 
         var isLocal = LocalObservationGate.IsLocalPlayerInteraction(byEntity);
         if (!SkyExposure.CanSeeSky(world.BlockAccessor, byEntity))
         {
             Report(isLocal, "No horizon from in here.");
-            return;
+            return null;
         }
 
         var calendar = world.Calendar;
@@ -133,12 +226,33 @@ public sealed class ItemSkyDisc : Item
         if (crossing is null)
         {
             Report(isLocal, "The sun is nowhere near the horizon. Come back at sunrise or sunset.");
-            return;
+            return null;
         }
 
         var latitude = LatitudeMapper.MapGameLatitude(
             byEntity.Pos.Z,
             calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
+
+        return new SkyDiscSighting(crossing, latitude);
+    }
+
+    /// <summary>
+    /// Scratches today's mark, if the sun is within a window of the horizon and the disc will take it.
+    /// </summary>
+    /// <remarks>
+    /// The server owns the itemstack, so the server owns the rim. The client runs the same check only
+    /// to say something immediately — a scratch that the server refuses is refused on both sides,
+    /// because both are reading the same sun.
+    /// </remarks>
+    private static void Scratch(ItemSlot slot, EntityAgent byEntity)
+    {
+        if (FindCrossing(slot, byEntity) is not ({ } crossing, var latitude))
+        {
+            return;
+        }
+
+        var world = byEntity.World;
+        var isLocal = LocalObservationGate.IsLocalPlayerInteraction(byEntity);
         var band = SolarBandStore.ReadOrEmpty(slot.Itemstack);
         var result = band.Scratch(
             (int)Math.Floor(crossing.TotalDays),
@@ -172,6 +286,7 @@ public sealed class ItemSkyDisc : Item
     private static void Finish(EntityAgent? byEntity)
     {
         byEntity?.Attributes?.RemoveAttribute(MarkingAttribute);
+        byEntity?.Attributes?.RemoveAttribute(ScratchedAttribute);
 
         if (LocalObservationGate.IsLocalPlayerInteraction(byEntity))
         {
@@ -179,3 +294,6 @@ public sealed class ItemSkyDisc : Item
         }
     }
 }
+
+/// <summary>The sun at the horizon, and the latitude it was seen from.</summary>
+internal sealed record SkyDiscSighting(SolarCrossing Crossing, double LatitudeDeg);

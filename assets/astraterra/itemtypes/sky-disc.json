@@ -1,7 +1,15 @@
 {
   "code": "sky-disc",
   "class": "AstraTerra.Items.ItemSkyDisc",
+  "variantgroups": [
+    { "code": "metal", "states": ["copper", "tinbronze"] }
+  ],
   "shape": { "base": "astraterra:item/sky-disc" },
+  "textures": {
+    "bronze": { "base": "game:block/metal/plate/{metal}" },
+    "bronze-dark": { "base": "game:block/metal/tarnished/{metal}" },
+    "gold": { "base": "game:block/metal/plate/gold" }
+  },
   "maxstacksize": 1,
   "behaviors": [
     {
@@ -13,6 +21,12 @@
     }
   ],
   "attributes": {
+    "arcNotchDegByType": {
+      "*-copper": 5,
+      "*": 2.5
+    },
+    "displaycaseable": true,
+    "shelvable": true,
     "groundStorageTransform": {
       "translation": { "x": 0, "y": 0, "z": 0 },
       "rotation": { "x": 0, "y": 0, "z": 0 },
@@ -28,6 +42,7 @@
   },
   "materialDensity": 900,
   "heldPriorityInteract": true,
+  "heldTpUseAnimation": "interactstatic",
   "fpHandTransform": {
     "translation": { "x": -0.15, "y": -0.12, "z": 0 },
     "rotation": { "x": 4, "y": 90, "z": -30 },

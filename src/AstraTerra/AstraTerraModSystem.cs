@@ -24,6 +24,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private TelescopeZoomPatcher? telescopeZoomPatcher;
     private TelescopeScopeController? telescopeScopeController;
     private SkyLyingController? skyLyingController;
+    private GroundStorageDiscMeshPatcher? groundStorageDiscMeshPatcher;
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
@@ -145,6 +146,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
+        SkyDiscMeshes.Reset();
         SkyLyingState.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
@@ -201,6 +203,11 @@ public sealed class AstraTerraModSystem : ModSystem
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
         // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
+        SkyDiscMeshes.Install(api);
+        groundStorageDiscMeshPatcher = new GroundStorageDiscMeshPatcher();
+        api.Logger.Event(
+            "AstraTerra startup step: sky disc marks on stored discs: {0}",
+            groundStorageDiscMeshPatcher.Start(api) ? "patched" : "unavailable");
         api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
 
         sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient);
@@ -328,6 +335,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
+        groundStorageDiscMeshPatcher?.Stop();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
