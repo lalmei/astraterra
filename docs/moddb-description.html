@@ -36,7 +36,7 @@
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 960px; margin: 0 auto; background: #f0ebe0; padding: 24px; border-radius: 6px;">
 <!-- image: docs/screenshots/starfiel.png — banner shot for the top of the page -->
 
-<p>AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, and nine annual meteor showers, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.</p>
+<p>AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, nine annual meteor showers, and comets that return on their own schedule, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.</p>
 
 <p>Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.</p>
 
@@ -47,36 +47,53 @@
 
 <div style="background: #d4edda; border: 1px solid #a3d4ad; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #2d5a3a; line-height: 1.6;">
 <p style="margin: 0 0 8px;"><strong>&#10003; Contributions welcome</strong></p>
-<p style="margin: 0 0 8px;">Models, code, docs, translations, screenshots &mdash; all of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
+<p style="margin: 0 0 8px;">Models, code, docs, translations, screenshots. All of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
 </div>
 
 <h3>What is new</h3>
 
-<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#127756; Next update &mdash; the Milky Way, and what it costs</strong></p>
-<p style="margin: 0 0 8px;">The stars will stand against the galaxy's own glow: a broad band with a bright core towards Sagittarius, split down its length by the dark dust lanes of the Great Rift, turning with the rest of the sky and sitting at whatever angle your latitude puts it.</p>
+<div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#127756; v0.5.4: the Milky Way, and a sky you work out for yourself</strong></p>
+<p style="margin: 0 0 8px;">The galaxy's own glow is in the sky. And the instruments stopped handing you answers: what a moving body is, and what your astrolabe is engraved for, are now things you establish by observing and writing it down.</p>
 <ul>
-<li><strong>It is generated, not photographed.</strong> The glow map is a galaxy &mdash; an exponential disc with four spiral arms and a flattened bulge &mdash; integrated along every line of sight from the Sun's place inside it, dimmed by a layer of dust in front. The rift, the clouds and the amber reddening of the core fall out of that model rather than being painted, so the asset is the mod's own and its shape can be tuned by parameter.</li>
-<li><strong>It behaves like the real one.</strong> Gone in twilight, back only once the night is properly dark, and mostly washed out by a bright moon &mdash; a glow spread across a quarter of the sky is the first thing any sky brightness takes away, where a star survives it. Best near new moon.</li>
-<li><strong>It is close to free.</strong> Measured in a real session, lying on your back with the band at full strength filling the screen: 0.16&ndash;0.55 ms per frame with it on, 0.50&ndash;0.55 ms with it off. The two cannot be told apart &mdash; the cost is smaller than the frame-to-frame noise of everything else &mdash; and draw calls are unchanged. If you would rather not have it, <code>MilkyWayBrightness</code> in <code>ModConfig/astraterra.json</code> takes <code>0</code>, and <code>.stars render milkyway off</code> switches it off for a session.</li>
+<li><strong>The Milky Way.</strong> A broad band with a bright core towards Sagittarius, split by the dark dust lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your latitude puts it. It is generated from a model of the galaxy rather than photographed, so the rift and the amber core fall out of the model rather than being painted. Gone in twilight, back once the night is properly dark, washed out by a bright moon, so it is best near new moon. It costs nothing measurable: 0.16&ndash;0.55 ms a frame with it on against 0.50&ndash;0.55 with it off, and no extra draw calls. <code>MilkyWayBrightness</code> in <code>ModConfig/astraterra.json</code> takes <code>0</code>, and <code>.stars render milkyway off</code> switches it off for a session.</li>
+<li><strong>Write down what you saw, not what it was.</strong> Sneak while holding the Sextant up, with a writable book in your left hand and ink and quill in your inventory, and the book gains a dated entry: the angle above the horizon, the bearing, how bright it looked, the day and hour, and the latitude you stood at. The entry does not say what you sighted, and that is the point: it records that <em>something</em> stood there at that hour.</li>
+<li><strong>Then work it out.</strong> <code>.stars sightings</code> lays your entries side by side, gathers them into the sets it takes to be one body, and says how far apart the nights put them. <code>.stars classify &lt;set&gt; star|wanderer|comet [name]</code> is where you say what it was. Nothing grades the answer; that is what makes it yours. Call a set a wanderer and, if exactly one of the wandering bodies was in all those places on all those nights, your name for it becomes the name every instrument uses.</li>
+<li><strong>Every answer says what it rests on.</strong> <em>From 3 sightings over 11 days, to 0&deg; 01&prime;</em> for a wanderer you established yourself, <em>drawn from 7 stars</em> for one of your own figures, <em>from the almanac, not your sightings</em> for a comet, whose returns are somebody else's arithmetic. A planet written down under an older version, with no sightings behind it, still aims, but it says it is thin.</li>
+<li><strong>The astrolabe's plate is yours to cut.</strong> A new one is blank. Stand under open sky after dusk and sneak-hold right click while it sights the pole, and it is engraved for that latitude. No star catalog and no brass, only the sky. Afterwards every reading answers for the latitude it was cut at: travel far enough and it tells you how far you have strayed, and eventually asks to be recut.</li>
+<li><strong>Comets come back on their own schedule.</strong> Four of them, on their real orbital periods. The first is Machholz, a little under two world years into a new world, so a world started today already has one coming. It returns about every five years after that. Each is up for a couple of world weeks, crossing the sky, brightening as it rounds perihelion, and fading again.</li>
+<li><strong>An Astronomy tab in the in-game handbook</strong>, so the instruments explain themselves without a second screen.</li>
+<li><strong>Fixed: pressing Z could crash the client.</strong> The lie-down clips added in v0.5.3 left half of some keyframes unwritten, and the game reads those fields without checking whether they are there. The first time anyone lay down, the client went down with it. If you are on v0.5.3, this is the update you want.</li>
+<li><strong>For modders: the sky is replaceable.</strong> Both the star catalog and the solar system can be swapped for your own, so another mod can ship a different sky rather than patching this one's.</li>
 </ul>
-<p style="margin: 0 0 8px;"><strong>Two things we are unsure about, and would like to hear on:</strong> how bright the band should be, and how dark the night has to get before it appears. Both are single numbers and easy to move, and both are judgements better made by someone actually out there looking than by anyone reading a diff. Screenshots welcome.</p>
-<p style="margin: 0 0 8px;"><strong>One known problem, found while measuring this.</strong> Raising a telescope where many deep-sky plates are above the horizon is expensive &mdash; around 10 ms a frame with roughly forty plates up, with occasional long frames &mdash; because every visible plate re-uploads its geometry every frame. It is not new and it is not the Milky Way; it is the first time it has been measured properly. Tracked as <a href="https://github.com/lalmei/astraterra/issues/105">issue #105</a> and next on the list.</p>
+<p style="margin: 0 0 8px;"><strong>One known problem, found while measuring the Milky Way.</strong> Raising a telescope where many deep-sky plates are above the horizon is expensive, around 10 ms a frame with roughly forty plates up and the occasional long frame, because every visible plate re-uploads its geometry every frame. It is not new and it is not the Milky Way; it is the first time it has been measured properly. Tracked as <a href="https://github.com/lalmei/astraterra/issues/105">issue #105</a> and next on the list.</p>
 </div>
 
-<div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#127769; v0.5.3 &mdash; lying down looks like lying down</strong></p>
-<p style="margin: 0 0 8px;">Pressing <strong>Z</strong> used to tip the seraph backwards in one piece, feet still planted, until it arched into a bridge and landed flat &mdash; and with empty hands the arms came off their shoulders and the elbows separated.</p>
+<div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#9997; Two numbers we would like a second opinion on</strong></p>
+<p style="margin: 0 0 8px;">How bright the Milky Way should be, and how dark the night has to get before it appears. Both are single numbers, easy to move, and better judged by someone out there looking than by anyone reading a diff. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>, and screenshots are welcome.</p>
+</div>
+
+<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
+<p style="margin: 0 0 8px;"><strong>&#128301; Coming next door: a mod that replaces the sky outright</strong></p>
+<p style="margin: 0 0 8px;">Now that the star catalog and the solar system can both be swapped, a companion mod is in the works that does exactly that: it takes AstraTerra as a dependency and puts its own sky in place of this one. If you have been waiting to build a sky of your own, that is the hook to build it on, and the interfaces it uses are the ones any mod can use. More when it is ready.</p>
+</div>
+
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127769; v0.5.3: lying down looks like lying down</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
+<p style="margin: 0 0 8px;">Pressing <strong>Z</strong> used to tip the seraph backwards in one piece, feet still planted, until it arched into a bridge and landed flat. With empty hands the arms came off their shoulders and the elbows separated.</p>
 <ul>
-<li><strong>It sits down now.</strong> Crouch, sit, lower the back onto the ground, over about half a second. Standing up runs the same movement backwards, a little quicker &mdash; and only when you stand up on purpose, so walking out of it is still instant.</li>
+<li><strong>It sits down now.</strong> Crouch, sit, lower the back onto the ground, over about half a second. Standing up runs the same movement backwards, a little quicker, and only when you stand up on purpose, so walking out of it is still instant.</li>
 <li><strong>The pose rests.</strong> One knee drawn up, the other leg long, the chest rising and falling, and empty hands folded behind the head with the elbows on the ground.</li>
 <li><strong>The arms are attached again.</strong> The old pose was authored in an animation version that turns a limb about its model's corner rather than its joint, which on the seraph pulls a raised arm off the shoulder. Everything is version 0 now, the same as every clip the game ships.</li>
 </ul>
 <!-- image: docs/screenshots/stargazing.png — the seraph resting on its back, hands folded behind the head -->
 </div>
+</div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9889; v0.5.2 &mdash; the sky pass got cheap</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9889; v0.5.2: the sky pass got cheap</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p style="margin: 0 0 8px;">The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
 <table style="border-collapse: collapse; width: 100%;" border="1">
@@ -113,23 +130,23 @@
 </tr>
 </tbody>
 </table>
-<p style="margin: 0 0 8px;">The before figures come from a real <code>client-main.log</code> &mdash; 2,988 stars and 3,728 constellation dots visible &mdash; and the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
+<p style="margin: 0 0 8px;">The before figures come from a real <code>client-main.log</code> with 2,988 stars and 3,728 constellation dots visible, where the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
 <p style="margin: 0 0 8px;">Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.</p>
 <p style="margin: 0 0 8px;">You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
 </div>
 </div>
 
 <div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9997; v0.5.2 &mdash; the sky looks different, and we would like to hear about it</strong></p>
+<p style="margin: 0 0 8px;"><strong>&#9997; v0.5.2: the sky looks different, and we would like to hear about it</strong></p>
 <p style="margin: 0 0 8px;">Getting the cost down meant changing how several things are drawn. None of it is settled, and the judgements behind it are the kind that are better made by people actually observing than by anyone reading a diff.</p>
 <ul>
 <li><strong>Constellation lines are continuous now</strong>, a thin ribbon per edge instead of a trail of dots, and each line stops short of the stars it joins. The dots were sized in degrees, so magnification pulled them apart into a row of specks; a ribbon holds its weight at any zoom and cannot be mistaken for a star.</li>
-<li><strong>The sky turns smoothly through a telescope.</strong> It used to be redrawn only once it had moved a twentieth of a degree &mdash; under a pixel at the naked eye, but seven to fourteen through a scope, which arrived as a visible step several times a second.</li>
+<li><strong>The sky turns smoothly through a telescope.</strong> It used to be redrawn only once it had moved a twentieth of a degree. That is under a pixel at the naked eye, but seven to fourteen through a scope, and it arrived as a visible step several times a second.</li>
 <li><strong>Scoped stars are the size the naked eye shows them at.</strong> Raising a telescope used to halve every bright star, because the scoped sprite fills less than half the quad the naked-eye one does.</li>
 <li><strong>Deep-sky plates now fade the catalogue out underneath them.</strong> A plate is a photograph with its own stars already in it, so over the Pleiades the photograph's stars are the stars; a degree away the sky is the catalogue's again.</li>
 <li><strong>Star colours read slightly more saturated.</strong> Colour rides on the mesh vertices now, where the old path applied each tint twice.</li>
 </ul>
-<p style="margin: 0 0 8px;">If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong &mdash; please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
+<p style="margin: 0 0 8px;">If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its edge, or a colour wrong, please say so, with a screenshot if you can. Line width, star size, and how hard a plate fades are all single numbers and easy to move. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a>.</p>
 </div>
 
 <h3>Features</h3>
@@ -141,6 +158,8 @@
 
 <p>A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.<br />
 Star locations and images are from Stellarium's database.</p>
+
+<p>Behind them is the galaxy's own glow: a broad band with a bright core towards Sagittarius, split by the dark dust lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your latitude puts it. It is gone in twilight, back once the night is properly dark, and mostly washed out by a bright moon. It is generated from a model of the galaxy rather than photographed, so its shape can be tuned, or switched off entirely with <code>MilkyWayBrightness</code>.</p>
 
 <div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
 <p style="margin: 0 0 8px;"><strong>&#9432; Note for server owners and modders</strong></p>
@@ -154,9 +173,11 @@ Star locations and images are from Stellarium's database.</p>
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
 <div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128207; Measure the sky with a Sextant.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too &mdash; a daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.</p>
+<p>Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too. A daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.</p>
 
 <!-- image: docs/screenshots/sextant_azimuthal_grid.png — sextant sighting with the azimuthal grid -->
+
+<p><strong>Sneak while sighting to write the reading down.</strong> With a writable book in your left hand and ink and quill in your inventory, the book gains a dated entry: the angle, the bearing, how bright it looked, the day and hour, and the latitude you stood at. It does not record what you sighted. Working that out is the game. <code>.stars sightings</code> gathers your entries into the sets it takes to be one body and says how far the nights moved each one; <code>.stars classify &lt;set&gt; star|wanderer|comet [name]</code> is where you say what it was. Name a wanderer correctly and your name for it becomes the name every instrument uses.</p>
 </div>
 </div>
 
@@ -166,6 +187,10 @@ Star locations and images are from Stellarium's database.</p>
 <p>Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.</p>
 
 <p>It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.</p>
+
+<p>An astrolabe is engraved for one latitude, so a new one is blank until you cut its plate: stand under open sky after dusk and sneak-hold right click while it sights the pole. It needs no star catalog and no brass to do this, only the sky. Afterwards every reading answers for the latitude it was cut at. Travel far enough and it tells you how far you have strayed, and eventually it asks to be recut. Its clock is not engraved and follows you wherever you go.</p>
+
+<p>Every answer also says what it rests on: <em>from 3 sightings over 11 days</em> for a body you established yourself, <em>drawn from 7 stars</em> for one of your figures, <em>from the almanac, not your sightings</em> for a comet. A thin answer that sounds as confident as a thick one is a broken answer, whatever its numbers say.</p>
 
 <!-- image: docs/screenshots/astrolabe.png — astrolabe readout -->
 </div>
@@ -192,7 +217,7 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9732; Watch seasonal meteor showers.</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127776; Watch seasonal meteor showers.</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Nine major annual showers recur at fixed points in the world's year. Their visible rate follows the published peak strength, how high the radiant is above the horizon, sky darkness, and moonlight. Short streaks near the radiant and longer streaks farther away preserve the perspective that makes a real shower appear to radiate from one point in the sky.</p>
 </div>
@@ -207,6 +232,19 @@ Star locations and images are from Stellarium's database.</p>
 </div>
 </div>
 
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9732; Wait for a comet.</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
+<p>Four comets return on their real orbital periods. Each is up for a couple of world weeks, and across those nights it crosses the sky, brightens as it rounds perihelion, and fades again. The tail leans away from the sun, as a real one does, rather than trailing the direction of travel.</p>
+
+<p>You will not wait long for the first. <strong>Machholz</strong> arrives a little under two world years in and comes back every five and a bit. <strong>Halley</strong> makes its first pass in your third year, and it is the bright one, the only comet here that outshines every star in the sky. <strong>Tuttle</strong> follows in year four, then every fourteen; <strong>Tempel-Tuttle</strong> in year nine, then every thirty-three.</p>
+
+<p>Do go out for Halley. Its second pass is in world year 78, and the honest advice for anyone who sleeps through the first one is to start a family, raise them well, and impress upon them the importance of looking up.</p>
+
+<p>A comet's returns are the almanac's arithmetic rather than yours, and the astrolabe says so when it aims at one.</p>
+</div>
+</div>
+
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
 <div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128506; Roadmap.</div>
@@ -216,16 +254,16 @@ Star locations and images are from Stellarium's database.</p>
 <ul>
 <li><span style="text-decoration: line-through;">Seasonal meteor showers.</span> Shipped.</li>
 <li><span style="text-decoration: line-through;">Planets (named specific wandering bodies).</span> Shipped.</li>
-<li>Ability to lay down looking up.</li>
-<li>Ability to keep the astrolabe calibrated to a specific latitude, or recalibrate it to a different latitude without the star catalog.</li>
+<li><span>Ability to lay down looking up.</span> Shipped.</li>
+<li><span>Ability to keep the astrolabe calibrated to a specific latitude, or recalibrate it to a different latitude without the star catalog.</span> Shipped.</li>
 <li>New models for astronomical instruments.</li>
 <li>Redo recipes for instruments and calibration.</li>
 <li>Using a simple sextant on the sun will damage one of your eyes, requiring an eye patch for non-blurry vision.</li>
 <li>Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap).</li>
-<li>Modify architecture for easier customization, such as custom deep sky objects.</li>
+<li>Modify architecture for easier customization, such as custom deep sky objects. The star catalog and the solar system are replaceable as of v0.5.4; deep sky objects are not yet.</li>
 <li>Star Catalog randomizer loot tables for chests and ruins (i.e. create a star catalog with Maya constellations for a Mayan ruin, or other sky cultures). Much of the backend is there since Stellarium already contains much of these datasets.</li>
-<li><a href="https://github.com/lalmei/astraterra/issues/38">Comets</a>. Authored apparitions with an anti-sunward tail.</li>
-<li>New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in <a href="https://github.com/lalmei/astraterra/issues/41">sextant on land</a> &mdash; sighting a mountain to get its distance and height.</li>
+<li><span><a href="https://github.com/lalmei/astraterra/issues/38">Comets</a>. Authored apparitions with an anti-sunward tail.</span> Shipped.</li>
+<li>New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in <a href="https://github.com/lalmei/astraterra/issues/41">sextant on land</a>, sighting a mountain to get its distance and height.</li>
 </ul>
 
 <p>Comets sit on the same <a href="https://github.com/lalmei/astraterra/issues/36">shared ephemeris foundation</a> the planets already use, since their right ascension and declination change with time. Meteor radiants are fixed like catalog stars and do not need that dependency. <a href="https://github.com/lalmei/astraterra/issues/40">Instrument targeting</a> will let the astrolabe and sextant point at moving bodies and meteor radiants.</p>
