@@ -21,6 +21,8 @@ Always looking for contributions, models, code, docs etc.
 A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.  
 Star locations and images are from Stellarium's database.
 
+Behind them is the galaxy's own glow: a broad band with a bright core towards Sagittarius, split by the dark dust lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your latitude puts it. It is gone in twilight, back once the night is properly dark, and mostly washed out by a bright moon. It is generated from a model of the galaxy rather than photographed, so its shape can be tuned, or switched off entirely with `MilkyWayBrightness`.
+
 #### Note
 
 Without a clear date to start from we are just using the current Earth-centered locations.
@@ -32,9 +34,11 @@ Similarly the deep sky views could be generated or use custom assets, or place a
 
 ### Measure the sky with a Sextant
 
-Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too — a daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
+Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too. A daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
 
 ![Sextant usage](docs/screenshots/sextant_azimuthal_grid.png)
+
+**Sneak while sighting to write the reading down.** With a writable book in your left hand and ink and quill in your inventory, the book gains a dated entry: the angle, the bearing, how bright it looked, the day and hour, and the latitude you stood at. It does not record what you sighted. Working that out is the game. `.stars sightings` gathers your entries into the sets it takes to be one body and says how far the nights moved each one; `.stars classify <set> star|wanderer|comet [name]` is where you say what it was. Name a wanderer correctly and your name for it becomes the name every instrument uses.
 
 ### Plan observations with a Calibrated Astrolabe
 
@@ -42,7 +46,9 @@ Hold a written constellation book in your left hand and use the Calibrated Astro
 
 It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.
 
-An astrolabe is engraved for one latitude, so a new one is blank until you cut its plate: stand under open sky after dusk and sneak-hold right click while it sights the pole. It needs no star catalog and no brass to do this, only the sky. Afterwards every reading answers for the latitude it was cut at — travel far enough and it tells you how far you have strayed, and eventually asks to be recut. Its clock is not engraved and follows you wherever you go.
+An astrolabe is engraved for one latitude, so a new one is blank until you cut its plate: stand under open sky after dusk and sneak-hold right click while it sights the pole. It needs no star catalog and no brass to do this, only the sky. Afterwards every reading answers for the latitude it was cut at. Travel far enough and it tells you how far you have strayed, and eventually it asks to be recut. Its clock is not engraved and follows you wherever you go.
+
+Every answer also says what it rests on: `from 3 sightings over 11 days` for a body you established yourself, `drawn from 7 stars` for one of your figures, `from the almanac, not your sightings` for a comet. A thin answer that sounds as confident as a thick one is a broken answer, whatever its numbers say.
 
 ![Astrolabe usage](docs/screenshots/astrolabe.png)
 
@@ -77,51 +83,84 @@ retrograde loop: it is what the sky does when the world overtakes a slower plane
 
 > ### Wait for a comet
 
-Four comets return on their real orbital periods — Machholz about every five years, Halley about every seventy-five. Each is up for a couple of world weeks, and across those nights it crosses the sky, brightens as it rounds perihelion, and fades again.
+Four comets return on their real orbital periods. Each is up for a couple of world weeks, and across those nights it crosses the sky, brightens as it rounds perihelion, and fades again.
 
-Its tail points **away from the sun**, never along its motion, and swings right around as it passes perihelion — which is the thing about a comet that most pictures get wrong. Tail length and coma brightness build and fade together, so an apparition arrives gradually rather than switching on.
+Its tail points **away from the sun**, never along its motion, and swings right around as it passes perihelion, which is the thing about a comet that most pictures get wrong. Tail length and coma brightness build and fade together, so an apparition arrives gradually rather than switching on.
 
-The Astrolabe lists every comet whether or not it is here. One that is away reads `away, returns in 340 days`, and scrolling the forecast that far ahead turns the line into a real position — so a comet is something you can plan a journey around rather than something you happen to catch.
+You will not wait long for the first. **Machholz** arrives a little under two world years in and comes back every five and a bit. **Halley** makes its first pass in your third year, and it is the bright one, the only comet here that outshines every star in the sky. **Tuttle** follows in year four, then every fourteen; **Tempel-Tuttle** in year nine, then every thirty-three.
+
+Do go out for Halley. Its second pass is in world year 78, and the honest advice for anyone who sleeps through the first one is to start a family, raise them well, and impress upon them the importance of looking up.
+
+The Astrolabe lists every comet whether or not it is here. One that is away reads `away, returns in 340 days`, and scrolling the forecast that far ahead turns the line into a real position, so a comet is something you can plan a journey around rather than something you happen to catch.
 
 `.stars comets` reports every comet's state: up now, or how long until it returns.
 
-> ### Next update — the Milky Way, and what it costs
+> ### New in v0.5.4: the Milky Way, and a sky you work out for yourself
 >
-> The stars will stand against the galaxy's own glow: a broad band with a bright core towards
-> Sagittarius, split down its length by the dark dust lanes of the Great Rift, turning with the rest
-> of the sky and sitting at whatever angle your latitude puts it.
+> The galaxy's own glow is in the sky. And the instruments stopped handing you answers: what a
+> moving body is, and what your astrolabe is engraved for, are now things you establish by
+> observing and writing it down.
 >
-> **It is generated, not photographed.** The glow map is a galaxy — an exponential disc with four
-> spiral arms and a flattened bulge — integrated along every line of sight from the Sun's place
-> inside it, dimmed by a layer of dust in front. The rift, the clouds and the amber reddening of the
-> core fall out of that model rather than being painted, so the asset is the mod's own and its shape
-> can be tuned by parameter rather than repainted.
+> - **The Milky Way.** A broad band with a bright core towards Sagittarius, split by the dark dust
+>   lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your
+>   latitude puts it. It is generated from a model of the galaxy rather than photographed, so the
+>   rift and the amber core fall out of the model rather than being painted. Gone in twilight, back
+>   once the night is properly dark, washed out by a bright moon, so it is best near new moon. It
+>   costs nothing measurable: 0.16–0.55 ms a frame with it on against 0.50–0.55 with it off, and no
+>   extra draw calls. `MilkyWayBrightness` in `ModConfig/astraterra.json` takes `0`, and
+>   `.stars render milkyway off` switches it off for a session.
+> - **Write down what you saw, not what it was.** Sneak while holding the Sextant up, with a
+>   writable book in your left hand and ink and quill in your inventory, and the book gains a dated
+>   entry: the angle above the horizon, the bearing, how bright it looked, the day and hour, and the
+>   latitude you stood at. The entry does not say what you sighted, and that is the point: it
+>   records that *something* stood there at that hour.
+> - **Then work it out.** `.stars sightings` lays your entries side by side, gathers them into the
+>   sets it takes to be one body, and says how far apart the nights put them.
+>   `.stars classify <set> star|wanderer|comet [name]` is where you say what it was. Nothing grades
+>   the answer; that is what makes it yours. Call a set a wanderer and, if exactly one of the
+>   wandering bodies was in all those places on all those nights, your name for it becomes the name
+>   every instrument uses.
+> - **Every answer says what it rests on.** `from 3 sightings over 11 days, to 0° 01′` for a
+>   wanderer you established yourself, `drawn from 7 stars` for one of your own figures,
+>   `from the almanac, not your sightings` for a comet, whose returns are somebody else's
+>   arithmetic. A planet written down under an older version, with no sightings behind it, still
+>   aims, but it says it is thin.
+> - **The astrolabe's plate is yours to cut.** A new one is blank. Stand under open sky after dusk
+>   and sneak-hold right click while it sights the pole, and it is engraved for that latitude. No
+>   star catalog and no brass, only the sky.
+> - **Comets come back on their own schedule.** Four of them, on their real orbital periods. The
+>   first is Machholz, a little under two world years into a new world, so a world started today
+>   already has one coming. It returns about every five years after that.
+> - **An Astronomy tab in the in-game handbook**, so the instruments explain themselves without a
+>   second screen.
+> - **Fixed: pressing Z could crash the client.** The lie-down clips added in v0.5.3 left half of
+>   some keyframes unwritten, and the game reads those fields without checking whether they are
+>   there. The first time anyone lay down, the client went down with it. If you are on v0.5.3, this
+>   is the update you want.
+> - **For modders: the sky is replaceable.** Both the star catalog and the solar system can be
+>   swapped for your own, so another mod can ship a different sky rather than patching this one's.
 >
-> **It behaves like the real one.** It is gone in twilight and comes back only once the night is
-> properly dark, and a bright moon washes most of it out — a glow spread across a quarter of the sky
-> is the first thing any sky brightness takes away, where a star survives it. The best nights for it
-> are dark ones near new moon.
+> **Two numbers we would like a second opinion on.** How bright the Milky Way should be, and how
+> dark the night has to get before it appears. Both are single numbers, easy to move, and better
+> judged by someone out there looking than by anyone reading a diff.
+> [Open an issue](https://github.com/lalmei/astraterra/issues/new/choose), and screenshots are
+> welcome.
 >
-> **It is close to free.** Measured in a real session, lying on your back with the band at full
-> strength filling the screen: 0.16–0.55 ms per frame with it on, 0.50–0.55 ms with it off — the two
-> cannot be told apart, because the cost is smaller than the frame-to-frame noise of everything else.
-> Draw calls are unchanged. If you would still rather not have it, `MilkyWayBrightness` in
-> `ModConfig/astraterra.json` takes `0`, and `.stars render milkyway off` switches it off for a
-> session.
+> **One known problem, found while measuring the Milky Way.** Raising a telescope where many
+> deep-sky plates are above the horizon is expensive, around 10 ms a frame with roughly forty plates
+> up and the occasional long frame, because every visible plate re-uploads its geometry every frame.
+> It is not new and it is not the Milky Way, it is just the first time it has been measured
+> properly. Tracked as [#105](https://github.com/lalmei/astraterra/issues/105) and next on the list.
+
+> ### Coming next door: a mod that replaces the sky outright
 >
-> **Two things we are unsure about, and would like to hear on.** How bright the band should be, and
-> how dark the night has to get before it appears — both are single numbers and easy to move, and
-> both are judgements better made by someone actually out there looking than by anyone reading a
-> diff. Screenshots welcome.
->
-> **One known problem, found while measuring this.** Raising a telescope where many deep-sky plates
-> are above the horizon is expensive — around 10 ms a frame with roughly forty plates up, with
-> occasional long frames — because every visible plate re-uploads its geometry every frame. It is not
-> new and it is not the Milky Way, it is just the first time it has been measured properly. Tracked
-> as [#105](https://github.com/lalmei/astraterra/issues/105) and next on the list.
+> Now that the star catalog and the solar system can both be swapped, a companion mod is in the
+> works that does exactly that: it takes AstraTerra as a dependency and puts its own sky in place of
+> this one. If you have been waiting to build a sky of your own, that is the hook to build it on,
+> and the interfaces it uses are the ones any mod can use. More when it is ready.
 
 <details>
-<summary><strong>⚡ Update v0.5.2 — the sky pass got cheap</strong></summary>
+<summary><strong>⚡ Update v0.5.2: the sky pass got cheap</strong></summary>
 <br>
 The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and
 measured, and the numbers moved by more than a little.
@@ -134,9 +173,9 @@ measured, and the numbers moved by more than a little.
 | Constellation line geometry | 3,728 quads | **148** |
 | Star projections per second | 60 | **~5** |
 
-The before figures come from a real `client-main.log` — 2,988 stars and 3,728 constellation dots
-visible — and the star projection alone cost over 10 ms a frame and produced about a gigabyte of
-garbage a minute, which players saw as stutter and as a client that would not give memory back.
+The before figures come from a real `client-main.log` with 2,988 stars and 3,728 constellation
+dots visible, where the star projection alone cost over 10 ms a frame and produced about a gigabyte
+of garbage a minute, which players saw as stutter and as a client that would not give memory back.
 
 Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has
 actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.
@@ -147,7 +186,7 @@ uploads for the sky pass every 30 seconds.
 
 </details>
 
-> ### Also in v0.5.2 — the sky looks different, and we would like to hear about it
+> ### Also in v0.5.2: the sky looks different, and we would like to hear about it
 >
 > Getting the cost down meant changing how several things are drawn. None of it is settled, and the
 > judgements behind it are the kind that are better made by people actually observing than by anyone
@@ -158,8 +197,8 @@ uploads for the sky pass every 30 seconds.
 >   pulled them apart into a row of specks; a ribbon holds its weight at any zoom and cannot be
 >   mistaken for a star.
 > - **The sky turns smoothly through a telescope.** It used to be redrawn only once it had moved a
->   twentieth of a degree — under a pixel at the naked eye, but seven to fourteen through a scope,
->   which arrived as a visible step several times a second.
+>   twentieth of a degree. That is under a pixel at the naked eye, but seven to fourteen through a
+>   scope, and it arrived as a visible step several times a second.
 > - **Scoped stars are the size the naked eye shows them at.** Raising a telescope used to halve every
 >   bright star, because the scoped sprite fills less than half the quad the naked-eye one does.
 > - **Deep-sky plates now fade the catalogue out underneath them.** A plate is a photograph with its
@@ -169,7 +208,7 @@ uploads for the sky pass every 30 seconds.
 >   old path applied each tint twice.
 >
 > If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its
-> edge, or a colour wrong — please say so, with a screenshot if you can. Line width, star size, and
+> edge, or a colour wrong, please say so, with a screenshot if you can. Line width, star size, and
 > how hard a plate fades are all single numbers and easy to move.
 > [Open an issue](https://github.com/lalmei/astraterra/issues/new/choose).
 
@@ -180,9 +219,9 @@ In no order what so ever. Items with an issue have a design sketch and a suggest
 - New models astrological instruments.
 - Redo recipes for instruments and calibration.
 - Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap)
-- Modify architecture for more easier customization. Such as custom deep sky objects.
+- Modify architecture for more easier customization. Such as custom deep sky objects. The star catalog and the solar system are replaceable as of v0.5.4; deep sky objects are not yet.
 - Star Catalog randomizer loot tables for chest and ruins. (i.e. create a star catalog with Maya constellations for a Mayan Ruin, or other sky cultures.) much of the backend is there since sterallarium already contains much of this datasets.
-- New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41) — sighting a mountain to get its distance and height.
+- New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41), sighting a mountain to get its distance and height.
 
 Meteor radiants are fixed like catalog stars and do not need the [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) that the planets and comets are built on. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
 
