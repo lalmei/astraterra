@@ -35,7 +35,20 @@ public static class SolarBandStore
 
     public static SolarBand? Read(ItemStack? stack) => Read(stack?.Attributes);
 
-    public static SolarBand ReadOrEmpty(ItemStack? stack) => Read(stack) ?? new SolarBand();
+    public static SolarBand ReadOrEmpty(ItemStack? stack) => ReadOrEmpty(stack, NotchOf(stack));
+
+    /// <summary>
+    /// The band on this disc, or a blank one graduated the way this disc is. An unscratched copper
+    /// disc has to know its own scale before the first mark goes on it, because that mark is what
+    /// fixes the scale for the rest of its life.
+    /// </summary>
+    public static SolarBand ReadOrEmpty(ItemStack? stack, double notchDeg)
+        => Read(stack) ?? new SolarBand(notchDeg);
+
+    /// <summary>How finely this disc's rim is graduated, which is a property of the metal.</summary>
+    public static double NotchOf(ItemStack? stack)
+        => stack?.Collectible?.Attributes?["arcNotchDeg"].AsDouble(SolarBandPolicy.ArcNotchDeg)
+           ?? SolarBandPolicy.ArcNotchDeg;
 
     public static bool HasMarks(ItemStack? stack) => Read(stack)?.Marks.Count > 0;
 

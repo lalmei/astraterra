@@ -28,6 +28,14 @@ public static class SolarBandPolicy
     public const double ArcNotchDeg = 2.5;
 
     /// <summary>
+    /// What a softer metal will hold. Copper takes a scratch as readily as bronze and keeps it less
+    /// crisply, so its rim is graduated at twice the width — and by <b>P1</b> that costs patience,
+    /// never access: a copper disc finds the same solstice, from more evenings, and fixes its date
+    /// and its latitude less finely. It is the disc you can make before you have tin.
+    /// </summary>
+    public const double CoarseArcNotchDeg = 5.0;
+
+    /// <summary>
     /// How far an observer may carry the disc and still add to its band. Deliberately the tolerance
     /// the astrolabe treats as still-on-plate: a plate that is wrong can be recut, and a scratch in
     /// bronze cannot, so the disc refuses rather than drifts.
@@ -41,8 +49,10 @@ public static class SolarBandPolicy
     public const double ObliquityDeg = CelestialMath.MeanObliquityDeg;
 
     /// <summary>Puts a sighting on the nearest notch below it, because a scratch has no decimals.</summary>
-    public static double Notch(double azimuthDeg)
-        => InstrumentResolution.Truncate(CelestialMath.NormalizeDegrees(azimuthDeg), ArcNotchDeg);
+    public static double Notch(double azimuthDeg, double notchDeg = ArcNotchDeg)
+        => InstrumentResolution.Truncate(
+            CelestialMath.NormalizeDegrees(azimuthDeg),
+            notchDeg > 0.0 && double.IsFinite(notchDeg) ? notchDeg : ArcNotchDeg);
 
     /// <summary>
     /// How wide the band of sunsets is at a latitude: the angle between midsummer's setting point

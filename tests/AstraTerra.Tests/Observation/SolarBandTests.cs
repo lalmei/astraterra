@@ -161,6 +161,53 @@ public sealed class SolarBandTests
         Assert.Null(SolarBandPolicy.SwingDegAt(70.0));
     }
 
+    [Fact]
+    public void A_Copper_Rim_Finds_The_Same_Year_On_A_Coarser_Notch()
+    {
+        var copper = MarkYear(new SolarBand(SolarBandPolicy.CoarseArcNotchDeg), fromDay: 0, days: YearDays + 20);
+
+        var reading = copper.Read(SolarEvent.Sunset);
+
+        // P1: the softer metal costs precision and patience, never the discovery itself.
+        Assert.True(reading.IsComplete);
+        Assert.NotNull(reading.LatitudeDeg);
+        Assert.InRange(reading.LatitudeDeg!.Value, LatitudeDeg - 4.0, LatitudeDeg + 4.0);
+        Assert.All(
+            copper.Marks,
+            mark => Assert.Equal(0.0, mark.NotchDeg % SolarBandPolicy.CoarseArcNotchDeg, 6));
+    }
+
+    [Fact]
+    public void A_Rim_Keeps_Its_Own_Scale_Across_A_Save()
+    {
+        var copper = new SolarBand(SolarBandPolicy.CoarseArcNotchDeg);
+        copper.Scratch(400, 241.3, SolarEvent.Sunset, LatitudeDeg, 0, 0);
+
+        var loaded = SolarBandPersistence.Deserialize(SolarBandPersistence.Serialize(copper));
+
+        Assert.Equal(SolarBandPolicy.CoarseArcNotchDeg, loaded.NotchDeg);
+        Assert.Equal(240.0, loaded.Marks.Single().NotchDeg);
+    }
+
+    [Fact]
+    public void A_Disc_Scratched_Before_There_Were_Two_Metals_Is_A_Bronze_One()
+    {
+        const string LegacyJson = """
+        {
+          "schemaVersion": 1,
+          "boundLatitudeDeg": 51.0,
+          "boundX": 0,
+          "boundZ": 0,
+          "marks": [{ "day": 400, "notchDeg": 240.0, "event": 1 }]
+        }
+        """;
+
+        var loaded = SolarBandPersistence.Deserialize(LegacyJson);
+
+        Assert.Equal(SolarBandPolicy.ArcNotchDeg, loaded.NotchDeg);
+        Assert.Single(loaded.Marks);
+    }
+
     private static SolarBand MarkYear(SolarBand band, int fromDay, int days)
     {
         foreach (var day in Enumerable.Range(fromDay, days))

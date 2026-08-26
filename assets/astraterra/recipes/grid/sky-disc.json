@@ -1,10 +1,15 @@
 {
   "ingredientPattern": "GPG",
   "ingredients": {
-    "P": { "type": "item", "code": "game:metalplate-tinbronze" },
+    "P": {
+      "type": "item",
+      "code": "game:metalplate-*",
+      "name": "metal",
+      "allowedVariants": ["copper", "tinbronze"]
+    },
     "G": { "type": "item", "code": "game:metalbit-gold" }
   },
   "width": 3,
   "height": 1,
-  "output": { "type": "item", "code": "astraterra:sky-disc", "quantity": 1 }
+  "output": { "type": "item", "code": "astraterra:sky-disc-{metal}", "quantity": 1 }
 }
