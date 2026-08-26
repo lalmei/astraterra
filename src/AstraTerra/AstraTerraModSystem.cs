@@ -36,10 +36,12 @@ public sealed class AstraTerraModSystem : ModSystem
         api.RegisterItemClass("AstraTerra.Items.ItemPrecisionTelescope", typeof(ItemPrecisionTelescope));
         api.RegisterItemClass("AstraTerra.Items.ItemSextant", typeof(ItemSextant));
         api.RegisterItemClass("AstraTerra.Items.ItemAstrolabe", typeof(ItemAstrolabe));
+        api.RegisterItemClass("AstraTerra.Items.ItemSkyDisc", typeof(ItemSkyDisc));
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemBrassTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemPrecisionTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSextant");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemAstrolabe");
+        api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSkyDisc");
     }
 
     public override void AssetsLoaded(ICoreAPI api)
@@ -140,6 +142,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeReadingState.Reset();
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
+        SkyDiscReadingState.Reset();
         SkyLyingState.Reset();
         clientApi = api;
         config ??= AstraTerraConfigLoader.Load(api);
@@ -319,6 +322,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeReadingState.Reset();
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
+        SkyDiscReadingState.Reset();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
