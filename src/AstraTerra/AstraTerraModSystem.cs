@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Client.Observation;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Client.SkyLying;
 using AstraTerra.Client.Zoom;
@@ -21,6 +22,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private PlanetCatalog? planets;
     private CometCatalog? comets;
     private TelescopeZoomPatcher? telescopeZoomPatcher;
+    private TelescopeScopeController? telescopeScopeController;
     private SkyLyingController? skyLyingController;
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
@@ -149,6 +151,8 @@ public sealed class AstraTerraModSystem : ModSystem
         skyLyingController = new SkyLyingController();
         skyLyingController.Start(api);
         api.Logger.Event("AstraTerra startup step: lie-down pose registered: hotkey={0}", SkyLyingController.HotkeyCode);
+        telescopeScopeController = new TelescopeScopeController();
+        telescopeScopeController.Start(api);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
         telescopeZoomPatcher.Start(api);
         api.Logger.Event("AstraTerra startup step: telescope zoom patched");
@@ -317,6 +321,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
+        telescopeScopeController?.Stop();
         skyLyingController?.Stop();
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
