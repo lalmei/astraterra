@@ -83,6 +83,7 @@ autolabeler:
     title:
       - '/^\s*✨/'
       - '/^\s*🔭/'
+      - '/^\s*🌌/'
       - '/^\s*🎉/'
       - '/^\s*feat(\(|:)/i'
   - label: bug
@@ -93,6 +94,7 @@ autolabeler:
   - label: style
     title:
       - '/^\s*💄/'
+      - '/^\s*🎨/'
       - '/^\s*style(\(|:)/i'
   - label: performance
     title:
