@@ -25,21 +25,22 @@ public sealed class SkyDiscMeshes : IDisposable
 
     private const double SunriseRadius = 4.66;
 
-    // Proud of the graduations rather than flush with them: a mark has to be legible against a rim
-    // that is already notched all the way round, or the disc reads as fully marked from the day it
-    // was made.
-    private const double MarkWidth = 0.45;
-    private const double MarkLength = 1.6;
-    private const double EdgeMarkLength = 2.2;
-    private const double MarkFloor = 1.0;
-    private const double MarkCeiling = 1.6;
-    private const double EdgeMarkCeiling = 1.9;
+    // A scratch is a line cut across the rim, not an object put on it. So a mark is a hairline in
+    // width, long enough radially to cross the rim and run out past both its edges, and it lies flush
+    // with the rim's surface — barely proud of it, and lower than the graduations it runs between.
+    // Standing one up turns it into a token sitting on the disc, which is exactly what it is not.
+    private const double MarkWidth = 0.14;
+    private const double MarkLength = 2.4;
+    private const double EdgeMarkLength = 3.4;
 
-    /// <summary>
-    /// The shape's ornament slot, which each disc fills with what it is made of: gold inlay on
-    /// metal, a burnt impression on clay. No hash on the code — the shape loader strips it off face
-    /// textures when it resolves them, and "##gold" maps to nothing.
-    /// </summary>
+    /// <summary>Sunk into the rim, so the mark reads as cut through its surface rather than laid on it.</summary>
+    private const double MarkFloor = 0.98;
+
+    private const double MarkCeiling = 1.1;
+
+    /// <summary>The two the band stops at: the same cut, carried further, never taller.</summary>
+    private const double EdgeMarkCeiling = 1.13;
+
     private const string MarkTexture = "gold";
     private const string ShapePath = "astraterra:shapes/item/sky-disc.json";
 
