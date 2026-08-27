@@ -1,5 +1,6 @@
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
+using Vintagestory.API.Config;
 using Vintagestory.API.Common;
 
 namespace AstraTerra.Client.Rendering;
@@ -44,6 +45,9 @@ public sealed class SkyDiscMeshes : IDisposable
 
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, MultiTextureMeshRef> meshes = [];
+
+    /// <summary>Chunk meshes are built on worker threads, and the shape they are built from is shared.</summary>
+    private readonly Lock gate = new();
     private Shape? baseShape;
 
     public SkyDiscMeshes(ICoreClientAPI api)
@@ -70,7 +74,13 @@ public sealed class SkyDiscMeshes : IDisposable
         Active = null;
     }
 
-    /// <summary>The model for one disc, built on first sight of that pattern of marks.</summary>
+    /// <summary>
+    /// The model for one disc, or nothing if it is not built and this is no place to build it.
+    /// </summary>
+    /// <remarks>
+    /// Uploading a model is an OpenGL call and OpenGL belongs to the main thread. A disc drawn where
+    /// it lies goes through <see cref="BuildDisplayMesh"/> instead, which only tesselates.
+    /// </remarks>
     public MultiTextureMeshRef? Get(Item item, SolarBand? band)
     {
         var face = SkyDiscFace.Read(band);
@@ -80,10 +90,15 @@ public sealed class SkyDiscMeshes : IDisposable
             return null;
         }
 
-        var key = $"{item.Code}|{SkyDiscFace.Key(face)}";
+        var key = CacheKey(item, face);
         if (meshes.TryGetValue(key, out var cached) && !cached.Disposed)
         {
             return cached;
+        }
+
+        if (!IsMainThread)
+        {
+            return null;
         }
 
         var built = Build(item, face);
@@ -95,6 +110,52 @@ public sealed class SkyDiscMeshes : IDisposable
         meshes[key] = built;
         return built;
     }
+
+    /// <summary>
+    /// A name for exactly what one disc looks like, which is what the game caches its model against.
+    /// </summary>
+    public static string CacheKey(Item item, SolarBand? band)
+        => CacheKey(item, SkyDiscFace.Read(band));
+
+    /// <summary>
+    /// The disc's geometry, for a caller that draws it into a chunk rather than into a hand.
+    /// </summary>
+    /// <remarks>
+    /// Tesselating is safe on the worker threads that build chunk meshes — it is only uploading that
+    /// belongs to the main one — so a disc lying in the world is built where it is asked for, into
+    /// whichever atlas the block is drawn from. Nothing back means an unscratched disc, which the
+    /// caller already has a model for.
+    /// </remarks>
+    public MeshData? BuildDisplayMesh(Item item, SolarBand? band, ITextureAtlasAPI targetAtlas)
+    {
+        var face = SkyDiscFace.Read(band);
+        if (face.Count == 0)
+        {
+            return null;
+        }
+
+        lock (gate)
+        {
+            var shape = MarkedShape(item, face);
+            if (shape is null)
+            {
+                return null;
+            }
+
+            var textures = TextureLocations(item, shape);
+            var source = new ContainedTextureSource(
+                api,
+                targetAtlas,
+                textures,
+                $"Sky disc {item.Code}");
+
+            api.Tesselator.TesselateShape("astraterra:sky-disc", shape, out MeshData? mesh, source, null);
+            return mesh;
+        }
+    }
+
+    private static bool IsMainThread
+        => Environment.CurrentManagedThreadId == RuntimeEnv.MainThreadId;
 
     public void Dispose()
     {
@@ -110,7 +171,11 @@ public sealed class SkyDiscMeshes : IDisposable
         baseShape = null;
     }
 
-    private MultiTextureMeshRef? Build(Item item, IReadOnlyList<SkyDiscFaceMark> face)
+    private static string CacheKey(Item item, IReadOnlyList<SkyDiscFaceMark> face)
+        => $"{item.Code}|{SkyDiscFace.Key(face)}";
+
+    /// <summary>The authored disc with this disc's own marks added to it.</summary>
+    private Shape? MarkedShape(Item item, IReadOnlyList<SkyDiscFaceMark> face)
     {
         baseShape ??= Shape.TryGet(api, ShapePath);
         if (baseShape is null)
@@ -128,6 +193,31 @@ public sealed class SkyDiscMeshes : IDisposable
         }
 
         shape.Elements = [.. shape.Elements, .. face.Select((mark, index) => Scratch(template, mark, index))];
+        return shape;
+    }
+
+    /// <summary>
+    /// Where this disc's textures live, which is a question the item answers rather than the shape:
+    /// the shape is authored in bronze, and a copper or a clay disc overrides every code on it.
+    /// </summary>
+    private static Dictionary<string, AssetLocation> TextureLocations(Item item, Shape shape)
+    {
+        var textures = new Dictionary<string, AssetLocation>(shape.Textures);
+        foreach (var (code, texture) in item.Textures)
+        {
+            textures[code] = texture.Baked?.BakedName ?? texture.Base;
+        }
+
+        return textures;
+    }
+
+    private MultiTextureMeshRef? Build(Item item, IReadOnlyList<SkyDiscFaceMark> face)
+    {
+        var shape = MarkedShape(item, face);
+        if (shape is null)
+        {
+            return null;
+        }
 
         api.Tesselator.TesselateShape(item, shape, out MeshData? mesh);
         api.Logger.Notification(
