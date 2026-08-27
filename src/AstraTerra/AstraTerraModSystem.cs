@@ -24,7 +24,6 @@ public sealed class AstraTerraModSystem : ModSystem
     private TelescopeZoomPatcher? telescopeZoomPatcher;
     private TelescopeScopeController? telescopeScopeController;
     private SkyLyingController? skyLyingController;
-    private GroundStorageDiscMeshPatcher? groundStorageDiscMeshPatcher;
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
@@ -205,10 +204,6 @@ public sealed class AstraTerraModSystem : ModSystem
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
         // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
         SkyDiscMeshes.Install(api);
-        groundStorageDiscMeshPatcher = new GroundStorageDiscMeshPatcher();
-        api.Logger.Event(
-            "AstraTerra startup step: sky disc marks on stored discs: {0}",
-            groundStorageDiscMeshPatcher.Start(api) ? "patched" : "unavailable");
         api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
 
         // Held open for the session: it draws nothing until a disc is raised, and it has to be an
@@ -341,7 +336,6 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
-        groundStorageDiscMeshPatcher?.Stop();
         skyDiscFaceHud?.TryClose();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();

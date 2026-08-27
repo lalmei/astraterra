@@ -44,10 +44,13 @@ public sealed class SkyDiscAssetTests
             .GetProperty("guiTransform")
             .GetProperty("rotation");
 
-        // The shape lies flat in the horizontal plane, and the inventory camera looks at the
-        // vertical one: leave this near zero and the icon is a disc seen edge on, which reads as an
-        // item with no model at all. Negative tips the marked face toward the viewer.
-        Assert.InRange(rotation.GetProperty("x").GetDouble(), -105.0, -45.0);
+        // The shape lies flat in the horizontal plane and the inventory camera looks at the vertical
+        // one, so near zero draws the disc edge on — a sliver, indistinguishable from an item with
+        // no model. Which way it tips matters as much: an item's transform is used as written while
+        // a block's is turned a half circle first, so the angles either side of a right angle show
+        // opposite faces, and a disc turned the wrong way is a blank plate with its rim, its
+        // graduations and every mark on the side away from the viewer.
+        Assert.InRange(rotation.GetProperty("x").GetDouble(), 75.0, 135.0);
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace AstraTerra.Items;
 
@@ -17,7 +18,7 @@ namespace AstraTerra.Items;
 /// over a world year of evenings. Everything the astrolabe answers in three seconds, bought with
 /// patience instead.
 /// </remarks>
-public sealed class ItemSkyDisc : Item
+public sealed class ItemSkyDisc : Item, IContainedMeshSource
 {
     private const string MarkingAttribute = "astraterraDiscMarking";
     private const string ScratchedAttribute = "astraterraDiscScratched";
@@ -68,6 +69,25 @@ public sealed class ItemSkyDisc : Item
             Preflight(slot, byEntity);
         }
     }
+
+    /// <summary>
+    /// The disc as it is drawn where it lies: on the ground, on a shelf, in a display case.
+    /// </summary>
+    /// <remarks>
+    /// The supported way for an itemstack to be drawn as more than its item's one model. Nothing
+    /// back means an unscratched disc, and the game falls back to the model it already has. This
+    /// runs on the threads that build chunk meshes, so it tesselates and never uploads.
+    /// </remarks>
+    public MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
+        => SkyDiscMeshes.Active?.BuildDisplayMesh(this, SolarBandStore.Read(slot?.Itemstack), targetAtlas)!;
+
+    /// <summary>
+    /// What this disc looks like, as a name the game can cache a model against. Every disc of a
+    /// material would otherwise share one cached model, and the first one drawn would lend its marks
+    /// to every other.
+    /// </summary>
+    public string GetMeshCacheKey(ItemSlot slot)
+        => SkyDiscMeshes.CacheKey(this, SolarBandStore.Read(slot?.Itemstack));
 
     /// <summary>
     /// Draws this disc with its own marks on it, wherever it is being shown.
