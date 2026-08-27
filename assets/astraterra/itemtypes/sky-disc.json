@@ -20,7 +20,7 @@
         "base": "game:block/clay/ceramic"
       },
       "gold": {
-        "base": "game:block/clay/ceramic-dark"
+        "base": "game:block/clay/redclay"
       }
     },
     "*": {

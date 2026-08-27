@@ -1,6 +1,5 @@
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
@@ -24,14 +23,6 @@ public sealed class SkyDiscRenderer : IRenderer
     private const float LineHeight = 26.0f;
     private const float TopOffset = 64.0f;
 
-    /// <summary>
-    /// How much of the screen's height the raised disc takes, and how far its centre sits below the
-    /// bottom edge. Held up to be read, it fills the lower half of the view and its far rim is cut
-    /// off by the bottom of the screen — near enough to see a scratch, close enough to be holding.
-    /// </summary>
-    private const float FaceHeightFraction = 0.62f;
-
-    private const float FaceSinkFraction = 0.38f;
 
     private readonly ICoreClientAPI api;
     private readonly LoadedTexture?[] lines = new LoadedTexture?[4];
@@ -57,7 +48,6 @@ public sealed class SkyDiscRenderer : IRenderer
         var band = SolarBandStore.ReadOrEmpty(slot?.Itemstack);
         var day = (int)Math.Floor(api.World.Calendar.TotalDays);
 
-        RenderFace(slot, deltaTime);
         RenderLine(0, slot?.Itemstack?.GetName() ?? "Sky disc");
         RenderLine(1, $"Sunsets: {band.Read(SolarEvent.Sunset).Describe()}");
         RenderLine(2, $"Sunrises: {band.Read(SolarEvent.Sunrise).Describe()}");
@@ -70,35 +60,6 @@ public sealed class SkyDiscRenderer : IRenderer
         {
             DeleteLine(i);
         }
-    }
-
-    /// <summary>
-    /// The disc itself, brought up in front of the observer with its own marks on it.
-    /// </summary>
-    /// <remarks>
-    /// The scratches are the reading, so they have to be big enough to count. Drawn from the stack
-    /// in hand, which is what carries the band, so what is on the screen is this disc rather than a
-    /// picture of a disc.
-    /// </remarks>
-    private void RenderFace(ItemSlot? slot, float deltaTime)
-    {
-        if (slot?.Itemstack is null)
-        {
-            return;
-        }
-
-        var size = api.Render.FrameHeight * FaceHeightFraction;
-        api.Render.RenderItemstackToGui(
-            slot,
-            api.Render.FrameWidth / 2.0,
-            api.Render.FrameHeight - (size * FaceSinkFraction),
-            100.0,
-            (float)size,
-            ColorUtil.WhiteArgb,
-            deltaTime,
-            true,
-            false,
-            false);
     }
 
     /// <summary>

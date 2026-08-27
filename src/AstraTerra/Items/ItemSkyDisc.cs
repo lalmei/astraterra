@@ -90,7 +90,8 @@ public sealed class ItemSkyDisc : Item
             renderinfo.ModelRef = marked;
         }
 
-        if (target == EnumItemRenderTarget.HandFp)
+        // One target covers the held item in both views now; first person is where it is felt.
+        if (target == EnumItemRenderTarget.HandTp)
         {
             Raise(ref renderinfo);
         }
@@ -246,14 +247,15 @@ public sealed class ItemSkyDisc : Item
     /// </remarks>
     private static void Scratch(ItemSlot slot, EntityAgent byEntity)
     {
-        if (FindCrossing(slot, byEntity) is not ({ } crossing, var latitude))
+        if (slot?.Itemstack is not { } stack
+            || FindCrossing(slot, byEntity) is not ({ } crossing, var latitude))
         {
             return;
         }
 
         var world = byEntity.World;
         var isLocal = LocalObservationGate.IsLocalPlayerInteraction(byEntity);
-        var band = SolarBandStore.ReadOrEmpty(slot.Itemstack);
+        var band = SolarBandStore.ReadOrEmpty(stack);
         var result = band.Scratch(
             (int)Math.Floor(crossing.TotalDays),
             crossing.AzimuthDeg,
@@ -268,7 +270,7 @@ public sealed class ItemSkyDisc : Item
             return;
         }
 
-        SolarBandStore.Write(slot.Itemstack, band);
+        SolarBandStore.Write(stack, band);
 
         // Without this the scratch exists only in the server's copy, and the face that reads it is
         // on the client.

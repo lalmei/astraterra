@@ -28,6 +28,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
+    private SkyDiscFaceHud? skyDiscFaceHud;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
     private SextantReadingRenderer? sextantReadingRenderer;
     private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
@@ -210,6 +211,11 @@ public sealed class AstraTerraModSystem : ModSystem
             groundStorageDiscMeshPatcher.Start(api) ? "patched" : "unavailable");
         api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
 
+        // Held open for the session: it draws nothing until a disc is raised, and it has to be an
+        // open dialog to be drawn at all.
+        skyDiscFaceHud = new SkyDiscFaceHud(api);
+        skyDiscFaceHud.TryOpen();
+
         sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
@@ -336,6 +342,7 @@ public sealed class AstraTerraModSystem : ModSystem
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
         groundStorageDiscMeshPatcher?.Stop();
+        skyDiscFaceHud?.TryClose();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)

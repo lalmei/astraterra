@@ -162,19 +162,10 @@ public sealed class SolarBandTests
     }
 
     [Fact]
-    public void A_Copper_Rim_Finds_The_Same_Year_On_A_Coarser_Notch()
+    public void Metal_Rims_All_Read_Alike()
     {
-        var copper = MarkYear(new SolarBand(SolarBandPolicy.CoarseArcNotchDeg), fromDay: 0, days: YearDays + 20);
-
-        var reading = copper.Read(SolarEvent.Sunset);
-
-        // P1: the softer metal costs precision and patience, never the discovery itself.
-        Assert.True(reading.IsComplete);
-        Assert.NotNull(reading.LatitudeDeg);
-        Assert.InRange(reading.LatitudeDeg!.Value, LatitudeDeg - 4.0, LatitudeDeg + 4.0);
-        Assert.All(
-            copper.Marks,
-            mark => Assert.Equal(0.0, mark.NotchDeg % SolarBandPolicy.CoarseArcNotchDeg, 6));
+        // Past copper a disc buys nothing in accuracy; what it buys is room to be engraved.
+        Assert.Equal(SolarBandPolicy.ArcNotchDeg, SolarBandPolicy.MetalArcNotchDeg);
     }
 
     [Fact]
@@ -187,10 +178,13 @@ public sealed class SolarBandTests
         // P1 again, at the bottom of the ladder: clay finds the solstice a bronze disc finds.
         Assert.True(reading.IsComplete);
         Assert.NotNull(reading.LatitudeDeg);
-        Assert.InRange(reading.LatitudeDeg!.Value, LatitudeDeg - 8.0, LatitudeDeg + 8.0);
+        Assert.InRange(reading.LatitudeDeg!.Value, LatitudeDeg - 4.0, LatitudeDeg + 4.0);
+        Assert.All(
+            clay.Marks,
+            mark => Assert.Equal(0.0, mark.NotchDeg % SolarBandPolicy.RoughArcNotchDeg, 6));
 
         // P5: an answer this rough is never allowed to sound like a fine one.
-        Assert.Contains("notches of 10", reading.Describe());
+        Assert.Contains("notches of 5", reading.Describe());
     }
 
     [Fact]
@@ -216,12 +210,12 @@ public sealed class SolarBandTests
     [Fact]
     public void A_Rim_Keeps_Its_Own_Scale_Across_A_Save()
     {
-        var copper = new SolarBand(SolarBandPolicy.CoarseArcNotchDeg);
-        copper.Scratch(400, 241.3, SolarEvent.Sunset, LatitudeDeg, 0, 0);
+        var clay = new SolarBand(SolarBandPolicy.RoughArcNotchDeg);
+        clay.Scratch(400, 241.3, SolarEvent.Sunset, LatitudeDeg, 0, 0);
 
-        var loaded = SolarBandPersistence.Deserialize(SolarBandPersistence.Serialize(copper));
+        var loaded = SolarBandPersistence.Deserialize(SolarBandPersistence.Serialize(clay));
 
-        Assert.Equal(SolarBandPolicy.CoarseArcNotchDeg, loaded.NotchDeg);
+        Assert.Equal(SolarBandPolicy.RoughArcNotchDeg, loaded.NotchDeg);
         Assert.Equal(240.0, loaded.Marks.Single().NotchDeg);
     }
 
