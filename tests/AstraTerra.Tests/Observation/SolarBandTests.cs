@@ -162,6 +162,31 @@ public sealed class SolarBandTests
     }
 
     [Fact]
+    public void A_Finished_Band_Hands_Back_Due_West()
+    {
+        var band = MarkYear(new SolarBand(), fromDay: 0, days: YearDays + 20);
+
+        var reading = band.Read(SolarEvent.Sunset);
+
+        // The sun sets due west at the equinoxes and swings evenly either side of it, so the middle
+        // of a finished band is west exactly — a bearing the disc was never given and works out for
+        // itself. Within a notch of 270°, which is as near as a scratch can say it.
+        Assert.NotNull(reading.CardinalNotchDeg);
+        Assert.InRange(reading.CardinalNotchDeg!.Value, 270.0 - SolarBandPolicy.ArcNotchDeg, 270.0 + SolarBandPolicy.ArcNotchDeg);
+        Assert.Contains("due west", reading.Describe());
+    }
+
+    [Fact]
+    public void A_Band_Still_Widening_Says_Nothing_About_Where_West_Is()
+    {
+        var band = MarkYear(new SolarBand(), fromDay: 0, days: 40);
+
+        // Half a band has no middle: until the sun has turned at both ends, the marks bracket only
+        // the part of the year that was watched.
+        Assert.Null(band.Read(SolarEvent.Sunset).CardinalNotchDeg);
+    }
+
+    [Fact]
     public void Metal_Rims_All_Read_Alike()
     {
         // Past copper a disc buys nothing in accuracy; what it buys is room to be engraved.
