@@ -45,6 +45,21 @@ public sealed record SolarBandReading(
     public bool IsComplete => LowConfirmed && HighConfirmed;
 
     /// <summary>
+    /// The bearing the middle of a finished band points at, which is a cardinal direction exactly.
+    /// </summary>
+    /// <remarks>
+    /// The sun sets due west at the equinoxes and swings symmetrically either side of that through
+    /// the year, so the point halfway between midsummer's setting place and midwinter's <i>is</i>
+    /// due west, at every latitude, however wide the band. The sunrise rim gives due east the same
+    /// way. So a disc hands back the cardinal directions as a result rather than needing them as a
+    /// setting: nothing here was told which way north lay, and a finished rim knows anyway.
+    /// </remarks>
+    public double? CardinalNotchDeg
+        => IsComplete && LowNotchDeg is { } low && HighNotchDeg is { } high
+            ? (low + high) / 2.0
+            : null;
+
+    /// <summary>
     /// The next day the sun should stand still, counted on from the last turn the disc caught.
     /// This is the payout that matters to somebody who has never looked up: when to sow.
     /// </summary>
@@ -85,7 +100,12 @@ public sealed record SolarBandReading(
         var latitude = LatitudeDeg is { } degrees
             ? $"{degrees:0.#}° from the equator"
             : "a latitude this band cannot resolve";
-        return $"{arc} — a full turn of the year: {YearDays:0.#} days, {latitude}.";
+        var cardinal = Event == SolarEvent.Sunset ? "west" : "east";
+        var bearing = CardinalNotchDeg is { } middle
+            ? $" The middle of this band, at {middle:0.#}°, is due {cardinal}."
+            : string.Empty;
+
+        return $"{arc} — a full turn of the year: {YearDays:0.#} days, {latitude}.{bearing}";
     }
 }
 
