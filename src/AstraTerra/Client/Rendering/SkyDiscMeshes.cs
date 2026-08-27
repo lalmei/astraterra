@@ -24,12 +24,15 @@ public sealed class SkyDiscMeshes : IDisposable
 
     private const double SunriseRadius = 4.66;
 
-    private const double MarkWidth = 0.16;
-    private const double MarkLength = 0.72;
-    private const double EdgeMarkLength = 1.15;
-    private const double MarkFloor = 1.06;
-    private const double MarkCeiling = 1.32;
-    private const double EdgeMarkCeiling = 1.44;
+    // Proud of the graduations rather than flush with them: a mark has to be legible against a rim
+    // that is already notched all the way round, or the disc reads as fully marked from the day it
+    // was made.
+    private const double MarkWidth = 0.45;
+    private const double MarkLength = 1.6;
+    private const double EdgeMarkLength = 2.2;
+    private const double MarkFloor = 1.0;
+    private const double MarkCeiling = 1.6;
+    private const double EdgeMarkCeiling = 1.9;
 
     /// <summary>
     /// The shape's ornament slot, which each disc fills with what it is made of: gold inlay on
@@ -126,8 +129,14 @@ public sealed class SkyDiscMeshes : IDisposable
 
         shape.Elements = [.. shape.Elements, .. face.Select((mark, index) => Scratch(template, mark, index))];
 
-        MeshData? mesh = null;
-        api.Tesselator.TesselateShape(item, shape, out mesh);
+        api.Tesselator.TesselateShape(item, shape, out MeshData? mesh);
+        api.Logger.Notification(
+            "AstraTerra sky disc model built: item={0}; marks={1}; elements={2}; mesh={3}",
+            item.Code,
+            face.Count,
+            shape.Elements.Length,
+            mesh is null ? "none" : mesh.VerticesCount.ToString());
+
         return mesh is null ? null : api.Render.UploadMultiTextureMesh(mesh);
     }
 
@@ -157,18 +166,28 @@ public sealed class SkyDiscMeshes : IDisposable
         element.RotationY = mark.NotchDeg;
         element.Children = null;
 
-        // Clone() copies the array but not the faces in it, and these have to be gold without the
-        // notch they were copied from turning gold as well.
-        element.FacesResolved = [.. (template.FacesResolved ?? []).Select(existing =>
-            existing is null
-                ? null
-                : new ShapeElementFace
-                {
-                    Texture = MarkTexture,
-                    Uv = existing.Uv is null ? null : (float[])existing.Uv.Clone(),
-                    Rotation = existing.Rotation,
-                    Enabled = existing.Enabled,
-                })];
+        // Clone() copies the array but not the faces in it, and these have to carry the ornament
+        // texture without the notch they were copied from taking it too. A face the template does
+        // not have stays absent here, which is what the empty slots in the array mean.
+        var templateFaces = template.FacesResolved ?? [];
+        var faces = new ShapeElementFace[templateFaces.Length];
+        for (var face = 0; face < faces.Length; face++)
+        {
+            if (templateFaces[face] is not { } existing)
+            {
+                continue;
+            }
+
+            faces[face] = new ShapeElementFace
+            {
+                Texture = MarkTexture,
+                Uv = existing.Uv is null ? null : (float[])existing.Uv.Clone(),
+                Rotation = existing.Rotation,
+                Enabled = existing.Enabled,
+            };
+        }
+
+        element.FacesResolved = faces;
 
         return element;
     }
