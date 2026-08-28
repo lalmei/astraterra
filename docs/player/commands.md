@@ -88,6 +88,27 @@ To create a book titled **The Wanderers**, which already names all five planets 
 
 Planets are otherwise anonymous: without a book that names them, every instrument calls a planet a *wandering star*, because that is all it looks like from the ground. This book is somebody else's finished work — handy for testing and for creative play, and a shortcut past identifying each planet yourself. Put it in your left hand and the Sextant and Astrolabe will use its names.
 
+## The Vanilla Calendar
+
+```text
+.stars calendar full
+.stars calendar clock
+.stars calendar none
+```
+
+Vintage Story writes the day, the month, the year and the hour into the Environment box of the
+character panel. That is every single thing the Sky Disc spends a world year measuring, available
+free from your first night — which makes the disc decoration rather than an instrument.
+
+`calendar` decides how much of it stays. `full` is the default and changes nothing. `clock` drops the
+date and keeps the hour, which the sun gives away anyway. `none` gives neither, and the sky becomes
+the only calendar you have. In place of the date the panel says `unreckoned`, so it is clear that
+nothing is broken — nobody is keeping the count for you. Reopen the character panel to see a change,
+and the choice is saved in `ModConfig/astraterra.json`.
+
+This only touches what your own client displays. An administrator asking the server the time with
+`/time` still gets a straight answer.
+
 ## Recovery And Debug Commands
 
 ```text

@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Client.Calendar;
 using AstraTerra.Client.Observation;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Client.SkyLying;
@@ -155,9 +156,14 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Logger.Event("AstraTerra startup step: lie-down pose registered: hotkey={0}", SkyLyingController.HotkeyCode);
         telescopeScopeController = new TelescopeScopeController();
         telescopeScopeController.Start(api);
+        // Both live behind the one Harmony instance below, so the calendar hooks have to know their
+        // config before anything is patched.
+        VanillaCalendarHooks.Initialize(api, config);
         telescopeZoomPatcher = new TelescopeZoomPatcher();
         telescopeZoomPatcher.Start(api);
-        api.Logger.Event("AstraTerra startup step: telescope zoom patched");
+        api.Logger.Event(
+            "AstraTerra startup step: telescope zoom patched; vanilla calendar display={0}",
+            config.CalendarDisplay);
         api.Event.MouseWheelMove += OnMouseWheelMove;
         api.Logger.Event("AstraTerra startup step: observation input registered: mouseWheelZoom=true");
         var store = new ConstellationJournalStore(api.GetOrCreateDataPath("AstraTerra"));
@@ -195,7 +201,7 @@ public sealed class AstraTerraModSystem : ModSystem
             config,
             comets,
             planets).Register(api);
-        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/comets/debug/daylight-stars/starfield/sky-grid/render");
+        api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/comets/debug/daylight-stars/starfield/sky-grid/calendar/render");
 
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
@@ -329,6 +335,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
+        VanillaCalendarHooks.Reset();
         telescopeScopeController?.Stop();
         skyLyingController?.Stop();
         SkyStarSunMoonRenderer.Reset();

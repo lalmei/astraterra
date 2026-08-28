@@ -27,6 +27,15 @@ public static class AstraTerraConfigLoader
         }
 
         config.SkyGridMode = SkyGridModeParser.ToConfigValue(skyGridMode);
+        if (!CalendarDisplayParser.TryParse(config.CalendarDisplay, out var calendarDisplay))
+        {
+            api.Logger.Warning(
+                "AstraTerra config has unknown calendar display '{0}'; using '{1}'.",
+                config.CalendarDisplay,
+                CalendarDisplayParser.FullValue);
+        }
+
+        config.CalendarDisplay = CalendarDisplayParser.ToConfigValue(calendarDisplay);
         var normalizedMeteorRateMultiplier = config.GetDebugMeteorRateMultiplier();
         if (normalizedMeteorRateMultiplier != config.DebugMeteorRateMultiplier)
         {

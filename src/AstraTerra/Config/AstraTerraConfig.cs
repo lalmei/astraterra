@@ -9,6 +9,12 @@ public sealed class AstraTerraConfig
 
     public string StarfieldMode { get; set; } = StarfieldModeParser.AstraTerraValue;
     public string SkyGridMode { get; set; } = SkyGridModeParser.NoneValue;
+
+    /// <summary>
+    /// How much of Vintage Story's own date and hour the character panel keeps showing. Defaults to
+    /// showing all of it; the disc only becomes an instrument once this is turned down.
+    /// </summary>
+    public string CalendarDisplay { get; set; } = CalendarDisplayParser.FullValue;
     public float StarBrightnessBias { get; set; } = 1.0f;
 
     /// <summary>
@@ -28,6 +34,9 @@ public sealed class AstraTerraConfig
 
     public SkyGridMode GetSkyGridMode()
         => SkyGridModeParser.ParseOrDefault(SkyGridMode);
+
+    public CalendarDisplay GetCalendarDisplay()
+        => CalendarDisplayParser.ParseOrDefault(CalendarDisplay);
 
     /// <summary>The Milky Way multiplier, clamped and with a non-finite setting treated as absent.</summary>
     public float GetMilkyWayBrightness()

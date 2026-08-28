@@ -80,6 +80,13 @@ Past copper the rim stops getting better, and what a disc is worth after that is
 
 The Astrolabe gets you the same latitude in a three-second sighting. The disc is the slow road to it, and it is open to you on the first evening of a new world.
 
+**Turn Vintage Story's own calendar off, or the disc is only decoration.** The character panel already
+tells you the day, the month, the year and the hour — everything the rim spends a world year
+measuring. `.stars calendar clock` drops the date and keeps the hour; `.stars calendar none` gives you
+neither, and the panel says `unreckoned` in place of the date so it is plain that nothing has broken.
+Either way the choice is saved, and from then on the year is something you find out by watching where
+the sun goes down. `.stars calendar full` puts it back.
+
 ### Sextant
 
 Hold right click with the Sextant and align the center of the screen with the sun, the moon, or a visible star. The top-center readout names what you sighted and displays its angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
