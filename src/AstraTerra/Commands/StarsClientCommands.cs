@@ -99,6 +99,11 @@ public sealed class StarsClientCommands
                 .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
                 .HandleWith(args => TextCommandResult.Success(SetSkyGridMode(api, GetStringArg(args, 0))))
             .EndSubCommand()
+            .BeginSubCommand("calendar")
+                .WithDescription("Choose how much of Vintage Story's own date and hour stays on screen.")
+                .WithArgs(api.ChatCommands.Parsers.Word("full|clock|none"))
+                .HandleWith(args => TextCommandResult.Success(SetCalendarDisplay(api, GetStringArg(args, 0))))
+            .EndSubCommand()
             .BeginSubCommand("render")
                 .WithDescription("Switch one sky rendering path off to see what it costs. Session only.")
                 .WithArgs(
@@ -359,6 +364,29 @@ public sealed class StarsClientCommands
             SkyGridMode.Equatorial => "Sky grid set to equatorial (right ascension-declination, rose).",
             SkyGridMode.Both => "Sky grids set to both: horizontal is cyan; equatorial is rose.",
             _ => "Sky coordinate grids disabled."
+        };
+    }
+
+    /// <summary>
+    /// Turns vanilla's date down, which is what makes the disc's year worth measuring. Saved,
+    /// because it is a decision about the game rather than a measurement.
+    /// </summary>
+    private string SetCalendarDisplay(ICoreClientAPI api, string value)
+    {
+        if (!CalendarDisplayParser.TryParse(value, out var display))
+        {
+            return "Usage: .stars calendar full|clock|none";
+        }
+
+        config.CalendarDisplay = CalendarDisplayParser.ToConfigValue(display);
+        AstraTerraConfigLoader.Store(api, config);
+        api.Logger.Notification("AstraTerra vanilla calendar display changed: mode={0}", config.CalendarDisplay);
+
+        return display switch
+        {
+            CalendarDisplay.Clock => "The character panel keeps the hour and drops the date. Reopen it to see the change.",
+            CalendarDisplay.None => "The character panel gives neither the date nor the hour. Reopen it to see the change.",
+            _ => "The character panel reports the date and hour as Vintage Story writes them."
         };
     }
 

@@ -216,6 +216,19 @@ the host's own client process — a dedicated server hides the bug, since nothin
 - With both players scoped at once, confirm each sees only their own zoom level and mode, and that scrolling zoom on one does not move the other.
 - Repeat the telescope check on a dedicated server with the two players standing next to each other, to confirm a nearby player's interaction does not open the local overlay.
 
+## Vanilla Calendar Suppression
+
+- With the default settings, open the character panel (`C`); expected result: the Environment box
+  reads `Date: <day>. <month>, Year <n>, <hh>:<mm>`, exactly as vanilla writes it.
+- Run `.stars calendar clock`, close and reopen the character panel; expected result: the date line
+  reads `Date: unreckoned, <hh>:<mm>` — the hour survives, the day, month and year do not.
+- Run `.stars calendar none` and reopen it; expected result: `Date: unreckoned`, with no time at all.
+- Confirm `ModConfig/astraterra.json` has `CalendarDisplay` set to the chosen value, restart the
+  client, and reopen the panel; expected result: the setting held.
+- In a single-player world with cheats on, run `/time` while the display is set to `none`; expected
+  result: the server still answers with the real date. Only the client's own display is redacted.
+- Run `.stars calendar full`; expected result: the vanilla date comes straight back.
+
 ## Result Log
 
 - Equator: pass in manual in-game check; starfield and authored constellation orientation looked correct.
