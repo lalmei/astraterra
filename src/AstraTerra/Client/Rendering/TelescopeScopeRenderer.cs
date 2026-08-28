@@ -170,13 +170,7 @@ public sealed class TelescopeScopeRenderer : IRenderer
         texture.TextureId = 0;
     }
 
-    private static string FormatMode(ObservationMode mode) => mode switch
-    {
-        ObservationMode.RemoveSegment => "Remove Segment",
-        ObservationMode.Draw => "Create Constellation",
-        ObservationMode.Inspect => "Inspect Constellation",
-        _ => "Observe"
-    };
+    private static string FormatMode(ObservationMode mode) => TelescopeObservationState.ModeLabel(mode);
 
     private static int[] BuildScopeMask(int width, int height, float centerX, float centerY, float radius)
     {

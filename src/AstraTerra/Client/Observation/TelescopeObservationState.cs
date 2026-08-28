@@ -18,6 +18,24 @@ public static class TelescopeObservationState
         _ => ObservationMode.Observe
     };
 
+    /// <summary>Short mode name shown on the scope overlay and in chat.</summary>
+    public static string ModeLabel(ObservationMode mode) => mode switch
+    {
+        ObservationMode.Draw => "Create Constellation",
+        ObservationMode.Inspect => "Inspect Constellation",
+        ObservationMode.RemoveSegment => "Remove Segment",
+        _ => "Observe"
+    };
+
+    /// <summary>What the mode lets the observer do, for the chat message on a mode change.</summary>
+    public static string ModeHint(ObservationMode mode) => mode switch
+    {
+        ObservationMode.Draw => "drag from one guide star to another to link them into a constellation",
+        ObservationMode.Inspect => "click a segment to open its constellation and rename it",
+        ObservationMode.RemoveSegment => "click a segment to erase it from the constellation",
+        _ => "look and zoom only; the sky is left untouched"
+    };
+
     public static int ClampZoomStep(int zoomStep) => ClampZoomStep(zoomStep, MaxZoomStep);
 
     public static int ClampZoomStep(int zoomStep, int maxZoomStep)

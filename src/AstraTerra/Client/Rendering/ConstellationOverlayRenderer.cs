@@ -686,11 +686,8 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         return (closestDx * closestDx) + (closestDy * closestDy);
     }
 
-    private static string FormatMode(ObservationMode mode) => mode switch
-    {
-        ObservationMode.RemoveSegment => "Remove Segment",
-        _ => "Observe"
-    };
+    private static string FormatMode(ObservationMode mode)
+        => $"{TelescopeObservationState.ModeLabel(mode)} - {TelescopeObservationState.ModeHint(mode)}.";
 
     private static bool ProjectWorldToScreen(
         double worldX,
