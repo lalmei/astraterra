@@ -171,6 +171,42 @@ public sealed class BootstrapSmokeTests
         Assert.DoesNotContain("RenderStarQuad(", renderer, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The sky is geometry the weather cannot reach. Feeding it the scene's fog let a mod that keeps
+    /// a bright fog colour after sunset replace the whole starfield with a flat sheet of it, which
+    /// is what a player reported as deep-sky plates with broken transparency.
+    /// </summary>
+    [Fact]
+    public void The_Sky_Pass_Is_Drawn_Without_Scene_Fog()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("shader.FogDensityIn = 0f;", renderer, StringComparison.Ordinal);
+        Assert.Contains("shader.FogMinIn = 0f;", renderer, StringComparison.Ordinal);
+        Assert.DoesNotContain("render.FogColor", renderer, StringComparison.Ordinal);
+        Assert.DoesNotContain("render.FogDensity", renderer, StringComparison.Ordinal);
+        Assert.DoesNotContain("render.FogMin", renderer, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Deep-sky plates used to rebuild and re-upload their geometry into one shared buffer once per
+    /// plate per frame, which cost ten times the sky pass and produced 200 ms hitches.
+    /// </summary>
+    [Fact]
+    public void Deep_Sky_Plates_Keep_Their_Geometry_Between_Frames()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        // One buffer per plate, rebuilt behind a dirty flag rather than on every draw.
+        Assert.Contains("EnsureDeepSkyPlateMeshes(clientApi, visibleDeepSkyObjects);", renderer, StringComparison.Ordinal);
+        Assert.Contains("if (!deepSkyPlateMeshesDirty)", renderer, StringComparison.Ordinal);
+        Assert.DoesNotContain("deepSkyQuadMesh", renderer, StringComparison.Ordinal);
+
+        // And a projection held to the same threshold as the stars, not redone per frame.
+        Assert.Contains("EnsureProjectedDeepSkyObjects(", renderer, StringComparison.Ordinal);
+        Assert.Contains("DeepSkyRenderModel.ProjectVisibleObjects(objects, latitudeDeg, localSiderealDeg, brightnessBias, ProjectedDeepSkyObjects);", renderer, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Sky_Renderer_Reset_Clears_Static_Session_State_In_Source()
     {

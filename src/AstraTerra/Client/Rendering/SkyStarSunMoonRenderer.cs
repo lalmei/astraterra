@@ -132,7 +132,13 @@ public static class SkyStarSunMoonRenderer
     private static int skyMarkTextureId;
     private static int milkyWayTextureId;
     private static MeshRef? milkyWayMesh;
-    private static MeshRef? deepSkyQuadMesh;
+
+    // One buffer per plate, keyed by the catalog id that outlives any single projection. See
+    // EnsureDeepSkyPlateMeshes for why they are not batched into one.
+    private static readonly Dictionary<string, MeshRef> DeepSkyPlateMeshes = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> RetainedPlateIds = new(StringComparer.Ordinal);
+    private static readonly List<string> StalePlateIds = new(16);
+    private static bool deepSkyPlateMeshesDirty = true;
     private static MeshRef? meteorStreakMesh;
     private static MeshRef? cometTailMesh;
     private static MeshRef? constellationLineMesh;
@@ -157,6 +163,15 @@ public static class SkyStarSunMoonRenderer
     private static bool cachedStarMeshScoped;
     private static int cachedStarMeshPlateSignature;
     private static readonly List<DeepSkyPlateField> PlateFields = new(64);
+
+    // The plates are projected on the same threshold as the stars rather than every frame: a
+    // photograph spanning degrees of sky does not move meaningfully in a twentieth of one, and
+    // reprojecting fifty of them per frame was allocating a list of records and their corners each
+    // time.
+    private static readonly List<RenderedDeepSkyObject> ProjectedDeepSkyObjects = new(64);
+    private static double cachedDeepSkyLatitudeDeg = double.NaN;
+    private static double cachedDeepSkySiderealDeg = double.NaN;
+    private static double cachedDeepSkyBrightnessBias = double.NaN;
     private static bool starMeshesDirty = true;
     private static int constellationLineMeshCapacity;
     private static int constellationLineMeshDrawnCount;
@@ -177,6 +192,11 @@ public static class SkyStarSunMoonRenderer
     // instance can serve every draw.
     private static readonly Vec4f ScratchTint = new(1f, 1f, 1f, 1f);
     private static readonly Vec4f ScratchLight = new(1f, 1f, 1f, 1f);
+
+    // The fog the sky is drawn under, which is none. Black rather than white so that the one term
+    // this pass cannot switch off -- flat fog, set globally from the world's own fog banks -- puts
+    // the sky out rather than painting it a solid sheet of colour.
+    private static readonly Vec4f NoFog = new(0f, 0f, 0f, 1f);
     private static readonly Dictionary<int, RenderedStar> VisibleStarsByHip = new(6000);
     private static double cachedStarLatitudeDeg = double.NaN;
     private static double cachedStarSiderealDeg = double.NaN;
@@ -212,6 +232,7 @@ public static class SkyStarSunMoonRenderer
     private static double cachedMilkyWaySiderealDeg = double.NaN;
     private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> PlatesReportedWithoutTexture = new(StringComparer.Ordinal);
 
     public static bool ForceDaylightStars => forceDaylightStars;
 
@@ -270,6 +291,13 @@ public static class SkyStarSunMoonRenderer
         ArgumentNullException.ThrowIfNull(replacement);
         catalog = replacement;
         ClearProjectedStars();
+
+        // The plates come from the same catalog, and are held to a projection that would otherwise
+        // keep drawing the sky this replaced.
+        ProjectedDeepSkyObjects.Clear();
+        PlatesReportedWithoutTexture.Clear();
+        cachedDeepSkySiderealDeg = double.NaN;
+        deepSkyPlateMeshesDirty = true;
         api?.Logger.Notification(
             "AstraTerra sky renderer catalog replaced: stars={0}; deepSkyObjects={1}",
             replacement.Stars.Count,
@@ -372,8 +400,20 @@ public static class SkyStarSunMoonRenderer
     {
         milkyWayMesh?.Dispose();
         milkyWayMesh = null;
-        deepSkyQuadMesh?.Dispose();
-        deepSkyQuadMesh = null;
+        foreach (var plateMesh in DeepSkyPlateMeshes.Values)
+        {
+            plateMesh.Dispose();
+        }
+
+        DeepSkyPlateMeshes.Clear();
+        PlatesReportedWithoutTexture.Clear();
+        RetainedPlateIds.Clear();
+        StalePlateIds.Clear();
+        deepSkyPlateMeshesDirty = true;
+        ProjectedDeepSkyObjects.Clear();
+        cachedDeepSkyLatitudeDeg = double.NaN;
+        cachedDeepSkySiderealDeg = double.NaN;
+        cachedDeepSkyBrightnessBias = double.NaN;
         meteorStreakMesh?.Dispose();
         meteorStreakMesh = null;
         cometTailMesh?.Dispose();
@@ -652,9 +692,12 @@ public static class SkyStarSunMoonRenderer
 
         EnsureSkyMarkTexture(api);
 
-        IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects = TelescopeScopeState.IsScoped
-            ? DeepSkyRenderModel.ProjectVisibleObjects(catalog.DeepSkyObjects, latitude, localSiderealAngle, brightnessBias)
-            : Array.Empty<RenderedDeepSkyObject>();
+        EnsureProjectedDeepSkyObjects(
+            TelescopeScopeState.IsScoped ? catalog.DeepSkyObjects : Array.Empty<DeepSkyObjectEntry>(),
+            latitude,
+            localSiderealAngle,
+            brightnessBias);
+        var visibleDeepSkyObjects = ProjectedDeepSkyObjects;
 
         var quadModel = QuadModelRefField?.GetValue(__instance) as MeshRef;
         var imageSize = ImageSizeField?.GetValue(__instance) as int? ?? 256;
@@ -671,6 +714,13 @@ public static class SkyStarSunMoonRenderer
             cachedStarLatitudeDeg,
             CelestialMath.ShortestAngularDistanceDegrees(cachedStarSiderealDeg, localSiderealAngle));
 
+        // The plates are held to their own projection, which refreshes on the same threshold but not
+        // necessarily on the same frame -- the star path can be switched off entirely while the
+        // scope still has photographs to draw -- so they carry their own turn.
+        var deepSkyResidualRotation = SkyResidualRotation.Build(
+            cachedDeepSkyLatitudeDeg,
+            CelestialMath.ShortestAngularDistanceDegrees(cachedDeepSkySiderealDeg, localSiderealAngle));
+
         var milkyWay = PrepareMilkyWay(api, milkyWayAlpha, latitude, localSiderealAngle);
 
         RenderSky(
@@ -684,6 +734,7 @@ public static class SkyStarSunMoonRenderer
             FindStrongestReading(meteorReadings),
             milkyWay,
             starResidualRotation,
+            deepSkyResidualRotation,
             starAngularScale,
             quadModel,
             imageSize,
@@ -707,6 +758,7 @@ public static class SkyStarSunMoonRenderer
         MeteorShowerReading? strongestMeteorReading,
         MilkyWayDraw milkyWay,
         Matrix4 starResidualRotation,
+        Matrix4 deepSkyResidualRotation,
         float starAngularScale,
         MeshRef quadModel,
         int imageSize,
@@ -757,10 +809,22 @@ public static class SkyStarSunMoonRenderer
             shader.Use();
             shader.Uniform("skyShaded", 0);
             shader.RgbaAmbientIn = ColorUtil.WhiteRgbVec;
-            shader.RgbaFogIn = render.FogColor;
+
+            // Nothing this pass draws is inside the weather. The standard shader mixes every
+            // fragment towards the scene's fog colour by `getFogLevel`, which for geometry forty
+            // blocks out is `fogMin` plus a distance term -- so a mod that raises either after
+            // sunset does not tint the sky, it replaces it. That is what a player saw as deep-sky
+            // plates with "broken transparency": with fog saturated, an alpha-blended plate is a
+            // flat rectangle of fog colour, the additive passes lay the same colour over the whole
+            // eyepiece, and no photograph survives either.
+            //
+            // The sky already answers to darkness, moonlight and its own horizon fade for how
+            // brightly it draws. Scene fog has no further say, and taking it out costs the vanilla
+            // sky only the slight tint it was picking up at forty blocks.
+            shader.RgbaFogIn = NoFog;
             shader.ExtraGlow = 0;
-            shader.FogMinIn = render.FogMin;
-            shader.FogDensityIn = render.FogDensity;
+            shader.FogMinIn = 0f;
+            shader.FogDensityIn = 0f;
             shader.DontWarpVertices = 0;
             shader.AddRenderFlags = 0;
             shader.ExtraZOffset = 0f;
@@ -809,12 +873,13 @@ public static class SkyStarSunMoonRenderer
                 // blending lets their dark sky attenuate the catalog sprites below;
                 // additive glow blending would make draw order visually irrelevant.
                 render.GlToggleBlend(true, EnumBlendMode.Standard);
+                EnsureDeepSkyPlateMeshes(clientApi, visibleDeepSkyObjects);
                 foreach (var deepSkyObject in visibleDeepSkyObjects)
                 {
                     var textureId = ResolveDeepSkyTexture(clientApi, deepSkyObject);
                     if (textureId != 0)
                     {
-                        RenderDeepSkyQuad(clientApi, shader, deepSkyObject, textureId, modelMatrixBuffer);
+                        RenderDeepSkyQuad(clientApi, shader, deepSkyObject, textureId, deepSkyResidualRotation, modelMatrixBuffer);
                     }
                 }
 
@@ -1383,27 +1448,94 @@ public static class SkyStarSunMoonRenderer
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
+    /// <summary>
+    /// Rebuilds the plate geometry, once per projection rather than once per frame.
+    /// </summary>
+    /// <remarks>
+    /// A plate is a fixed photograph on a sky that only turns, so its mesh is worth exactly as much
+    /// on the next frame as it was on this one, and <see cref="SkyResidualRotation"/> carries the
+    /// turn between rebuilds the same way it does for the star batches.
+    /// <para>
+    /// One mesh per plate rather than one shared between them, because the shared buffer had to be
+    /// rewritten between every pair of draws: the driver cannot overlap a write to a buffer with the
+    /// read it is about to serve, so forty plates meant forty stalls in a row. Held apart, a frame
+    /// that changes nothing writes nothing.
+    /// </para>
+    /// </remarks>
+    private static void EnsureDeepSkyPlateMeshes(
+        ICoreClientAPI clientApi,
+        IReadOnlyList<RenderedDeepSkyObject> plates)
+    {
+        if (!deepSkyPlateMeshesDirty)
+        {
+            return;
+        }
+
+        deepSkyPlateMeshesDirty = false;
+        for (var index = 0; index < plates.Count; index++)
+        {
+            var plate = plates[index];
+            var meshData = DeepSkyQuadMeshBuilder.Build(plate.QuadCorners, SkyDistance);
+
+            // Every plate subdivides to the same vertex and index count, so a mesh that already
+            // exists is always the right size to be written over.
+            if (DeepSkyPlateMeshes.TryGetValue(plate.Id, out var mesh))
+            {
+                UpdateMesh(clientApi, mesh, meshData);
+            }
+            else
+            {
+                DeepSkyPlateMeshes[plate.Id] = UploadMesh(clientApi, meshData);
+            }
+        }
+
+        DropDeepSkyPlateMeshesFor(plates);
+    }
+
+    /// <summary>Releases the buffers of plates that have set, so a night does not accumulate them.</summary>
+    private static void DropDeepSkyPlateMeshesFor(IReadOnlyList<RenderedDeepSkyObject> plates)
+    {
+        if (DeepSkyPlateMeshes.Count == plates.Count)
+        {
+            return;
+        }
+
+        RetainedPlateIds.Clear();
+        for (var index = 0; index < plates.Count; index++)
+        {
+            RetainedPlateIds.Add(plates[index].Id);
+        }
+
+        StalePlateIds.Clear();
+        foreach (var id in DeepSkyPlateMeshes.Keys)
+        {
+            if (!RetainedPlateIds.Contains(id))
+            {
+                StalePlateIds.Add(id);
+            }
+        }
+
+        for (var index = 0; index < StalePlateIds.Count; index++)
+        {
+            DeepSkyPlateMeshes[StalePlateIds[index]].Dispose();
+            DeepSkyPlateMeshes.Remove(StalePlateIds[index]);
+        }
+    }
+
     private static void RenderDeepSkyQuad(
         ICoreClientAPI clientApi,
         IStandardShaderProgram shader,
         RenderedDeepSkyObject deepSkyObject,
         int textureId,
+        Matrix4 residualRotation,
         float[] modelMatrixBuffer)
     {
-        var meshData = DeepSkyQuadMeshBuilder.Build(deepSkyObject.QuadCorners, SkyDistance);
-        if (deepSkyQuadMesh is null)
+        if (!DeepSkyPlateMeshes.TryGetValue(deepSkyObject.Id, out var plateMesh))
         {
-            deepSkyQuadMesh = UploadMesh(clientApi, meshData);
-        }
-        else
-        {
-            UpdateMesh(clientApi, deepSkyQuadMesh, meshData);
+            return;
         }
 
-        var entity = clientApi.World.Player.Entity;
-        var verticalOrigin = (float)entity.LocalEyePos.Y
-            - ((float)entity.Pos.Y - clientApi.World.SeaLevel) / 10000f;
-        var modelMatrix = Matrix4.CreateTranslation(0f, verticalOrigin, 0f);
+        var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
         var alpha = DeepSkyPlateVisibility.CalculateOpacity(deepSkyObject.Brightness);
         var tint = Set(
             ScratchTint,
@@ -1418,7 +1550,7 @@ public static class SkyStarSunMoonRenderer
         shader.Tex2D = textureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
-        DrawMesh(clientApi, deepSkyQuadMesh);
+        DrawMesh(clientApi, plateMesh);
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
     }
 
@@ -1430,6 +1562,18 @@ public static class SkyStarSunMoonRenderer
             {
                 return textureId;
             }
+        }
+
+        // A plate with no photograph behind it is simply not drawn, which is right but silent: from
+        // the eyepiece it is indistinguishable from an object that has not risen. Said once per
+        // object, since the draw loop asks again every frame.
+        if (PlatesReportedWithoutTexture.Add(deepSkyObject.Id))
+        {
+            clientApi.Logger.Warning(
+                "AstraTerra is not drawing deep-sky object {0} ({1}): none of its textures could be loaded ({2}).",
+                deepSkyObject.Id,
+                deepSkyObject.DisplayName,
+                string.Join(", ", deepSkyObject.TexturePaths));
         }
 
         return 0;
@@ -1532,6 +1676,54 @@ public static class SkyStarSunMoonRenderer
         cachedStarBrightnessBias = brightnessBias;
         starMeshesDirty = true;
         return true;
+    }
+
+    /// <summary>
+    /// Reprojects the scope's deep-sky plates when the sky has turned far enough to be worth it, and
+    /// reports nothing: what changed is the list, and the meshes built from it.
+    /// </summary>
+    /// <remarks>
+    /// This runs on the star projection's threshold, but keeps its own cached angle. The star path
+    /// can be switched off, or have no star above the horizon, on a night where the scope still has
+    /// plates to draw, and a plate held to a projection the stars had abandoned would sit still
+    /// while the sky turned underneath it.
+    /// </remarks>
+    private static void EnsureProjectedDeepSkyObjects(
+        IReadOnlyList<DeepSkyObjectEntry> objects,
+        double latitudeDeg,
+        double localSiderealDeg,
+        double brightnessBias)
+    {
+        if (objects.Count == 0)
+        {
+            if (ProjectedDeepSkyObjects.Count > 0)
+            {
+                ProjectedDeepSkyObjects.Clear();
+                deepSkyPlateMeshesDirty = true;
+            }
+
+            cachedDeepSkyLatitudeDeg = double.NaN;
+            cachedDeepSkySiderealDeg = double.NaN;
+            cachedDeepSkyBrightnessBias = double.NaN;
+            return;
+        }
+
+        // The cached angle rather than the list's length: a sky whose plates have all set is a
+        // projection that found nothing, not a projection that has not been made, and asking again
+        // sixty times a second would answer nothing every time.
+        if (double.IsFinite(cachedDeepSkySiderealDeg) &&
+            Math.Abs(latitudeDeg - cachedDeepSkyLatitudeDeg) < StarRefreshThresholdDeg &&
+            Math.Abs(CelestialMath.ShortestAngularDistanceDegrees(cachedDeepSkySiderealDeg, localSiderealDeg)) < StarRefreshThresholdDeg &&
+            Math.Abs(brightnessBias - cachedDeepSkyBrightnessBias) < 0.005)
+        {
+            return;
+        }
+
+        DeepSkyRenderModel.ProjectVisibleObjects(objects, latitudeDeg, localSiderealDeg, brightnessBias, ProjectedDeepSkyObjects);
+        cachedDeepSkyLatitudeDeg = latitudeDeg;
+        cachedDeepSkySiderealDeg = localSiderealDeg;
+        cachedDeepSkyBrightnessBias = brightnessBias;
+        deepSkyPlateMeshesDirty = true;
     }
 
     /// <summary>Drops the projected sky when no path needs it, so a switched-off star path costs nothing.</summary>
