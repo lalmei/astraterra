@@ -226,6 +226,9 @@ public sealed class NearBodyRenderer : IRenderer
         private LoadedTexture texture;
         private MeshRef? mesh;
         private bool uploaded;
+        private SkyDirection lastDirection;
+        private SkyDirection lastSun;
+        private double lastDaylight = -1.0;
 
         public BodyPass(ICoreClientAPI api, NearBodyEntry body)
         {
@@ -244,14 +247,24 @@ public sealed class NearBodyRenderer : IRenderer
                 return;
             }
 
-            var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight);
-            if (mesh is null)
+            // A face is tens of thousands of vertices, and nothing about it changes quickly: the sky
+            // turns, the sun moves, and both do it slowly enough that rebuilding on every frame is
+            // work nobody sees. Rebuild when the geometry has actually moved.
+            if (mesh is null || HasMoved(placed, daylight))
             {
-                mesh = api.Render.UploadMesh(meshData);
-            }
-            else
-            {
-                api.Render.UpdateMesh(mesh, meshData);
+                var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight);
+                if (mesh is null)
+                {
+                    mesh = api.Render.UploadMesh(meshData);
+                }
+                else
+                {
+                    api.Render.UpdateMesh(mesh, meshData);
+                }
+
+                lastDirection = placed.Direction;
+                lastSun = placed.SunDirection;
+                lastDaylight = daylight;
             }
 
             shader.Tex2D = texture.TextureId;
@@ -263,6 +276,18 @@ public sealed class NearBodyRenderer : IRenderer
             mesh?.Dispose();
             mesh = null;
             texture.Dispose();
+        }
+
+        /// <summary>A tenth of a degree of movement, or a visible step in the daylight.</summary>
+        private bool HasMoved(PlacedNearBody placed, double daylight)
+            => Math.Abs(daylight - lastDaylight) > 0.01
+               || Separation(placed.Direction, lastDirection) > 0.0017
+               || Separation(placed.SunDirection, lastSun) > 0.0017;
+
+        private static double Separation(SkyDirection left, SkyDirection right)
+        {
+            var dot = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
+            return Math.Acos(Math.Clamp(dot, -1.0, 1.0));
         }
 
         private void EnsureTexture()

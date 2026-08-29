@@ -35,17 +35,39 @@ namespace AstraTerra.Client.Rendering;
 /// </remarks>
 public static class NearBodyMeshBuilder
 {
-    /// <summary>Cells across the face. 24 keeps the terminator smooth at a body filling a quarter of the sky.</summary>
-    public const int Subdivisions = 24;
+    /// <summary>Cells a body's own globe gets across it, whatever else shares the face.</summary>
+    public const int CellsAcrossGlobe = 56;
 
-    public const int VerticesPerBody = (Subdivisions + 1) * (Subdivisions + 1);
-    public const int IndicesPerBody = Subdivisions * Subdivisions * 6;
+    /// <summary>Fewest and most cells across a whole face.</summary>
+    public const int MinSubdivisions = 24;
+    public const int MaxSubdivisions = 192;
+
+    /// <summary>
+    /// How finely a face is cut up. The terminator is drawn by shading the corners of these cells,
+    /// so a cell is the smallest step the terminator can take -- and a ringed giant's globe is only a
+    /// third of its face, the rest being the room the rings need. Counting cells across the whole
+    /// face therefore leaves barely six across the globe, and the terminator comes out as a staircase
+    /// of blocks. The count is taken from the globe instead, and the rings get whatever that implies.
+    /// </summary>
+    public static int SubdivisionsFor(double discFraction)
+    {
+        var wanted = CellsAcrossGlobe / Math.Clamp(discFraction, 0.05, 1.0);
+        return (int)Math.Clamp(Math.Ceiling(wanted), MinSubdivisions, MaxSubdivisions);
+    }
+
+    public static int VerticesFor(int subdivisions) => (subdivisions + 1) * (subdivisions + 1);
+
+    public static int IndicesFor(int subdivisions) => subdivisions * subdivisions * 6;
 
     /// <summary>Light on the unlit side: a planet is never perfectly black against the sky.</summary>
     public const float NightSideLight = 0.055f;
 
-    /// <summary>How far past the terminator the light fades, in units of the Lambert term.</summary>
-    public const float TerminatorSoftness = 0.12f;
+    /// <summary>
+    /// How far past the terminator the light fades, in units of the Lambert term. Wide enough that
+    /// the fade always spans several cells, so what is left of the staircase is blurred out by it.
+    /// A gas giant's terminator is genuinely soft anyway: it is an atmosphere, not a cliff.
+    /// </summary>
+    public const float TerminatorSoftness = 0.16f;
 
     public static MeshData Build(
         IReadOnlyList<PlacedNearBody> bodies,
@@ -57,9 +79,12 @@ public static class NearBodyMeshBuilder
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(radius);
         ArgumentOutOfRangeException.ThrowIfNegative(capacity);
 
+        var subdivisions = bodies.Count > 0
+            ? bodies.Max(body => SubdivisionsFor(body.Body.Face.DiscFraction))
+            : MinSubdivisions;
         var meshData = new MeshData(
-            Math.Max(1, capacity * VerticesPerBody),
-            Math.Max(1, capacity * IndicesPerBody),
+            Math.Max(1, capacity * VerticesFor(subdivisions)),
+            Math.Max(1, capacity * IndicesFor(subdivisions)),
             withNormals: false,
             withUv: true,
             withRgba: true,
@@ -71,12 +96,12 @@ public static class NearBodyMeshBuilder
         var drawn = Math.Min(bodies.Count, capacity);
         for (var index = 0; index < drawn; index++)
         {
-            Add(meshData, bodies[index], radius, Math.Clamp(daylight, 0.0, 1.0));
+            Add(meshData, bodies[index], radius, Math.Clamp(daylight, 0.0, 1.0), subdivisions);
         }
 
         for (var slot = drawn; slot < capacity; slot++)
         {
-            AddUnusedSlot(meshData, radius);
+            AddUnusedSlot(meshData, radius, subdivisions);
         }
 
         return meshData;
@@ -110,7 +135,7 @@ public static class NearBodyMeshBuilder
         return (float)Math.Clamp(NightSideLight + ((1.0 - NightSideLight) * lit * limb), 0.0, 1.0);
     }
 
-    private static void Add(MeshData meshData, PlacedNearBody placed, float radius, double daylight)
+    private static void Add(MeshData meshData, PlacedNearBody placed, float radius, double daylight, int subdivisions)
     {
         var direction = placed.Direction;
         var (rightX, rightY, rightZ, upX, upY, upZ) = BuildFaceAxes(direction.X, direction.Y, direction.Z);
@@ -129,13 +154,13 @@ public static class NearBodyMeshBuilder
         var brightness = Math.Clamp(placed.Body.Brightness, 0.0, 1.0);
         var firstVertex = meshData.VerticesCount;
 
-        for (var row = 0; row <= Subdivisions; row++)
+        for (var row = 0; row <= subdivisions; row++)
         {
-            var v = (float)row / Subdivisions;
+            var v = (float)row / subdivisions;
             var offsetUp = (v * 2f) - 1f;
-            for (var column = 0; column <= Subdivisions; column++)
+            for (var column = 0; column <= subdivisions; column++)
             {
-                var u = (float)column / Subdivisions;
+                var u = (float)column / subdivisions;
                 var offsetRight = (u * 2f) - 1f;
                 var light = LightAt(
                     offsetRight / discFraction,
@@ -161,26 +186,26 @@ public static class NearBodyMeshBuilder
             }
         }
 
-        AddGridIndices(meshData, firstVertex);
+        AddGridIndices(meshData, firstVertex, subdivisions);
     }
 
-    private static void AddUnusedSlot(MeshData meshData, float radius)
+    private static void AddUnusedSlot(MeshData meshData, float radius, int subdivisions)
     {
         var firstVertex = meshData.VerticesCount;
-        for (var vertex = 0; vertex < VerticesPerBody; vertex++)
+        for (var vertex = 0; vertex < VerticesFor(subdivisions); vertex++)
         {
             meshData.AddVertexWithFlags(0f, radius, 0f, 0f, 0f, ColorUtil.ColorFromRgba(0, 0, 0, 0), 0);
         }
 
-        AddGridIndices(meshData, firstVertex);
+        AddGridIndices(meshData, firstVertex, subdivisions);
     }
 
-    private static void AddGridIndices(MeshData meshData, int firstVertex)
+    private static void AddGridIndices(MeshData meshData, int firstVertex, int subdivisions)
     {
-        const int stride = Subdivisions + 1;
-        for (var row = 0; row < Subdivisions; row++)
+        var stride = subdivisions + 1;
+        for (var row = 0; row < subdivisions; row++)
         {
-            for (var column = 0; column < Subdivisions; column++)
+            for (var column = 0; column < subdivisions; column++)
             {
                 var corner = firstVertex + (row * stride) + column;
                 meshData.AddIndex(corner);
