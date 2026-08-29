@@ -85,6 +85,100 @@ public sealed class PlanetCatalogAssetTests
         Assert.True(mars.TintR > mars.TintG && mars.TintG > mars.TintB);
     }
 
+    /// <summary>
+    /// Every planet ships the faces a telescope needs, and every face has a picture behind it: a
+    /// missing texture is silent in the eyepiece, indistinguishable from a planet that has not risen.
+    /// </summary>
+    [Fact]
+    public void Every_Planet_Ships_A_Disc_With_Faces_Across_The_Phase()
+    {
+        var catalog = LoadCatalog();
+
+        Assert.All(
+            catalog.Planets,
+            planet =>
+            {
+                var disc = planet.Disc;
+                Assert.NotNull(disc);
+                Assert.Equal([0.0, 90.0, 180.0], disc.Faces.Select(face => face.PhaseAngleDeg));
+                Assert.True(disc.EquatorialDiameterKm > 1000.0, $"{planet.Id} has no globe to draw.");
+                Assert.InRange(disc.ImageWidthInDiameters, 1.0, 3.0);
+                Assert.All(disc.Faces, face => AssertTextureExists(face.TexturePath));
+            });
+
+        // Only Saturn's picture is wider than its globe, because only Saturn's rings need the room.
+        Assert.Equal(
+            ["saturn"],
+            catalog.Planets.Where(planet => planet.Disc!.ImageWidthInDiameters > 1.0).Select(planet => planet.Id));
+    }
+
+    [Fact]
+    public void The_Two_Giants_Carry_The_Moons_A_Telescope_Shows()
+    {
+        var catalog = LoadCatalog();
+        var withMoons = catalog.Planets.Where(planet => planet.Moons is { Count: > 0 }).ToList();
+
+        Assert.Equal(["jupiter", "saturn"], withMoons.Select(planet => planet.Id));
+        Assert.Equal(
+            ["io", "europa", "ganymede", "callisto"],
+            catalog.Planets.Single(planet => planet.Id == "jupiter").Moons!.Select(moon => moon.Id));
+        Assert.Equal(
+            ["enceladus", "tethys", "dione", "rhea", "titan"],
+            catalog.Planets.Single(planet => planet.Id == "saturn").Moons!.Select(moon => moon.Id));
+
+        Assert.All(
+            withMoons.SelectMany(planet => planet.Moons!),
+            moon =>
+            {
+                Assert.False(string.IsNullOrWhiteSpace(moon.DisplayName));
+                Assert.InRange(moon.Brightness, 0.1, 1.0);
+                Assert.InRange(moon.MeanLongitudeDeg, 0.0, 360.0);
+                AssertTextureExists(moon.TexturePath);
+            });
+
+        // Saturn's system is the one tipped far enough for its moons to open into an ellipse rather
+        // than a line, which is the same tilt its rings are drawn at.
+        Assert.InRange(catalog.Planets.Single(planet => planet.Id == "saturn").MoonPlaneTiltDeg, 20.0, 30.0);
+        Assert.InRange(catalog.Planets.Single(planet => planet.Id == "jupiter").MoonPlaneTiltDeg, 0.0, 5.0);
+    }
+
+    /// <summary>
+    /// The same check the planets get, one level down: a moon's period and its distance from its
+    /// parent are independent numbers in the catalog, and Kepler ties them together. Within one
+    /// system the constant is the parent's mass, so the ratio has to hold across every moon of it.
+    /// </summary>
+    [Fact]
+    public void Every_Moon_Orbits_Its_Parent_On_A_Keplerian_Orbit()
+    {
+        var catalog = LoadCatalog();
+
+        foreach (var planet in catalog.Planets.Where(planet => planet.Moons is { Count: > 0 }))
+        {
+            var moons = planet.Moons!;
+            var reference = Math.Pow(moons[0].SemiMajorAxisKm, 3.0) / Math.Pow(moons[0].OrbitalPeriodRealDays, 2.0);
+
+            Assert.Equal(
+                moons.OrderBy(moon => moon.SemiMajorAxisKm).Select(moon => moon.Id),
+                moons.Select(moon => moon.Id));
+
+            foreach (var moon in moons)
+            {
+                var constant = Math.Pow(moon.SemiMajorAxisKm, 3.0) / Math.Pow(moon.OrbitalPeriodRealDays, 2.0);
+                Assert.True(
+                    Math.Abs((constant / reference) - 1.0) < 0.02,
+                    $"{moon.Id} is not on a Keplerian orbit around {planet.Id}: {constant:0.###e+0} against {reference:0.###e+0}.");
+            }
+        }
+    }
+
+    private static void AssertTextureExists(string texturePath)
+    {
+        var file = Path.Combine(
+            "assets/astraterra/textures",
+            texturePath.Replace("astraterra:", string.Empty, StringComparison.Ordinal) + ".png");
+        Assert.True(File.Exists(file), $"{texturePath} has no picture behind it at {file}.");
+    }
+
     private static PlanetCatalog LoadCatalog()
         => PlanetCatalogLoader.Parse(File.ReadAllText("assets/astraterra/data/planets.v1.json"));
 }

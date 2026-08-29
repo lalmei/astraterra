@@ -155,6 +155,46 @@ over a world year, which is the point of modelling it at all.
     renderer spends it on the glow rather than the core. Anything else added to the sky brighter than
     magnitude 0.4 needs the same treatment, or the sky flattens out at the bright end.
 
+### What a telescope resolves
+
+A planet is a point of light to the naked eye and a disc through a glass, and those are two different
+drawing problems. `PlanetRenderModel` answers the first; `PlanetDiscRenderModel` answers the second,
+and it runs only while the scope is raised — nothing below is computed for a player looking up.
+
+It reads three things off the same ephemeris the sprite already uses:
+
+| Quantity | Where it comes from | What it produces |
+| --- | --- | --- |
+| Distance | `GetGeocentricPosition(t).Length` | The disc's angular width, so Mars swells towards opposition |
+| Phase angle | `PhaseAngleAt(t)` | Which authored face is drawn: full, half or crescent |
+| Sun direction | The calendar's own sun | Which way the crescent points |
+
+Faces are pictures, not shaded models, and each is drawn lit from the left. The quad is built with
+its horizontal running *away* from the sun's projected direction, so a crescent Venus turns its
+lit limb towards the sun wherever the sun happens to be.
+
+The moons of Jupiter and Saturn ride on circular orbits in their parent's equatorial plane, which is
+within a few degrees of the ecliptic — so they string out along the ecliptic tangent at the planet,
+opened into an ellipse by `moonPlaneTiltDeg` for Saturn and left nearly edge-on for Jupiter. Their
+periods are quoted in **real days**, the same clock `WorldEpoch` puts the planets on, so Io still
+laps Callisto nine times whatever the world's day length. The third component of the orbit is depth,
+and its sign is why it is computed at all: a moon on the far side of the swing, inside its parent's
+disc, is dropped rather than drawn — so the count beside Jupiter changes over a night.
+
+!!! warning "Everything resolved is drawn 7.5x larger than life"
+    `PlanetDiscRenderModel.DiscExaggeration` is the one departure from the real sky in this pass, and
+    it applies to every body and every orbit alike, so the relationships hold: Saturn's globe stays a
+    third of its ring span, Callisto stays four times as far out as Io. The factor is fixed by the
+    eyepiece rather than by taste — any larger and Callisto's ten-arcminute swing leaves the precision
+    telescope's field, which is exactly when a player can no longer count the moons.
+
+    A moon is exempt in one direction only: enlarged with everything else it would still be under a
+    pixel, so it is held at `MinimumMoonWidthDeg`, the size the stars beside it draw at.
+
+A planet with a disc drops the sprite that stood in for one — at any magnification worth using, the
+sprite is several times wider than the planet and would erase it. What is left is a halo just outside
+the disc, which is both what an eyepiece shows and what keeps the planet findable at low power.
+
 ### The world epoch
 
 Orbits are published against Julian centuries past J2000, so a world day has to be worth something
