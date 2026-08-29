@@ -59,6 +59,13 @@ public static class SkyStarSunMoonRenderer
     private const float MilkyWaySkyDistance = 40.6f;
     private const float MeteorSkyDistance = 39.8f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
+
+    /// <summary>
+    /// How wide a resolved planet's halo is drawn, as a multiple of the disc it surrounds. Just
+    /// outside it, so the glow reads as light spilling off the planet rather than as a sprite laid
+    /// over the photograph.
+    /// </summary>
+    private const double ResolvedPlanetHaloWidth = 1.6;
     private const float StarGlowMaxAlpha = 0.35f;
 
     /// <summary>
@@ -105,6 +112,8 @@ public static class SkyStarSunMoonRenderer
     private static PlanetCatalog? planetCatalog;
     private static CometCatalog? cometCatalog;
     private static PlanetRenderModel? planetModel;
+    private static PlanetDiscRenderModel? planetDiscModel;
+    private static int planetDiscModelDaysPerYear;
     private static CometRenderModel? cometModel;
     private static int cometModelDaysPerYear;
     private static int planetModelDaysPerYear;
@@ -136,6 +145,20 @@ public static class SkyStarSunMoonRenderer
     // One buffer per plate, keyed by the catalog id that outlives any single projection. See
     // EnsureDeepSkyPlateMeshes for why they are not batched into one.
     private static readonly Dictionary<string, MeshRef> DeepSkyPlateMeshes = new(StringComparer.Ordinal);
+    // What the scope resolves: a planet's disc and the moons beside it. One mesh apiece, for the
+    // same reason a plate has one -- each carries its own picture, so there is nothing to batch.
+    private static readonly Dictionary<string, MeshRef> PlanetDiscMeshes = new(StringComparer.Ordinal);
+    private static readonly List<RenderedPlanetDisc> ProjectedPlanetDiscs = new(16);
+    private static readonly List<string> RetainedDiscIds = new(16);
+    private static readonly List<string> StaleDiscIds = new(16);
+    private static readonly HashSet<string> DiscsReportedWithoutTexture = new(StringComparer.Ordinal);
+
+    // How wide each planet is being drawn, for the star pass: a planet that has become a disc no
+    // longer wants the sprite that stood in for one.
+    private static readonly Dictionary<string, double> DiscWidthByPlanetId = new(StringComparer.Ordinal);
+    private static double cachedPlanetDiscLatitudeDeg = double.NaN;
+    private static double cachedPlanetDiscSiderealDeg = double.NaN;
+    private static int cachedStarMeshDiscSignature;
     private static readonly HashSet<string> RetainedPlateIds = new(StringComparer.Ordinal);
     private static readonly List<string> StalePlateIds = new(16);
     private static bool deepSkyPlateMeshesDirty = true;
@@ -376,6 +399,26 @@ public static class SkyStarSunMoonRenderer
     }
 
     /// <summary>
+    /// The model behind the resolved discs, built on demand like the planet model it shares a
+    /// catalog with.
+    /// </summary>
+    private static PlanetDiscRenderModel? ResolvePlanetDiscModel(int daysPerYear)
+    {
+        if (planetCatalog is null)
+        {
+            return null;
+        }
+
+        if (planetDiscModel is null || daysPerYear != planetDiscModelDaysPerYear)
+        {
+            planetDiscModel = new PlanetDiscRenderModel(planetCatalog, daysPerYear);
+            planetDiscModelDaysPerYear = daysPerYear;
+        }
+
+        return planetDiscModel;
+    }
+
+    /// <summary>
     /// Built on demand for the same reason the planet model is: a client only learns the world's
     /// <c>daysPerYear</c> from the server, and that is the clock every apparition is authored
     /// against.
@@ -405,6 +448,19 @@ public static class SkyStarSunMoonRenderer
             plateMesh.Dispose();
         }
 
+        foreach (var discMesh in PlanetDiscMeshes.Values)
+        {
+            discMesh.Dispose();
+        }
+
+        PlanetDiscMeshes.Clear();
+        ProjectedPlanetDiscs.Clear();
+        DiscWidthByPlanetId.Clear();
+        DiscsReportedWithoutTexture.Clear();
+        RetainedDiscIds.Clear();
+        StaleDiscIds.Clear();
+        cachedPlanetDiscLatitudeDeg = double.NaN;
+        cachedPlanetDiscSiderealDeg = double.NaN;
         DeepSkyPlateMeshes.Clear();
         PlatesReportedWithoutTexture.Clear();
         RetainedPlateIds.Clear();
@@ -630,6 +686,16 @@ public static class SkyStarSunMoonRenderer
                 brightnessBias,
                 new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z))
             ?? (IReadOnlyList<RenderedComet>)NoComets;
+        // Only a telescope resolves a planet into a disc, so nothing is placed for the naked eye.
+        EnsureProjectedPlanetDiscs(
+            TelescopeScopeState.IsScoped,
+            calendar.TotalDays,
+            Math.Max(1, calendar.DaysPerYear),
+            latitude,
+            localSiderealAngle,
+            brightnessBias,
+            new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z));
+
         // The scope's deep-sky plates are the one thing that can still be worth drawing with no star
         // above the horizon, so they keep the pass alive.
         if (drawableStars.Count == 0 && drawablePlanets.Count == 0 && visibleComets.Count == 0 && meteorStreaks.Count == 0 && milkyWayAlpha <= 0f && !TelescopeScopeState.IsScoped)
@@ -721,6 +787,12 @@ public static class SkyStarSunMoonRenderer
             cachedDeepSkyLatitudeDeg,
             CelestialMath.ShortestAngularDistanceDegrees(cachedDeepSkySiderealDeg, localSiderealAngle));
 
+        // The discs are held to their own projection for the same reason, and refreshed on the same
+        // threshold, so they carry their own turn too.
+        var planetDiscResidualRotation = SkyResidualRotation.Build(
+            cachedPlanetDiscLatitudeDeg,
+            CelestialMath.ShortestAngularDistanceDegrees(cachedPlanetDiscSiderealDeg, localSiderealAngle));
+
         var milkyWay = PrepareMilkyWay(api, milkyWayAlpha, latitude, localSiderealAngle);
 
         RenderSky(
@@ -729,12 +801,14 @@ public static class SkyStarSunMoonRenderer
             drawablePlanets,
             visibleComets,
             visibleDeepSkyObjects,
+            ProjectedPlanetDiscs,
             constellationLines,
             meteorStreaks,
             FindStrongestReading(meteorReadings),
             milkyWay,
             starResidualRotation,
             deepSkyResidualRotation,
+            planetDiscResidualRotation,
             starAngularScale,
             quadModel,
             imageSize,
@@ -753,12 +827,14 @@ public static class SkyStarSunMoonRenderer
         IReadOnlyList<RenderedPlanet> visiblePlanets,
         IReadOnlyList<RenderedComet> visibleComets,
         IReadOnlyList<RenderedDeepSkyObject> visibleDeepSkyObjects,
+        IReadOnlyList<RenderedPlanetDisc> planetDiscs,
         IReadOnlyList<SkyConstellationLine> constellationLines,
         IReadOnlyList<RenderedMeteorStreak> meteorStreaks,
         MeteorShowerReading? strongestMeteorReading,
         MilkyWayDraw milkyWay,
         Matrix4 starResidualRotation,
         Matrix4 deepSkyResidualRotation,
+        Matrix4 planetDiscResidualRotation,
         float starAngularScale,
         MeshRef quadModel,
         int imageSize,
@@ -880,6 +956,26 @@ public static class SkyStarSunMoonRenderer
                     if (textureId != 0)
                     {
                         RenderDeepSkyQuad(clientApi, shader, deepSkyObject, textureId, deepSkyResidualRotation, modelMatrixBuffer);
+                    }
+                }
+
+                render.GlToggleBlend(true, EnumBlendMode.Glow);
+            }
+
+            if (planetDiscs.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Stars))
+            {
+                // Alpha blended and drawn last of the sky's own objects: a planet's disc is opaque
+                // where its globe is, so it should hide the stars behind it rather than glow over
+                // them -- and a moon crossing in front of its parent should hide that.
+                render.GlToggleBlend(true, EnumBlendMode.Standard);
+                EnsurePlanetDiscMeshes(clientApi, planetDiscs);
+                for (var index = 0; index < planetDiscs.Count; index++)
+                {
+                    var textureId = ResolvePlanetDiscTexture(clientApi, planetDiscs[index]);
+                    if (textureId != 0)
+                    {
+                        RenderPlanetDisc(clientApi, shader, planetDiscs[index], textureId, planetDiscResidualRotation, modelMatrixBuffer);
+                        drawnCount++;
                     }
                 }
 
@@ -1012,7 +1108,9 @@ public static class SkyStarSunMoonRenderer
         bool useTelescopeSprites)
     {
         var plateSignature = DeepSkyPlateVisibility.GetSignature(visibleDeepSkyObjects);
+        var discSignature = DiscWidthByPlanetId.Count;
         if (!starMeshesDirty &&
+            discSignature == cachedStarMeshDiscSignature &&
             Math.Abs(brightStarAngularScale - cachedStarMeshAngularScale) < 1e-6f &&
             useTelescopeSprites == cachedStarMeshScoped &&
             plateSignature == cachedStarMeshPlateSignature)
@@ -1064,6 +1162,30 @@ public static class SkyStarSunMoonRenderer
             var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
             var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
 
+            // A planet the scope has resolved is drawn from its own photograph, and the sprite that
+            // stood in for that disc has to get out of its way: at the magnification a disc is worth
+            // looking at, the sprite is several times wider than the planet and would erase it.
+            // What survives is the halo, held just outside the disc, which is both what an eyepiece
+            // shows around a bright planet and what keeps the planet findable at low power, where
+            // the disc itself is a couple of pixels.
+            if (DiscWidthByPlanetId.TryGetValue(planet.Id, out var discWidthDeg))
+            {
+                var haloAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
+                if (haloAlpha > 0.005f)
+                {
+                    PlanetBillboards.Add(Billboard(
+                        planet.Body,
+                        (float)(discWidthDeg * ResolvedPlanetHaloWidth / (StarAngularSizePerPixelDeg * planetAngularScale)),
+                        planetAngularScale,
+                        planet.TintR,
+                        planet.TintG,
+                        planet.TintB,
+                        haloAlpha));
+                }
+
+                continue;
+            }
+
             var glowAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
             if (glowAlpha > 0.005f)
             {
@@ -1082,6 +1204,7 @@ public static class SkyStarSunMoonRenderer
         cachedStarMeshAngularScale = brightStarAngularScale;
         cachedStarMeshScoped = useTelescopeSprites;
         cachedStarMeshPlateSignature = plateSignature;
+        cachedStarMeshDiscSignature = discSignature;
     }
 
     private static SkyBillboard Billboard(
@@ -1462,6 +1585,171 @@ public static class SkyStarSunMoonRenderer
     /// that changes nothing writes nothing.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Places the bodies the scope resolves, on the same refresh threshold as the plates: a disc a
+    /// tenth of a degree wide has not moved meaningfully in the twelve seconds of world time the
+    /// threshold is worth, and what it does in between, the residual rotation carries.
+    /// </summary>
+    private static void EnsureProjectedPlanetDiscs(
+        bool scoped,
+        double totalDays,
+        int daysPerYear,
+        double latitudeDeg,
+        double localSiderealDeg,
+        double brightnessBias,
+        SkyDirection sunDirection)
+    {
+        // Planets ride the star path, so switching the stars off takes their discs with them, as
+        // it already takes the sprites that stood in for them.
+        var model = scoped && SkyRenderPaths.IsEnabled(SkyRenderPath.Stars)
+            ? ResolvePlanetDiscModel(daysPerYear)
+            : null;
+        if (model is null || model.Count == 0)
+        {
+            if (ProjectedPlanetDiscs.Count > 0)
+            {
+                ProjectedPlanetDiscs.Clear();
+                DiscWidthByPlanetId.Clear();
+                starMeshesDirty = true;
+            }
+
+            cachedPlanetDiscLatitudeDeg = double.NaN;
+            cachedPlanetDiscSiderealDeg = double.NaN;
+            return;
+        }
+
+        if (!double.IsNaN(cachedPlanetDiscLatitudeDeg) &&
+            Math.Abs(latitudeDeg - cachedPlanetDiscLatitudeDeg) < StarRefreshThresholdDeg &&
+            Math.Abs(CelestialMath.ShortestAngularDistanceDegrees(cachedPlanetDiscSiderealDeg, localSiderealDeg)) < StarRefreshThresholdDeg)
+        {
+            return;
+        }
+
+        model.Place(totalDays, latitudeDeg, localSiderealDeg, brightnessBias, sunDirection, ProjectedPlanetDiscs);
+        cachedPlanetDiscLatitudeDeg = latitudeDeg;
+        cachedPlanetDiscSiderealDeg = localSiderealDeg;
+
+        // The star pass reads this to know which planets have stopped being points of light. It is
+        // rebuilt here rather than there because only this pass knows how wide a disc came out.
+        DiscWidthByPlanetId.Clear();
+        for (var index = 0; index < ProjectedPlanetDiscs.Count; index++)
+        {
+            var disc = ProjectedPlanetDiscs[index];
+            if (disc.ParentId is null)
+            {
+                DiscWidthByPlanetId[disc.Id] = disc.AngularWidthDeg;
+            }
+        }
+
+        starMeshesDirty = true;
+    }
+
+    private static void EnsurePlanetDiscMeshes(
+        ICoreClientAPI clientApi,
+        IReadOnlyList<RenderedPlanetDisc> discs)
+    {
+        for (var index = 0; index < discs.Count; index++)
+        {
+            var disc = discs[index];
+
+            // Far fewer subdivisions than a plate needs: a plate spans degrees and has to follow the
+            // sphere, while a disc is a tenth of one, over which the sky is flat.
+            var meshData = DeepSkyQuadMeshBuilder.Build(disc.QuadCorners, SkyDistance, subdivisions: 2);
+            if (PlanetDiscMeshes.TryGetValue(disc.Id, out var mesh))
+            {
+                UpdateMesh(clientApi, mesh, meshData);
+            }
+            else
+            {
+                PlanetDiscMeshes[disc.Id] = UploadMesh(clientApi, meshData);
+            }
+        }
+
+        DropPlanetDiscMeshesFor(discs);
+    }
+
+    /// <summary>Releases the buffers of bodies that have set or gone behind their planet.</summary>
+    private static void DropPlanetDiscMeshesFor(IReadOnlyList<RenderedPlanetDisc> discs)
+    {
+        if (PlanetDiscMeshes.Count == discs.Count)
+        {
+            return;
+        }
+
+        RetainedDiscIds.Clear();
+        for (var index = 0; index < discs.Count; index++)
+        {
+            RetainedDiscIds.Add(discs[index].Id);
+        }
+
+        StaleDiscIds.Clear();
+        foreach (var id in PlanetDiscMeshes.Keys)
+        {
+            if (!RetainedDiscIds.Contains(id))
+            {
+                StaleDiscIds.Add(id);
+            }
+        }
+
+        for (var index = 0; index < StaleDiscIds.Count; index++)
+        {
+            PlanetDiscMeshes[StaleDiscIds[index]].Dispose();
+            PlanetDiscMeshes.Remove(StaleDiscIds[index]);
+        }
+    }
+
+    private static void RenderPlanetDisc(
+        ICoreClientAPI clientApi,
+        IStandardShaderProgram shader,
+        RenderedPlanetDisc disc,
+        int textureId,
+        Matrix4 residualRotation,
+        float[] modelMatrixBuffer)
+    {
+        if (!PlanetDiscMeshes.TryGetValue(disc.Id, out var discMesh))
+        {
+            return;
+        }
+
+        var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
+
+        // No tint. The picture is the body's own colour, taken from a photograph of it, and the
+        // brightness the sky hands over is the horizon fade and the daylight -- which is why it goes
+        // to alpha rather than to the colour, so a planet low down thins out rather than dims to
+        // grey.
+        var alpha = (float)Math.Clamp(disc.Brightness, 0.0, 1.0);
+        var tint = Set(ScratchTint, 1f, 1f, 1f, alpha);
+
+        ((IShaderProgram)shader).Uniform("skyShaded", 0);
+        shader.RgbaTint = tint;
+        shader.RgbaLightIn = Set(ScratchLight, 1f, 1f, 1f, 1f);
+        shader.Tex2D = textureId;
+        CopyToFloatArray(modelMatrix, modelMatrixBuffer);
+        ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
+        DrawMesh(clientApi, discMesh);
+    }
+
+    private static int ResolvePlanetDiscTexture(ICoreClientAPI clientApi, RenderedPlanetDisc disc)
+    {
+        if (TryGetDeepSkyTexture(clientApi, disc.TexturePath, out var textureId))
+        {
+            return textureId;
+        }
+
+        // Said once per body rather than per frame: through the eyepiece a body with no picture is
+        // indistinguishable from one that has not risen.
+        if (DiscsReportedWithoutTexture.Add(disc.Id))
+        {
+            clientApi.Logger.Warning(
+                "AstraTerra is not drawing {0} ({1}): its texture could not be loaded ({2}).",
+                disc.Id,
+                disc.DisplayName,
+                disc.TexturePath);
+        }
+
+        return 0;
+    }
+
     private static void EnsureDeepSkyPlateMeshes(
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedDeepSkyObject> plates)

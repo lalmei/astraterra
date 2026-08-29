@@ -36,7 +36,25 @@
       "phaseCoefficient": 0.029,
       "tintR": 0.86,
       "tintG": 0.82,
-      "tintB": 0.76
+      "tintB": 0.76,
+      "disc": {
+        "equatorialDiameterKm": 4879.0,
+        "imageWidthInDiameters": 1.0,
+        "faces": [
+          {
+            "phaseAngleDeg": 0,
+            "texturePath": "astraterra:environment/solar-system/mercury-0"
+          },
+          {
+            "phaseAngleDeg": 90,
+            "texturePath": "astraterra:environment/solar-system/mercury-90"
+          },
+          {
+            "phaseAngleDeg": 180,
+            "texturePath": "astraterra:environment/solar-system/mercury-180"
+          }
+        ]
+      }
     },
     {
       "id": "venus",
@@ -59,7 +77,25 @@
       "phaseCoefficient": 0.018,
       "tintR": 1.0,
       "tintG": 0.98,
-      "tintB": 0.90
+      "tintB": 0.90,
+      "disc": {
+        "equatorialDiameterKm": 12104.0,
+        "imageWidthInDiameters": 1.0,
+        "faces": [
+          {
+            "phaseAngleDeg": 0,
+            "texturePath": "astraterra:environment/solar-system/venus-0"
+          },
+          {
+            "phaseAngleDeg": 90,
+            "texturePath": "astraterra:environment/solar-system/venus-90"
+          },
+          {
+            "phaseAngleDeg": 180,
+            "texturePath": "astraterra:environment/solar-system/venus-180"
+          }
+        ]
+      }
     },
     {
       "id": "mars",
@@ -82,7 +118,25 @@
       "phaseCoefficient": 0.016,
       "tintR": 1.0,
       "tintG": 0.55,
-      "tintB": 0.38
+      "tintB": 0.38,
+      "disc": {
+        "equatorialDiameterKm": 6779.0,
+        "imageWidthInDiameters": 1.0,
+        "faces": [
+          {
+            "phaseAngleDeg": 0,
+            "texturePath": "astraterra:environment/solar-system/mars-0"
+          },
+          {
+            "phaseAngleDeg": 90,
+            "texturePath": "astraterra:environment/solar-system/mars-90"
+          },
+          {
+            "phaseAngleDeg": 180,
+            "texturePath": "astraterra:environment/solar-system/mars-180"
+          }
+        ]
+      }
     },
     {
       "id": "jupiter",
@@ -105,7 +159,68 @@
       "phaseCoefficient": 0.005,
       "tintR": 1.0,
       "tintG": 0.93,
-      "tintB": 0.78
+      "tintB": 0.78,
+      "disc": {
+        "equatorialDiameterKm": 142984.0,
+        "imageWidthInDiameters": 1.0,
+        "faces": [
+          {
+            "phaseAngleDeg": 0,
+            "texturePath": "astraterra:environment/solar-system/jupiter-0"
+          },
+          {
+            "phaseAngleDeg": 90,
+            "texturePath": "astraterra:environment/solar-system/jupiter-90"
+          },
+          {
+            "phaseAngleDeg": 180,
+            "texturePath": "astraterra:environment/solar-system/jupiter-180"
+          }
+        ]
+      },
+      "moonPlaneTiltDeg": 3.0,
+      "moons": [
+        {
+          "id": "io",
+          "displayName": "Io",
+          "semiMajorAxisKm": 421700.0,
+          "orbitalPeriodRealDays": 1.769,
+          "diameterKm": 3643.0,
+          "meanLongitudeDeg": 0.0,
+          "brightness": 0.95,
+          "texturePath": "astraterra:environment/solar-system/io"
+        },
+        {
+          "id": "europa",
+          "displayName": "Europa",
+          "semiMajorAxisKm": 671034.0,
+          "orbitalPeriodRealDays": 3.551,
+          "diameterKm": 3122.0,
+          "meanLongitudeDeg": 97.0,
+          "brightness": 0.9,
+          "texturePath": "astraterra:environment/solar-system/europa"
+        },
+        {
+          "id": "ganymede",
+          "displayName": "Ganymede",
+          "semiMajorAxisKm": 1070412.0,
+          "orbitalPeriodRealDays": 7.155,
+          "diameterKm": 5268.0,
+          "meanLongitudeDeg": 211.0,
+          "brightness": 1.0,
+          "texturePath": "astraterra:environment/solar-system/ganymede"
+        },
+        {
+          "id": "callisto",
+          "displayName": "Callisto",
+          "semiMajorAxisKm": 1882709.0,
+          "orbitalPeriodRealDays": 16.689,
+          "diameterKm": 4821.0,
+          "meanLongitudeDeg": 304.0,
+          "brightness": 0.8,
+          "texturePath": "astraterra:environment/solar-system/callisto"
+        }
+      ]
     },
     {
       "id": "saturn",
@@ -128,7 +243,78 @@
       "phaseCoefficient": 0.044,
       "tintR": 0.98,
       "tintG": 0.88,
-      "tintB": 0.66
+      "tintB": 0.66,
+      "disc": {
+        "equatorialDiameterKm": 120536.0,
+        "imageWidthInDiameters": 2.27,
+        "faces": [
+          {
+            "phaseAngleDeg": 0,
+            "texturePath": "astraterra:environment/solar-system/saturn-0"
+          },
+          {
+            "phaseAngleDeg": 90,
+            "texturePath": "astraterra:environment/solar-system/saturn-90"
+          },
+          {
+            "phaseAngleDeg": 180,
+            "texturePath": "astraterra:environment/solar-system/saturn-180"
+          }
+        ]
+      },
+      "moonPlaneTiltDeg": 26.0,
+      "moons": [
+        {
+          "id": "enceladus",
+          "displayName": "Enceladus",
+          "semiMajorAxisKm": 237948.0,
+          "orbitalPeriodRealDays": 1.37,
+          "diameterKm": 504.0,
+          "meanLongitudeDeg": 52.0,
+          "brightness": 0.7,
+          "texturePath": "astraterra:environment/solar-system/enceladus"
+        },
+        {
+          "id": "tethys",
+          "displayName": "Tethys",
+          "semiMajorAxisKm": 294619.0,
+          "orbitalPeriodRealDays": 1.888,
+          "diameterKm": 1062.0,
+          "meanLongitudeDeg": 168.0,
+          "brightness": 0.72,
+          "texturePath": "astraterra:environment/solar-system/tethys"
+        },
+        {
+          "id": "dione",
+          "displayName": "Dione",
+          "semiMajorAxisKm": 377396.0,
+          "orbitalPeriodRealDays": 2.737,
+          "diameterKm": 1123.0,
+          "meanLongitudeDeg": 289.0,
+          "brightness": 0.72,
+          "texturePath": "astraterra:environment/solar-system/dione"
+        },
+        {
+          "id": "rhea",
+          "displayName": "Rhea",
+          "semiMajorAxisKm": 527108.0,
+          "orbitalPeriodRealDays": 4.518,
+          "diameterKm": 1527.0,
+          "meanLongitudeDeg": 24.0,
+          "brightness": 0.78,
+          "texturePath": "astraterra:environment/solar-system/rhea"
+        },
+        {
+          "id": "titan",
+          "displayName": "Titan",
+          "semiMajorAxisKm": 1221870.0,
+          "orbitalPeriodRealDays": 15.945,
+          "diameterKm": 5150.0,
+          "meanLongitudeDeg": 143.0,
+          "brightness": 0.95,
+          "texturePath": "astraterra:environment/solar-system/titan"
+        }
+      ]
     }
   ]
 }

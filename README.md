@@ -95,6 +95,19 @@ The Astrolabe lists every comet whether or not it is here. One that is away read
 
 `.stars comets` reports every comet's state: up now, or how long until it returns.
 
+### Point a telescope at a planet
+
+Raise a telescope on a planet and it stops being a point of light. Each planet is drawn from its own
+photograph, at the width its globe actually subtends -- so Mars swells towards opposition and shrinks
+to a speck on the far side of its orbit -- and showing the face its phase calls for: Venus runs
+through crescent, half and full, with the lit limb turned towards wherever the sun is. Saturn arrives
+with its rings.
+
+Beside Jupiter are the four moons Galileo saw, and beside Saturn are five of its own. They swing back
+and forth on their real orbits, the inner ones over a night and the outer ones over a fortnight, and
+one that passes behind its planet is gone until it comes out the other side. None of it is visible to
+the naked eye: put the glass down and the planets are points of light again.
+
 ### Hang another world in the sky
 
 Some worlds are not planets. A world that is a moon of a gas giant sees that giant instead of a

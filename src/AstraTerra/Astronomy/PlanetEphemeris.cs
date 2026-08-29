@@ -67,6 +67,27 @@ public sealed class PlanetEphemeris : ISkyEphemeris
             + (planet.PhaseCoefficient * GetPhaseAngleDeg(sunDistance, observerDistance, observerPosition.Length));
     }
 
+    /// <summary>
+    /// The sun-planet-observer angle at a world time: 0 when the planet shows a full face, 180 when
+    /// it is a thin crescent between the observer and the sun.
+    /// </summary>
+    /// <remarks>
+    /// Already computed for the magnitude, and needed again by the disc a telescope resolves, which
+    /// picks the face it draws by this angle.
+    /// </remarks>
+    public double PhaseAngleAt(double totalDays)
+    {
+        var julianCenturies = WorldEpoch.GetJulianCenturies(totalDays, daysPerYear);
+        var heliocentric = KeplerianOrbit.GetHeliocentricPosition(planet.Elements, julianCenturies);
+        var observerPosition = KeplerianOrbit.GetHeliocentricPosition(observer, julianCenturies);
+        var geocentric = heliocentric - observerPosition;
+        var sunDistance = heliocentric.Length;
+        var observerDistance = geocentric.Length;
+        return sunDistance <= 0 || observerDistance <= 0
+            ? 0.0
+            : GetPhaseAngleDeg(sunDistance, observerDistance, observerPosition.Length);
+    }
+
     /// <summary>The planet as seen from the observer's orbit, in the ecliptic frame.</summary>
     public EclipticVector GetGeocentricPosition(double totalDays)
     {
