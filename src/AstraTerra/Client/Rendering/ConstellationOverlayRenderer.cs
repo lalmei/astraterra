@@ -16,10 +16,10 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private const double SkyProjectionDistance = 40.0;
     private const float LineDotSpacing = 6.0f;
     private const float LineDotSize = 3.2f;
-    private const float GuidePickRadius = 26.0f;
-    private const float GuideTargetDotSize = 13.0f;
-    private static readonly Vec4f HoverGuideTint = new(0.976f, 0.886f, 0.686f, 0.78f);
-    private static readonly Vec4f DragGuideTint = new(0.980f, 0.702f, 0.529f, 0.78f);
+    private const float StarPickRadius = 26.0f;
+    private const float StarTargetDotSize = 13.0f;
+    private static readonly Vec4f HoverStarTint = new(0.976f, 0.886f, 0.686f, 0.78f);
+    private static readonly Vec4f DragStarTint = new(0.980f, 0.702f, 0.529f, 0.78f);
     private static readonly Vec4f PreviewSegmentTint = new(0.980f, 0.702f, 0.529f, 0.56f);
 
     private readonly ICoreClientAPI api;
@@ -27,14 +27,13 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
     private readonly List<RenderedStar> overlayStars = new(6000);
-    private readonly List<RenderedStar> overlayGuideStars = new(256);
     private readonly Dictionary<int, RenderedStar> overlayStarsByHip = new(6000);
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
-    private IReadOnlyList<ProjectedGuideStar> projectedGuideStars = [];
+    private readonly List<ProjectedStar> projectedStars = new(6000);
     private LoadedTexture pixelTexture;
     private bool renderingDisabledAfterFailure;
-    private int? hoveredGuideHipId;
+    private int? hoveredStarHipId;
     private int? drawStartHipId;
     private int? drawHoverHipId;
     private IReadOnlyList<RenderedScreenSegment> screenSegments = [];
@@ -66,8 +65,8 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         ArgumentNullException.ThrowIfNull(replacement);
         catalog = replacement;
         overlayStars.Clear();
-        overlayGuideStars.Clear();
         overlayStarsByHip.Clear();
+        projectedStars.Clear();
         screenSegments = [];
     }
 
@@ -111,23 +110,23 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     {
         if (!TelescopeScopeState.IsScoped)
         {
-            hoveredGuideHipId = null;
+            hoveredStarHipId = null;
             drawHoverHipId = null;
             return;
         }
 
         if (TelescopeScopeState.Mode != ObservationMode.Draw)
         {
-            hoveredGuideHipId = null;
+            hoveredStarHipId = null;
             drawHoverHipId = null;
             return;
         }
 
-        var guide = PickGuideStar(args.X, args.Y);
-        hoveredGuideHipId = guide?.Hip;
+        var target = PickStar(args.X, args.Y);
+        hoveredStarHipId = target?.Hip;
         if (drawStartHipId is not null)
         {
-            drawHoverHipId = guide?.Hip;
+            drawHoverHipId = target?.Hip;
         }
     }
 
@@ -138,8 +137,8 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
-        var guide = PickGuideStar(args.X, args.Y);
-        drawHoverHipId = guide?.Hip ?? drawHoverHipId;
+        var target = PickStar(args.X, args.Y);
+        drawHoverHipId = target?.Hip ?? drawHoverHipId;
         if (drawStartHipId is int start && drawHoverHipId is int end && start != end)
         {
             bookClient.SendAddEdge(start, end);
@@ -225,18 +224,13 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength),
             overlayStars);
 
-        overlayGuideStars.Clear();
         overlayStarsByHip.Clear();
         foreach (var star in overlayStars)
         {
             overlayStarsByHip[star.Hip] = star;
-            if (star.IsGuideStar)
-            {
-                overlayGuideStars.Add(star);
-            }
         }
 
-        projectedGuideStars = ProjectGuideStars(overlayGuideStars);
+        ProjectStars(overlayStars, projectedStars);
         var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, overlayStarsByHip);
         var nextScreenSegments = new List<RenderedScreenSegment>();
 
@@ -291,19 +285,19 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
     private void DrawTelescopeDrawingFeedback()
     {
-        var hovered = FindProjectedGuide(hoveredGuideHipId);
-        var start = FindProjectedGuide(drawStartHipId);
-        var end = FindProjectedGuide(drawHoverHipId);
+        var hovered = FindProjectedStar(hoveredStarHipId);
+        var start = FindProjectedStar(drawStartHipId);
+        var end = FindProjectedStar(drawHoverHipId);
 
         if (start is not null)
         {
-            DrawGuideTarget(start.Value.X, start.Value.Y, DragGuideTint, GuideTargetDotSize + 4.0f);
+            DrawStarTarget(start.Value.X, start.Value.Y, DragStarTint, StarTargetDotSize + 4.0f);
             DrawSegment(start.Value.X, start.Value.Y, api.Render.FrameWidth / 2f, api.Render.FrameHeight / 2f, PreviewSegmentTint);
         }
 
         if (hovered is not null)
         {
-            DrawGuideTarget(hovered.Value.X, hovered.Value.Y, HoverGuideTint, GuideTargetDotSize);
+            DrawStarTarget(hovered.Value.X, hovered.Value.Y, HoverStarTint, StarTargetDotSize);
         }
 
         if (start is not null && end is not null && start.Value.Hip != end.Value.Hip)
@@ -328,7 +322,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         }
     }
 
-    private void DrawGuideTarget(float x, float y, Vec4f tint, float size)
+    private void DrawStarTarget(float x, float y, Vec4f tint, float size)
     {
         api.Render.Render2DTexture(pixelTexture.TextureId, x - (size / 2f), y - (size / 2f), size, size, 762f, tint);
     }
@@ -365,35 +359,47 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     // the stars themselves do -- under a tree or in a doorway, but not underground.
     private bool HasOpenSkyAbovePlayer() => SkyExposure.CanSeeSky(api);
 
-    private IReadOnlyList<ProjectedGuideStar> ProjectGuideStars(IEnumerable<RenderedStar> stars)
+    /// <summary>
+    /// Screen positions for every star currently drawn, so any of them can anchor a line.
+    /// </summary>
+    /// <remarks>
+    /// Fills a reused buffer with a plain loop for the same reason
+    /// <see cref="StarRenderModel.ProjectVisibleStars(IEnumerable{StarCatalogEntry}, double, double, double, List{RenderedStar}, double, double)"/>
+    /// does: this runs on the render thread over the whole visible sky every frame the scope is up,
+    /// and the LINQ chain it replaced allocated a closure and a list per frame.
+    /// </remarks>
+    private void ProjectStars(List<RenderedStar> stars, List<ProjectedStar> destination)
     {
+        destination.Clear();
         if (cachedViewMatrix is null || cachedProjectionMatrix is null)
         {
-            return [];
+            return;
         }
 
-        return stars.Select(star =>
+        var frameWidth = api.Render.FrameWidth;
+        var frameHeight = api.Render.FrameHeight;
+        for (var index = 0; index < stars.Count; index++)
+        {
+            var star = stars[index];
+            if (TryProject(star.Body, cachedViewMatrix, cachedProjectionMatrix, frameWidth, frameHeight, out var x, out var y))
             {
-                var projected = TryProject(star.Body, cachedViewMatrix, cachedProjectionMatrix, api.Render.FrameWidth, api.Render.FrameHeight, out var x, out var y);
-                return projected ? new ProjectedGuideStar(star.Hip, x, y) : (ProjectedGuideStar?)null;
-            })
-            .Where(star => star is not null)
-            .Select(star => star!.Value)
-            .ToList();
+                destination.Add(new ProjectedStar(star.Hip, x, y));
+            }
+        }
     }
 
     private void ClearInteractionTargets()
     {
-        hoveredGuideHipId = null;
+        hoveredStarHipId = null;
         drawHoverHipId = null;
-        projectedGuideStars = [];
+        projectedStars.Clear();
         screenSegments = [];
     }
 
     private void BeginConnection(MouseEvent args)
     {
-        var guide = PickGuideStar(args.X, args.Y);
-        if (guide is null)
+        var target = PickStar(args.X, args.Y);
+        if (target is null)
         {
             return;
         }
@@ -404,9 +410,9 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
-        drawStartHipId = guide.Value.Hip;
+        drawStartHipId = target.Value.Hip;
         drawHoverHipId = null;
-        hoveredGuideHipId = guide.Value.Hip;
+        hoveredStarHipId = target.Value.Hip;
         args.Handled = true;
     }
 
@@ -455,20 +461,24 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         bookClient.SendRename(constellationId, name);
     }
 
-    private ProjectedGuideStar? PickGuideStar(float mouseX, float mouseY)
+    /// <summary>
+    /// The star nearest the cursor, from every star the player can currently see: a figure may be
+    /// drawn between any two of them, not only the catalog's flagged guide stars.
+    /// </summary>
+    private ProjectedStar? PickStar(float mouseX, float mouseY)
     {
-        var radiusSquared = GuidePickRadius * GuidePickRadius;
-        ProjectedGuideStar? closest = null;
+        var radiusSquared = StarPickRadius * StarPickRadius;
+        ProjectedStar? closest = null;
         var closestDistanceSquared = double.MaxValue;
 
-        foreach (var guide in projectedGuideStars)
+        foreach (var star in projectedStars)
         {
-            var dx = guide.X - mouseX;
-            var dy = guide.Y - mouseY;
+            var dx = star.X - mouseX;
+            var dy = star.Y - mouseY;
             var distanceSquared = (dx * dx) + (dy * dy);
             if (distanceSquared <= radiusSquared && distanceSquared < closestDistanceSquared)
             {
-                closest = guide;
+                closest = star;
                 closestDistanceSquared = distanceSquared;
             }
         }
@@ -496,9 +506,22 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         return closest;
     }
 
-    private ProjectedGuideStar? FindProjectedGuide(int? hipId)
+    private ProjectedStar? FindProjectedStar(int? hipId)
     {
-        return hipId is null ? null : projectedGuideStars.FirstOrDefault(guide => guide.Hip == hipId.Value);
+        if (hipId is not int hip)
+        {
+            return null;
+        }
+
+        foreach (var star in projectedStars)
+        {
+            if (star.Hip == hip)
+            {
+                return star;
+            }
+        }
+
+        return null;
     }
 
     private bool TryProject(
@@ -598,7 +621,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         return true;
     }
 
-    private readonly record struct ProjectedGuideStar(int Hip, float X, float Y);
+    private readonly record struct ProjectedStar(int Hip, float X, float Y);
 
     private readonly record struct RenderedScreenSegment(int ConstellationId, int StartHip, int EndHip, float StartX, float StartY, float EndX, float EndY);
 }

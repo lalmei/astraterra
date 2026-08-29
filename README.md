@@ -56,7 +56,7 @@ Every answer also says what it rests on: `from 3 sightings over 11 days` for a b
 
 ![The Brass Telescope scoped view with a recorded constellation](docs/screenshots/create_constellation.png)
 
-The Brass Telescope provides a scoped observation view with several zoom levels. Draw between guide stars, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.
+The Brass Telescope provides a scoped observation view with several zoom levels. Draw between any two stars you can see, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.
 
 ### Lie down and watch the sky
 

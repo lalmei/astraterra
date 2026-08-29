@@ -280,7 +280,7 @@ public sealed class StarsClientCommands
 
         if (first == second)
         {
-            return "A constellation segment needs two different guide stars.";
+            return "A constellation segment needs two different stars.";
         }
 
         bookClient.SendAddEdge(first, second);

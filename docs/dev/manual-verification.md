@@ -71,7 +71,7 @@
   moving; expected result: the tail stays attached to the comet rather than drifting off it.
 - Put a blank normal book in the left hand and keep ink and quill in inventory.
 - Use `.stars list` before drawing; expected result: no saved constellations for the held book.
-- Scope with the Brass Telescope, switch to Draw mode, and drag from one guide star to another; expected result: a constellation segment is written into the held book and the naming dialog opens.
+- Scope with the Brass Telescope, switch to Draw mode, and drag from one visible star to another; expected result: a constellation segment is written into the held book and the naming dialog opens.
 - Build a known authored sky-culture constellation with `.stars build Ori`.
 - Run `.stars list` and `.stars info selected`.
 - Confirm `.stars info` includes ID, star count, segment count, month window, season summary, and state.
