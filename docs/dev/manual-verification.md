@@ -229,6 +229,23 @@ the host's own client process — a dedicated server hides the bug, since nothin
   result: the server still answers with the real date. Only the client's own display is redacted.
 - Run `.stars calendar full`; expected result: the vanilla date comes straight back.
 
+## Identifying A Wanderer
+
+- Scope in with a telescope in Observe mode, centre a planet, and press sneak; expected result:
+  **nothing happens** — no chat message, no journal entry, no name prompt. The old one-press
+  identification is gone, and sneak in Observe mode is inert.
+- Sight the same planet with the Sextant on two different nights (sneak while sighting, book in the
+  left hand, ink and quill carried); expected result: two dated entries, neither naming a body.
+- Run `.stars sightings`; expected result: the two entries are gathered into one set with the
+  distance between the nights reported.
+- Run `.stars classify set wanderer` with no name; expected result: the conclusion is written down,
+  the response says your instruments call it that from now on, and **the name dialog opens**.
+- Name it, then check the Astrolabe lists it under that name with provenance `from 2 sightings`.
+- Run `.stars classify set wanderer Ares` on the same entries; expected result: the claim is
+  replaced rather than duplicated, and the name changes everywhere.
+- Load a save made before this change that has planets identified the old way; expected result: they
+  still name and aim, reported as `recorded without sightings — low confidence until re-observed`.
+
 ## Result Log
 
 - Equator: pass in manual in-game check; starfield and authored constellation orientation looked correct.

@@ -98,12 +98,13 @@ public sealed class ConstellationBookServer
     }
 
     /// <summary>
-    /// Writes the planet half of the book, leaving the drawn figures alone.
+    /// Names a wanderer the observer has already picked out of their own sightings.
     /// </summary>
     /// <remarks>
-    /// Identifying and naming are separate actions so an observer can write a wanderer down the
-    /// moment they notice it moving and settle on a name afterwards, which is how the constellation
-    /// side already behaves.
+    /// Naming is all that is left here. A wanderer used to enter this half of the book because the
+    /// game recognised one near the crosshair; now it gets in only by being classified out of the
+    /// ledger, so what arrives here is a body the observer has already concluded something about,
+    /// and the only thing outstanding is what to call it.
     /// </remarks>
     private static ConstellationBookResponsePacket HandlePlanetMutation(
         ItemSlot slot,
@@ -122,37 +123,16 @@ public sealed class ConstellationBookServer
         try
         {
             var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
-            var alreadyKnown = journal.IsIdentified(packet.PlanetId);
-            string message;
-            var promptName = string.Empty;
-
-            if (packet.Action == ConstellationBookMutationActions.RenamePlanet)
-            {
-                var record = journal.Rename(packet.PlanetId, packet.Name);
-                message = string.IsNullOrWhiteSpace(record.Name)
-                    ? "Cleared the name of a wandering star."
-                    : $"Named a wandering star {record.Name}.";
-            }
-            else if (alreadyKnown)
-            {
-                // Nothing to write, but the observer plainly wants to revisit the entry.
-                message = $"Already recorded: {journal.DisplayName(packet.PlanetId)}.";
-                promptName = packet.PlanetId;
-            }
-            else
-            {
-                journal.Identify(packet.PlanetId);
-                message = "Recorded a wandering star. It keeps its place among the stars for no more than a night.";
-                promptName = packet.PlanetId;
-            }
+            var record = journal.Rename(packet.PlanetId, packet.Name);
 
             ConstellationBookService.WritePlanetJournal(stack, journal);
             slot.MarkDirty();
             return new ConstellationBookResponsePacket
             {
                 Success = true,
-                Message = message,
-                PromptNamePlanetId = promptName
+                Message = string.IsNullOrWhiteSpace(record.Name)
+                    ? "Cleared the name of a wandering star."
+                    : $"Named a wandering star {record.Name}."
             };
         }
         catch (Exception exception)
@@ -265,7 +245,14 @@ public sealed class ConstellationBookServer
                 Success = true,
                 Message = $"Written down as {SightingClaim.Describe(claim.Class).ToLowerInvariant()}: "
                           + $"{claim.DisplayName}, {claim.Provenance}."
-                          + (bound ? " Your instruments call it that from now on." : string.Empty)
+                          + (bound ? " Your instruments call it that from now on." : string.Empty),
+
+                // Concluding that something is a wanderer is the moment the observer has earned the
+                // right to name it, so that is when the book asks. Naming stays optional: an
+                // unnamed conclusion still stands, and classifying again is how it gets renamed.
+                PromptNamePlanetId = bound && string.IsNullOrWhiteSpace(claim.Name)
+                    ? claim.BoundId!
+                    : string.Empty
             };
         }
         catch (Exception exception)

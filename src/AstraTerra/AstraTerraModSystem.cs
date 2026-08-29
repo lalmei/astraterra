@@ -229,7 +229,7 @@ public sealed class AstraTerraModSystem : ModSystem
         }
 
         SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets);
-        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, planets);
+        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient);
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
         api.Event.MouseDown += constellationOverlayRenderer.OnMouseDown;
@@ -296,7 +296,6 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         planets = replacement;
         SkyStarSunMoonRenderer.ReplacePlanetCatalog(replacement);
-        constellationOverlayRenderer?.ReplacePlanetCatalog(replacement);
         astrolabePlannerRenderer?.ReplacePlanetCatalog(replacement);
         sextantReadingRenderer?.ReplacePlanetCatalog(replacement);
     }

@@ -138,12 +138,13 @@ public sealed class PlanetJournalTests
     }
 
     [Theory]
-    [InlineData(ConstellationBookMutationActions.IdentifyPlanet, true)]
     [InlineData(ConstellationBookMutationActions.RenamePlanet, true)]
     [InlineData(ConstellationBookMutationActions.AddEdge, false)]
     [InlineData(ConstellationBookMutationActions.Rename, false)]
     [InlineData(ConstellationBookMutationActions.Delete, false)]
     [InlineData(ConstellationBookMutationActions.Build, false)]
+    [InlineData(ConstellationBookMutationActions.ClassifySighting, false)]
+    [InlineData("identifyPlanet", false)]
     [InlineData("nonsense", false)]
     public void Only_Planet_Actions_Write_The_Planet_Half_Of_A_Book(string action, bool expected)
     {
