@@ -97,14 +97,18 @@ public static class ConstellationBookMutationActions
     public const string RemoveEdge = "removeEdge";
     public const string Delete = "delete";
     public const string Build = "build";
-    public const string IdentifyPlanet = "identifyPlanet";
     public const string RenamePlanet = "renamePlanet";
     public const string RecordObservation = "recordObservation";
     public const string ClassifySighting = "classifySighting";
 
     /// <summary>Actions that write the planet half of the book rather than the constellation half.</summary>
+    /// <remarks>
+    /// Naming only. A wanderer enters this half of the book by being classified out of the
+    /// observer's own sightings; there is no longer an action that writes an identity down because
+    /// the game recognised something.
+    /// </remarks>
     public static bool IsPlanetAction(string action)
-        => action is IdentifyPlanet or RenamePlanet;
+        => action is RenamePlanet;
 
     /// <summary>Actions that write the ledger of sightings rather than either journal.</summary>
     public static bool IsObservationAction(string action)

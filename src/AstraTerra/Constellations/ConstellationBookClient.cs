@@ -104,15 +104,6 @@ public sealed class ConstellationBookClient
         });
     }
 
-    public void SendIdentifyPlanet(string planetId)
-    {
-        SendMutation(new ConstellationBookMutationPacket
-        {
-            Action = ConstellationBookMutationActions.IdentifyPlanet,
-            PlanetId = planetId
-        });
-    }
-
     public void SendRenamePlanet(string planetId, string? name)
     {
         SendMutation(new ConstellationBookMutationPacket

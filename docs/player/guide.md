@@ -33,7 +33,7 @@ Hold right click to enter the scoped view. While scoped:
 
 - Scroll to change zoom.
 - Middle click to cycle modes.
-- In Observe mode, centre a wandering star and press sneak to write it down and name it.
+- In Observe mode you look and zoom only; the sky is left untouched.
 - In Draw mode, left-drag from one guide star to another to create a segment.
 - In Inspect mode, click a saved constellation segment to name or rename it.
 - In Remove Segment mode, click a saved segment to delete it.
@@ -44,7 +44,9 @@ The telescope still works as a zoom tool when astronomy conditions are not avail
 
 A telescope cannot tell you a planet is a planet — through any eyepiece it stays a point of light, exactly like the stars around it. What gives it away is that it *moves*: chart it over a few nights and it will have shifted against the fixed stars behind it, and that is how the ancients picked them out.
 
-When you are satisfied you have found one, centre it in the eyepiece in Observe mode and press sneak. It goes into your book and you are asked what to call it. Sneak rather than a click, because right click is already holding the scope up. As with drawing constellations, you need a book in your left hand and ink and quill in your inventory.
+So the telescope is not where you identify one, and there is no keypress that does it for you. Sight the light with the Sextant on one night and again on another, so the book holds two dated entries for it. `.stars sightings` then lays the entries out and says how far apart those nights put them, and `.stars classify set wanderer` is where you say what you think it was.
+
+The book takes your word for it. Nothing weighs the conclusion against the sky, because a verdict the game has already marked correct is a quiz rather than a discovery. If your own entries pin the conclusion to one wandering body, the book asks what you would like to call it, and every instrument uses that name from then on. Being wrong is allowed, and it surfaces later as an instrument forecasting badly from the record you gave it.
 
 The name is yours. Nothing in the sky will ever tell you it was called Mars — that name only arrives in a book somebody else already wrote.
 
