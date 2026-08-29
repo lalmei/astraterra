@@ -134,12 +134,38 @@ public sealed class NearBodyRenderModelTests
         var night = NearBodyMeshBuilder.Build([placed], 40f, 1, daylight: 0.0);
         var noon = NearBodyMeshBuilder.Build([placed], 40f, 1, daylight: 1.0);
 
-        Assert.Equal(NearBodyMeshBuilder.VerticesPerBody, night.VerticesCount);
-        Assert.Equal(NearBodyMeshBuilder.IndicesPerBody, night.IndicesCount);
+        var subdivisions = NearBodyMeshBuilder.SubdivisionsFor(placed.Body.Face.DiscFraction);
+        Assert.Equal(NearBodyMeshBuilder.VerticesFor(subdivisions), night.VerticesCount);
+        Assert.Equal(NearBodyMeshBuilder.IndicesFor(subdivisions), night.IndicesCount);
 
         Assert.Equal(255, MinAlpha(night));
         Assert.True(MinAlpha(noon) < 40, $"the unlit side stayed at alpha {MinAlpha(noon)} in daylight");
         Assert.True(MaxAlpha(noon) > 200, "the lit side should still stand against a daytime sky");
+    }
+
+    /// <summary>
+    /// The terminator can only step as finely as the cells it is shaded across, and a ringed giant's
+    /// globe is a fraction of its face. Counting cells over the whole face left six across the globe
+    /// and drew the terminator as a staircase of blocks, so the count follows the globe instead.
+    /// </summary>
+    [Fact]
+    public void A_Globe_Sharing_Its_Face_With_Rings_Still_Gets_A_Fine_Shading_Grid()
+    {
+        // A ring reaching 3.6 planet radii leaves the globe just over a quarter of the face.
+        var withRings = NearBodyMeshBuilder.SubdivisionsFor(1.0 / 3.6);
+        var bare = NearBodyMeshBuilder.SubdivisionsFor(1.0);
+
+        // The cap on total cells bites before the full count is reached at this ring reach, which is
+        // the intended trade: fifty-odd steps across the globe rather than the six it used to get.
+        Assert.True(
+            withRings * (1.0 / 3.6) >= 40.0,
+            $"only {withRings / 3.6:0.0} cells landed across the globe");
+        Assert.True(withRings > bare, "a ringed face needs more cells than a bare one");
+        Assert.InRange(bare, NearBodyMeshBuilder.MinSubdivisions, NearBodyMeshBuilder.MaxSubdivisions);
+        Assert.InRange(
+            NearBodyMeshBuilder.SubdivisionsFor(0.01),
+            NearBodyMeshBuilder.MinSubdivisions,
+            NearBodyMeshBuilder.MaxSubdivisions);
     }
 
     private static int MinAlpha(Vintagestory.API.Client.MeshData mesh)
