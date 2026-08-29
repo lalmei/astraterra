@@ -141,20 +141,39 @@ var polarEquatorDistance = mapSizeZ * 0.5;   // 90 degrees of longitude
     within a long but ordinary journey — which is exactly why the scale and the behaviour need
     deciding together.
 
-## The open question
+## The divergence, and how it is being resolved
 
 Because Vintage Story's sun ignores longitude and AstraTerra's star field does not, travelling east
 or west drifts the stars out of step with the sun that is supposed to anchor them. Three clocks are
 in play and only two agree:
 
-| Clock | Longitude applied? |
-| --- | --- |
-| Vintage Story's sun and daylight | No |
-| AstraTerra's star field | **Yes** |
-| AstraTerra's astrolabe clock | No |
+| Clock | Longitude applied today? | After the decision below |
+| --- | --- | --- |
+| Vintage Story's sun and daylight | No | **Yes** |
+| AstraTerra's star field | **Yes** | Yes |
+| AstraTerra's astrolabe clock | No | **Yes**, as displayed local time |
 
-What longitude *should* do — including whether to keep it at all — is an open design decision. See
-the tracking issue for the options and the current recommendation.
+This was settled on [issue #43](https://github.com/lalmei/astraterra/issues/43) in favour of making
+longitude real: AstraTerra installs its own `OnGetSolarSphericalCoords` that uses `posX`, so the sun,
+daylight and the stars all shift together. The delegate accepts an X coordinate because longitude was
+meant to matter in the original design of this system and the idea was shelved, not rejected.
+
+One amendment came with the decision: **the world's internal clock stays a single universal time**,
+and longitude is applied only to the time a player is *shown*. Nothing about scheduling, save data or
+multiplayer sync changes.
+
+!!! note "This is a large behavioural change, and deliberately so"
+    Day/night timing becomes a function of X for everything downstream of the sun vector — crops,
+    temperature, mob spawning, other mods, and other players on the same server. That cost was
+    weighed and accepted rather than overlooked; it ships behind a config flag so a server owner can
+    keep vanilla's single time zone.
+
+Tracked work: [#122](https://github.com/lalmei/astraterra/issues/122) (the longitude-aware sun),
+[#123](https://github.com/lalmei/astraterra/issues/123) (displayed local time, and what a recorded
+sighting's hour means once the hour depends on where you stand),
+[#124](https://github.com/lalmei/astraterra/issues/124) (longitude by chronometer), and
+[#44](https://github.com/lalmei/astraterra/issues/44), which is now a prerequisite rather than
+something to hold back — at the current scale longitude would be too coarse to notice at all.
 
 ## Related
 
