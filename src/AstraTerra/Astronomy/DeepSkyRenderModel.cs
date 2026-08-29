@@ -34,13 +34,56 @@ public static class DeepSkyRenderModel
         double horizonFadeBandDeg = DefaultHorizonFadeBandDeg,
         double visualHorizonCutoffDeg = DefaultVisualHorizonCutoffDeg)
     {
-        return objects
-            .Select(entry => Project(entry, latitudeDeg, localSiderealDeg, brightnessBias, horizonFadeBandDeg, visualHorizonCutoffDeg))
-            .Where(entry => entry is not null)
-            .Select(entry => entry!)
-            .OrderBy(entry => entry.Brightness)
-            .ThenBy(entry => entry.Id, StringComparer.Ordinal)
-            .ToList();
+        var destination = new List<RenderedDeepSkyObject>();
+        ProjectVisibleObjects(
+            objects,
+            latitudeDeg,
+            localSiderealDeg,
+            brightnessBias,
+            destination,
+            horizonFadeBandDeg,
+            visualHorizonCutoffDeg);
+        return destination;
+    }
+
+    /// <summary>
+    /// Projects into a list the caller already holds, for the render path, which cannot afford a
+    /// fresh one per frame.
+    /// </summary>
+    /// <remarks>
+    /// Dimmest first, then by id. Plates are alpha blended against each other, so unlike the
+    /// additive star batches their draw order is visible where two overlap, and it has to be the
+    /// same order on every frame or an overlap flickers.
+    /// </remarks>
+    public static void ProjectVisibleObjects(
+        IEnumerable<DeepSkyObjectEntry> objects,
+        double latitudeDeg,
+        double localSiderealDeg,
+        double brightnessBias,
+        List<RenderedDeepSkyObject> destination,
+        double horizonFadeBandDeg = DefaultHorizonFadeBandDeg,
+        double visualHorizonCutoffDeg = DefaultVisualHorizonCutoffDeg)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(destination);
+
+        destination.Clear();
+        foreach (var entry in objects)
+        {
+            var projected = Project(entry, latitudeDeg, localSiderealDeg, brightnessBias, horizonFadeBandDeg, visualHorizonCutoffDeg);
+            if (projected is not null)
+            {
+                destination.Add(projected);
+            }
+        }
+
+        destination.Sort(static (left, right) =>
+        {
+            var byBrightness = left.Brightness.CompareTo(right.Brightness);
+            return byBrightness != 0
+                ? byBrightness
+                : string.CompareOrdinal(left.Id, right.Id);
+        });
     }
 
     /// <summary>

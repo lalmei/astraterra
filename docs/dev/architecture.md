@@ -71,7 +71,18 @@ AstraTerra follows the reference sky implementation-style sun/moon render pass:
 - disable depth test/culling during the star pass,
 - use additive/glow blending,
 - batch transient meteor ribbons into one updated mesh,
-- keep orthographic rendering for overlays and labels.
+- keep orthographic rendering for overlays and labels,
+- draw the whole pass with **scene fog switched off**.
+
+The last one is not cosmetic. The standard shader mixes every fragment towards the scene's fog
+colour by `getFogLevel`, and for geometry forty blocks out that mix is `fogMin` plus a distance
+term. In vanilla the night fog colour is dark enough for the result to read as a slight dimming; a
+mod that keeps a bright fog colour after sunset does not tint the sky, it *replaces* it, and the
+starfield comes out as a flat sheet of blue with the deep-sky plates as solid rectangles in it. The
+sky already answers to darkness, moonlight and its own horizon fade for how brightly it draws, so
+`shader.FogDensityIn` and `shader.FogMinIn` are pinned to zero and `RgbaFogIn` to black.
+`BootstrapSmokeTests.The_Sky_Pass_Is_Drawn_Without_Scene_Fog` keeps the scene's fog from finding
+its way back in.
 
 !!! warning "A mesh that is updated every frame must never change size"
     Vintage Story sizes a mesh's GPU buffers from the vertex count of the first `UploadMesh` and
@@ -84,6 +95,22 @@ AstraTerra follows the reference sky implementation-style sun/moon render pass:
     padding out to `MaximumActiveStreaks` with empty, zero-area streak slots. Any new mesh built
     once per frame and updated in place has to do the same.
     `MeteorStreakMeshBuilderTests.Mesh_Size_Does_Not_Change_With_The_Number_Of_Streaks` pins it.
+
+### Nothing on the sky is rebuilt per frame
+
+Every batch the sky draws is held to the projection it was built at and carried forward by
+`SkyResidualRotation`, which turns the whole celestial sphere rigidly about the pole. The
+projections themselves refresh on `StarRefreshThresholdDeg`, a twentieth of a degree, which is a
+handful of times a second rather than sixty.
+
+The deep-sky plates follow the same rule, and hold **one buffer each** rather than sharing one.
+Sharing meant rewriting the same buffer between every pair of draws, and a driver cannot overlap a
+write to a buffer with the read it is about to serve — forty plates up was forty stalls in a row,
+which is where the 200 ms frames came from. Held apart, a frame that changes nothing writes nothing.
+
+The plates keep their own cached angle rather than borrowing the stars', because the star path can
+be switched off, or have nothing above the horizon, on a night when the scope still has photographs
+to draw.
 
 ## Sky Sprites
 
