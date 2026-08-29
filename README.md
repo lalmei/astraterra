@@ -95,6 +95,25 @@ The Astrolabe lists every comet whether or not it is here. One that is away read
 
 `.stars comets` reports every comet's state: up now, or how long until it returns.
 
+### Hang another world in the sky
+
+Some worlds are not planets. A world that is a moon of a gas giant sees that giant instead of a
+moon of its own -- and because such a world is tidally locked to its parent, the giant never rises
+and never sets. It hangs at one spot on the sky forever, tens of degrees across, going through its
+phases as the sun goes round: full near midnight, dark at noon. Sibling moons drift past it at the
+rate the two orbits beat against each other.
+
+AstraTerra does not decide any of that. It draws whatever near bodies a mod hands it through
+`ReplaceNearBodies`: each body's face as a picture, how wide it is, where it hangs, and how fast that
+drifts. The terminator is not painted into that picture -- the renderer shades the disc per vertex
+from the sphere normal and the real sun direction, so a body curves and darkens toward its limb the
+way a globe does. A catalog can also ask Vintage Story's own moon to stand down, which a world with
+no moon of its own should. Only the drawing stops: moonlight, the moon phase the calendar reports,
+and the length of the day are untouched.
+
+[AstraExtera](https://github.com/lalmei/astraextera) is what fills this in today, from the giant it
+authored for your save.
+
 > ### New in v0.5.4: the Milky Way, and a sky you work out for yourself
 >
 > The galaxy's own glow is in the sky. And the instruments stopped handing you answers: what a

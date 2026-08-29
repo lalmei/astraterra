@@ -32,6 +32,8 @@ public sealed class AstraTerraModSystem : ModSystem
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
     private SextantReadingRenderer? sextantReadingRenderer;
     private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
+    private NearBodyRenderer? nearBodyRenderer;
+    private NearBodyCatalog nearBodies = NearBodyCatalog.Empty;
 
     public override void Start(ICoreAPI api)
     {
@@ -206,6 +208,12 @@ public sealed class AstraTerraModSystem : ModSystem
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
         api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
 
+        // Near bodies need no star catalog: a world whose sky is dominated by the planet it orbits
+        // should show that planet whether or not the starfield loaded.
+        nearBodyRenderer = new NearBodyRenderer(api);
+        nearBodyRenderer.Apply(nearBodies);
+        api.Event.RegisterRenderer(nearBodyRenderer, EnumRenderStage.Opaque, "AstraTerraNearBodies");
+
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
         // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
@@ -324,6 +332,22 @@ public sealed class AstraTerraModSystem : ModSystem
         SkyStarSunMoonRenderer.ReplaceMeteorShowers(replacement);
     }
 
+    /// <summary>
+    /// Replaces the bodies near enough to show a disc -- the planet a moon world orbits, and the
+    /// moons that share that orbit -- or passes an empty catalog for an ordinary sky.
+    /// </summary>
+    /// <remarks>
+    /// Vintage Story draws one moon of its own. A world that is itself a moon has none, so the
+    /// catalog can ask for that moon to stand down rather than hang beside a parent planet it has
+    /// nothing to do with. Only the drawing stops: moonlight, the phase the calendar reports, and
+    /// the length of the day are all untouched.
+    /// </remarks>
+    public void ReplaceNearBodies(NearBodyCatalog? replacement)
+    {
+        nearBodies = replacement ?? NearBodyCatalog.Empty;
+        nearBodyRenderer?.Apply(nearBodies);
+    }
+
     public override void StartServerSide(ICoreServerAPI api)
     {
         new ConstellationBookServer(() => catalog).Register(api);
@@ -345,6 +369,7 @@ public sealed class AstraTerraModSystem : ModSystem
         skyDiscFaceHud?.TryClose();
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
+        nearBodyRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;
