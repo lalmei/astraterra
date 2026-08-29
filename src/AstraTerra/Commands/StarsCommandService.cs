@@ -136,13 +136,13 @@ public sealed class StarsCommandService
 
         if (first == second)
         {
-            return "A constellation segment needs two different guide stars.";
+            return "A constellation segment needs two different stars.";
         }
 
         var record = journal.AddEdgeAndMerge(first, second);
         selectedId = record.Id;
         onChanged?.Invoke();
-        return $"Connected guide stars {first} and {second} in constellation #{record.Id}.";
+        return $"Connected stars {first} and {second} in constellation #{record.Id}.";
     }
 
     public string Build(string target)

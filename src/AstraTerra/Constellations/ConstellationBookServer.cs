@@ -284,14 +284,14 @@ public sealed class ConstellationBookServer
     {
         if (startHip == endHip)
         {
-            return MutationResult.Failure("A constellation segment needs two different guide stars.");
+            return MutationResult.Failure("A constellation segment needs two different stars.");
         }
 
         var createsNewConstellation = !journal.Constellations.Any(record =>
             record.Edges.Any(edge => edge.A == startHip || edge.A == endHip || edge.B == startHip || edge.B == endHip));
         var record = journal.AddEdgeAndMerge(startHip, endHip);
         return MutationResult.SuccessResult(
-            $"Connected guide stars {startHip} and {endHip} in constellation #{record.Id}.",
+            $"Connected stars {startHip} and {endHip} in constellation #{record.Id}.",
             createsNewConstellation ? record.Id : 0);
     }
 

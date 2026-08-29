@@ -34,7 +34,7 @@ Hold right click to enter the scoped view. While scoped:
 - Scroll to change zoom.
 - Middle click to cycle modes.
 - In Observe mode you look and zoom only; the sky is left untouched.
-- In Draw mode, left-drag from one guide star to another to create a segment.
+- In Draw mode, left-drag from one visible star to another to create a segment; any star on screen can anchor a line, not just the named guide stars.
 - In Inspect mode, click a saved constellation segment to name or rename it.
 - In Remove Segment mode, click a saved segment to delete it.
 
@@ -251,7 +251,7 @@ Use the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) to find 
 3. Put a blank normal book (or a catalog book from the creative tab) in your left hand and keep ink and quill in your inventory.
 4. Hold right click with the telescope to scope in.
 5. Middle click to switch to Draw mode.
-6. Drag between visible guide stars to create a constellation segment.
+6. Drag between any two visible stars to create a constellation segment.
 7. Run `.stars list` and `.stars info selected` to inspect the saved constellation.
 8. Use the Sextant on a visible star to read its angle above the horizon.
 9. Hold a Calibrated Astrolabe with the written constellation book in your left hand and forecast the constellation's next transit.
