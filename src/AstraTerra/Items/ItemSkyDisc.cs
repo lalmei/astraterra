@@ -115,6 +115,39 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
         {
             Raise(ref renderinfo);
         }
+
+        // Only the raised face turns. Every other disc drawn this frame — the hotbar icon, anything
+        // in an open inventory — asks through this same target and must be left as it lies.
+        if (target == EnumItemRenderTarget.Gui && SkyDiscReadingState.IsDrawingRaisedFace)
+        {
+            TurnInHand(ref renderinfo);
+        }
+    }
+
+    /// <summary>
+    /// Turns the raised disc about its own face, as far as its holder has turned it.
+    /// </summary>
+    /// <remarks>
+    /// The disc lies flat in its own model, so its Y axis is the axis through the middle of the
+    /// face. The GUI transform tips that axis towards the camera, and the tip is applied after this
+    /// turn rather than before it — so a turn about Y is the disc spinning where it is, which is
+    /// what turning a disc in the hand does, rather than the disc rolling away from the eye.
+    /// <para>
+    /// Copied before it is changed, for the reason <see cref="Raise"/> gives: the transform on the
+    /// item is shared by every disc there is.
+    /// </para>
+    /// </remarks>
+    private static void TurnInHand(ref ItemRenderInfo renderinfo)
+    {
+        var turn = SkyDiscReadingState.FaceTurnDeg;
+        if (turn == 0f || renderinfo.Transform is null)
+        {
+            return;
+        }
+
+        var transform = renderinfo.Transform.Clone();
+        transform.Rotation.Y += turn;
+        renderinfo.Transform = transform;
     }
 
     /// <summary>

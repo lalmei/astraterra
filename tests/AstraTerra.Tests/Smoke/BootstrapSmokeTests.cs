@@ -74,6 +74,10 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("AstraTerra.Items.ItemAstrolabe", modSystem);
         Assert.Contains("api.RegisterItemClass(\"AstraTerra.Items.ItemSkyDisc\", typeof(ItemSkyDisc))", modSystem);
         Assert.Contains("SkyDiscReadingState.Reset()", modSystem);
+
+        // The wheel reaches the disc before the hotbar does, and only while the disc is up.
+        Assert.Contains("SkyDiscReadingState.Turn(args.delta > 0 ? 1 : -1)", modSystem);
+        Assert.Contains("api.Event.MouseWheelMove += OnMouseWheelMove", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);
