@@ -5,6 +5,12 @@ namespace AstraTerra.Astronomy;
 /// How bright the body reads, or null when there is no scale to judge it against — the sun and the
 /// moon come straight from Vintage Story and carry no magnitude.
 /// </param>
+/// <param name="AngularRadiusDeg">
+/// Half the width the body shows, or zero for anything that reads as a point. Stars, planets and
+/// comets are points at this scale; a moon world's parent giant is tens of degrees across, and a
+/// sight taken on it has to latch anywhere on the disc rather than only within a reticle of its
+/// centre.
+/// </param>
 public sealed record SightedBody(
     string DisplayName,
     double AzimuthDeg,
@@ -12,7 +18,8 @@ public sealed record SightedBody(
     double DirectionX,
     double DirectionY,
     double DirectionZ,
-    double? VisualMagnitude = null);
+    double? VisualMagnitude = null,
+    double AngularRadiusDeg = 0.0);
 
 /// <summary>
 /// Turns sky objects into a single shape the sextant can sight, so the sun and moon are measured
@@ -87,6 +94,38 @@ public static class SkyBodyModel
             body.DirectionY,
             body.DirectionZ,
             body.VisualMagnitude);
+    }
+
+    /// <summary>
+    /// Sights a near body — the planet a moon world hangs beneath, or a sibling moon crossing that
+    /// sky — carrying the disc's own width so the sight can latch anywhere on it.
+    /// </summary>
+    /// <remarks>
+    /// Named from the catalog rather than from the observer's book, which is where a planet's name
+    /// comes from. A wandering point is a discovery somebody has to make; a giant filling a fifth of
+    /// the sky and never leaving its spot is not something an observer has to work out.
+    /// <para>
+    /// No magnitude: a near body's brightness is the lit fraction of a disc, not a point source's
+    /// place on a stellar scale, so there is nothing honest to write in that column.
+    /// </para>
+    /// </remarks>
+    public static SightedBody FromNearBody(PlacedNearBody placed)
+    {
+        ArgumentNullException.ThrowIfNull(placed);
+
+        var direction = placed.Direction;
+        var azimuthDeg = CelestialMath.NormalizeDegrees(
+            ToDegrees(Math.Atan2(direction.X, -direction.Z)));
+
+        return new SightedBody(
+            placed.Body.DisplayName,
+            azimuthDeg,
+            placed.AltitudeDeg,
+            direction.X,
+            direction.Y,
+            direction.Z,
+            VisualMagnitude: null,
+            AngularRadiusDeg: placed.AngularDiameterDeg * 0.5);
     }
 
     public static SightedBody FromStar(RenderedStar star)

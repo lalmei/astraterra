@@ -165,4 +165,67 @@ public sealed class SkyBodyModelTests
 
         Assert.InRange(altitude, 89.0, 90.0);
     }
+    /// <summary>
+    /// A near body reaches the sextant as the disc it is, carrying its own width: without that the
+    /// sight would only latch within a reticle of the centre of a body tens of degrees across.
+    /// </summary>
+    [Fact]
+    public void A_Near_Body_Sights_As_A_Disc_With_Its_Own_Width()
+    {
+        var placed = NearBodyRenderModel.Place(
+            Giant(),
+            totalDays: 3.0,
+            latitudeDeg: 15.0,
+            localSiderealDeg: 40.0,
+            new SkyDirection(0.0, 1.0, 0.0));
+
+        Assert.NotNull(placed);
+        var sighted = SkyBodyModel.FromNearBody(placed!);
+
+        Assert.Equal("Warden", sighted.DisplayName);
+        Assert.Equal(11.0, sighted.AngularRadiusDeg, 9);
+        Assert.Equal(placed!.AltitudeDeg, sighted.AltitudeDeg, 9);
+        Assert.Equal(placed.Direction.X, sighted.DirectionX, 9);
+        Assert.Equal(placed.Direction.Y, sighted.DirectionY, 9);
+        Assert.Equal(placed.Direction.Z, sighted.DirectionZ, 9);
+
+        // No magnitude: a lit disc has no place on a point source's brightness scale.
+        Assert.Null(sighted.VisualMagnitude);
+    }
+
+    /// <summary>Azimuth has to come out on the same convention every other sighting uses.</summary>
+    [Fact]
+    public void A_Near_Body_Reports_Azimuth_Clockwise_From_North()
+    {
+        var placed = NearBodyRenderModel.Place(
+            Giant(),
+            totalDays: 0.0,
+            latitudeDeg: 0.0,
+            localSiderealDeg: 0.0,
+            new SkyDirection(0.0, 1.0, 0.0));
+
+        Assert.NotNull(placed);
+        var sighted = SkyBodyModel.FromNearBody(placed!);
+        var fromDirection = SkyBodyModel.FromWorldDirection(
+            "Warden",
+            placed!.Direction.X,
+            placed.Direction.Y,
+            placed.Direction.Z);
+
+        Assert.NotNull(fromDirection);
+        Assert.Equal(fromDirection!.AzimuthDeg, sighted.AzimuthDeg, 9);
+        Assert.Equal(fromDirection.AltitudeDeg, sighted.AltitudeDeg, 6);
+    }
+
+    private static NearBodyEntry Giant()
+        => new(
+            "parent",
+            "Warden",
+            NearBodyKind.ParentPlanet,
+            AngularDiameterDeg: 22.0,
+            HourAngleDeg: 20.0,
+            HourAngleRateDegPerDay: 0.0,
+            DeclinationDeg: 5.0,
+            Brightness: 1.0,
+            new NearBodyFace(2, new int[4], DiscFraction: 1.0));
 }

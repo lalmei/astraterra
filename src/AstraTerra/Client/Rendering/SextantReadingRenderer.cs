@@ -12,7 +12,6 @@ namespace AstraTerra.Client.Rendering;
 public sealed class SextantReadingRenderer : IRenderer
 {
     private const double SkyProjectionDistance = 40.0;
-    private const double TargetRadiusPixels = 44.0;
     private const float ReadingTopOffset = 64.0f;
 
     private readonly ICoreClientAPI api;
@@ -25,6 +24,7 @@ public sealed class SextantReadingRenderer : IRenderer
     private double planetModelHoursPerDay;
     private CometRenderModel? cometModel;
     private int cometModelDaysPerYear;
+    private NearBodyCatalog nearBodies = NearBodyCatalog.Empty;
     private double[]? cachedViewMatrix;
     private double[]? cachedProjectionMatrix;
     private readonly ConstellationBookClient? bookClient;
@@ -37,13 +37,15 @@ public sealed class SextantReadingRenderer : IRenderer
     /// <param name="planetCatalog">Null when the planet catalog failed to load. Everything else still sights.</param>
     /// <param name="cometCatalog">Null when the comet catalog failed to load. Everything else still sights.</param>
     /// <param name="bookClient">Null when there is no book channel. Sighting still reads; it just cannot be written down.</param>
+    /// <param name="nearBodies">Empty on a world with an ordinary sky, which is most of them.</param>
     public SextantReadingRenderer(
         ICoreClientAPI api,
         AstraTerraConfig config,
         StarCatalog? catalog,
         PlanetCatalog? planetCatalog = null,
         CometCatalog? cometCatalog = null,
-        ConstellationBookClient? bookClient = null)
+        ConstellationBookClient? bookClient = null,
+        NearBodyCatalog? nearBodies = null)
     {
         this.api = api;
         this.config = config;
@@ -51,6 +53,7 @@ public sealed class SextantReadingRenderer : IRenderer
         this.planetCatalog = planetCatalog;
         this.cometCatalog = cometCatalog;
         this.bookClient = bookClient;
+        this.nearBodies = nearBodies ?? NearBodyCatalog.Empty;
     }
 
     public double RenderOrder => 0.99;
@@ -79,6 +82,12 @@ public sealed class SextantReadingRenderer : IRenderer
         cometCatalog = replacement;
         cometModel = null;
         cometModelDaysPerYear = 0;
+    }
+
+    /// <summary>See <see cref="AstraTerraModSystem.ReplaceNearBodies"/>.</summary>
+    public void ReplaceNearBodies(NearBodyCatalog? replacement)
+    {
+        nearBodies = replacement ?? NearBodyCatalog.Empty;
     }
 
     public void OnMouseDown(MouseEvent args)
@@ -137,7 +146,9 @@ public sealed class SextantReadingRenderer : IRenderer
         {
             status = CanSightStars()
                 ? "Sextant: align with a star, the sun, or the moon"
-                : "Sextant: align with the sun or the moon";
+                : nearBodies.Bodies.Count > 0
+                    ? "Sextant: align with the sun, the moon, or a body overhead"
+                    : "Sextant: align with the sun or the moon";
             return null;
         }
 
@@ -216,6 +227,12 @@ public sealed class SextantReadingRenderer : IRenderer
     /// game actually draws. Both are sightable whenever they are up, which is what lets the moon be
     /// shot in daylight; only the star catalog needs a dark sky.
     /// </summary>
+    /// <remarks>
+    /// Near bodies sight in daylight for the same reason the sun and moon do: they are drawn in
+    /// daylight. A parent giant tens of degrees wide is the most conspicuous thing in a moon world's
+    /// sky at noon, and an instrument that could not be pointed at it would be refusing the one
+    /// sight that world offers. So they are collected above the dark-sky gate, not inside it.
+    /// </remarks>
     private IEnumerable<SightedBody> CollectSightableBodies()
     {
         var calendar = api.World.Calendar;
@@ -228,17 +245,17 @@ public sealed class SextantReadingRenderer : IRenderer
             yield return sun;
         }
 
-        var moonVector = calendar.GetMoonPosition(position.XYZ, calendar.TotalDays);
-        var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
-        if (moon is not null && moon.AltitudeDeg > 0)
+        // A moon world has no moon of its own, and the near-body pass has already taken Vintage
+        // Story's off the sky. Sighting it anyway would hand back an angle to a body that is not
+        // there to be seen.
+        if (!NearBodyRenderer.HidesVanillaMoon)
         {
-            yield return moon;
-        }
-
-        // The null check is redundant with CanSightStars, but the compiler cannot see through it.
-        if (catalog is null || !CanSightStars())
-        {
-            yield break;
+            var moonVector = calendar.GetMoonPosition(position.XYZ, calendar.TotalDays);
+            var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
+            if (moon is not null && moon.AltitudeDeg > 0)
+            {
+                yield return moon;
+            }
         }
 
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
@@ -248,6 +265,25 @@ public sealed class SextantReadingRenderer : IRenderer
             Math.Max(1, calendar.DaysPerYear),
             Math.Max(1.0, calendar.HoursPerDay),
             longitude);
+
+        // Placed exactly as the near-body pass places them, off the same catalog, so the sight lands
+        // on the disc that is drawn rather than near it.
+        var placedNearBodies = NearBodyRenderModel.Place(
+            nearBodies,
+            calendar.TotalDays,
+            latitude,
+            localSiderealAngle,
+            new SkyDirection(sunVector.X, sunVector.Y, sunVector.Z));
+        foreach (var placed in placedNearBodies)
+        {
+            yield return SkyBodyModel.FromNearBody(placed);
+        }
+
+        // The null check is redundant with CanSightStars, but the compiler cannot see through it.
+        if (catalog is null || !CanSightStars())
+        {
+            yield break;
+        }
 
         var visibleStars = StarRenderModel.ProjectVisibleStars(
             catalog.Stars,
@@ -269,13 +305,12 @@ public sealed class SextantReadingRenderer : IRenderer
         var comets = ResolveCometModel(Math.Max(1, calendar.DaysPerYear));
         if (comets is not null)
         {
-            var cometSunVector = calendar.GetSunPosition(position.XYZ, calendar.TotalDays);
             var visibleComets = comets.ProjectVisibleComets(
                 calendar.TotalDays,
                 latitude,
                 localSiderealAngle,
                 config.StarBrightnessBias,
-                new SkyDirection(cometSunVector.X, cometSunVector.Y, cometSunVector.Z),
+                new SkyDirection(sunVector.X, sunVector.Y, sunVector.Z),
                 visualHorizonCutoffDeg: 0.0);
             foreach (var comet in visibleComets)
             {
@@ -355,9 +390,11 @@ public sealed class SextantReadingRenderer : IRenderer
     {
         var centerX = api.Render.FrameWidth / 2f;
         var centerY = api.Render.FrameHeight / 2f;
-        var radiusSquared = TargetRadiusPixels * TargetRadiusPixels;
-        SightedBody? closest = null;
-        var closestDistanceSquared = double.MaxValue;
+        var pixelsPerDegree = SightingTargetPolicy.PixelsPerDegree(
+            cachedProjectionMatrix![5],
+            api.Render.FrameHeight);
+        SightedBody? best = null;
+        SightingTargetPolicy.TargetRank? bestRank = null;
 
         foreach (var body in bodies)
         {
@@ -368,15 +405,19 @@ public sealed class SextantReadingRenderer : IRenderer
 
             var dx = x - centerX;
             var dy = y - centerY;
-            var distanceSquared = (dx * dx) + (dy * dy);
-            if (distanceSquared <= radiusSquared && distanceSquared < closestDistanceSquared)
+            var rank = SightingTargetPolicy.Rank(
+                Math.Sqrt((dx * dx) + (dy * dy)),
+                body.AngularRadiusDeg * pixelsPerDegree);
+            if (rank is null || (bestRank is not null && rank.Value.CompareTo(bestRank.Value) >= 0))
             {
-                closest = body;
-                closestDistanceSquared = distanceSquared;
+                continue;
             }
+
+            best = body;
+            bestRank = rank;
         }
 
-        return closest;
+        return best;
     }
 
     private bool IsReadingSextant()
