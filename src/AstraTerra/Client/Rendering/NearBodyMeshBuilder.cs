@@ -135,6 +135,34 @@ public static class NearBodyMeshBuilder
         return (float)Math.Clamp(NightSideLight + ((1.0 - NightSideLight) * lit * limb), 0.0, 1.0);
     }
 
+    /// <summary>
+    /// How much of the sun the face sees at one point, with no limb darkening and no night-side
+    /// floor: 1 where the sun is up over that point, 0 where it has set, and a soft edge between.
+    /// </summary>
+    /// <remarks>
+    /// This is what daylight fades the body by, and it is deliberately not the brightness. Fading by
+    /// brightness would take the limb's own darkening with it and eat a translucent ring out of the
+    /// planet's edge against a bright sky -- which is a hole in the silhouette, not a shadow.
+    /// </remarks>
+    public static float LitFractionAt(
+        double faceX,
+        double faceY,
+        double sunRight,
+        double sunUp,
+        double sunToward,
+        double illuminatedFraction)
+    {
+        var distanceSquared = (faceX * faceX) + (faceY * faceY);
+        if (distanceSquared > 1.0)
+        {
+            return (float)Math.Clamp(illuminatedFraction, 0.0, 1.0);
+        }
+
+        var toward = Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared));
+        var lambert = (faceX * sunRight) + (faceY * sunUp) + (toward * sunToward);
+        return (float)Math.Clamp((lambert + TerminatorSoftness) / (2.0 * TerminatorSoftness), 0.0, 1.0);
+    }
+
     private static void Add(MeshData meshData, PlacedNearBody placed, float radius, double daylight, int subdivisions)
     {
         var direction = placed.Direction;
@@ -172,8 +200,17 @@ public static class NearBodyMeshBuilder
                 var shade = (int)Math.Clamp(light * 255f, 0f, 255f);
 
                 // Opaque at night, so the disc occults the stars behind it; by day only what is lit
-                // stands against the sky.
-                var opacity = (int)Math.Clamp((light + (1.0 - daylight)) * 255.0, 0.0, 255.0);
+                // stands against the sky. Fading follows how much sun the point sees, never its
+                // brightness -- brightness carries the limb's darkening, and fading by that would
+                // eat a translucent ring out of the planet's own edge.
+                var covered = LitFractionAt(
+                    offsetRight / discFraction,
+                    offsetUp / discFraction,
+                    sunRight,
+                    sunUp,
+                    sunToward,
+                    placed.IlluminatedFraction);
+                var opacity = (int)Math.Clamp((covered + (1.0 - daylight)) * 255.0, 0.0, 255.0);
 
                 meshData.AddVertexWithFlags(
                     centerX + (rightX * halfSize * offsetRight) + (upX * halfSize * offsetUp),
