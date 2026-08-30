@@ -411,6 +411,15 @@ public sealed class AstraTerraModSystem : ModSystem
             return;
         }
 
+        // A disc is turned in the hand, not zoomed or wound forward: the wheel spins it about its
+        // own face so a mark can be brought round to where its owner is looking.
+        if (SkyDiscReadingState.IsReading)
+        {
+            SkyDiscReadingState.Turn(args.delta > 0 ? 1 : -1);
+            args.SetHandled(true);
+            return;
+        }
+
         if (!AstrolabeReadingState.IsReading || clientApi is null)
         {
             return;

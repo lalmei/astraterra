@@ -10,7 +10,8 @@ namespace AstraTerra.Client.Rendering;
 /// <remarks>
 /// A scratch is the whole of what this instrument says, and at arm's length it is a few pixels. So
 /// the disc comes up big, drawn from the stack in hand — what is on the screen is this disc, with
-/// this disc's marks, rather than a picture of one.
+/// this disc's marks, rather than a picture of one. The wheel turns it, the way a disc in the hand
+/// is turned to bring a mark round to the eye.
 /// <para>
 /// It is a HUD rather than a plain overlay renderer because drawing an itemstack goes through the
 /// GUI shader, and that shader is only in use while dialogs are being drawn. The same call from a
@@ -25,11 +26,12 @@ namespace AstraTerra.Client.Rendering;
 public sealed class SkyDiscFaceHud : HudElement
 {
     /// <summary>
-    /// How much of the screen's height the raised disc takes, and how low it sits. The whole rim has
-    /// to be on the screen: the rim is where the marks are, and a disc drawn any larger than this
-    /// puts the part worth reading past the edges of the view.
+    /// How much of the screen's height the raised disc takes, and how low it sits. The rim is where
+    /// the marks are, so the disc is drawn as large as the view will hold it: at this fraction the
+    /// whole of it still clears the top of the screen and the bottom, and nothing worth reading
+    /// falls past an edge.
     /// </summary>
-    private const float HeightFraction = 0.34f;
+    private const float HeightFraction = 0.68f;
 
     private const float SinkFraction = 0.55f;
 
@@ -60,16 +62,29 @@ public sealed class SkyDiscFaceHud : HudElement
         }
 
         var size = capi.Render.FrameHeight * HeightFraction;
-        capi.Render.RenderItemstackToGui(
-            slot,
-            capi.Render.FrameWidth / 2.0,
-            capi.Render.FrameHeight - (size * SinkFraction),
-            100.0,
-            (float)size,
-            ColorUtil.WhiteArgb,
-            deltaTime,
-            true,
-            false,
-            false);
+
+        // The disc's turn belongs to this one drawing of it. The item, and the GUI transform the
+        // turn is applied to, are shared by every disc on the screen — the hotbar icon included —
+        // so the item is told that the raised face is what it is being asked for, and untold again
+        // the moment the call returns.
+        SkyDiscReadingState.BeginDrawingRaisedFace();
+        try
+        {
+            capi.Render.RenderItemstackToGui(
+                slot,
+                capi.Render.FrameWidth / 2.0,
+                capi.Render.FrameHeight - (size * SinkFraction),
+                100.0,
+                (float)size,
+                ColorUtil.WhiteArgb,
+                deltaTime,
+                true,
+                false,
+                false);
+        }
+        finally
+        {
+            SkyDiscReadingState.EndDrawingRaisedFace();
+        }
     }
 }
