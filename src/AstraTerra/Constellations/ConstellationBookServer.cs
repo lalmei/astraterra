@@ -11,6 +11,7 @@ public sealed class ConstellationBookServer
     public const string ChannelName = "astraterraconstellationbook";
 
     private readonly Func<StarCatalog?> catalogProvider;
+    private ICoreServerAPI? api;
     private IServerNetworkChannel? channel;
 
     public ConstellationBookServer(Func<StarCatalog?> catalogProvider)
@@ -20,6 +21,7 @@ public sealed class ConstellationBookServer
 
     public void Register(ICoreServerAPI api)
     {
+        this.api = api;
         channel = api.Network.RegisterChannel(ChannelName)
             .RegisterMessageType<ConstellationBookMutationPacket>()
             .RegisterMessageType<ConstellationBookResponsePacket>();
@@ -64,7 +66,24 @@ public sealed class ConstellationBookServer
         var bookTitle = wasConstellationBook
             ? slot.Itemstack.Attributes.GetString(ConstellationBookService.VanillaTitleAttribute, null)
             : null;
-        var journal = ConstellationBookService.ReadJournalOrEmpty(slot.Itemstack);
+        var journalRead = ConstellationBookService.ReadJournalResult(slot.Itemstack);
+        if (journalRead.Status == ConstellationJournalReadStatus.Unreadable)
+        {
+            var titleForLog = string.IsNullOrWhiteSpace(bookTitle)
+                ? ConstellationBookService.BookTitle
+                : bookTitle;
+            api?.Logger.Error(
+                "AstraTerra refused to edit unreadable constellation book '{0}' "
+                + "(journalJsonLength={1}): {2}",
+                titleForLog,
+                journalRead.JsonLength,
+                journalRead.Exception);
+            return Error(
+                "This constellation book's contents could not be read. "
+                + "The edit was refused to avoid overwriting them.");
+        }
+
+        var journal = journalRead.Journal ?? new ConstellationJournal();
         var legacyMigrationAccepted = false;
 
         if (!wasConstellationBook && TryReadLegacyJournal(packet.LegacyJournalJson, out var legacyJournal))

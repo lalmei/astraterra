@@ -30,6 +30,29 @@ public sealed class ConstellationBookServiceTests
     }
 
     [Fact]
+    public void Journal_Read_Distinguishes_An_Absent_Journal_From_An_Unreadable_One()
+    {
+        var attributes = new TreeAttribute();
+
+        var absent = ConstellationBookService.ReadJournalResult(attributes);
+
+        Assert.Equal(ConstellationJournalReadStatus.Absent, absent.Status);
+        Assert.Null(absent.Journal);
+        Assert.Null(absent.Exception);
+
+        const string corruptJson = "{not-json";
+        attributes.SetString(ConstellationBookService.JournalJsonAttribute, corruptJson);
+
+        var unreadable = ConstellationBookService.ReadJournalResult(attributes);
+
+        Assert.Equal(ConstellationJournalReadStatus.Unreadable, unreadable.Status);
+        Assert.Null(unreadable.Journal);
+        Assert.NotNull(unreadable.Exception);
+        Assert.Equal(corruptJson.Length, unreadable.JsonLength);
+        Assert.Equal(corruptJson, attributes.GetString(ConstellationBookService.JournalJsonAttribute));
+    }
+
+    [Fact]
     public void WriteObservationLog_Stores_A_Dated_Ledger_Page()
     {
         var log = new ObservationLog();
