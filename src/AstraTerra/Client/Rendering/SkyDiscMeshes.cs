@@ -6,7 +6,7 @@ using Vintagestory.API.Common;
 namespace AstraTerra.Client.Rendering;
 
 /// <summary>
-/// Builds the disc the way its owner scratched it: gold on the rim wherever the sun was marked.
+/// Builds the disc the way its owner scratched it: a mark cut into it wherever the sun was seen.
 /// </summary>
 /// <remarks>
 /// The band lives on the itemstack, so two discs of the same item are different objects and must be
@@ -14,8 +14,11 @@ namespace AstraTerra.Client.Rendering;
 /// and kept against a name for exactly what it looks like — a disc that has not been scratched since
 /// the last frame is never rebuilt, and two discs marked alike share one model.
 /// <para>
-/// The marks are geometry rather than a texture, for the same reason the rim is: this is a
-/// scratched object, and gold sitting proud of a bronze face is what the real artefact does.
+/// A mark is a scratch, so it is drawn as the tarnish of a line cut through the surface rather than
+/// as anything standing on it. It is still geometry, because a disc's marks differ per stack and a
+/// texture on the shape is the same for every disc — but the geometry is a decal: a hairline the
+/// width of a scratch, flush with the surface it is cut into. Inlaying gold into those cuts is the
+/// disc owner's own later work, and nothing here presumes it has been done.
 /// </para>
 /// </remarks>
 public sealed class SkyDiscMeshes : IDisposable
@@ -26,9 +29,8 @@ public sealed class SkyDiscMeshes : IDisposable
     private const double SunriseRadius = 4.66;
 
     // A scratch is a line cut across the surface, not an object put on it. So a mark is a hairline in
-    // width, long enough radially to run out past both edges of the band it belongs to, and it lies
-    // flush with the surface it is cut into — barely proud of it, and no taller.
-    // Standing one up turns it into a token sitting on the disc, which is exactly what it is not.
+    // width and long enough radially to run out past both edges of the band it belongs to. The two
+    // the band stops at are the same cut carried further — longer, never taller.
     private const double MarkWidth = 0.14;
     private const double MarkLength = 2.4;
     private const double EdgeMarkLength = 3.4;
@@ -42,12 +44,18 @@ public sealed class SkyDiscMeshes : IDisposable
     /// <summary>Sunk below the surface, so a mark reads as cut through it rather than laid on it.</summary>
     private const double MarkDepth = 0.08;
 
-    private const double MarkHeight = 0.04;
+    /// <summary>
+    /// How far a mark's own top stands above the surface it is cut into: a hair, and no more. It
+    /// cannot be nothing — two faces at one height flicker against each other — but at this height
+    /// the eye reads a line in the surface rather than a ridge on it.
+    /// </summary>
+    private const double MarkProud = 0.01;
 
-    /// <summary>The two the band stops at: the same cut, carried further, never taller.</summary>
-    private const double EdgeMarkHeight = 0.07;
-
-    private const string MarkTexture = "gold";
+    /// <summary>
+    /// The tarnish of a fresh cut, not an ornament. Gold is what a disc's owner puts into a mark
+    /// afterwards, so a mark is not born gold.
+    /// </summary>
+    private const string MarkTexture = "bronze-dark";
     private const string ShapePath = "astraterra:shapes/item/sky-disc.json";
 
     private readonly ICoreClientAPI api;
@@ -238,7 +246,7 @@ public sealed class SkyDiscMeshes : IDisposable
     }
 
     /// <summary>
-    /// One gold mark, laid on the rim where the sun went down.
+    /// One mark, cut into the disc where the sun was seen.
     /// </summary>
     /// <remarks>
     /// The rim segments on the shape are placed by their own corners and merely turned to sit square
@@ -257,7 +265,7 @@ public sealed class SkyDiscMeshes : IDisposable
         var surface = sunset ? BodyTop : SunriseRimTop;
         var length = mark.IsEdge ? EdgeMarkLength : MarkLength;
         var floor = surface - MarkDepth;
-        var ceiling = surface + (mark.IsEdge ? EdgeMarkHeight : MarkHeight);
+        var ceiling = surface + MarkProud;
         var radians = mark.NotchDeg * Math.PI / 180.0;
         var centreX = 8.0 + (radius * Math.Sin(radians));
         var centreZ = 8.0 + (radius * Math.Cos(radians));
@@ -270,9 +278,9 @@ public sealed class SkyDiscMeshes : IDisposable
         element.RotationY = mark.NotchDeg;
         element.Children = null;
 
-        // Clone() copies the array but not the faces in it, and these have to carry the ornament
-        // texture without the notch they were copied from taking it too. A face the template does
-        // not have stays absent here, which is what the empty slots in the array mean.
+        // Clone() copies the array but not the faces in it, and these have to carry the scratch
+        // texture without the rim segment they were copied from taking it too. A face the template
+        // does not have stays absent here, which is what the empty slots in the array mean.
         var templateFaces = template.FacesResolved ?? [];
         var faces = new ShapeElementFace[templateFaces.Length];
         for (var face = 0; face < faces.Length; face++)

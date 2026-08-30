@@ -54,7 +54,7 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_A_Gold_Sun_Cluster()
+    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_A_Gold_Sun()
     {
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
         var root = document.RootElement;
@@ -72,8 +72,9 @@ public sealed class SkyDiscAssetTests
         // The mesh builder copies this one to make a mark, so it has to be there.
         Assert.Contains("sunrise-rim-segment-01", names);
 
-        Assert.Contains("gold-sun-centre", names);
-        Assert.Equal(9, names.Count(name => name.StartsWith("gold-", StringComparison.Ordinal)));
+        // The sun, and nothing radiating from it: a disc carries the marks its owner cut, and a
+        // fixed spray of rays is decoration nobody on the disc is responsible for.
+        Assert.Equal(["gold-sun-centre"], names.Where(name => name.StartsWith("gold-", StringComparison.Ordinal)));
 
         // Round, not stepped: every row of the body is cut to a circle of radius seven about (8, 8),
         // to within the half unit a row's own depth allows.
