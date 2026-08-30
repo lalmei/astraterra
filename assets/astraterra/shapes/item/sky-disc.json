@@ -16,12 +16,17 @@
   "gold": [
    16,
    16
+  ],
+  "figure": [
+   32,
+   32
   ]
  },
  "textures": {
   "bronze": "game:block/metal/plate/tinbronze",
   "bronze-dark": "game:block/metal/tarnished/tinbronze",
-  "gold": "game:block/metal/plate/gold"
+  "gold": "game:block/metal/plate/gold",
+  "figure": "astraterra:item/sky-disc-figure"
  },
  "elements": [
   {
@@ -2648,6 +2653,37 @@
     }
    },
    "rotationY": 337.5
+  },
+  {
+   "name": "figure-plate",
+   "from": [
+    4.85,
+    0.8,
+    4.85
+   ],
+   "to": [
+    11.15,
+    0.81,
+    11.15
+   ],
+   "rotationOrigin": [
+    4.85,
+    0.8,
+    4.85
+   ],
+   "faces": {
+    "up": {
+     "texture": "#figure",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "autoUv": false,
+     "snapUv": false
+    }
+   }
   }
  ],
  "animations": []

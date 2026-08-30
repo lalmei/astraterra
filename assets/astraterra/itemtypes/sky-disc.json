@@ -82,8 +82,7 @@
     },
     "engravedFiguresByType": {
       "*-clay": 0,
-      "*-copper": 1,
-      "*": 2
+      "*": 1
     }
   },
   "creativeinventory": {

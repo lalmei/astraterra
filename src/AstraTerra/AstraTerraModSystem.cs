@@ -28,6 +28,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ICoreClientAPI? clientApi;
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
+    private SkyDiscEngraveClient? skyDiscEngraveClient;
     private SkyDiscFaceHud? skyDiscFaceHud;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
     private SextantReadingRenderer? sextantReadingRenderer;
@@ -232,6 +233,9 @@ public sealed class AstraTerraModSystem : ModSystem
         skyDiscFaceHud = new SkyDiscFaceHud(api);
         skyDiscFaceHud.TryOpen();
 
+        skyDiscEngraveClient = new SkyDiscEngraveClient(api);
+        skyDiscEngraveClient.Register();
+
         sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient, nearBodies);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
@@ -244,7 +248,7 @@ public sealed class AstraTerraModSystem : ModSystem
         }
 
         SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets);
-        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient);
+        constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, skyDiscEngraveClient);
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
         api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
         api.Event.MouseDown += constellationOverlayRenderer.OnMouseDown;
@@ -359,6 +363,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void StartServerSide(ICoreServerAPI api)
     {
         new ConstellationBookServer(() => catalog).Register(api);
+        new SkyDiscEngraveServer().Register(api);
         new StarsServerCommands(() => catalog, () => planets).Register(api);
         api.Logger.Event("AstraTerra startup step: server commands registered: /stars debug/goto-lat/give-catalog/give-zodiac");
     }
