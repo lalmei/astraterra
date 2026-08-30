@@ -13,13 +13,19 @@ namespace AstraTerra.Astronomy;
 /// terminator -- the mesh does that per vertex -- but it is what a moon's brightness in the
 /// landscape should follow.
 /// </param>
+/// <param name="SeparationRatio">
+/// How far off the body is, as a multiple of the parent's distance. One for a body that has no
+/// orbit to work it out from, which is also where the parent itself sits, so a sibling round the
+/// far side comes out above one and is drawn behind the parent.
+/// </param>
 public sealed record PlacedNearBody(
     NearBodyEntry Body,
     SkyDirection Direction,
     SkyDirection SunDirection,
     double AltitudeDeg,
     double AngularDiameterDeg,
-    double IlluminatedFraction
+    double IlluminatedFraction,
+    double SeparationRatio = 1.0
 );
 
 /// <summary>
@@ -38,6 +44,13 @@ public static class NearBodyRenderModel
     /// allowed on top: a body tens of degrees wide is still half up with its centre well under.
     /// </summary>
     public const double HorizonCutoffDeg = -2.0;
+
+    /// <summary>
+    /// The closest two bodies are allowed to come before the drawn size stops growing. Hill
+    /// separation keeps real siblings orders of magnitude further apart than this; it is here so
+    /// nothing divides by zero.
+    /// </summary>
+    public const double MinSeparationRatio = 1e-3;
 
     public static IReadOnlyList<PlacedNearBody> Place(
         NearBodyCatalog catalog,
@@ -61,8 +74,15 @@ public static class NearBodyRenderModel
             }
         }
 
-        // Farthest first, so a sibling moon passing in front of the parent planet is drawn over it.
-        placed.Sort(static (a, b) => b.AngularDiameterDeg.CompareTo(a.AngularDiameterDeg));
+        // Farthest first, so a sibling passing in front of the parent planet is drawn over it and
+        // one round the far side goes behind it. Depth is off in this pass, so the order is the
+        // occultation. Bodies at the same distance fall back to the wider one first, which is the
+        // parent when nothing carries an orbit.
+        placed.Sort(static (a, b) =>
+        {
+            var byDistance = b.SeparationRatio.CompareTo(a.SeparationRatio);
+            return byDistance != 0 ? byDistance : b.AngularDiameterDeg.CompareTo(a.AngularDiameterDeg);
+        });
         return placed;
     }
 
@@ -75,13 +95,15 @@ public static class NearBodyRenderModel
     {
         ArgumentNullException.ThrowIfNull(body);
 
+        var separation = SeparationRatio(body, totalDays);
+        var angularDiameter = body.AngularDiameterDeg / separation;
         var rightAscension = RightAscensionDeg(body, totalDays, localSiderealDeg);
         var horizontal = CelestialMath.GetHorizontalCoordinates(
             rightAscension,
             body.DeclinationDeg,
             latitudeDeg,
             localSiderealDeg);
-        if (horizontal.AltitudeDeg < HorizonCutoffDeg - (body.AngularDiameterDeg * 0.5))
+        if (horizontal.AltitudeDeg < HorizonCutoffDeg - (angularDiameter * 0.5))
         {
             return null;
         }
@@ -93,8 +115,9 @@ public static class NearBodyRenderModel
             direction,
             sunDirection,
             horizontal.AltitudeDeg,
-            body.AngularDiameterDeg,
-            IlluminatedFraction(direction, sunDirection));
+            angularDiameter,
+            IlluminatedFraction(direction, sunDirection),
+            separation);
     }
 
     /// <summary>
@@ -104,8 +127,75 @@ public static class NearBodyRenderModel
     public static double RightAscensionDeg(NearBodyEntry body, double totalDays, double localSiderealDeg)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var hourAngle = body.HourAngleDeg + (body.HourAngleRateDegPerDay * totalDays);
-        return CelestialMath.NormalizeDegrees(localSiderealDeg - hourAngle);
+        return CelestialMath.NormalizeDegrees(localSiderealDeg - HourAngleDeg(body, totalDays));
+    }
+
+    /// <summary>Where the body hangs at this moment, measured west from the meridian.</summary>
+    public static double HourAngleDeg(NearBodyEntry body, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        if (body.Orbit is not { } orbit)
+        {
+            return body.HourAngleDeg + (body.HourAngleRateDegPerDay * totalDays);
+        }
+
+        return orbit.AnchorHourAngleDeg + ElongationDeg(orbit.DistanceRatio, PhaseDeg(orbit, totalDays));
+    }
+
+    /// <summary>How far round its own orbit past the observer the sibling has come.</summary>
+    public static double PhaseDeg(NearBodyOrbit orbit, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(orbit);
+        return orbit.PhaseDeg + (orbit.PhaseRateDegPerDay * totalDays);
+    }
+
+    /// <summary>
+    /// How far from the parent the sibling appears, measured in the orbital plane and signed the way
+    /// hour angle runs.
+    /// </summary>
+    /// <remarks>
+    /// The sibling sits at <c>q</c> parent-distances round from the observer and the parent sits one
+    /// distance away, so what the observer sees is the difference of those two: a circle of radius
+    /// <c>q</c> centred one unit off. When <c>q</c> is under one that circle does not enclose the
+    /// observer, and the sibling is penned in about the parent to a greatest elongation of
+    /// <c>asin(q)</c> -- Venus's whole behaviour, and the reason an inner sibling cannot cross the
+    /// midnight sky. When <c>q</c> is over one the circle does enclose the observer, the elongation
+    /// runs right round, and it does so fastest at opposition rather than at a flat rate. A sibling
+    /// infinitely far out is the sun: one turn per day, evenly.
+    /// </remarks>
+    public static double ElongationDeg(double distanceRatio, double phaseDeg)
+    {
+        var phase = phaseDeg * Math.PI / 180.0;
+        var elongation = Math.Atan2(
+            distanceRatio * Math.Sin(phase),
+            1.0 - (distanceRatio * Math.Cos(phase)));
+        return elongation * 180.0 / Math.PI;
+    }
+
+    /// <summary>
+    /// How far off the body is right now, as a multiple of the parent's distance. One for a body
+    /// with no orbit, which puts it level with the parent.
+    /// </summary>
+    public static double SeparationRatio(NearBodyEntry body, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return body.Orbit is { } orbit
+            ? SeparationRatio(orbit.DistanceRatio, PhaseDeg(orbit, totalDays))
+            : 1.0;
+    }
+
+    /// <summary>
+    /// The observer-to-sibling distance over the observer-to-parent distance: the third side of the
+    /// triangle the two orbits make. Floored well inside any Hill-separated pair, so nothing can
+    /// divide by a distance of zero.
+    /// </summary>
+    public static double SeparationRatio(double distanceRatio, double phaseDeg)
+    {
+        var phase = phaseDeg * Math.PI / 180.0;
+        var squared = 1.0
+            + (distanceRatio * distanceRatio)
+            - (2.0 * distanceRatio * Math.Cos(phase));
+        return Math.Max(Math.Sqrt(Math.Max(squared, 0.0)), MinSeparationRatio);
     }
 
     /// <summary>

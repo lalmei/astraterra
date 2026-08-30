@@ -237,6 +237,154 @@ public sealed class NearBodyRenderModelTests
         Assert.Equal(NearBodyMeshBuilder.NightSideLight + (0.95f * (float)Illuminated), wellOut, 3);
     }
 
+    /// <summary>
+    /// A sibling closer to the parent than the observer is bound to it the way Venus is bound to the
+    /// sun: it swings back and forth about the parent, reaches a greatest elongation of
+    /// <c>asin(q)</c>, and never gets any further. Sending it round the whole sky at a flat rate --
+    /// which is all an hour angle and a rate can do -- put moons in the midnight sky that physically
+    /// cannot leave the planet's face.
+    /// </summary>
+    [Theory]
+    [InlineData(0.26)]
+    [InlineData(0.44)]
+    [InlineData(0.9)]
+    public void An_Inner_Sibling_Is_Penned_In_About_The_Parent(double distanceRatio)
+    {
+        const double AnchorDeg = 40.0;
+        var greatestElongation = Math.Asin(distanceRatio) * 180.0 / Math.PI;
+        var sibling = Sibling(new NearBodyOrbit(AnchorDeg, distanceRatio, PhaseDeg: 0.0, PhaseRateDegPerDay: 720.0));
+
+        var reached = 0.0;
+        for (var step = 0; step <= 2000; step++)
+        {
+            var offset = NearBodyRenderModel.HourAngleDeg(sibling, step / 1000.0) - AnchorDeg;
+            Assert.InRange(Math.Abs(offset), 0.0, greatestElongation + 1e-9);
+            reached = Math.Max(reached, Math.Abs(offset));
+        }
+
+        Assert.Equal(greatestElongation, reached, 1);
+    }
+
+    /// <summary>
+    /// An outer sibling does go right round -- the observer laps the parent inside it -- but not at
+    /// the flat rate the old model drew: it hangs near the parent while it is far off and swings
+    /// through fastest when it passes closest.
+    /// </summary>
+    [Fact]
+    public void An_Outer_Sibling_Goes_Right_Round_And_Fastest_When_It_Passes_Close()
+    {
+        var orbit = new NearBodyOrbit(AnchorHourAngleDeg: 0.0, DistanceRatio: 1.3, PhaseDeg: 0.0, PhaseRateDegPerDay: -360.0);
+        var sibling = Sibling(orbit);
+
+        // Phase zero puts it on the far side of the parent, so it draws opposite the parent.
+        Assert.Equal(180.0, Math.Abs(NearBodyRenderModel.ElongationDeg(1.3, 0.0)), 9);
+
+        // One full turn of phase carries the elongation one full turn round the sky.
+        var swept = 0.0;
+        var previous = NearBodyRenderModel.HourAngleDeg(sibling, 0.0);
+        for (var step = 1; step <= 3600; step++)
+        {
+            var now = NearBodyRenderModel.HourAngleDeg(sibling, step / 3600.0);
+            var delta = CelestialMath.NormalizeDegrees(now - previous);
+            swept += delta > 180.0 ? delta - 360.0 : delta;
+            previous = now;
+        }
+
+        // Phase runs backwards for an outer sibling, and the sky offset runs forwards: one turn west.
+        Assert.Equal(360.0, swept, 6);
+
+        // Closest approach is phase zero, opposite the parent; the swing there outruns the crawl it
+        // does half a turn later, when it is round behind the parent and at its furthest.
+        var nearRate = ElongationStep(1.3, 1.0, -1.0);
+        var farRate = ElongationStep(1.3, 181.0, 179.0);
+        Assert.True(nearRate > 3.0 * farRate, $"{nearRate} against {farRate}");
+    }
+
+    /// <summary>
+    /// The sun is the limiting case of a sibling infinitely far out, and it has to come back as the
+    /// plain one-turn-a-day it always was.
+    /// </summary>
+    [Fact]
+    public void A_Sibling_Infinitely_Far_Out_Is_The_Sun()
+    {
+        var distant = new NearBodyOrbit(0.0, DistanceRatio: 1e7, PhaseDeg: 0.0, PhaseRateDegPerDay: -360.0);
+        var sun = Sibling(distant);
+
+        Assert.Equal(180.0, HourAngle(sun, 0.0), 4);
+        Assert.Equal(270.0, HourAngle(sun, 0.25), 4);
+        Assert.Equal(324.0, HourAngle(sun, 0.4), 4);
+    }
+
+    /// <summary>
+    /// A sibling's distance swings over a synodic period, so a disc drawn at one fixed width is
+    /// wrong at both ends of it. Inner or outer, the width has to follow the distance.
+    /// </summary>
+    [Fact]
+    public void A_Siblings_Disc_Follows_How_Far_Off_It_Is()
+    {
+        Assert.Equal(0.75, NearBodyRenderModel.SeparationRatio(0.25, 0.0), 9);
+        Assert.Equal(1.25, NearBodyRenderModel.SeparationRatio(0.25, 180.0), 9);
+        Assert.Equal(0.5, NearBodyRenderModel.SeparationRatio(1.5, 0.0), 9);
+        Assert.Equal(2.5, NearBodyRenderModel.SeparationRatio(1.5, 180.0), 9);
+
+        var sibling = Sibling(new NearBodyOrbit(0.0, DistanceRatio: 0.25, PhaseDeg: 0.0, PhaseRateDegPerDay: 360.0))
+            with { AngularDiameterDeg = 1.5 };
+        var sun = new SkyDirection(0.0, -1.0, 0.0);
+
+        var closest = NearBodyRenderModel.Place(sibling, 0.0, LatitudeDeg, 0.0, sun);
+        var farthest = NearBodyRenderModel.Place(sibling, 0.5, LatitudeDeg, 0.0, sun);
+
+        Assert.NotNull(closest);
+        Assert.NotNull(farthest);
+        Assert.Equal(1.5 / 0.75, closest.AngularDiameterDeg, 9);
+        Assert.Equal(1.5 / 1.25, farthest.AngularDiameterDeg, 9);
+    }
+
+    /// <summary>
+    /// Half of an inner sibling's circuit is spent behind the parent, where the parent's own globe
+    /// hides it. Depth testing is off in this pass, so being hidden is a matter of being drawn
+    /// first.
+    /// </summary>
+    [Fact]
+    public void A_Sibling_Round_The_Far_Side_Is_Drawn_Behind_The_Parent()
+    {
+        var giant = Parent(0.0, 0.0) with { Id = "giant", AngularDiameterDeg = 22.0 };
+        var sibling = Sibling(new NearBodyOrbit(0.0, DistanceRatio: 0.3, PhaseDeg: 180.0, PhaseRateDegPerDay: 360.0))
+            with { Id = "sibling", AngularDiameterDeg = 0.6 };
+        var catalog = new NearBodyCatalog(NearBodyCatalog.CurrentSchemaVersion, true, [sibling, giant]);
+        var sun = new SkyDirection(0.0, -1.0, 0.0);
+
+        // Phase 180 is round the far side of the parent: the parent is drawn over it.
+        Assert.Equal(
+            ["sibling", "giant"],
+            NearBodyRenderModel.Place(catalog, 0.0, LatitudeDeg, 0.0, sun).Select(static body => body.Body.Id));
+
+        // Half a turn later it is between the observer and the parent, transiting its face.
+        Assert.Equal(
+            ["giant", "sibling"],
+            NearBodyRenderModel.Place(catalog, 0.5, LatitudeDeg, 0.0, sun).Select(static body => body.Body.Id));
+    }
+
+    private static double HourAngle(NearBodyEntry body, double totalDays)
+        => CelestialMath.NormalizeDegrees(NearBodyRenderModel.HourAngleDeg(body, totalDays));
+
+    private static double ElongationStep(double distanceRatio, double fromPhase, double toPhase)
+    {
+        var step = CelestialMath.NormalizeDegrees(
+            NearBodyRenderModel.ElongationDeg(distanceRatio, fromPhase)
+            - NearBodyRenderModel.ElongationDeg(distanceRatio, toPhase));
+        return Math.Abs(step > 180.0 ? step - 360.0 : step);
+    }
+
+    private static NearBodyEntry Sibling(NearBodyOrbit orbit)
+        => Parent(orbit.AnchorHourAngleDeg, 0.0) with
+        {
+            Id = "sibling",
+            Kind = NearBodyKind.Moon,
+            AngularDiameterDeg = 0.6,
+            Orbit = orbit
+        };
+
     private static PlacedNearBody Placed(SkyDirection direction, SkyDirection sun, double illuminated)
         => new(
             Parent(0.0, 0.0),

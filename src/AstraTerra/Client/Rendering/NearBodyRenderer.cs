@@ -37,6 +37,13 @@ public sealed class NearBodyRenderer : IRenderer
     /// <summary>How far the sun may move before the shading is redone: a tenth of a degree.</summary>
     private const double SunTolerance = 0.0017;
 
+    /// <summary>
+    /// How much a body may swell or shrink before its mesh is rebuilt. A sibling's distance changes
+    /// over a synodic period, so its disc breathes; held to the same fraction of a degree its
+    /// position is.
+    /// </summary>
+    private const double SizeTolerance = 0.003;
+
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, BodyPass> passes = new(StringComparer.Ordinal);
     private readonly float[] modelMatrix = IdentityModelMatrix();
@@ -237,6 +244,7 @@ public sealed class NearBodyRenderer : IRenderer
         private SkyDirection lastDirection;
         private SkyDirection lastSun;
         private double lastDaylight = -1.0;
+        private double lastAngularDiameter = -1.0;
 
         public BodyPass(ICoreClientAPI api, NearBodyEntry body)
         {
@@ -273,6 +281,7 @@ public sealed class NearBodyRenderer : IRenderer
                 lastDirection = placed.Direction;
                 lastSun = placed.SunDirection;
                 lastDaylight = daylight;
+                lastAngularDiameter = placed.AngularDiameterDeg;
             }
 
             shader.Tex2D = texture.TextureId;
@@ -303,6 +312,7 @@ public sealed class NearBodyRenderer : IRenderer
         /// </remarks>
         private bool HasMoved(PlacedNearBody placed, double daylight)
             => Math.Abs(daylight - lastDaylight) > 0.01
+               || Math.Abs(placed.AngularDiameterDeg - lastAngularDiameter) > SizeTolerance
                || Separation(placed.Direction, lastDirection) > PositionTolerance
                || Separation(placed.SunDirection, lastSun) > SunTolerance;
 
