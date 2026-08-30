@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AstraTerra.Observation;
 using Xunit;
 
@@ -100,6 +102,83 @@ public sealed class SkyDiscAssetTests
         var textures = root.GetProperty("textures");
         Assert.Equal("game:block/metal/plate/tinbronze", textures.GetProperty("bronze").GetString());
         Assert.Equal("game:block/metal/plate/gold", textures.GetProperty("gold").GetString());
+    }
+
+    [Fact]
+    public void A_Mark_Runs_From_The_Rim_Outwards_And_Stops_Inside_The_Disc()
+    {
+        // The marks are built in code against the shape authored here, so the two have to be checked
+        // against each other: a mark that starts short of the rim floats, and one that runs long
+        // hangs off the edge of the disc.
+        var meshes = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyDiscMeshes.cs"));
+        var inner = Constant(meshes, "MarkInnerRadius");
+        var longest = Math.Max(Constant(meshes, "MarkLength"), Constant(meshes, "EdgeMarkLength"));
+
+        using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
+        var elements = document.RootElement.GetProperty("elements").EnumerateArray().ToList();
+
+        // Every mark starts at the rim, whichever band it belongs to: inside the rim's outer face,
+        // so no bare face shows between the two, and outside its inner one, so it is not on the rim.
+        var rim = elements
+            .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
+                .StartsWith("sunrise-rim-segment-", StringComparison.Ordinal))
+            .Select(Footprint)
+            .ToList();
+
+        Assert.NotEmpty(rim);
+        Assert.InRange(inner, rim.Min(box => Radius(box, nearest: true)), rim.Max(box => Radius(box, nearest: false)));
+
+        // And stops inside the disc at every bearing. The body is stepped, so its edge is closer to
+        // the centre at some bearings than others, and the closest of them is the one that counts.
+        var body = elements
+            .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
+                .StartsWith("body-", StringComparison.Ordinal))
+            .Select(Footprint)
+            .ToList();
+
+        Assert.NotEmpty(body);
+        Assert.True(
+            inner + longest < body.Min(box => Radius(box, nearest: true)),
+            $"A mark reaching {inner + longest} runs off a disc whose nearest edge is at {body.Min(box => Radius(box, nearest: true))}.");
+    }
+
+    /// <summary>The value of a <c>private const double</c> on a source file, by name.</summary>
+    private static double Constant(string source, string name)
+    {
+        var match = Regex.Match(source, @"const double " + Regex.Escape(name) + @" = (-?[\d.]+);");
+        Assert.True(match.Success, $"{name} is no longer a double constant on SkyDiscMeshes.");
+
+        return double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>An element's extent in the disc's plane, as (x1, z1, x2, z2) about the centre.</summary>
+    private static (double X1, double Z1, double X2, double Z2) Footprint(JsonElement element)
+    {
+        var from = element.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+        var to = element.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+
+        return (from[0] - 8.0, from[2] - 8.0, to[0] - 8.0, to[2] - 8.0);
+    }
+
+    /// <summary>
+    /// How far a box reaches from the centre of the disc: its nearest corner, or its furthest.
+    /// </summary>
+    /// <remarks>
+    /// The rim segments are turned about their own centres, which leaves every corner the same
+    /// distance out as it was, so unturned corners answer the question for a turned box too.
+    /// </remarks>
+    private static double Radius((double X1, double Z1, double X2, double Z2) box, bool nearest)
+    {
+        double[] corners =
+        [
+            Math.Sqrt((box.X1 * box.X1) + (box.Z1 * box.Z1)),
+            Math.Sqrt((box.X2 * box.X2) + (box.Z1 * box.Z1)),
+            Math.Sqrt((box.X1 * box.X1) + (box.Z2 * box.Z2)),
+            Math.Sqrt((box.X2 * box.X2) + (box.Z2 * box.Z2)),
+        ];
+
+        return nearest ? corners.Min() : corners.Max();
     }
 
     [Fact]
