@@ -33,6 +33,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private SextantReadingRenderer? sextantReadingRenderer;
     private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
     private NearBodyRenderer? nearBodyRenderer;
+    private MoonDiscRenderer? moonDiscRenderer;
     private NearBodyCatalog nearBodies = NearBodyCatalog.Empty;
 
     public override void Start(ICoreAPI api)
@@ -214,6 +215,12 @@ public sealed class AstraTerraModSystem : ModSystem
         nearBodyRenderer.Apply(nearBodies);
         api.Event.RegisterRenderer(nearBodyRenderer, EnumRenderStage.Opaque, "AstraTerraNearBodies");
 
+        // The moon needs no star catalog either: it draws what Vintage Story's own calendar already
+        // says, from AstraTerra's photographs of the real one. Registered after the near bodies so
+        // that a moon world, which has no moon, wins the argument over the vanilla disc.
+        moonDiscRenderer = new MoonDiscRenderer(api, config);
+        api.Event.RegisterRenderer(moonDiscRenderer, EnumRenderStage.Opaque, "AstraTerraMoonDisc");
+
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
         // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
@@ -371,6 +378,7 @@ public sealed class AstraTerraModSystem : ModSystem
         SkyLyingState.Reset();
         skyCoordinateGridRenderer?.Dispose();
         nearBodyRenderer?.Dispose();
+        moonDiscRenderer?.Dispose();
         if (clientApi is not null && constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;

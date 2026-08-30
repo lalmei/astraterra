@@ -108,6 +108,14 @@ and forth on their real orbits, the inner ones over a night and the outer ones o
 one that passes behind its planet is gone until it comes out the other side. None of it is visible to
 the naked eye: put the glass down and the planets are points of light again.
 
+### The moon, from photographs
+
+Vintage Story's moon steps aside for eight photographs of the real one, turning through its phases as
+the calendar says it should, with the bright limb pointing at the sun wherever the sun is. It is drawn
+smaller than the game's own moon and larger than the real one -- about four times life size, which is
+where a moon that reads properly by eye and a moon that fits in an eyepiece meet -- so a telescope
+raised on it shows craters and maria rather than a bigger smooth disc. The moonlight, the phase the game reports and the length of the night are untouched.
+
 ### Hang another world in the sky
 
 Some worlds are not planets. A world that is a moon of a gas giant sees that giant instead of a
