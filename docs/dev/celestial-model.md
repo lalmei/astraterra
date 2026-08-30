@@ -406,17 +406,12 @@ the calendar's, read fresh each frame — so anything that moves the game's moon
 | Where | `GetMoonPosition(pos, totalDays)` |
 | Which of the eight faces | `MoonPhaseExact`, rounded on a month that wraps |
 | Which way up | The bright limb turns to the sun: `MoonDiscModel.RightAxis` |
-| How wide | `AngularDiameterDeg`: four times the half degree the moon really subtends |
+| How wide | `AngularDiameterDeg`: 7°, matching Vintage Story's own disc |
 
-The size is a compromise between two wrong answers, and it is set by the eyepiece. Vintage Story's
-own moon is about **7°** across — 256 quad units at `moonScale * 1.1`, hung at distance 50 — which is
-thirteen times life size and roughly what everyone pictures a moon as. The true half degree beside it
-reads as a pinprick. But 7° overflows the precision telescope's field, so a scope raised on it would
-show a crop of the surface rather than the moon, and the supplied pictures are only a couple of
-hundred pixels across, which is already less than a moon that size wants.
-
-`SizeExaggeration = 3.85` is where those meet: substantial to the naked eye, and about half the field
-at the highest magnification. Raising it further wants higher-resolution faces first.
+Vintage Story's own moon is about **7°** across — 256 quad units at `moonScale * 1.1`, hung at distance
+50. `AngularDiameterDeg = 7.0` keeps the replacement photograph at that familiar apparent size. This
+is about thirteen times the real moon's half-degree diameter, and it overflows the precision
+telescope's field at high magnification, so a scope raised on it shows a crop of the lunar surface.
 
 !!! warning "The night side is black, and black is a hole in a daytime sky"
     Each face is a full disc with its dark side painted in, which is what the moon is: after dark it

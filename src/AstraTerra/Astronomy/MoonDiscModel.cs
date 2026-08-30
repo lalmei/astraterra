@@ -17,8 +17,8 @@ public sealed record MoonPhaseFace(string Id, string DisplayName, bool LitOnRigh
 /// <para>
 /// Vintage Story already decides where the moon is and what phase it is in — the calendar reports
 /// both, moonlight follows them, and nothing here changes any of that. What this replaces is the
-/// picture: eight photographs of the real moon in place of the game's own disc, on a disc sized by
-/// what a telescope raised on it should show.
+/// picture: eight photographs of the real moon in place of the game's own disc, at the same apparent
+/// width as the disc it replaces.
 /// </para>
 /// <para>
 /// Nothing in here draws or touches the game. It is the arithmetic between the calendar's moon and a
@@ -27,28 +27,11 @@ public sealed record MoonPhaseFace(string Id, string DisplayName, bool LitOnRigh
 /// </remarks>
 public static class MoonDiscModel
 {
-    /// <summary>The angle the moon really subtends: half a degree, and famously smaller than anyone remembers.</summary>
-    public const double TrueAngularDiameterDeg = 0.52;
-
     /// <summary>
-    /// How much larger than life the moon is drawn.
+    /// How wide the moon is drawn: the roughly seven-degree apparent diameter of Vintage Story's
+    /// own moon, which is what this picture replaces and what the telescope then magnifies.
     /// </summary>
-    /// <remarks>
-    /// A compromise between two sizes that are both wrong. Vintage Story's own moon is about seven
-    /// degrees across — thirteen times life size, which is roughly what everyone pictures a moon as
-    /// and is why the true angle reads as a pinprick beside it. But seven degrees overflows the
-    /// precision telescope's field entirely, so a scope raised on it would show a crop of the surface
-    /// rather than the moon, and the pictures are only a couple of hundred pixels across, which is
-    /// already less than a moon that size wants.
-    /// <para>
-    /// Four times life is what those meet at: substantial to the naked eye, and about half the field
-    /// at the highest magnification, which is the view an eyepiece actually gives.
-    /// </para>
-    /// </remarks>
-    public const double SizeExaggeration = 3.85;
-
-    /// <summary>How wide the moon is drawn, which is what the telescope then magnifies.</summary>
-    public const double AngularDiameterDeg = TrueAngularDiameterDeg * SizeExaggeration;
+    public const double AngularDiameterDeg = 7.0;
 
     /// <summary>
     /// Below this altitude the moon is not drawn. Its own radius is allowed on top of the horizon,
