@@ -32,6 +32,47 @@ public enum NearBodyKind
 public sealed record NearBodyFace(int Size, int[] RgbaPixels, double DiscFraction);
 
 /// <summary>
+/// A near body that goes round the same body the observer's world goes round: a sibling moon
+/// circling the parent planet, seen from a world circling it too.
+/// </summary>
+/// <remarks>
+/// <para>
+/// An hour angle and a rate can only ever send a body right round the sky, and only the outer
+/// siblings do that. A sibling closer in than the observer is bound to the parent the way Venus is
+/// bound to the sun: its direction swings back and forth about the parent and never leaves it, out
+/// to an elongation of <c>asin(DistanceRatio)</c> and no further. That is not a rate, so it is
+/// described here as the orbit it comes from and worked out per frame.
+/// </para>
+/// <para>
+/// Both orbits are taken as circular and coplanar, which is what regular satellites of a giant are
+/// to well inside anything the eye catches at this distance.
+/// </para>
+/// </remarks>
+/// <param name="AnchorHourAngleDeg">
+/// Hour angle of the body being circled, which for a locked world is a constant: the parent planet
+/// hangs at one spot and everything else is placed relative to it.
+/// </param>
+/// <param name="DistanceRatio">
+/// The sibling's orbit over the observer's, both about the parent. Below one for an inner sibling,
+/// above one for an outer one.
+/// </param>
+/// <param name="PhaseDeg">
+/// How far ahead of the observer the sibling sits on its orbit at day zero. Zero puts it on the
+/// line between the observer and the parent -- transiting the parent when it is inside the
+/// observer's orbit, and opposite the parent in the sky when it is outside.
+/// </param>
+/// <param name="PhaseRateDegPerDay">
+/// How fast that lead changes, in world days: <c>360 * (observerPeriod / siblingPeriod - 1)</c>.
+/// Negative for an outer sibling, which falls behind.
+/// </param>
+public sealed record NearBodyOrbit(
+    double AnchorHourAngleDeg,
+    double DistanceRatio,
+    double PhaseDeg,
+    double PhaseRateDegPerDay
+);
+
+/// <summary>
 /// A body near enough to show a disc rather than a point: the planet a moon world hangs beneath, or
 /// a sibling moon crossing that world's sky.
 /// </summary>
@@ -50,7 +91,10 @@ public sealed record NearBodyFace(int Size, int[] RgbaPixels, double DiscFractio
 /// </remarks>
 /// <param name="AngularDiameterDeg">
 /// How wide the whole image draws, rings included -- not the globe alone. A parent giant seen from a
-/// close moon is tens of degrees across, which is the point of drawing it at all.
+/// close moon is tens of degrees across, which is the point of drawing it at all. For a body with an
+/// <paramref name="Orbit"/> this is the width at the parent's own distance, and the drawn width
+/// follows the distance from there: a sibling passing close swells, and one round the far side of
+/// the parent shrinks.
 /// </param>
 /// <param name="HourAngleDeg">
 /// Hour angle at day zero, measured west from the meridian the way
@@ -59,6 +103,11 @@ public sealed record NearBodyFace(int Size, int[] RgbaPixels, double DiscFractio
 /// <param name="HourAngleRateDegPerDay">
 /// How fast that hour angle drifts. Zero holds the body still over the ground, which is what tidal
 /// locking looks like from the surface.
+/// </param>
+/// <param name="Orbit">
+/// Set when the body circles the parent rather than drifting at a flat rate. It supersedes
+/// <paramref name="HourAngleDeg"/> and <paramref name="HourAngleRateDegPerDay"/>, which then only
+/// record where the body starts and how fast it comes round on average.
 /// </param>
 /// <param name="Brightness">
 /// How bright the lit face draws, 0 to 1. A dark rocky moon sits well below a fresh-ice one.
@@ -72,7 +121,8 @@ public sealed record NearBodyEntry(
     double HourAngleRateDegPerDay,
     double DeclinationDeg,
     double Brightness,
-    NearBodyFace Face
+    NearBodyFace Face,
+    NearBodyOrbit? Orbit = null
 );
 
 /// <summary>
