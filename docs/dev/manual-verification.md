@@ -202,6 +202,10 @@
 - Save and reload after selecting a constellation and changing telescope mode/zoom.
 - Confirm the constellation journal persists.
 - Confirm selected constellation, last mode, and zoom are restored from the per-world client state file.
+- Put invalid JSON in a written book's `astraterraJournalJson` attribute, then try to draw a segment.
+  Expected result: the edit is refused with an overwrite-protection message, the attribute is
+  unchanged, and the server log identifies the book title and JSON length without printing its
+  contents.
 
 ## Multiplayer
 

@@ -6,6 +6,19 @@ using Vintagestory.API.Datastructures;
 
 namespace AstraTerra.Constellations;
 
+public enum ConstellationJournalReadStatus
+{
+    Absent,
+    Success,
+    Unreadable
+}
+
+public sealed record ConstellationJournalReadResult(
+    ConstellationJournalReadStatus Status,
+    ConstellationJournal? Journal,
+    int JsonLength,
+    Exception? Exception);
+
 public static class ConstellationBookService
 {
     public const string BookTitle = "AstraTerra Constellation Journal";
@@ -93,23 +106,39 @@ public static class ConstellationBookService
     }
 
     public static ConstellationJournal? ReadJournal(ItemStack? stack)
-        => stack?.Attributes is null ? null : ReadJournal(stack.Attributes);
+        => ReadJournalResult(stack).Journal;
 
     public static ConstellationJournal? ReadJournal(ITreeAttribute attributes)
+        => ReadJournalResult(attributes).Journal;
+
+    public static ConstellationJournalReadResult ReadJournalResult(ItemStack? stack)
+        => stack?.Attributes is null
+            ? AbsentJournalResult()
+            : ReadJournalResult(stack.Attributes);
+
+    public static ConstellationJournalReadResult ReadJournalResult(ITreeAttribute attributes)
     {
         var json = attributes.GetString(JournalJsonAttribute, null);
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            return AbsentJournalResult();
         }
 
         try
         {
-            return ConstellationPersistence.Deserialize(json);
+            return new ConstellationJournalReadResult(
+                ConstellationJournalReadStatus.Success,
+                ConstellationPersistence.Deserialize(json),
+                json.Length,
+                null);
         }
-        catch
+        catch (Exception exception)
         {
-            return null;
+            return new ConstellationJournalReadResult(
+                ConstellationJournalReadStatus.Unreadable,
+                null,
+                json.Length,
+                exception);
         }
     }
 
@@ -384,4 +413,7 @@ public static class ConstellationBookService
 
     private static string ResolveBookTitle(string? bookTitle)
         => string.IsNullOrWhiteSpace(bookTitle) ? BookTitle : bookTitle.Trim();
+
+    private static ConstellationJournalReadResult AbsentJournalResult()
+        => new(ConstellationJournalReadStatus.Absent, null, 0, null);
 }

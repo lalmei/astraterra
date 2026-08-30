@@ -113,11 +113,12 @@ public sealed class ConstellationJournal
         constellations[index] = updated with { ModifiedTick = nextTick++ };
     }
 
-    internal JournalSnapshot ToSnapshot() => new(1, nextId, nextTick, nextEdgeOrder, constellations);
+    internal JournalSnapshot ToSnapshot()
+        => new(ConstellationPersistence.CurrentSchemaVersion, nextId, nextTick, nextEdgeOrder, constellations);
 
     internal static ConstellationJournal FromSnapshot(JournalSnapshot snapshot)
     {
-        if (snapshot.Version != 1)
+        if (snapshot.Version != ConstellationPersistence.CurrentSchemaVersion)
         {
             throw new InvalidOperationException($"Unsupported constellation journal version {snapshot.Version}.");
         }
