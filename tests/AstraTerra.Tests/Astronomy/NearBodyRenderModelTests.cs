@@ -169,52 +169,55 @@ public sealed class NearBodyRenderModelTests
     }
 
     /// <summary>
-    /// Daylight fades the unlit half out, and it has to leave the lit half's own edge alone. Fading
-    /// by brightness took the limb's darkening with it and ate a translucent ring out of the
-    /// planet's silhouette, which reads as a hole rather than as a shadow.
+    /// By day a body is fogged out in proportion to how little light it sends, and the lit face
+    /// sends plenty right out to its edge. Fading it by whether a point is lit instead asks a
+    /// question with a cliff at the limb, and the answer drew the planet as a ring round the sky.
     /// </summary>
     [Fact]
-    public void Daylight_Fades_The_Unlit_Half_Without_Thinning_The_Lit_Limb()
+    public void Daylight_Leaves_The_Lit_Face_Solid_And_Takes_The_Unlit_One()
     {
-        // Sun straight behind the observer: the whole face is lit, limb included.
-        var middle = NearBodyMeshBuilder.LitFractionAt(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
-        var limb = NearBodyMeshBuilder.LitFractionAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
+        var sunward = new SkyDirection(1.0, 0.0, 0.0);
+        var full = Placed(direction: new SkyDirection(-1.0, 0.0, 0.0), sun: sunward, illuminated: 1.0);
+        var quarter = Placed(direction: new SkyDirection(0.0, 0.0, 1.0), sun: sunward, illuminated: 0.5);
 
-        Assert.Equal(1.0f, middle, 3);
-        Assert.Equal(1.0f, limb, 3);
+        // Face fully lit: solid at noon, middle and limb alike.
+        Assert.Equal(255, MinAlpha(NearBodyMeshBuilder.Build([full], 40f, 1, daylight: 1.0)));
 
-        // The brightness at that same limb is lower -- that is limb darkening, and it belongs to
-        // the colour rather than to the silhouette.
-        Assert.True(NearBodyMeshBuilder.LightAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0) < 0.9f);
-
-        // The night side still goes: that is the half a bright sky should swallow.
-        Assert.Equal(0.0f, NearBodyMeshBuilder.LitFractionAt(-0.6, 0.0, 1.0, 0.0, 0.0, 0.5), 3);
+        // Half lit: the lit side still stands, the unlit side has all but gone.
+        var half = NearBodyMeshBuilder.Build([quarter], 40f, 1, daylight: 1.0);
+        Assert.Equal(255, MaxAlpha(half));
+        Assert.True(MinAlpha(half) < 40, $"the unlit side stayed at alpha {MinAlpha(half)}");
     }
 
     /// <summary>
     /// A sphere's normal turns square to the eye exactly at its edge, with an infinite gradient.
     /// Shading the corners of cells cannot follow that, and the last ring of cells came out a
-    /// scalloped half-transparent fringe: the planet's edge drawn with teeth.
+    /// scalloped fringe: the planet's edge drawn with teeth.
     /// </summary>
     [Fact]
     public void The_Very_Limb_Does_Not_Fall_Off_A_Cliff_No_Grid_Could_Draw()
     {
         // Sun behind the observer, so the whole disc is lit right out to its edge.
-        var justInside = NearBodyMeshBuilder.LitFractionAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
-        var atTheLimb = NearBodyMeshBuilder.LitFractionAt(1.0, 0.0, 0.0, 0.0, 1.0, 1.0);
-
-        Assert.Equal(1.0f, justInside, 3);
-        Assert.Equal(1.0f, atTheLimb, 3);
+        var brightInside = NearBodyMeshBuilder.LightAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
+        var brightLimb = NearBodyMeshBuilder.LightAt(1.0, 0.0, 0.0, 0.0, 1.0, 1.0);
 
         // Brightness may still fall toward the edge -- that is limb darkening, and it is meant to
         // be there -- but not by a step a cell cannot span.
-        var brightInside = NearBodyMeshBuilder.LightAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
-        var brightLimb = NearBodyMeshBuilder.LightAt(1.0, 0.0, 0.0, 0.0, 1.0, 1.0);
         Assert.True(Math.Abs(brightInside - brightLimb) < 0.02f, $"{brightInside} to {brightLimb}");
-
-        // And the middle is still brighter than the edge.
         Assert.True(NearBodyMeshBuilder.LightAt(0.0, 0.0, 0.0, 0.0, 1.0, 1.0) > brightLimb);
+
+        // And the night side is still the night side: the floor lifts the limb, not the shadow.
+        Assert.True(NearBodyMeshBuilder.LightAt(-0.99, 0.0, 1.0, 0.0, 0.0, 0.5) < 0.1f);
     }
+
+    private static PlacedNearBody Placed(SkyDirection direction, SkyDirection sun, double illuminated)
+        => new(
+            Parent(0.0, 0.0),
+            direction,
+            sun,
+            AltitudeDeg: 45.0,
+            AngularDiameterDeg: 20.0,
+            IlluminatedFraction: illuminated);
 
     private static int MinAlpha(Vintagestory.API.Client.MeshData mesh)
         => AlphaBytes(mesh).Min();

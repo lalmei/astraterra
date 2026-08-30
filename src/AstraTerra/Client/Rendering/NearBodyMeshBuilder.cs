@@ -69,9 +69,13 @@ public static class NearBodyMeshBuilder
     /// A sphere's normal turns square to the eye exactly at its edge, and it does it with an
     /// infinite gradient: over the last cell of any grid, however fine, the facing term falls from
     /// a fraction to nothing. Shading the corners of cells cannot follow that, so the last ring of
-    /// cells came out a scalloped, half-transparent fringe -- the planet's edge drawn with teeth.
-    /// Holding the normal a little short of square costs a sliver of limb darkening that nobody
-    /// can see and removes the cliff that nobody could draw.
+    /// cells came out a scalloped fringe -- the planet's edge drawn with teeth. Holding the normal
+    /// a little short of square costs a sliver of limb darkening that nobody can see and removes
+    /// the cliff that nobody could draw.
+    /// <para>
+    /// Brightness only. Lifting the facing term where the body is drawn solid lifts the unlit rim
+    /// with it, and the planet's silhouette comes back as a ring drawn round the sky.
+    /// </para>
     /// </remarks>
     public const double LimbNormalFloor = 0.35;
 
@@ -81,6 +85,16 @@ public static class NearBodyMeshBuilder
     /// A gas giant's terminator is genuinely soft anyway: it is an atmosphere, not a cliff.
     /// </summary>
     public const float TerminatorSoftness = 0.16f;
+
+    /// <summary>
+    /// How much brighter than the sky a point has to be to draw solid against it in daylight.
+    /// </summary>
+    /// <remarks>
+    /// By day a body is fogged out in proportion to how little light it sends, and a lit face sends
+    /// plenty even where its own limb darkening has taken a third of it. Without this gain that
+    /// third came off the silhouette instead, and ate a translucent ring out of the planet's edge.
+    /// </remarks>
+    public const float DaylightGain = 1.45f;
 
     public static MeshData Build(
         IReadOnlyList<PlacedNearBody> bodies,
@@ -148,34 +162,6 @@ public static class NearBodyMeshBuilder
         return (float)Math.Clamp(NightSideLight + ((1.0 - NightSideLight) * lit * limb), 0.0, 1.0);
     }
 
-    /// <summary>
-    /// How much of the sun the face sees at one point, with no limb darkening and no night-side
-    /// floor: 1 where the sun is up over that point, 0 where it has set, and a soft edge between.
-    /// </summary>
-    /// <remarks>
-    /// This is what daylight fades the body by, and it is deliberately not the brightness. Fading by
-    /// brightness would take the limb's own darkening with it and eat a translucent ring out of the
-    /// planet's edge against a bright sky -- which is a hole in the silhouette, not a shadow.
-    /// </remarks>
-    public static float LitFractionAt(
-        double faceX,
-        double faceY,
-        double sunRight,
-        double sunUp,
-        double sunToward,
-        double illuminatedFraction)
-    {
-        var distanceSquared = (faceX * faceX) + (faceY * faceY);
-        if (distanceSquared > 1.0)
-        {
-            return (float)Math.Clamp(illuminatedFraction, 0.0, 1.0);
-        }
-
-        var toward = Math.Max(LimbNormalFloor, Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared)));
-        var lambert = (faceX * sunRight) + (faceY * sunUp) + (toward * sunToward);
-        return (float)Math.Clamp((lambert + TerminatorSoftness) / (2.0 * TerminatorSoftness), 0.0, 1.0);
-    }
-
     private static void Add(MeshData meshData, PlacedNearBody placed, float radius, double daylight, int subdivisions)
     {
         var direction = placed.Direction;
@@ -212,18 +198,15 @@ public static class NearBodyMeshBuilder
                     placed.IlluminatedFraction) * brightness;
                 var shade = (int)Math.Clamp(light * 255f, 0f, 255f);
 
-                // Opaque at night, so the disc occults the stars behind it; by day only what is lit
-                // stands against the sky. Fading follows how much sun the point sees, never its
-                // brightness -- brightness carries the limb's darkening, and fading by that would
-                // eat a translucent ring out of the planet's own edge.
-                var covered = LitFractionAt(
-                    offsetRight / discFraction,
-                    offsetUp / discFraction,
-                    sunRight,
-                    sunUp,
-                    sunToward,
-                    placed.IlluminatedFraction);
-                var opacity = (int)Math.Clamp((covered + (1.0 - daylight)) * 255.0, 0.0, 255.0);
+                // Opaque at night, so the disc occults the stars behind it. By day it is fogged out
+                // in proportion to how little light it sends: the lit face saturates and stays
+                // solid to its edge, the night side all but vanishes, and the terminator grades
+                // between them. Nothing here asks whether a point is lit -- that question has a
+                // cliff at the limb, and answering it drew the planet as a ring round the sky.
+                var opacity = (int)Math.Clamp(
+                    ((light * DaylightGain) + (1.0 - daylight)) * 255.0,
+                    0.0,
+                    255.0);
 
                 meshData.AddVertexWithFlags(
                     centerX + (rightX * halfSize * offsetRight) + (upX * halfSize * offsetUp),
