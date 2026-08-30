@@ -63,6 +63,19 @@ public static class NearBodyMeshBuilder
     public const float NightSideLight = 0.055f;
 
     /// <summary>
+    /// How far the sphere's normal is allowed to tip away from the observer at the limb.
+    /// </summary>
+    /// <remarks>
+    /// A sphere's normal turns square to the eye exactly at its edge, and it does it with an
+    /// infinite gradient: over the last cell of any grid, however fine, the facing term falls from
+    /// a fraction to nothing. Shading the corners of cells cannot follow that, so the last ring of
+    /// cells came out a scalloped, half-transparent fringe -- the planet's edge drawn with teeth.
+    /// Holding the normal a little short of square costs a sliver of limb darkening that nobody
+    /// can see and removes the cliff that nobody could draw.
+    /// </remarks>
+    public const double LimbNormalFloor = 0.35;
+
+    /// <summary>
     /// How far past the terminator the light fades, in units of the Lambert term. Wide enough that
     /// the fade always spans several cells, so what is left of the staircase is blurred out by it.
     /// A gas giant's terminator is genuinely soft anyway: it is an atmosphere, not a cliff.
@@ -126,7 +139,7 @@ public static class NearBodyMeshBuilder
             return (float)Math.Clamp(NightSideLight + (0.95 * illuminatedFraction), 0.0, 1.0);
         }
 
-        var toward = Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared));
+        var toward = Math.Max(LimbNormalFloor, Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared)));
         var lambert = (faceX * sunRight) + (faceY * sunUp) + (toward * sunToward);
         var lit = Math.Clamp((lambert + TerminatorSoftness) / (2.0 * TerminatorSoftness), 0.0, 1.0);
 
@@ -158,7 +171,7 @@ public static class NearBodyMeshBuilder
             return (float)Math.Clamp(illuminatedFraction, 0.0, 1.0);
         }
 
-        var toward = Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared));
+        var toward = Math.Max(LimbNormalFloor, Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared)));
         var lambert = (faceX * sunRight) + (faceY * sunUp) + (toward * sunToward);
         return (float)Math.Clamp((lambert + TerminatorSoftness) / (2.0 * TerminatorSoftness), 0.0, 1.0);
     }
