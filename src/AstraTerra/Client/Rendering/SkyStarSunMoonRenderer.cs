@@ -222,7 +222,13 @@ public static class SkyStarSunMoonRenderer
     private static string? cachedJournalJson;
     private static ConstellationJournal? cachedJournal;
     private static ConstellationJournal? cachedDotsJournal;
+    private static string? cachedDiscFigureJson;
+    private static SkyDiscFigure? cachedDiscFigure;
+    private static SkyDiscFigure? cachedDotsDiscFigure;
     private static IReadOnlyList<SkyConstellationLine>? cachedConstellationLines;
+
+    /// <summary>The figures the sky is drawing this frame: the book's, the disc's, or both.</summary>
+    private static readonly List<ConstellationRecord> ConstellationRecords = new(64);
 
     /// <summary>
     /// How far the sky must turn, or the observer move, before the star projection is redone.
@@ -531,6 +537,10 @@ public static class SkyStarSunMoonRenderer
         cachedJournalJson = null;
         cachedJournal = null;
         cachedDotsJournal = null;
+        cachedDiscFigureJson = null;
+        cachedDiscFigure = null;
+        cachedDotsDiscFigure = null;
+        ConstellationRecords.Clear();
         cachedConstellationLines = null;
         secondsSinceLastSkipLog = 0;
         starTextureLoadFailed = false;
@@ -722,15 +732,22 @@ public static class SkyStarSunMoonRenderer
         // Reading the book means deserializing its journal, which is far too much work to repeat
         // sixty times a second for a page that has not changed. The written JSON is the key.
         var journal = ReadJournalCached(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+
+        // The disc carries its own figure and shows it from either hand, so it is a second source of
+        // lines and cached the same way — by the text on the object, which is what actually changes.
+        var discFigure = ReadDiscFigureCached(SkyDiscHeld.Find(api.World.Player));
         var scoped = TelescopeScopeState.IsScoped;
         var fovMultiplier = scoped ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
         var starAngularScale = StarBillboardSizing.CalculateStarAngularScale(scoped, fovMultiplier);
         IReadOnlyList<SkyConstellationLine> constellationLines = Array.Empty<SkyConstellationLine>();
-        if (journal is not null)
+        if (journal is not null || discFigure is not null)
         {
             // A ribbon spans a whole edge, so unlike the dotted trail it replaced, nothing about its
             // layout depends on the magnification: only the mesh's width does.
-            if (starsRefreshed || cachedConstellationLines is null || !ReferenceEquals(journal, cachedDotsJournal))
+            if (starsRefreshed
+                || cachedConstellationLines is null
+                || !ReferenceEquals(journal, cachedDotsJournal)
+                || !ReferenceEquals(discFigure, cachedDotsDiscFigure))
             {
                 VisibleStarsByHip.Clear();
                 foreach (var star in drawableStars)
@@ -738,9 +755,21 @@ public static class SkyStarSunMoonRenderer
                     VisibleStarsByHip[star.Hip] = star;
                 }
 
-                var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, VisibleStarsByHip);
+                ConstellationRecords.Clear();
+                if (journal is not null)
+                {
+                    ConstellationRecords.AddRange(journal.Constellations);
+                }
+
+                if (discFigure is not null)
+                {
+                    ConstellationRecords.Add(discFigure.AsRecord());
+                }
+
+                var constellationSegments = ConstellationRenderModel.BuildConstellationSegments(ConstellationRecords, VisibleStarsByHip);
                 cachedConstellationLines = ConstellationRenderModel.BuildSkyLines(constellationSegments);
                 cachedDotsJournal = journal;
+                cachedDotsDiscFigure = discFigure;
             }
 
             constellationLines = cachedConstellationLines;
@@ -2029,6 +2058,35 @@ public static class SkyStarSunMoonRenderer
         cachedStarSiderealDeg = double.NaN;
         cachedStarBrightnessBias = double.NaN;
         return true;
+    }
+
+    /// <summary>
+    /// The figure on the disc in hand, deserialized only when the disc's own text has changed.
+    /// </summary>
+    /// <remarks>
+    /// Same bargain as <see cref="ReadJournalCached"/> and for the same reason: this runs on the
+    /// render thread every frame, and a disc that has not been engraved since the last one must not
+    /// be parsed again. A blank disc reads as nothing to draw rather than as an empty figure, so the
+    /// sky pass can skip the whole of this when there is no figure to show.
+    /// </remarks>
+    private static SkyDiscFigure? ReadDiscFigureCached(ItemStack? stack)
+    {
+        var json = stack?.Attributes?.GetString(SkyDiscFigureStore.FigureJsonAttribute, null);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            cachedDiscFigureJson = null;
+            cachedDiscFigure = null;
+            return null;
+        }
+
+        if (!string.Equals(json, cachedDiscFigureJson, StringComparison.Ordinal))
+        {
+            cachedDiscFigureJson = json;
+            var read = SkyDiscFigureStore.Read(stack);
+            cachedDiscFigure = read is { IsBlank: false } ? read : null;
+        }
+
+        return cachedDiscFigure;
     }
 
     private static ConstellationJournal? ReadJournalCached(ItemStack? stack)
