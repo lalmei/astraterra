@@ -27,6 +27,15 @@ public static class AstraTerraConfigLoader
         }
 
         config.SkyGridMode = SkyGridModeParser.ToConfigValue(skyGridMode);
+        if (!SolarSystemArtStyleParser.TryParse(config.SolarSystemArt, out var solarSystemArt))
+        {
+            api.Logger.Warning(
+                "AstraTerra config has unknown solar system art '{0}'; using '{1}'.",
+                config.SolarSystemArt,
+                SolarSystemArtStyleParser.PixelValue);
+        }
+
+        config.SolarSystemArt = SolarSystemArtStyleParser.ToConfigValue(solarSystemArt);
         if (!CalendarDisplayParser.TryParse(config.CalendarDisplay, out var calendarDisplay))
         {
             api.Logger.Warning(

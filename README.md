@@ -98,21 +98,26 @@ The Astrolabe lists every comet whether or not it is here. One that is away read
 ### Point a telescope at a planet
 
 Raise a telescope on a planet and it stops being a point of light. Each planet is drawn from its own
-photograph, at the width its globe actually subtends -- so Mars swells towards opposition and shrinks
-to a speck on the far side of its orbit -- and showing the face its phase calls for: Venus runs
-through crescent, half and full, with the lit limb turned towards wherever the sun is. Saturn arrives
-with its rings.
+picture, at the width its globe actually subtends -- so Mars swells towards opposition and shrinks
+to a speck on the far side of its orbit. Saturn arrives with its rings.
+
+There are two sets of pictures. Pixel art is what you get, drawn to sit with the game's own art;
+`.stars solar-system photo` swaps in photographs of the real surfaces instead, and those go further:
+they show the face a planet's phase calls for, so Venus runs through crescent, half and full with the
+lit limb turned towards wherever the sun is. Everything else -- where a body is, how wide it draws,
+which moons are out -- is the same under either set.
 
 Beside Jupiter are the four moons Galileo saw, and beside Saturn are five of its own. They swing back
 and forth on their real orbits, the inner ones over a night and the outer ones over a fortnight, and
 one that passes behind its planet is gone until it comes out the other side. None of it is visible to
 the naked eye: put the glass down and the planets are points of light again.
 
-### The moon, from photographs
+### The moon, with a face of its own
 
-Vintage Story's moon steps aside for eight photographs of the real one, turning through its phases as
-the calendar says it should, with the bright limb pointing at the sun wherever the sun is. It is drawn
-smaller than the game's own moon and larger than the real one -- about four times life size, which is
+Vintage Story's moon steps aside for eight faces of the real one, turning through its phases as
+the calendar says it should, with the bright limb pointing at the sun wherever the sun is. The faces
+come from the same two sets the planets do -- pixel art by default, photographs of the real surface
+under `.stars solar-system photo`. It is drawn smaller than the game's own moon and larger than the real one -- about four times life size, which is
 where a moon that reads properly by eye and a moon that fits in an eyepiece meet -- so a telescope
 raised on it shows craters and maria rather than a bigger smooth disc. The moonlight, the phase the game reports and the length of the night are untouched.
 

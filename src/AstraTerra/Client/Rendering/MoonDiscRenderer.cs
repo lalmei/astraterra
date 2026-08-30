@@ -116,7 +116,7 @@ public sealed class MoonDiscRenderer : IRenderer
         var moonPosition = calendar.GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var direction = new SkyDirection(moonPosition.X, moonPosition.Y, moonPosition.Z);
         var face = MoonDiscModel.SelectFace(calendar.MoonPhaseExact);
-        var textureId = ResolveTexture(face);
+        var textureId = ResolveTexture(face, SolarSystemTextures.Resolve(face.TexturePath, config.GetSolarSystemArtStyle()));
         if (textureId == 0)
         {
             // With no picture there is nothing to put in the game's moon's place, so it keeps the sky.
@@ -234,39 +234,43 @@ public sealed class MoonDiscRenderer : IRenderer
         lastFaceId = face.Id;
     }
 
-    private int ResolveTexture(MoonPhaseFace face)
+    /// <param name="texturePath">
+    /// The picture the face resolves to under the art the player has chosen, which is what is
+    /// loaded and cached: the same face draws from a different file when the choice changes.
+    /// </param>
+    private int ResolveTexture(MoonPhaseFace face, string texturePath)
     {
-        if (textureIds.TryGetValue(face.TexturePath, out var textureId))
+        if (textureIds.TryGetValue(texturePath, out var textureId))
         {
             return textureId;
         }
 
-        if (failedTexturePaths.Contains(face.TexturePath))
+        if (failedTexturePaths.Contains(texturePath))
         {
             return 0;
         }
 
         try
         {
-            textureId = api.Render.GetOrLoadTexture(new AssetLocation(face.TexturePath + ".png"));
+            textureId = api.Render.GetOrLoadTexture(new AssetLocation(texturePath + ".png"));
             if (textureId != 0)
             {
-                textureIds[face.TexturePath] = textureId;
+                textureIds[texturePath] = textureId;
                 return textureId;
             }
         }
         catch (Exception exception)
         {
-            api.Logger.Error("AstraTerra could not load the moon texture {0}: {1}", face.TexturePath, exception);
+            api.Logger.Error("AstraTerra could not load the moon texture {0}: {1}", texturePath, exception);
         }
 
         // Said once per face: with no picture the game's own moon keeps the sky, which is a working
         // sky rather than an empty one.
-        failedTexturePaths.Add(face.TexturePath);
+        failedTexturePaths.Add(texturePath);
         api.Logger.Warning(
             "AstraTerra is leaving Vintage Story's moon in place: the {0} texture could not be loaded ({1}).",
             face.DisplayName,
-            face.TexturePath);
+            texturePath);
         return 0;
     }
 

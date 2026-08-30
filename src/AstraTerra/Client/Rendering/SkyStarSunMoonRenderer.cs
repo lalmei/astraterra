@@ -1760,7 +1760,10 @@ public static class SkyStarSunMoonRenderer
 
     private static int ResolvePlanetDiscTexture(ICoreClientAPI clientApi, RenderedPlanetDisc disc)
     {
-        if (TryGetDeepSkyTexture(clientApi, disc.TexturePath, out var textureId))
+        var texturePath = SolarSystemTextures.Resolve(
+            disc.TexturePath,
+            config?.GetSolarSystemArtStyle() ?? SolarSystemArtStyle.Pixel);
+        if (TryGetDeepSkyTexture(clientApi, texturePath, out var textureId))
         {
             return textureId;
         }
@@ -1773,7 +1776,7 @@ public static class SkyStarSunMoonRenderer
                 "AstraTerra is not drawing {0} ({1}): its texture could not be loaded ({2}).",
                 disc.Id,
                 disc.DisplayName,
-                disc.TexturePath);
+                texturePath);
         }
 
         return 0;
