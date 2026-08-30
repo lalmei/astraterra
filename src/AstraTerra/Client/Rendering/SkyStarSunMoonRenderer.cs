@@ -60,12 +60,6 @@ public static class SkyStarSunMoonRenderer
     private const float MeteorSkyDistance = 39.8f;
     private const float StarAngularSizePerPixelDeg = 0.06f;
 
-    /// <summary>
-    /// How wide a resolved planet's halo is drawn, as a multiple of the disc it surrounds. Just
-    /// outside it, so the glow reads as light spilling off the planet rather than as a sprite laid
-    /// over the photograph.
-    /// </summary>
-    private const double ResolvedPlanetHaloWidth = 1.6;
     private const float StarGlowMaxAlpha = 0.35f;
 
     /// <summary>
@@ -1175,27 +1169,12 @@ public static class SkyStarSunMoonRenderer
             var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
             var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
 
-            // A planet the scope has resolved is drawn from its own photograph, and the sprite that
-            // stood in for that disc has to get out of its way: at the magnification a disc is worth
-            // looking at, the sprite is several times wider than the planet and would erase it.
-            // What survives is the halo, held just outside the disc, which is both what an eyepiece
-            // shows around a bright planet and what keeps the planet findable at low power, where
-            // the disc itself is a couple of pixels.
-            if (DiscWidthByPlanetId.TryGetValue(planet.Id, out var discWidthDeg))
+            // A planet the scope has resolved is drawn from its own photograph, so both parts of the
+            // point-light sprite have to get out of its way. Keeping even the Gaussian halo behind
+            // the alpha-blended photograph lets light through its antialiased edge; because the two
+            // meshes have independent projection caches, that light shimmers as the sky turns.
+            if (DiscWidthByPlanetId.ContainsKey(planet.Id))
             {
-                var haloAlpha = PlanetGlowMaxAlpha * alpha * brilliance;
-                if (haloAlpha > 0.005f)
-                {
-                    PlanetBillboards.Add(Billboard(
-                        planet.Body,
-                        (float)(discWidthDeg * ResolvedPlanetHaloWidth / (StarAngularSizePerPixelDeg * planetAngularScale)),
-                        planetAngularScale,
-                        planet.TintR,
-                        planet.TintG,
-                        planet.TintB,
-                        haloAlpha));
-                }
-
                 continue;
             }
 
