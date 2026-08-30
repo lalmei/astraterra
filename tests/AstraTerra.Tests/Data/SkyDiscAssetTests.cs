@@ -56,7 +56,7 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_A_Gold_Sun()
+    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_Nothing_Else_On_It()
     {
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
         var root = document.RootElement;
@@ -74,9 +74,10 @@ public sealed class SkyDiscAssetTests
         // The mesh builder copies this one to make a mark, so it has to be there.
         Assert.Contains("sunrise-rim-segment-01", names);
 
-        // The sun, and nothing radiating from it: a disc carries the marks its owner cut, and a
-        // fixed spray of rays is decoration nobody on the disc is responsible for.
-        Assert.Equal(["gold-sun-centre"], names.Where(name => name.StartsWith("gold-", StringComparison.Ordinal)));
+        // Bare bronze: a disc carries the marks its owner cut and nothing else. Anything shipped on
+        // it — a sun, its rays — is decoration nobody on the disc is responsible for, and it reads
+        // as a mark somebody made.
+        Assert.DoesNotContain(names, name => name.StartsWith("gold-", StringComparison.Ordinal));
 
         // Round, not stepped: every row of the body is cut to a circle of radius seven about (8, 8),
         // to within the half unit a row's own depth allows.
@@ -101,6 +102,9 @@ public sealed class SkyDiscAssetTests
 
         var textures = root.GetProperty("textures");
         Assert.Equal("game:block/metal/plate/tinbronze", textures.GetProperty("bronze").GetString());
+
+        // Nothing on the shape is gold any more, but the code stays declared: a face can only use a
+        // texture the shape names, and inlaying gold into a mark is the disc owner's own later work.
         Assert.Equal("game:block/metal/plate/gold", textures.GetProperty("gold").GetString());
     }
 

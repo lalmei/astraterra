@@ -5,7 +5,7 @@ using Vintagestory.API.MathTools;
 namespace AstraTerra.Client.Rendering;
 
 /// <summary>
-/// The disc itself, held up into the lower half of the view while its owner reads or marks it.
+/// The disc itself, held up over the bottom edge of the view while its owner reads or marks it.
 /// </summary>
 /// <remarks>
 /// A scratch is the whole of what this instrument says, and at arm's length it is a few pixels. So
@@ -25,15 +25,20 @@ namespace AstraTerra.Client.Rendering;
 /// </remarks>
 public sealed class SkyDiscFaceHud : HudElement
 {
-    /// <summary>
-    /// How much of the screen's height the raised disc takes, and how low it sits. The rim is where
-    /// the marks are, so the disc is drawn as large as the view will hold it: at this fraction the
-    /// whole of it still clears the top of the screen and the bottom, and nothing worth reading
-    /// falls past an edge.
-    /// </summary>
+    /// <summary>How much of the screen's height the whole disc would take, seen entire.</summary>
     private const float HeightFraction = 0.68f;
 
-    private const float SinkFraction = 0.55f;
+    /// <summary>
+    /// Where the middle of the disc sits, down the screen: on the bottom edge of it, so exactly the
+    /// top half is in view.
+    /// </summary>
+    /// <remarks>
+    /// The disc is held up from below and read over its near edge, the way you hold anything you are
+    /// lining up against the horizon — the far rim is what is being read, and the near half of the
+    /// disc is in the way of the thing it is being read against. Pinned to the screen rather than to
+    /// the disc's own size, so making the disc bigger grows it upward instead of sliding it about.
+    /// </remarks>
+    private const float CentreHeightFraction = 1.0f;
 
     public SkyDiscFaceHud(ICoreClientAPI capi)
         : base(capi)
@@ -73,7 +78,7 @@ public sealed class SkyDiscFaceHud : HudElement
             capi.Render.RenderItemstackToGui(
                 slot,
                 capi.Render.FrameWidth / 2.0,
-                capi.Render.FrameHeight - (size * SinkFraction),
+                capi.Render.FrameHeight * CentreHeightFraction,
                 100.0,
                 (float)size,
                 ColorUtil.WhiteArgb,
