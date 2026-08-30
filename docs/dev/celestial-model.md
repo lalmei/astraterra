@@ -435,9 +435,11 @@ testable while letting callers feed in Vintage Story's real sun.
 | `Dusk` / `Dawn` | between `-6°` and `0°`, split by whether the sun is climbing |
 | `Night`         | below `-6°` (civil twilight)                                 |
 
-Sunrise and sunset are found by walking forward at most one world day in 15-minute steps for a
-horizon crossing, then bisecting the bracketing interval. Both are nullable: at a polar day or polar
-night no crossing exists, and the astrolabe says so rather than inventing an hour.
+Sunrise and sunset are found by walking forward at most one world day in five-minute steps for a
+horizon crossing, then bisecting the bracketing interval. The finer sweep matters near the polar
+circles, where the sun can rise and set again inside the old 15-minute interval. Both results are
+nullable: at a polar day or polar night no crossing exists, and the astrolabe says so rather than
+inventing an hour.
 
 Clock time itself is `CelestialMath.GetLocalSolarTimeHours`, deliberately _without_ a longitude
 term, so the astrolabe agrees with the clock the game shows elsewhere.
