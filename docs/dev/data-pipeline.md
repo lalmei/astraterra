@@ -29,6 +29,31 @@ python -m unittest tests.test_galaxy
 
 Regenerating with the committed defaults reproduces the committed texture; the seed is one of them.
 
+## Pixel-Art Solar System
+
+The sun's family ships in two sets of pictures, and the pixel one is normalised from the drawn art
+rather than committed as it arrives. `tools/generate_pixel_solar_system.py` reads
+`textures/environment/solar-system-pixel_art/` — bodies floating on a wide transparent canvas — and
+writes `textures/environment/solar-system-pixel/`, cropping each body to its own ink and padding it
+back out to a square, which is the convention the photographic set already keeps and what makes
+`imageWidthInDiameters` size both sets alike.
+
+```bash
+python tools/generate_pixel_solar_system.py
+```
+
+Two bodies need more than a crop. Saturn's ink is its rings, so its square is measured from the
+globe inside them — centre and diameter are constants in the script, taken off the art — and widened
+to the ring span the catalogue quotes. The moon arrives as a single full face, so the other seven are
+cut from it: an elliptical terminator, an unlit side dimmed to the earthshine the photographic new
+moon keeps, and the cut quantised to the art's own pixel grid.
+
+The art draws one face per planet rather than three, so all of a planet's phase faces resolve to the
+same picture, and it draws only the larger moons, so Callisto and Saturn's small four share the one
+small moon it does draw. `SolarSystemTextures` holds that mapping and
+`SolarSystemArtAssetTests` checks that every catalogued body resolves to a square picture that
+exists.
+
 ## Runtime Assets
 
 - `star-catalog.v1.json`: baked fixed-star catalog.

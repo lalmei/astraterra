@@ -109,6 +109,26 @@ and the choice is saved in `ModConfig/astraterra.json`.
 This only touches what your own client displays. An administrator asking the server the time with
 `/time` still gets a straight answer.
 
+## The Solar System's Pictures
+
+```text
+.stars solar-system pixel
+.stars solar-system photo
+```
+
+The planets, their moons and the moon overhead are drawn from pictures, and the mod ships two sets
+of them. `pixel` is the default: pixel art, drawn to sit with the game's own. `photo` is the older
+set, photographs of the real surfaces — Jupiter's belts, Saturn's rings edge-on, the moon's craters
+at the eyepiece.
+
+Only the pictures change. Where a body is, how wide it draws, which of its moons are out and which
+has slipped behind it are the same either way, because both sets are cut to the same square. The one
+thing the photographs alone carry is a planet's phase as its own picture: they draw Venus and Mars
+crescent, half and full as the geometry demands, while the pixel art draws each planet the one way
+it is drawn. The moon keeps its eight faces in both sets.
+
+The choice takes effect at once and is saved in `ModConfig/astraterra.json`.
+
 ## Recovery And Debug Commands
 
 ```text

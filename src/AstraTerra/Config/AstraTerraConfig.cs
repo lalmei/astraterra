@@ -11,6 +11,11 @@ public sealed class AstraTerraConfig
     public string SkyGridMode { get; set; } = SkyGridModeParser.NoneValue;
 
     /// <summary>
+    /// Which set of pictures the sun's family is drawn from: the pixel art, or the photographs.
+    /// </summary>
+    public string SolarSystemArt { get; set; } = SolarSystemArtStyleParser.PixelValue;
+
+    /// <summary>
     /// How much of Vintage Story's own date and hour the character panel keeps showing. Defaults to
     /// showing all of it; the disc only becomes an instrument once this is turned down.
     /// </summary>
@@ -34,6 +39,9 @@ public sealed class AstraTerraConfig
 
     public SkyGridMode GetSkyGridMode()
         => SkyGridModeParser.ParseOrDefault(SkyGridMode);
+
+    public SolarSystemArtStyle GetSolarSystemArtStyle()
+        => SolarSystemArtStyleParser.ParseOrDefault(SolarSystemArt);
 
     public CalendarDisplay GetCalendarDisplay()
         => CalendarDisplayParser.ParseOrDefault(CalendarDisplay);

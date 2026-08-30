@@ -95,6 +95,11 @@ public sealed class StarsClientCommands
                 .WithArgs(api.ChatCommands.Parsers.Word("astraterra|both|vanilla"))
                 .HandleWith(args => TextCommandResult.Success(SetStarfieldMode(api, GetStringArg(args, 0))))
             .EndSubCommand()
+            .BeginSubCommand("solar-system")
+                .WithDescription("Choose which pictures the sun's family is drawn from: pixel art, or photographs.")
+                .WithArgs(api.ChatCommands.Parsers.Word("pixel|photo"))
+                .HandleWith(args => TextCommandResult.Success(SetSolarSystemArt(api, GetStringArg(args, 0))))
+            .EndSubCommand()
             .BeginSubCommand("sky-grid")
                 .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
                 .HandleWith(args => TextCommandResult.Success(SetSkyGridMode(api, GetStringArg(args, 0))))
@@ -344,6 +349,31 @@ public sealed class StarsClientCommands
             StarfieldMode.Both => "Starfield mode set to both: showing AstraTerra and vanilla stars.",
             StarfieldMode.Vanilla => "Starfield mode set to vanilla: showing only Vintage Story stars.",
             _ => "Starfield mode set to astraterra: showing only AstraTerra stars."
+        };
+    }
+
+    /// <summary>
+    /// Swaps the art the planets, their moons and our own moon are drawn from. Nothing about where
+    /// they are or how wide they draw changes: the two sets are cut to the same convention, so this
+    /// is the pictures and only the pictures.
+    /// </summary>
+    private string SetSolarSystemArt(ICoreClientAPI api, string value)
+    {
+        if (!SolarSystemArtStyleParser.TryParse(value, out var style))
+        {
+            return "Usage: .stars solar-system pixel|photo";
+        }
+
+        config.SolarSystemArt = SolarSystemArtStyleParser.ToConfigValue(style);
+        AstraTerraConfigLoader.Store(api, config);
+        api.Logger.Notification("AstraTerra solar system art changed: art={0}", config.SolarSystemArt);
+
+        return style switch
+        {
+            SolarSystemArtStyle.Photo =>
+                "Solar system art set to photo: the planets, their moons and the moon are drawn from photographs, "
+                + "each planet showing the phase it is actually in.",
+            _ => "Solar system art set to pixel: the planets, their moons and the moon are drawn from the pixel art."
         };
     }
 
