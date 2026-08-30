@@ -140,7 +140,7 @@ public sealed class NearBodyRenderModelTests
 
         Assert.Equal(255, MinAlpha(night));
         Assert.True(MinAlpha(noon) < 40, $"the unlit side stayed at alpha {MinAlpha(noon)} in daylight");
-        Assert.True(MaxAlpha(noon) > 200, "the lit side should still stand against a daytime sky");
+        Assert.Equal(255, MaxAlpha(noon));
     }
 
     /// <summary>
@@ -166,6 +166,29 @@ public sealed class NearBodyRenderModelTests
             NearBodyMeshBuilder.SubdivisionsFor(0.01),
             NearBodyMeshBuilder.MinSubdivisions,
             NearBodyMeshBuilder.MaxSubdivisions);
+    }
+
+    /// <summary>
+    /// Daylight fades the unlit half out, and it has to leave the lit half's own edge alone. Fading
+    /// by brightness took the limb's darkening with it and ate a translucent ring out of the
+    /// planet's silhouette, which reads as a hole rather than as a shadow.
+    /// </summary>
+    [Fact]
+    public void Daylight_Fades_The_Unlit_Half_Without_Thinning_The_Lit_Limb()
+    {
+        // Sun straight behind the observer: the whole face is lit, limb included.
+        var middle = NearBodyMeshBuilder.LitFractionAt(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+        var limb = NearBodyMeshBuilder.LitFractionAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
+
+        Assert.Equal(1.0f, middle, 3);
+        Assert.Equal(1.0f, limb, 3);
+
+        // The brightness at that same limb is lower -- that is limb darkening, and it belongs to
+        // the colour rather than to the silhouette.
+        Assert.True(NearBodyMeshBuilder.LightAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0) < 0.9f);
+
+        // The night side still goes: that is the half a bright sky should swallow.
+        Assert.Equal(0.0f, NearBodyMeshBuilder.LitFractionAt(-0.6, 0.0, 1.0, 0.0, 0.0, 0.5), 3);
     }
 
     private static int MinAlpha(Vintagestory.API.Client.MeshData mesh)
