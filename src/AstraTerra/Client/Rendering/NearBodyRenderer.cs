@@ -31,6 +31,12 @@ public sealed class NearBodyRenderer : IRenderer
     /// <summary>Just inside the star sphere: these bodies are between the observer and the stars.</summary>
     private const float SkyDistance = 39.5f;
 
+    /// <summary>How far a body may drift before its mesh is rebuilt: a fifth of an arcminute.</summary>
+    private const double PositionTolerance = 0.00006;
+
+    /// <summary>How far the sun may move before the shading is redone: a tenth of a degree.</summary>
+    private const double SunTolerance = 0.0017;
+
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, BodyPass> passes = new(StringComparer.Ordinal);
     private readonly float[] modelMatrix = IdentityModelMatrix();
@@ -278,11 +284,25 @@ public sealed class NearBodyRenderer : IRenderer
             texture.Dispose();
         }
 
-        /// <summary>A tenth of a degree of movement, or a visible step in the daylight.</summary>
+        /// <summary>
+        /// Whether anything has changed enough to be worth rebuilding tens of thousands of
+        /// vertices for.
+        /// </summary>
+        /// <remarks>
+        /// Where the body is and where its light comes from are held to very different standards.
+        /// A body's own position is the thing a player watches move, and it is baked into the
+        /// vertices, so the tolerance on it has to be far below what the eye can catch -- through a
+        /// telescope especially, where magnification multiplies any step. A tenth of a degree was
+        /// enough to make a moon crossing the sky visibly stutter. The sun only shades those
+        /// vertices, and a tenth of a degree of it changes nothing anyone can see.
+        ///
+        /// The saving is kept where it was worth having: a tidally locked world's parent planet
+        /// does not move at all, and it is the body with the vertices.
+        /// </remarks>
         private bool HasMoved(PlacedNearBody placed, double daylight)
             => Math.Abs(daylight - lastDaylight) > 0.01
-               || Separation(placed.Direction, lastDirection) > 0.0017
-               || Separation(placed.SunDirection, lastSun) > 0.0017;
+               || Separation(placed.Direction, lastDirection) > PositionTolerance
+               || Separation(placed.SunDirection, lastSun) > SunTolerance;
 
         private static double Separation(SkyDirection left, SkyDirection right)
         {

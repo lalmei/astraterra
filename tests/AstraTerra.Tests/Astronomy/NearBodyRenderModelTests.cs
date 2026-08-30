@@ -191,6 +191,31 @@ public sealed class NearBodyRenderModelTests
         Assert.Equal(0.0f, NearBodyMeshBuilder.LitFractionAt(-0.6, 0.0, 1.0, 0.0, 0.0, 0.5), 3);
     }
 
+    /// <summary>
+    /// A sphere's normal turns square to the eye exactly at its edge, with an infinite gradient.
+    /// Shading the corners of cells cannot follow that, and the last ring of cells came out a
+    /// scalloped half-transparent fringe: the planet's edge drawn with teeth.
+    /// </summary>
+    [Fact]
+    public void The_Very_Limb_Does_Not_Fall_Off_A_Cliff_No_Grid_Could_Draw()
+    {
+        // Sun behind the observer, so the whole disc is lit right out to its edge.
+        var justInside = NearBodyMeshBuilder.LitFractionAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
+        var atTheLimb = NearBodyMeshBuilder.LitFractionAt(1.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+
+        Assert.Equal(1.0f, justInside, 3);
+        Assert.Equal(1.0f, atTheLimb, 3);
+
+        // Brightness may still fall toward the edge -- that is limb darkening, and it is meant to
+        // be there -- but not by a step a cell cannot span.
+        var brightInside = NearBodyMeshBuilder.LightAt(0.96, 0.0, 0.0, 0.0, 1.0, 1.0);
+        var brightLimb = NearBodyMeshBuilder.LightAt(1.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+        Assert.True(Math.Abs(brightInside - brightLimb) < 0.02f, $"{brightInside} to {brightLimb}");
+
+        // And the middle is still brighter than the edge.
+        Assert.True(NearBodyMeshBuilder.LightAt(0.0, 0.0, 0.0, 0.0, 1.0, 1.0) > brightLimb);
+    }
+
     private static int MinAlpha(Vintagestory.API.Client.MeshData mesh)
         => AlphaBytes(mesh).Min();
 
