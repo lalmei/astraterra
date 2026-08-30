@@ -54,21 +54,47 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void The_Shape_Has_Two_Notched_Rims_And_A_Gold_Sun_Cluster()
+    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_A_Gold_Sun_Cluster()
     {
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
         var root = document.RootElement;
-        var names = root.GetProperty("elements")
-            .EnumerateArray()
+        var elements = root.GetProperty("elements").EnumerateArray().ToList();
+        var names = elements
             .Select(element => element.GetProperty("name").GetString() ?? string.Empty)
             .ToList();
 
-        Assert.Equal(8, names.Count(name => name.StartsWith("sunset-rim-segment-", StringComparison.Ordinal)));
-        Assert.Equal(8, names.Count(name => name.StartsWith("sunrise-rim-segment-", StringComparison.Ordinal)));
-        Assert.Equal(32, names.Count(name => name.StartsWith("sunset-notch-", StringComparison.Ordinal)));
-        Assert.Equal(24, names.Count(name => name.StartsWith("sunrise-notch-", StringComparison.Ordinal)));
+        // One rim, no graduations: the marks a disc carries are its own, and a ring of notches under
+        // them read as a second set of marks nobody made.
+        Assert.DoesNotContain(names, name => name.Contains("notch", StringComparison.Ordinal));
+        Assert.DoesNotContain(names, name => name.StartsWith("sunset-rim-segment-", StringComparison.Ordinal));
+        Assert.Equal(16, names.Count(name => name.StartsWith("sunrise-rim-segment-", StringComparison.Ordinal)));
+
+        // The mesh builder copies this one to make a mark, so it has to be there.
+        Assert.Contains("sunrise-rim-segment-01", names);
+
         Assert.Contains("gold-sun-centre", names);
         Assert.Equal(9, names.Count(name => name.StartsWith("gold-", StringComparison.Ordinal)));
+
+        // Round, not stepped: every row of the body is cut to a circle of radius seven about (8, 8),
+        // to within the half unit a row's own depth allows.
+        var body = elements
+            .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
+                .StartsWith("body-", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Equal(14, body.Count);
+        foreach (var row in body)
+        {
+            var from = row.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+            var to = row.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+
+            // Symmetric about the centre line, so the disc has no lopsided side.
+            Assert.Equal(8.0 - from[0], to[0] - 8.0, 3);
+
+            var depth = Math.Abs(((from[2] + to[2]) / 2.0) - 8.0);
+            var half = (to[0] - from[0]) / 2.0;
+            Assert.Equal(Math.Sqrt((7.0 * 7.0) - (depth * depth)), half, 3);
+        }
 
         var textures = root.GetProperty("textures");
         Assert.Equal("game:block/metal/plate/tinbronze", textures.GetProperty("bronze").GetString());
