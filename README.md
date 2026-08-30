@@ -34,7 +34,7 @@ Similarly the deep sky views could be generated or use custom assets, or place a
 
 ### Measure the sky with a Sextant
 
-Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and moon can be shot whenever they are up, so the Sextant works in daylight too. A daytime moon is a perfectly good sight. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
+Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and a visibly lit moon can be shot whenever they are up, so the Sextant works in daylight too. A daytime crescent is a perfectly good sight; an invisible new moon is not. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
 
 ![Sextant usage](docs/screenshots/sextant_azimuthal_grid.png)
 

@@ -224,8 +224,9 @@ public sealed class SextantReadingRenderer : IRenderer
 
     /// <summary>
     /// The sun and moon come straight from Vintage Story, so the sextant measures the bodies the
-    /// game actually draws. Both are sightable whenever they are up, which is what lets the moon be
-    /// shot in daylight; only the star catalog needs a dark sky.
+    /// game actually draws. The sun is sightable whenever it is up; the moon must also have a lit
+    /// phase, which keeps daylight crescents sightable without offering the invisible new moon.
+    /// Only the star catalog needs a dark sky.
     /// </summary>
     /// <remarks>
     /// Near bodies sight in daylight for the same reason the sun and moon do: they are drawn in
@@ -252,7 +253,8 @@ public sealed class SextantReadingRenderer : IRenderer
         {
             var moonVector = calendar.GetMoonPosition(position.XYZ, calendar.TotalDays);
             var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
-            if (moon is not null && moon.AltitudeDeg > 0)
+            if (moon is not null
+                && MoonSightingPolicy.IsSightable(moon.AltitudeDeg, calendar.MoonPhaseBrightness))
             {
                 yield return moon;
             }

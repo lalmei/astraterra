@@ -93,7 +93,7 @@ the sun goes down. `.stars calendar full` puts it back.
 
 Hold right click with the Sextant and align the center of the screen with the sun, the moon, or a visible star. The top-center readout names what you sighted and displays its angle above the horizon in degrees. While holding right click, use middle click to cycle through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`; the Sextant remembers its selected display mode for the rest of the game session.
 
-The sun and the moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime moon is a perfectly good sight, and often an easier one than a star. Stars and planets still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
+The sun and a visibly lit moon can be shot whenever they are above the horizon, so the Sextant works in broad daylight — a daytime crescent is a perfectly good sight, and often an easier one than a star. An invisible new moon is not offered as a target. Stars and planets still need a dark enough sky. If several bodies fall inside the sight, the one nearest the center of the screen wins.
 
 Planets sight by whatever *you* call them. With no book naming them the readout says **Wandering star**, because from the ground that is all a planet is: a star that does not keep its place. Put a book that names them in your left hand and the readout uses those names. Since planets are usually among the brightest things up, they are the easiest sights in the sky after the sun and the moon.
 

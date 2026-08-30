@@ -136,10 +136,11 @@
   and are deliberately not saved.
 - Set `.stars sky-grid none`, hold right click with the Sextant, and confirm the on-screen angle above horizon updates for a centered visible star with no grid initially. Middle click repeatedly and confirm the display cycles through rose equatorial, cyan azimuthal, both, and angle-only. Release right click and confirm the saved no-grid setting is restored.
 - In daylight, hold right click with the Sextant and sight the sun; expected result: the readout names `Sun` and shows its angle above the horizon, with no star reading offered.
-- With a daytime moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.
+- With a daytime lit moon above the horizon, sight it and confirm the readout names `Moon` and reports a plausible angle.
+- At new moon while the moon is above the horizon, aim at its position and confirm the Sextant does not offer a `Moon` reading; repeat at full moon and confirm that it does.
 - Sight the sun near sunrise or sunset and confirm the reported angle approaches zero as it meets the horizon.
 - Point away from every body and confirm the readout lists what is available to aim at rather than reporting stars are not visible.
-- With the star catalog asset missing or failing to load, confirm the Sextant still sights the sun and moon and offers only those two.
+- With the star catalog asset missing or failing to load, confirm the Sextant still sights the sun and any lit moon, and offers only whichever of those two are available.
 - Hold the Astrolabe steady for a minute of world time and confirm the clock line advances without the frame rate dropping; the sky clock is cached per world minute rather than recomputed each frame.
 - Hold a freshly crafted Calibrated Astrolabe and hold right click; expected result: it reads **no plate** and refuses to place anything, whatever book is in the left hand.
 - Sneak and hold right click under open sky at night; expected result: a bar fills over about three seconds and the readout then shows a plate at your latitude.
