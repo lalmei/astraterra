@@ -152,6 +152,7 @@ public static class SkyStarSunMoonRenderer
     private static readonly List<string> RetainedDiscIds = new(16);
     private static readonly List<string> StaleDiscIds = new(16);
     private static readonly HashSet<string> DiscsReportedWithoutTexture = new(StringComparer.Ordinal);
+    private static bool planetDiscMeshesDirty = true;
 
     // How wide each planet is being drawn, for the star pass: a planet that has become a disc no
     // longer wants the sprite that stood in for one.
@@ -341,6 +342,15 @@ public static class SkyStarSunMoonRenderer
         planetModel = null;
         planetModelDaysPerYear = 0;
         planetModelHoursPerDay = 0;
+        planetDiscModel = null;
+        planetDiscModelDaysPerYear = 0;
+        ProjectedPlanetDiscs.Clear();
+        DiscWidthByPlanetId.Clear();
+        DiscsReportedWithoutTexture.Clear();
+        cachedPlanetDiscLatitudeDeg = double.NaN;
+        cachedPlanetDiscSiderealDeg = double.NaN;
+        planetDiscMeshesDirty = true;
+        starMeshesDirty = true;
         api?.Logger.Notification(
             "AstraTerra sky renderer planets replaced: planets={0}",
             replacement?.Planets.Count ?? 0);
@@ -461,6 +471,7 @@ public static class SkyStarSunMoonRenderer
         StaleDiscIds.Clear();
         cachedPlanetDiscLatitudeDeg = double.NaN;
         cachedPlanetDiscSiderealDeg = double.NaN;
+        planetDiscMeshesDirty = true;
         DeepSkyPlateMeshes.Clear();
         PlatesReportedWithoutTexture.Clear();
         RetainedPlateIds.Clear();
@@ -506,11 +517,13 @@ public static class SkyStarSunMoonRenderer
         meteorShowers = Array.Empty<MeteorShowerEntry>();
         planetCatalog = null;
         planetModel = null;
+        planetDiscModel = null;
         cometCatalog = null;
         cometModel = null;
         cometModelDaysPerYear = 0;
         planetModelDaysPerYear = 0;
         planetModelHoursPerDay = 0;
+        planetDiscModelDaysPerYear = 0;
         meteorVisuals.Clear();
         Metrics.Reset();
         SkyRenderPaths.Reset();
@@ -962,13 +975,13 @@ public static class SkyStarSunMoonRenderer
                 render.GlToggleBlend(true, EnumBlendMode.Glow);
             }
 
+            EnsurePlanetDiscMeshes(clientApi, planetDiscs);
             if (planetDiscs.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.Stars))
             {
                 // Alpha blended and drawn last of the sky's own objects: a planet's disc is opaque
                 // where its globe is, so it should hide the stars behind it rather than glow over
                 // them -- and a moon crossing in front of its parent should hide that.
                 render.GlToggleBlend(true, EnumBlendMode.Standard);
-                EnsurePlanetDiscMeshes(clientApi, planetDiscs);
                 for (var index = 0; index < planetDiscs.Count; index++)
                 {
                     var textureId = ResolvePlanetDiscTexture(clientApi, planetDiscs[index]);
@@ -1611,6 +1624,7 @@ public static class SkyStarSunMoonRenderer
                 ProjectedPlanetDiscs.Clear();
                 DiscWidthByPlanetId.Clear();
                 starMeshesDirty = true;
+                planetDiscMeshesDirty = true;
             }
 
             cachedPlanetDiscLatitudeDeg = double.NaN;
@@ -1628,6 +1642,7 @@ public static class SkyStarSunMoonRenderer
         model.Place(totalDays, latitudeDeg, localSiderealDeg, brightnessBias, sunDirection, ProjectedPlanetDiscs);
         cachedPlanetDiscLatitudeDeg = latitudeDeg;
         cachedPlanetDiscSiderealDeg = localSiderealDeg;
+        planetDiscMeshesDirty = true;
 
         // The star pass reads this to know which planets have stopped being points of light. It is
         // rebuilt here rather than there because only this pass knows how wide a disc came out.
@@ -1648,6 +1663,12 @@ public static class SkyStarSunMoonRenderer
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedPlanetDisc> discs)
     {
+        if (!planetDiscMeshesDirty)
+        {
+            return;
+        }
+
+        planetDiscMeshesDirty = false;
         for (var index = 0; index < discs.Count; index++)
         {
             var disc = discs[index];

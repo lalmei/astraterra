@@ -207,6 +207,72 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("DeepSkyRenderModel.ProjectVisibleObjects(objects, latitudeDeg, localSiderealDeg, brightnessBias, ProjectedDeepSkyObjects);", renderer, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Resolved planets and their moons use the same cached-projection scheme as telescope plates.
+    /// Rewriting every little quad on every scoped frame would put the render-thread buffer stalls
+    /// back into the path that plate caching just removed.
+    /// </summary>
+    [Fact]
+    public void Resolved_Planet_Discs_Keep_Their_Geometry_Between_Projection_Refreshes()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("private static bool planetDiscMeshesDirty = true;", renderer, StringComparison.Ordinal);
+        Assert.Contains("if (!planetDiscMeshesDirty)", renderer, StringComparison.Ordinal);
+        Assert.Contains("planetDiscMeshesDirty = true;", renderer, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A replacement catalog is a different solar system. Both the naked-eye model and the resolved
+    /// telescope model have to release their derived state, including across client sessions whose
+    /// calendars happen to use the same number of days per year.
+    /// </summary>
+    [Fact]
+    public void Planet_Catalog_Replacement_And_Reset_Clear_The_Resolved_Disc_Model()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+        var replacementStart = renderer.IndexOf("public static void ReplacePlanetCatalog(", StringComparison.Ordinal);
+        var replacementEnd = renderer.IndexOf("public static void ReplaceCometCatalog(", replacementStart, StringComparison.Ordinal);
+        var resetStart = renderer.IndexOf("public static void Reset()", StringComparison.Ordinal);
+        var resetEnd = renderer.IndexOf("public static string SetForceDaylightStars", resetStart, StringComparison.Ordinal);
+
+        Assert.True(replacementStart >= 0 && replacementEnd > replacementStart);
+        Assert.True(resetStart >= 0 && resetEnd > resetStart);
+        Assert.Contains("planetDiscModel = null;", renderer[replacementStart..replacementEnd], StringComparison.Ordinal);
+        Assert.Contains("ProjectedPlanetDiscs.Clear();", renderer[replacementStart..replacementEnd], StringComparison.Ordinal);
+        Assert.Contains("planetDiscModel = null;", renderer[resetStart..resetEnd], StringComparison.Ordinal);
+        Assert.Contains("planetDiscModelDaysPerYear = 0;", renderer[resetStart..resetEnd], StringComparison.Ordinal);
+    }
+
+    /// <summary>Sky geometry is beyond the weather, whichever pass owns it.</summary>
+    [Fact]
+    public void Moon_And_Near_Body_Passes_Are_Drawn_Without_Scene_Fog()
+    {
+        foreach (var file in new[] { "MoonDiscRenderer.cs", "NearBodyRenderer.cs" })
+        {
+            var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering", file));
+
+            Assert.Contains("shader.RgbaFogIn = NoFog;", renderer, StringComparison.Ordinal);
+            Assert.Contains("shader.FogMinIn = 0f;", renderer, StringComparison.Ordinal);
+            Assert.Contains("shader.FogDensityIn = 0f;", renderer, StringComparison.Ordinal);
+            Assert.DoesNotContain("render.FogColor", renderer, StringComparison.Ordinal);
+            Assert.DoesNotContain("render.FogMin", renderer, StringComparison.Ordinal);
+            Assert.DoesNotContain("render.FogDensity", renderer, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void A_Near_Body_Render_Failure_Restores_The_Vanilla_Moon()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/NearBodyRenderer.cs"));
+        var catchStart = renderer.IndexOf("catch (Exception exception)", StringComparison.Ordinal);
+        var catchEnd = renderer.IndexOf("public void Dispose()", catchStart, StringComparison.Ordinal);
+
+        Assert.True(catchStart >= 0 && catchEnd > catchStart);
+        Assert.Contains("renderingDisabledAfterFailure = true;", renderer[catchStart..catchEnd], StringComparison.Ordinal);
+        Assert.Contains("HidesVanillaMoon = false;", renderer[catchStart..catchEnd], StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Sky_Renderer_Reset_Clears_Static_Session_State_In_Source()
     {

@@ -14,8 +14,8 @@ namespace AstraTerra.Client.Rendering;
 /// Only the picture changes. Where the moon is, what phase it is in, how much light it sheds and how
 /// that phase advances are all still Vintage Story's — this reads them and draws what they describe,
 /// so a mod or a command that moves the moon moves this too. What it adds is a moon worth pointing a
-/// telescope at: eight faces of the real surface, at the half degree the moon actually subtends, so
-/// magnification shows craters rather than a larger smooth disc.
+/// telescope at: eight faces of the real surface, at a modest four-times-life angle that still fits
+/// in the precision eyepiece, so magnification shows craters rather than a larger smooth disc.
 /// </para>
 /// <para>
 /// A pass of its own rather than part of the star pass, because the moon is up in daylight and the
@@ -40,6 +40,7 @@ public sealed class MoonDiscRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly AstraTerraConfig config;
     private readonly float[] modelMatrix = IdentityModelMatrix();
+    private static readonly Vec4f NoFog = new(0f, 0f, 0f, 1f);
     private readonly Dictionary<string, int> textureIds = new(StringComparer.Ordinal);
     private readonly HashSet<string> failedTexturePaths = new(StringComparer.Ordinal);
     private MeshRef? mesh;
@@ -154,10 +155,10 @@ public sealed class MoonDiscRenderer : IRenderer
             shader.Use();
             shader.Uniform("skyShaded", 0);
             shader.RgbaAmbientIn = ColorUtil.WhiteRgbVec;
-            shader.RgbaFogIn = render.FogColor;
+            shader.RgbaFogIn = NoFog;
             shader.ExtraGlow = 0;
-            shader.FogMinIn = render.FogMin;
-            shader.FogDensityIn = render.FogDensity;
+            shader.FogMinIn = 0f;
+            shader.FogDensityIn = 0f;
             shader.DontWarpVertices = 0;
             shader.AddRenderFlags = 0;
             shader.ExtraZOffset = 0f;

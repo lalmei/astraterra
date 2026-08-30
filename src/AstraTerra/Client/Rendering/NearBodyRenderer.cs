@@ -40,6 +40,7 @@ public sealed class NearBodyRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, BodyPass> passes = new(StringComparer.Ordinal);
     private readonly float[] modelMatrix = IdentityModelMatrix();
+    private static readonly Vec4f NoFog = new(0f, 0f, 0f, 1f);
     private NearBodyCatalog catalog = NearBodyCatalog.Empty;
     private NearBodyCatalog? pending;
     private bool renderingDisabledAfterFailure;
@@ -93,6 +94,7 @@ public sealed class NearBodyRenderer : IRenderer
         catch (Exception exception)
         {
             renderingDisabledAfterFailure = true;
+            HidesVanillaMoon = false;
             api.Logger.Error("AstraTerra stopped drawing near bodies after a render failure: {0}", exception);
         }
     }
@@ -159,10 +161,10 @@ public sealed class NearBodyRenderer : IRenderer
             shader.Use();
             shader.Uniform("skyShaded", 0);
             shader.RgbaAmbientIn = ColorUtil.WhiteRgbVec;
-            shader.RgbaFogIn = render.FogColor;
+            shader.RgbaFogIn = NoFog;
             shader.ExtraGlow = 0;
-            shader.FogMinIn = render.FogMin;
-            shader.FogDensityIn = render.FogDensity;
+            shader.FogMinIn = 0f;
+            shader.FogDensityIn = 0f;
             shader.DontWarpVertices = 0;
             shader.AddRenderFlags = 0;
             shader.ExtraZOffset = 0f;
