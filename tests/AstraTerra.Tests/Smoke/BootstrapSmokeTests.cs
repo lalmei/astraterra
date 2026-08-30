@@ -94,21 +94,34 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
-    public void A_Disc_Draws_On_The_Sky_When_It_Is_Up_And_Shows_Its_Figure_When_It_Is_Merely_Held()
+    public void A_Disc_Is_Drawn_On_While_It_Is_Up_And_Its_Figure_Is_Shown_While_It_Is_Held()
     {
         var overlay = File.ReadAllText(
             Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/ConstellationOverlayRenderer.cs"));
 
-        // Held is enough to see a figure; raised is what it takes to cut one. Losing either half of
-        // that turns the disc into a telescope that works from a backpack.
+        // Raised is what it takes to cut a line.
         Assert.Contains("SkyDiscReadingState.IsReading && SkyDiscHeld.IsHolding", overlay);
-        Assert.Contains("SkyDiscHeld.Find(api.World.Player)", overlay);
 
         // A line drawn through the disc goes into the disc, not into the book on the other hand.
         Assert.Contains("discClient.SendEngrave(start, end)", overlay);
 
         // And a disc asks for no book, no ink and no quill.
         Assert.Contains("surface == DrawingSurface.Telescope && !bookClient.CanMutate", overlay);
+
+        // The segments this pass builds are what a telescope points at to rename or unpick, and both
+        // of those act on the book by id. A disc's figure among them is a line the book is asked to
+        // edit and does not have, so this pass must only ever see the book's own constellations.
+        Assert.DoesNotContain("figures.Add(", overlay);
+        Assert.Contains("bookClient.ReadCurrentJournalOrEmpty().Constellations", overlay);
+
+        // The figure itself is drawn by the sky, not here — this pass only aims and previews. Wiring
+        // it up here instead is exactly the bug where a disc could be drawn on but never showed.
+        var sky = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        Assert.Contains("ReadDiscFigureCached(SkyDiscHeld.Find(api.World.Player))", sky);
+        Assert.Contains("ConstellationRecords.Add(discFigure.AsRecord())", sky);
+        Assert.Contains("SkyDiscFigureStore.FigureJsonAttribute", sky);
     }
 
     [Fact]

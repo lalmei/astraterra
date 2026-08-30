@@ -236,18 +236,14 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         var darkness = 1.0 - calendar.DayLightStrength;
         var surface = Surface;
 
-        // Held is enough to see a disc's figure; raised is what it takes to cut a line into it. An
-        // instrument in a chest shows nothing, which is the whole of the rule.
-        var discFigure = SkyDiscHeld.Find(api.World.Player) is { } heldDisc
-            ? SkyDiscFigureStore.Read(heldDisc)
-            : null;
-        var showsDisc = discFigure is { IsBlank: false };
-        var showsBook = bookClient.HasLeftHandJournalBook();
-
+        // This pass is the drawing hand, not the sky: it exists to project stars so one can be
+        // aimed at, and to show the line being pulled between two of them. What a figure looks like
+        // once it is drawn is the sky pass's business, so nothing here runs unless an instrument is
+        // actually up.
         if ((!SkyStarSunMoonRenderer.ForceDaylightStars && darkness <= 0.02) ||
             cachedViewMatrix is null ||
             cachedProjectionMatrix is null ||
-            (surface == DrawingSurface.None && !showsDisc))
+            surface == DrawingSurface.None)
         {
             ClearInteractionTargets();
             return;
@@ -262,22 +258,18 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         // The telescope draws into the book, so without one it has nothing to draw on and nothing
         // to show. The disc is its own page and asks for no book at all.
-        if (surface == DrawingSurface.Telescope && !showsBook)
+        if (surface == DrawingSurface.Telescope && !bookClient.HasLeftHandJournalBook())
         {
             ClearInteractionTargets();
             return;
         }
 
-        var figures = new List<ConstellationRecord>();
-        if (showsBook)
-        {
-            figures.AddRange(bookClient.ReadCurrentJournalOrEmpty().Constellations);
-        }
-
-        if (showsDisc)
-        {
-            figures.Add(discFigure!.AsRecord());
-        }
+        // Only the book's constellations. These become the segments a telescope can point at to
+        // rename or unpick, and every one of those acts on the book by id — so a disc's figure among
+        // them would be a line the book is asked to edit and does not have.
+        var figures = surface == DrawingSurface.Telescope
+            ? bookClient.ReadCurrentJournalOrEmpty().Constellations
+            : [];
 
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
@@ -289,16 +281,8 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         // Reused buffers rather than a fresh projection, filter and dictionary each frame: this runs
         // on the render thread whenever an instrument is up, over the whole catalog.
-        //
-        // Except when nothing is being drawn. A disc merely carried in the hand shows its figure and
-        // nothing else, and the figure hangs on a handful of named stars — so a player walking about
-        // at night with a disc on their belt pays for those stars rather than for six thousand.
-        var starsToProject = surface == DrawingSurface.None
-            ? catalog.Stars.Where(star => discFigure!.Stars.Contains(star.Hip))
-            : catalog.Stars;
-
         StarRenderModel.ProjectVisibleStars(
-            starsToProject,
+            catalog.Stars,
             latitude,
             localSiderealAngle,
             Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength),
