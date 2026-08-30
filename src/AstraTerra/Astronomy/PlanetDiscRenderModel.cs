@@ -8,8 +8,8 @@ namespace AstraTerra.Astronomy;
 /// How wide the whole image draws, rings included — not the globe alone.
 /// </param>
 /// <param name="QuadCorners">
-/// The image's corners as world directions, from its top-left clockwise, matching the winding a
-/// deep-sky plate is built with so the two share a mesh builder.
+/// The image's corners as world directions, bottom-left first, which is the winding a deep-sky
+/// plate is built with so the two share a mesh builder.
 /// </param>
 public sealed record RenderedPlanetDisc(
     string Id,
@@ -151,7 +151,7 @@ public sealed class PlanetDiscRenderModel
         // the sky at the planet, and near opposition the first of them is ill-conditioned -- the sun
         // is behind the observer and has no direction on the sky -- so the ecliptic stands in.
         var eclipticAxis = EclipticTangent(geocentric, direction, latitudeDeg, localSiderealDeg);
-        var sunwardAxis = Tangent(direction, sunDirection, fallback: eclipticAxis);
+        var sunwardAxis = SkyTangent.Tangent(direction, sunDirection, fallback: eclipticAxis);
 
         var globeWidthDeg = ToDegrees(disc.EquatorialDiameterKm / distanceKm) * DiscExaggeration;
         var imageWidthDeg = globeWidthDeg * Math.Max(disc.ImageWidthInDiameters, 0.01);
@@ -162,7 +162,7 @@ public sealed class PlanetDiscRenderModel
             SelectFace(disc.Faces, ephemeris.PhaseAngleAt(totalDays)).TexturePath,
             imageWidthDeg,
             placed.Brightness,
-            BuildQuad(direction, Negate(sunwardAxis), imageWidthDeg)));
+            SkyTangent.BuildQuad(direction, SkyTangent.Negate(sunwardAxis), imageWidthDeg)));
 
         if (planet.Moons is null)
         {
@@ -211,8 +211,8 @@ public sealed class PlanetDiscRenderModel
             return;
         }
 
-        var acrossAxis = Cross(eclipticAxis, parentDirection);
-        var direction = Normalize(new SkyDirection(
+        var acrossAxis = SkyTangent.Cross(eclipticAxis, parentDirection);
+        var direction = SkyTangent.Normalize(new SkyDirection(
             parentDirection.X + (eclipticAxis.X * ToRadians(alongDeg)) + (acrossAxis.X * ToRadians(acrossDeg)),
             parentDirection.Y + (eclipticAxis.Y * ToRadians(alongDeg)) + (acrossAxis.Y * ToRadians(acrossDeg)),
             parentDirection.Z + (eclipticAxis.Z * ToRadians(alongDeg)) + (acrossAxis.Z * ToRadians(acrossDeg))));
@@ -233,7 +233,7 @@ public sealed class PlanetDiscRenderModel
             moon.TexturePath,
             widthDeg,
             brightness,
-            BuildQuad(direction, eclipticAxis, widthDeg)));
+            SkyTangent.BuildQuad(direction, eclipticAxis, widthDeg)));
     }
 
     /// <summary>
@@ -268,45 +268,6 @@ public sealed class PlanetDiscRenderModel
     }
 
     /// <summary>
-    /// The image's four corners on the sky sphere: a square of <paramref name="widthDeg"/> centred on
-    /// the body, with its horizontal running along <paramref name="rightAxis"/>.
-    /// </summary>
-    /// <remarks>
-    /// Bottom-left first, then anticlockwise as the image is seen, because that is the winding
-    /// <see cref="AstraTerra.Client.Rendering.DeepSkyQuadMeshBuilder"/> reads: it flips V on the way
-    /// out, so the first corner it is handed is the one that takes the picture's bottom row.
-    /// </remarks>
-    public static IReadOnlyList<DeepSkyDirection> BuildQuad(
-        SkyDirection direction,
-        SkyDirection rightAxis,
-        double widthDeg)
-    {
-        var up = Cross(rightAxis, direction);
-        var half = ToRadians(widthDeg) * 0.5;
-        return
-        [
-            Corner(direction, rightAxis, up, -half, -half),
-            Corner(direction, rightAxis, up, half, -half),
-            Corner(direction, rightAxis, up, half, half),
-            Corner(direction, rightAxis, up, -half, half)
-        ];
-    }
-
-    private static DeepSkyDirection Corner(
-        SkyDirection direction,
-        SkyDirection rightAxis,
-        SkyDirection up,
-        double right,
-        double above)
-    {
-        var corner = Normalize(new SkyDirection(
-            direction.X + (rightAxis.X * right) + (up.X * above),
-            direction.Y + (rightAxis.Y * right) + (up.Y * above),
-            direction.Z + (rightAxis.Z * right) + (up.Z * above)));
-        return new DeepSkyDirection(corner.X, corner.Y, corner.Z);
-    }
-
-    /// <summary>
     /// The direction of increasing ecliptic longitude at the body, as a tangent to the sky. This is
     /// the line the moons of a planet string out along, because their orbits lie in their parent's
     /// equator and every one of those planes is within a few degrees of the ecliptic.
@@ -322,48 +283,7 @@ public sealed class PlanetDiscRenderModel
             geocentric.EclipticLongitudeDeg + stepDeg,
             geocentric.EclipticLatitudeDeg);
         var (x, y, z) = SkyProjection.GetWorldDirection(ahead, latitudeDeg, localSiderealDeg);
-        return Tangent(direction, new SkyDirection(x, y, z), fallback: AnyPerpendicular(direction));
-    }
-
-    /// <summary>
-    /// The part of <paramref name="towards"/> that lies on the sky at <paramref name="direction"/>,
-    /// which is what a direction in space looks like once it is flattened onto the view.
-    /// </summary>
-    private static SkyDirection Tangent(SkyDirection direction, SkyDirection towards, SkyDirection fallback)
-    {
-        var projection = (towards.X * direction.X) + (towards.Y * direction.Y) + (towards.Z * direction.Z);
-        var tangent = new SkyDirection(
-            towards.X - (direction.X * projection),
-            towards.Y - (direction.Y * projection),
-            towards.Z - (direction.Z * projection));
-        return Length(tangent) < 1e-6 ? fallback : Normalize(tangent);
-    }
-
-    /// <summary>Any unit vector at right angles to the direction, for when nothing else fixes one.</summary>
-    private static SkyDirection AnyPerpendicular(SkyDirection direction)
-    {
-        var candidate = Math.Abs(direction.Y) < 0.9
-            ? new SkyDirection(0, 1, 0)
-            : new SkyDirection(1, 0, 0);
-        return Normalize(Cross(direction, candidate));
-    }
-
-    private static SkyDirection Cross(SkyDirection left, SkyDirection right)
-        => Normalize(new SkyDirection(
-            (left.Y * right.Z) - (left.Z * right.Y),
-            (left.Z * right.X) - (left.X * right.Z),
-            (left.X * right.Y) - (left.Y * right.X)));
-
-    private static SkyDirection Negate(SkyDirection direction)
-        => new(-direction.X, -direction.Y, -direction.Z);
-
-    private static double Length(SkyDirection direction)
-        => Math.Sqrt((direction.X * direction.X) + (direction.Y * direction.Y) + (direction.Z * direction.Z));
-
-    private static SkyDirection Normalize(SkyDirection direction)
-    {
-        var length = Length(direction);
-        return length < 1e-12 ? direction : new SkyDirection(direction.X / length, direction.Y / length, direction.Z / length);
+        return SkyTangent.Tangent(direction, new SkyDirection(x, y, z), fallback: SkyTangent.Horizontal(direction));
     }
 
     private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;

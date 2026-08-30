@@ -348,6 +348,9 @@ public static class VanillaMoonSuppressionPatch
             vanillaMoonScale = __instance.moonScale;
         }
 
-        __instance.moonScale = NearBodyRenderer.HidesVanillaMoon ? 0f : vanillaMoonScale;
+        // Either pass may have taken the moon: a moon world has none to show, and a world with one
+        // draws it from AstraTerra's own photographs instead of the game's disc.
+        var hidden = NearBodyRenderer.HidesVanillaMoon || MoonDiscRenderer.HidesVanillaMoon;
+        __instance.moonScale = hidden ? 0f : vanillaMoonScale;
     }
 }

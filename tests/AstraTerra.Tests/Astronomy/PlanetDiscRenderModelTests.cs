@@ -34,7 +34,7 @@ public sealed class PlanetDiscRenderModelTests
         var direction = new SkyDirection(0.0, 0.0, -1.0);
         var right = new SkyDirection(1.0, 0.0, 0.0);
 
-        var corners = PlanetDiscRenderModel.BuildQuad(direction, right, widthDeg: 2.0);
+        var corners = SkyTangent.BuildQuad(direction, right, widthDeg: 2.0);
 
         Assert.Equal(4, corners.Count);
         Assert.All(corners, corner => Assert.Equal(1.0, Length(corner), 9));
