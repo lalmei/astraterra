@@ -81,8 +81,11 @@
       "scale": 1
     },
     "engravedFiguresByType": {
-      "*-clay": 0,
       "*": 1
+    },
+    "engravableByType": {
+      "*-clay": false,
+      "*": true
     }
   },
   "creativeinventory": {

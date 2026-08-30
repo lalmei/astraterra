@@ -8,6 +8,7 @@ using AstraTerra.Commands;
 using AstraTerra.Config;
 using AstraTerra.Constellations;
 using AstraTerra.Items;
+using AstraTerra.Items.Patches;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -29,6 +30,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private ConstellationOverlayRenderer? constellationOverlayRenderer;
     private ConstellationBookClient? constellationBookClient;
     private SkyDiscEngraveClient? skyDiscEngraveClient;
+    private readonly PitKilnFiringKeepsTheDiscPatch skyDiscFiringPatch = new();
     private SkyDiscFaceHud? skyDiscFaceHud;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
     private SextantReadingRenderer? sextantReadingRenderer;
@@ -45,6 +47,11 @@ public sealed class AstraTerraModSystem : ModSystem
         api.RegisterItemClass("AstraTerra.Items.ItemSextant", typeof(ItemSextant));
         api.RegisterItemClass("AstraTerra.Items.ItemAstrolabe", typeof(ItemAstrolabe));
         api.RegisterItemClass("AstraTerra.Items.ItemSkyDisc", typeof(ItemSkyDisc));
+
+        // Both sides: firing runs on the server, and in single player that server is this process.
+        api.Logger.Event(
+            "AstraTerra startup step: clay disc firing patched: kiln={0}",
+            skyDiscFiringPatch.Start(api));
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemBrassTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemPrecisionTelescope");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSextant");
@@ -371,6 +378,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
+        skyDiscFiringPatch.Stop();
         VanillaCalendarHooks.Reset();
         telescopeScopeController?.Stop();
         skyLyingController?.Stop();

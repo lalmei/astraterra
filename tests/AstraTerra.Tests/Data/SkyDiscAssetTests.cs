@@ -270,17 +270,34 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void Metal_Buys_A_Disc_Room_For_One_Figure()
+    public void Every_Disc_Holds_One_Figure_But_Clay_Takes_It_Only_Before_Firing()
     {
-        using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
-        var figures = document.RootElement.GetProperty("attributes").GetProperty("engravedFiguresByType");
+        using var fired = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
+        var attributes = fired.RootElement.GetProperty("attributes");
 
-        // Clay holds marks, not a memory: you inlay a figure into metal, and the disc worth keeping
-        // is the one that can carry the constellation you drew. One of them — a disc is one object
-        // with one face, not a notebook.
-        Assert.Equal(0, figures.GetProperty("*-clay").GetInt32());
-        Assert.Equal(1, figures.GetProperty("*").GetInt32());
+        // One figure whatever it is made of: a disc is one object with one face, not a notebook.
+        Assert.Equal(1, attributes.GetProperty("engravedFiguresByType").GetProperty("*").GetInt32());
         Assert.Equal(1, SkyDiscEngraving.MaxFigures);
+
+        // But carrying a figure and being able to take one are different questions. Fired clay holds
+        // the figure it was fired with and will never take another; metal is worked cold.
+        var engravable = attributes.GetProperty("engravableByType");
+        Assert.False(engravable.GetProperty("*-clay").GetBoolean());
+        Assert.True(engravable.GetProperty("*").GetBoolean());
+
+        // So the clay disc that can be drawn on is the raw one, which has to be an instrument at all
+        // to be raised and drawn on.
+        using var raw = ReadJson("assets", "astraterra", "itemtypes", "sky-disc-clay-raw.json");
+        var rawRoot = raw.RootElement;
+
+        Assert.Equal("AstraTerra.Items.ItemSkyDisc", rawRoot.GetProperty("class").GetString());
+        Assert.Equal(1, rawRoot.GetProperty("attributes").GetProperty("engravedFigures").GetInt32());
+        Assert.True(rawRoot.GetProperty("attributes").GetProperty("engravable").GetBoolean());
+
+        // And what it fires into is the disc that shows the figure.
+        Assert.Equal(
+            "astraterra:sky-disc-clay",
+            rawRoot.GetProperty("combustibleProps").GetProperty("smeltedStack").GetProperty("code").GetString());
     }
 
     [Fact]

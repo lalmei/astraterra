@@ -6,11 +6,14 @@ namespace AstraTerra.Observation;
 /// How many of the observer's own constellations a disc will carry.
 /// </summary>
 /// <remarks>
-/// The rim stops improving at copper, so past that a disc is bought for what it can be engraved
-/// with rather than for what it can measure. Metal takes one figure: a disc is one object with one
-/// face, and the figure on it is the one its owner thought worth carrying rather than a notebook
-/// page of them. Clay takes none — a figure is laid into metal, and a disc that cannot hold one is
-/// a disc you outgrow rather than keep, which is exactly what the starter disc should be.
+/// One figure, whatever it is made of: a disc is one object with one face, and what goes on it is
+/// the figure its owner thought worth carrying rather than a notebook page of them.
+/// <para>
+/// Holding a figure and being able to take one are different questions, and clay is why. A figure
+/// is pressed into a clay disc while the clay is still soft and is fixed by the firing; a fired
+/// disc carries the figure it was fired with and will never take another. Metal is worked cold and
+/// can be engraved whenever its owner likes.
+/// </para>
 /// </remarks>
 public static class SkyDiscEngraving
 {
@@ -29,4 +32,13 @@ public static class SkyDiscEngraving
             stack?.Collectible?.Attributes?["engravedFigures"].AsInt(0) ?? 0,
             0,
             MaxFigures);
+
+    /// <summary>
+    /// Whether this disc can be worked now, as opposed to whether it can carry a figure at all.
+    /// </summary>
+    /// <remarks>
+    /// False for fired clay, which holds the figure it was fired with and takes no more.
+    /// </remarks>
+    public static bool IsWorkable(ItemStack? stack)
+        => stack?.Collectible?.Attributes?["engravable"].AsBool(false) ?? false;
 }

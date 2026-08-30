@@ -1,5 +1,6 @@
 using AstraTerra.Astronomy;
 using AstraTerra.Client.Rendering;
+using AstraTerra.Constellations;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -220,6 +221,44 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
     {
         Finish(byEntity);
         return true;
+    }
+
+    /// <summary>
+    /// Firing a clay disc hardens it; it does not wipe it.
+    /// </summary>
+    /// <remarks>
+    /// The base builds the fired disc out of the recipe and throws the raw one away, so what was
+    /// worked into the clay has to be carried across by hand. The pit kiln — which is how a disc is
+    /// actually fired — does not come through here at all and is patched separately; this covers
+    /// every other way the game might smelt one, and costs nothing when nothing was worked.
+    /// </remarks>
+    public override void DoSmelt(
+        IWorldAccessor world,
+        ISlotProvider cookingSlotsProvider,
+        ItemSlot inputSlot,
+        ItemSlot outputSlot)
+    {
+        var figure = SkyDiscFigureStore.Read(inputSlot?.Itemstack);
+        var band = SolarBandStore.Read(inputSlot?.Itemstack);
+
+        base.DoSmelt(world, cookingSlotsProvider, inputSlot, outputSlot);
+
+        if (outputSlot?.Itemstack is not { } fired)
+        {
+            return;
+        }
+
+        if (figure is { IsBlank: false })
+        {
+            SkyDiscFigureStore.Write(fired, figure);
+        }
+
+        if (band is not null)
+        {
+            SolarBandStore.Write(fired, band);
+        }
+
+        outputSlot.MarkDirty();
     }
 
     /// <summary>
