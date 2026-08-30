@@ -148,69 +148,105 @@ sightable either.
 [AstraExtera](https://github.com/lalmei/astraextera) is what fills this in today, from the giant it
 authored for your save.
 
-> ### New in v0.5.4: the Milky Way, and a sky you work out for yourself
+> ### New in v0.6.0: a year on a disc, and worlds in the eyepiece
 >
-> The galaxy's own glow is in the sky. And the instruments stopped handing you answers: what a
-> moving body is, and what your astrolabe is engraved for, are now things you establish by
-> observing and writing it down.
+> Astronomy now begins with clay and a clear horizon, then reaches all the way to the moons of
+> Jupiter. This release adds an instrument whose answers take a year to earn, and turns the lights
+> a telescope found in earlier versions into worlds with size, phases, rings, and moons of their
+> own.The sky disk is meant to an early astronomy tool, you can make with clay or metals.
+> It meant to represent something like a nebra disk, you can save one constelation on it. shift and right click on sunset and sunrise to keep track of its position to see if you are moving towards or away from a soltisce, once you have a full gap measured you should access to the day of the years. 
 >
-> - **The Milky Way.** A broad band with a bright core towards Sagittarius, split by the dark dust
->   lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your
->   latitude puts it. It is generated from a model of the galaxy rather than photographed, so the
->   rift and the amber core fall out of the model rather than being painted. Gone in twilight, back
->   once the night is properly dark, washed out by a bright moon, so it is best near new moon. It
->   costs nothing measurable: 0.16–0.55 ms a frame with it on against 0.50–0.55 with it off, and no
->   extra draw calls. `MilkyWayBrightness` in `ModConfig/astraterra.json` takes `0`, and
->   `.stars render milkyway off` switches it off for a session.
-> - **Write down what you saw, not what it was.** Sneak while holding the Sextant up, with a
->   writable book in your left hand and ink and quill in your inventory, and the book gains a dated
->   entry: the angle above the horizon, the bearing, how bright it looked, the day and hour, and the
->   latitude you stood at. The entry does not say what you sighted, and that is the point: it
->   records that *something* stood there at that hour.
-> - **Then work it out.** `.stars sightings` lays your entries side by side, gathers them into the
->   sets it takes to be one body, and says how far apart the nights put them.
->   `.stars classify <set> star|wanderer|comet [name]` is where you say what it was. Nothing grades
->   the answer; that is what makes it yours. Call a set a wanderer and, if exactly one of the
->   wandering bodies was in all those places on all those nights, your name for it becomes the name
->   every instrument uses.
-> - **Every answer says what it rests on.** `from 3 sightings over 11 days, to 0° 01′` for a
->   wanderer you established yourself, `drawn from 7 stars` for one of your own figures,
->   `from the almanac, not your sightings` for a comet, whose returns are somebody else's
->   arithmetic. A planet written down under an older version, with no sightings behind it, still
->   aims, but it says it is thin.
-> - **The astrolabe's plate is yours to cut.** A new one is blank. Stand under open sky after dusk
->   and sneak-hold right click while it sights the pole, and it is engraved for that latitude. No
->   star catalog and no brass, only the sky.
-> - **Comets come back on their own schedule.** Four of them, on their real orbital periods. The
->   first is Machholz, a little under two world years into a new world, so a world started today
->   already has one coming. It returns about every five years after that.
-> - **An Astronomy tab in the in-game handbook**, so the instruments explain themselves without a
->   second screen.
-> - **Fixed: pressing Z could crash the client.** The lie-down clips added in v0.5.3 left half of
->   some keyframes unwritten, and the game reads those fields without checking whether they are
->   there. The first time anyone lay down, the client went down with it. If you are on v0.5.3, this
->   is the update you want.
-> - **For modders: the sky is replaceable.** Both the star catalog and the solar system can be
->   swapped for your own, so another mod can ship a different sky rather than patching this one's.
+> - **The Sky Disc begins before metal.** Form one from clay and fire it, or make a finer copper or
+>   bronze one. Mark where the sun crosses the horizon over the course of a world year; once the
+>   band reaches an edge and turns back, the disc can tell you the length of the year, your latitude,
+>   where east or west lies, and when the sun will next stand still. The scratches stay on the item,
+>   and the disc can be set down face-up where it was worked.
+> - **One disc carries one figure.** Hold it up under the stars and drag from star to star to cut one
+>   connected constellation into metal, or press it into raw clay before firing fixes it. Hold the
+>   finished disc again and its figure returns to the sky it was drawn on.
+> - **The calendar can stop giving the answer away.** `.stars calendar clock` keeps the hour but
+>   hides the date; `.stars calendar none` hides both. The choice is local and saved, so the Sky
+>   Disc can be the thing that tells you when the year turns instead of a decoration beside a free
+>   calendar.
+> - **Planets become worlds through a telescope.** Mars grows towards opposition, Saturn carries
+>   its rings, and Jupiter's four Galilean moons and five moons of Saturn move on their own orbits
+>   and disappear when their planet hides them. The photographic art also follows Venus through its
+>   phases. Put the telescope down and they return to the points of light the naked eye can actually
+>   see.
+> - **The Moon belongs to the same sky.** We replaced the moon, as suggested used a pixel art texture.
+> - **The solar system has two faces.** Pixel art made to sit with Vintage Story is the default;
+>   `.stars solar-system photo` swaps in photorealistic images. Position, apparent size,
+>   and moon orbits stay the same whichever art you choose.
+> - **Other worlds can have other skies.** A replacement catalog can now hang a nearby planet and
+>   sibling moons overhead, shade them from the real sun direction, suppress the ordinary Moon, and
+>   make those bodies valid daylight Sextant targets. [AstraExtera](https://github.com/lalmei/astraextera)
+>   uses that hook for the giant authored for its worlds.
+> 
 >
-> **Two numbers we would like a second opinion on.** How bright the Milky Way should be, and how
-> dark the night has to get before it appears. Both are single numbers, easy to move, and better
-> judged by someone out there looking than by anyone reading a diff.
-> [Open an issue](https://github.com/lalmei/astraterra/issues/new/choose), and screenshots are
-> welcome.
->
-> **One known problem, found while measuring the Milky Way.** Raising a telescope where many
-> deep-sky plates are above the horizon is expensive, around 10 ms a frame with roughly forty plates
-> up and the occasional long frame, because every visible plate re-uploads its geometry every frame.
-> It is not new and it is not the Milky Way, it is just the first time it has been measured
-> properly. Tracked as [#105](https://github.com/lalmei/astraterra/issues/105) and next on the list.
+> This pass also fixes a scope that could remain stuck after changing slots, deep-sky plates
+> rebuilding their geometry every frame, brief polar sunrises that the clock could miss, resolved
+> planets flickering behind their old glow, invisible new moons being offered to the Sextant, and
+> constellation journals being overwritten when they could not be read.
 
-> ### Coming next door: a mod that replaces the sky outright
->
-> Now that the star catalog and the solar system can both be swapped, a companion mod is in the
-> works that does exactly that: it takes AstraTerra as a dependency and puts its own sky in place of
-> this one. If you have been waiting to build a sky of your own, that is the hook to build it on,
-> and the interfaces it uses are the ones any mod can use. More when it is ready.
+<details>
+<summary><strong>🌌 Update v0.5.4: the Milky Way, and a sky you work out for yourself</strong></summary>
+<br>
+The galaxy's own glow entered the sky. And the instruments stopped handing you answers: what a
+moving body is, and what your astrolabe is engraved for, became things you establish by observing
+and writing down.
+
+- **The Milky Way.** A broad band with a bright core towards Sagittarius, split by the dark dust
+  lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your
+  latitude puts it. It is generated from a model of the galaxy rather than photographed, so the
+  rift and the amber core fall out of the model rather than being painted. Gone in twilight, back
+  once the night is properly dark, washed out by a bright moon, so it is best near new moon. It
+  costs nothing measurable: 0.16–0.55 ms a frame with it on against 0.50–0.55 with it off, and no
+  extra draw calls. `MilkyWayBrightness` in `ModConfig/astraterra.json` takes `0`, and
+  `.stars render milkyway off` switches it off for a session.
+- **Write down what you saw, not what it was.** Sneak while holding the Sextant up, with a writable
+  book in your left hand and ink and quill in your inventory, and the book gains a dated entry: the
+  angle above the horizon, the bearing, how bright it looked, the day and hour, and the latitude you
+  stood at. The entry does not say what you sighted, and that is the point: it records that
+  *something* stood there at that hour.
+- **Then work it out.** `.stars sightings` lays your entries side by side, gathers them into the
+  sets it takes to be one body, and says how far apart the nights put them.
+  `.stars classify <set> star|wanderer|comet [name]` is where you say what it was. Nothing grades
+  the answer; that is what makes it yours. Call a set a wanderer and, if exactly one of the
+  wandering bodies was in all those places on all those nights, your name for it becomes the name
+  every instrument uses.
+- **Every answer says what it rests on.** `from 3 sightings over 11 days, to 0° 01′` for a
+  wanderer you established yourself, `drawn from 7 stars` for one of your own figures,
+  `from the almanac, not your sightings` for a comet, whose returns are somebody else's arithmetic.
+  A planet written down under an older version, with no sightings behind it, still aims, but it says
+  it is thin.
+- **The astrolabe's plate is yours to cut.** A new one is blank. Stand under open sky after dusk and
+  sneak-hold right click while it sights the pole, and it is engraved for that latitude. No star
+  catalog and no brass, only the sky.
+- **Comets come back on their own schedule.** Four of them, on their real orbital periods. The first
+  is Machholz, a little under two world years into a new world, so a world started today already has
+  one coming. It returns about every five years after that.
+- **An Astronomy tab in the in-game handbook**, so the instruments explain themselves without a
+  second screen.
+- **Fixed: pressing Z could crash the client.** The lie-down clips added in v0.5.3 left half of some
+  keyframes unwritten, and the game reads those fields without checking whether they are there. The
+  first time anyone lay down, the client went down with it. If you are on v0.5.3, this is the update
+  you want.
+- **For modders: the sky is replaceable.** Both the star catalog and the solar system can be swapped
+  for your own, so another mod can ship a different sky rather than patching this one's. That hook
+  is now used by [AstraExtera](https://github.com/lalmei/astraextera).
+
+**Two numbers we would like a second opinion on.** How bright the Milky Way should be, and how dark
+the night has to get before it appears. Both are single numbers, easy to move, and better judged by
+someone out there looking than by anyone reading a diff.
+[Open an issue](https://github.com/lalmei/astraterra/issues/new/choose), and screenshots are welcome.
+
+**One problem found while measuring the Milky Way.** Raising a telescope where many deep-sky plates
+were above the horizon was expensive, around 10 ms a frame with roughly forty plates up and the
+occasional long frame, because every visible plate re-uploaded its geometry every frame. It was not
+new and it was not the Milky Way, only the first time it had been measured properly. It was tracked
+as [#105](https://github.com/lalmei/astraterra/issues/105) and fixed in v0.6.0.
+
+</details>
 
 <details>
 <summary><strong>⚡ Update v0.5.2: the sky pass got cheap</strong></summary>

@@ -53,7 +53,25 @@
 <h3>What is new</h3>
 
 <div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#127756; v0.5.4: the Milky Way, and a sky you work out for yourself</strong></p>
+<p style="margin: 0 0 8px;"><strong>&#127756; v0.6.0: a year on a disc, and worlds in the eyepiece</strong></p>
+<p style="margin: 0 0 8px;">Astronomy now begins with clay and a clear horizon, then reaches all the way to the moons of Jupiter. This release adds an instrument whose answers take a year to earn, and turns the lights a telescope found in earlier versions into worlds with size, phases, rings, and moons of their own.</p>
+<ul>
+<li><strong>The Sky Disc begins before metal.</strong> Form one from clay and fire it, or make a finer copper or bronze one. Mark where the sun crosses the horizon over the course of a world year; once the band reaches an edge and turns back, the disc can tell you the length of the year, your latitude, where east or west lies, and when the sun will next stand still. The scratches stay on the item, and the disc can be set down face-up where it was worked.</li>
+<li><strong>One disc carries one figure.</strong> Hold it up under the stars and drag from star to star to cut one connected constellation into metal, or press it into raw clay before firing fixes it. Hold the finished disc again and its figure returns to the sky it was drawn on.</li>
+<li><strong>The calendar can stop giving the answer away.</strong> <code>.stars calendar clock</code> keeps the hour but hides the date; <code>.stars calendar none</code> hides both. The choice is local and saved, so the Sky Disc can be the thing that tells you when the year turns instead of a decoration beside a free calendar.</li>
+<li><strong>Planets become worlds through a telescope.</strong> Mars grows towards opposition, Saturn carries its rings, and Jupiter's four Galilean moons and five moons of Saturn move on their own orbits and disappear when their planet hides them. The photographic art also follows Venus through its phases. Put the telescope down and they return to the points of light the naked eye can actually see.</li>
+<li><strong>The Moon belongs to the same sky.</strong> Vintage Story's disc steps aside for eight properly oriented phases of the real Moon, with its bright limb turned towards the sun. A telescope now reveals a surface rather than enlarging a smooth circle, without changing moonlight or the calendar's phase.</li>
+<li><strong>The solar system has two faces.</strong> Pixel art made to sit with Vintage Story is the default; <code>.stars solar-system photo</code> swaps in photographs of the real surfaces. Position, apparent size, and moon orbits stay the same whichever art you choose.</li>
+<li><strong>Other worlds can have other skies.</strong> A replacement catalog can now hang a nearby planet and sibling moons overhead, shade them from the real sun direction, suppress the ordinary Moon, and make those bodies valid daylight Sextant targets. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses that hook for the giant authored for its worlds.</li>
+<li><strong>Observation is less prescriptive.</strong> Constellations may begin from any visible star, telescope modes say what the next gesture will do, and an astrolabe names both the observation behind an answer and how fine that evidence was.</li>
+</ul>
+<p style="margin: 0 0 8px;">This pass also fixes a scope that could remain stuck after changing slots, deep-sky plates rebuilding their geometry every frame, brief polar sunrises that the clock could miss, resolved planets flickering behind their old glow, invisible new moons being offered to the Sextant, and constellation journals being overwritten when they could not be read.</p>
+</div>
+
+<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127756; v0.5.4: the Milky Way, and a sky you work out for yourself</div>
+<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
+<div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
 <p style="margin: 0 0 8px;">The galaxy's own glow is in the sky. And the instruments stopped handing you answers: what a moving body is, and what your astrolabe is engraved for, are now things you establish by observing and writing it down.</p>
 <ul>
 <li><strong>The Milky Way.</strong> A broad band with a bright core towards Sagittarius, split by the dark dust lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your latitude puts it. It is generated from a model of the galaxy rather than photographed, so the rift and the amber core fall out of the model rather than being painted. Gone in twilight, back once the night is properly dark, washed out by a bright moon, so it is best near new moon. It costs nothing measurable: 0.16&ndash;0.55 ms a frame with it on against 0.50&ndash;0.55 with it off, and no extra draw calls. <code>MilkyWayBrightness</code> in <code>ModConfig/astraterra.json</code> takes <code>0</code>, and <code>.stars render milkyway off</code> switches it off for a session.</li>
@@ -66,7 +84,7 @@
 <li><strong>Fixed: pressing Z could crash the client.</strong> The lie-down clips added in v0.5.3 left half of some keyframes unwritten, and the game reads those fields without checking whether they are there. The first time anyone lay down, the client went down with it. If you are on v0.5.3, this is the update you want.</li>
 <li><strong>For modders: the sky is replaceable.</strong> Both the star catalog and the solar system can be swapped for your own, so another mod can ship a different sky rather than patching this one's.</li>
 </ul>
-<p style="margin: 0 0 8px;"><strong>One known problem, found while measuring the Milky Way.</strong> Raising a telescope where many deep-sky plates are above the horizon is expensive, around 10 ms a frame with roughly forty plates up and the occasional long frame, because every visible plate re-uploads its geometry every frame. It is not new and it is not the Milky Way; it is the first time it has been measured properly. Tracked as <a href="https://github.com/lalmei/astraterra/issues/105">issue #105</a> and next on the list.</p>
+<p style="margin: 0 0 8px;"><strong>One problem found while measuring the Milky Way.</strong> Raising a telescope where many deep-sky plates were above the horizon was expensive, around 10 ms a frame with roughly forty plates up and the occasional long frame, because every visible plate re-uploaded its geometry every frame. It was not new and it was not the Milky Way; it was the first time it had been measured properly. It was tracked as <a href="https://github.com/lalmei/astraterra/issues/105">issue #105</a> and fixed in v0.6.0.</p>
 </div>
 
 <div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
@@ -76,7 +94,9 @@
 
 <div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
 <p style="margin: 0 0 8px;"><strong>&#128301; Coming next door: a mod that replaces the sky outright</strong></p>
-<p style="margin: 0 0 8px;">Now that the star catalog and the solar system can both be swapped, a companion mod is in the works that does exactly that: it takes AstraTerra as a dependency and puts its own sky in place of this one. If you have been waiting to build a sky of your own, that is the hook to build it on, and the interfaces it uses are the ones any mod can use. More when it is ready.</p>
+<p style="margin: 0 0 8px;">Now that the star catalog and the solar system can both be swapped, a companion mod can take AstraTerra as a dependency and put its own sky in place of this one. That hook is now used by <a href="https://github.com/lalmei/astraextera">AstraExtera</a>, and the interfaces it uses are the ones any mod can use.</p>
+</div>
+</div>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
