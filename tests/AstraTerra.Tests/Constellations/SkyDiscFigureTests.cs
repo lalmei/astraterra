@@ -7,7 +7,7 @@ namespace AstraTerra.Tests.Constellations;
 public sealed class SkyDiscFigureTests
 {
     private const int Metal = 1;
-    private const int Clay = 0;
+    private const int NoRoomForAny = 0;
 
     [Fact]
     public void The_First_Line_Goes_Anywhere()
@@ -72,12 +72,37 @@ public sealed class SkyDiscFigureTests
     }
 
     [Fact]
-    public void Clay_Holds_No_Figure_At_All()
+    public void A_Disc_With_No_Room_Takes_Nothing()
     {
         var figure = new SkyDiscFigure();
 
-        Assert.Equal(SkyDiscEngraveOutcome.NotEngravable, figure.Engrave(100, 200, Clay).Outcome);
+        Assert.Equal(SkyDiscEngraveOutcome.NotEngravable, figure.Engrave(100, 200, NoRoomForAny).Outcome);
         Assert.Empty(figure.Edges);
+    }
+
+    [Fact]
+    public void Fired_Clay_Holds_Its_Figure_But_Will_Not_Take_Another()
+    {
+        // It has room for one — it is carrying one — and is simply too hard to work now. Which is a
+        // different answer from "this disc will not hold a figure", and has to read as one.
+        var figure = new SkyDiscFigure();
+        figure.Engrave(100, 200, Metal);
+
+        var result = figure.Engrave(200, 300, Metal, workable: false);
+
+        Assert.Equal(SkyDiscEngraveOutcome.TooHard, result.Outcome);
+        Assert.Contains("before it is baked", result.Message, StringComparison.Ordinal);
+        Assert.Single(figure.Edges);
+    }
+
+    [Fact]
+    public void Soft_Clay_Takes_A_Figure_The_Way_Metal_Does()
+    {
+        var figure = new SkyDiscFigure();
+
+        Assert.True(figure.Engrave(100, 200, Metal, workable: true).Changed);
+        Assert.True(figure.Engrave(200, 300, Metal, workable: true).Changed);
+        Assert.True(figure.IsOnePiece);
     }
 
     [Fact]

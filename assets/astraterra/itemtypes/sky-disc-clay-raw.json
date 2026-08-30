@@ -1,5 +1,6 @@
 {
   "code": "sky-disc-clay",
+  "class": "AstraTerra.Items.ItemSkyDisc",
   "variantgroups": [
     {
       "code": "color",
@@ -79,7 +80,10 @@
         "z": 0.5
       },
       "scale": 1
-    }
+    },
+    "engravedFigures": 1,
+    "engravable": true,
+    "arcNotchDeg": 5
   },
   "creativeinventory": {
     "general": [
@@ -136,5 +140,7 @@
       "z": 0.5
     },
     "scale": 2
-  }
+  },
+  "heldPriorityInteract": true,
+  "heldTpUseAnimation": "interactstatic"
 }

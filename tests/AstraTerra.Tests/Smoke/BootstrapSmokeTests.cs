@@ -125,6 +125,30 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Firing_A_Clay_Disc_Hardens_It_Rather_Than_Wiping_It()
+    {
+        var patch = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Items/Patches/PitKilnFiringKeepsTheDiscPatch.cs"));
+
+        // The kiln clones the fired item out of the recipe and drops the raw one, attributes and
+        // all. A disc drawn on all evening coming out of the kiln blank reads as the game having
+        // eaten the work, so both halves of the carry have to be here.
+        Assert.Contains("BlockEntityPitKiln", patch);
+        Assert.Contains("SkyDiscFigureStore.FigureJsonAttribute", patch);
+        Assert.Contains("SolarBandStore.BandJsonAttribute", patch);
+
+        // Patched by hand, not by attribute: an assembly-wide PatchAll on the client would claim it
+        // as well, and it would then be applied twice in single player.
+        Assert.DoesNotContain("[HarmonyPatch]", patch);
+
+        var modSystem = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/AstraTerraModSystem.cs"));
+
+        // From Start, which is the one hook that runs on a dedicated server and on a client alike.
+        Assert.Contains("skyDiscFiringPatch.Start(api)", modSystem);
+        Assert.Contains("skyDiscFiringPatch.Stop()", modSystem);
+    }
+
+    [Fact]
     public void Telescope_Scope_Renderer_Uses_Telescope_Specific_Raster_Overlays()
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/TelescopeScopeRenderer.cs"));

@@ -74,7 +74,11 @@ public sealed class SkyDiscEngraveServer
         }
 
         var figure = SkyDiscFigureStore.ReadOrEmpty(stack);
-        var result = figure.Engrave(packet.StartHip, packet.EndHip, SkyDiscEngraving.FiguresAllowed(stack));
+        var result = figure.Engrave(
+            packet.StartHip,
+            packet.EndHip,
+            SkyDiscEngraving.FiguresAllowed(stack),
+            SkyDiscEngraving.IsWorkable(stack));
         if (!result.Changed)
         {
             return new SkyDiscEngraveResponsePacket { Message = result.Message };

@@ -17,6 +17,9 @@ public enum SkyDiscEngraveOutcome
     /// <summary>The material holds no figure at all.</summary>
     NotEngravable,
 
+    /// <summary>Fired clay: it holds the figure it was fired with, and no more.</summary>
+    TooHard,
+
     /// <summary>A second figure. A disc holds one.</summary>
     NoRoom,
 }
@@ -75,13 +78,20 @@ public sealed class SkyDiscFigure
     /// Nothing is written unless the answer is <see cref="SkyDiscEngraveOutcome.Engraved"/>, so a
     /// refusal leaves the figure exactly as it was and can be reported and forgotten.
     /// </remarks>
-    public SkyDiscEngraveResult Engrave(int startHip, int endHip, int figuresAllowed)
+    public SkyDiscEngraveResult Engrave(int startHip, int endHip, int figuresAllowed, bool workable = true)
     {
         if (figuresAllowed <= 0)
         {
             return new SkyDiscEngraveResult(
                 SkyDiscEngraveOutcome.NotEngravable,
-                "A figure is laid into metal. This disc will not hold one.");
+                "This disc will not hold a figure.");
+        }
+
+        if (!workable)
+        {
+            return new SkyDiscEngraveResult(
+                SkyDiscEngraveOutcome.TooHard,
+                "The clay is fired hard. A figure goes into it before it is baked, not after.");
         }
 
         if (startHip == endHip)
