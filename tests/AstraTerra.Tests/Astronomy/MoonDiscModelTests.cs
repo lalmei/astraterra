@@ -72,18 +72,17 @@ public sealed class MoonDiscModelTests
     }
 
     /// <summary>
-    /// Two degrees: four times the half degree the moon really subtends, and about half the field of
-    /// the finest telescope here, which is the constraint that picks it.
+    /// The replacement occupies the same roughly seven-degree width as Vintage Story's own moon.
     /// </summary>
     [Fact]
-    public void The_Moon_Is_Drawn_At_Four_Times_Life_Size()
+    public void The_Moon_Matches_The_Vanilla_Apparent_Size()
     {
         var moon = new SkyDirection(0.0, 1.0, 0.0);
 
         var corners = MoonDiscModel.BuildQuad(moon, new SkyDirection(1.0, 0.0, 0.0), MoonDiscModel.Faces[4]);
 
         Assert.Equal(4, corners.Count);
-        Assert.InRange(MoonDiscModel.AngularDiameterDeg, 1.5, 2.5);
+        Assert.Equal(7.0, MoonDiscModel.AngularDiameterDeg);
         // Half a diagonal from the centre, measured on the sphere: the corners are laid out on the
         // tangent plane and then dropped onto it, which pulls them in by a fraction of an arcminute.
         var halfWidth = MoonDiscModel.AngularDiameterDeg * Math.PI / 360.0;
