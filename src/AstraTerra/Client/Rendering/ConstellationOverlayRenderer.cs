@@ -26,6 +26,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     private readonly AstraTerraConfig config;
     private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
+    private readonly SkyDiscEngraveClient discClient;
     private readonly List<RenderedStar> overlayStars = new(6000);
     private readonly Dictionary<int, RenderedStar> overlayStarsByHip = new(6000);
     private double[]? cachedViewMatrix;
@@ -42,12 +43,14 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         ICoreClientAPI api,
         AstraTerraConfig config,
         StarCatalog catalog,
-        ConstellationBookClient bookClient)
+        ConstellationBookClient bookClient,
+        SkyDiscEngraveClient discClient)
     {
         this.api = api;
         this.config = config;
         this.catalog = catalog;
         this.bookClient = bookClient;
+        this.discClient = discClient;
         pixelTexture = new LoadedTexture(api)
         {
             Width = 1,
@@ -58,6 +61,29 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     public double RenderOrder => 0.95;
 
     public int RenderRange => 9999;
+
+    /// <summary>
+    /// The instrument a line is being drawn through, or none.
+    /// </summary>
+    /// <remarks>
+    /// Two instruments draw on the sky and each has its own way of being ready: the telescope when
+    /// it is scoped, and the disc when it is held up. Both are the same gesture from here — aim at a
+    /// star, press, aim at another, let go — and only the surface the line is cut into differs.
+    /// </remarks>
+    private DrawingSurface Surface
+    {
+        get
+        {
+            if (TelescopeScopeState.IsScoped)
+            {
+                return DrawingSurface.Telescope;
+            }
+
+            return SkyDiscReadingState.IsReading && SkyDiscHeld.IsHolding(api.World.Player)
+                ? DrawingSurface.Disc
+                : DrawingSurface.None;
+        }
+    }
 
     /// <summary>See <see cref="SkyStarSunMoonRenderer.ReplaceCatalog"/>.</summary>
     public void ReplaceCatalog(StarCatalog replacement)
@@ -72,8 +98,21 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
     public void OnMouseDown(MouseEvent args)
     {
-        if (!TelescopeScopeState.IsScoped)
+        var surface = Surface;
+        if (surface == DrawingSurface.None)
         {
+            return;
+        }
+
+        // The disc has one mode: a disc is a thing you cut a figure into, and it carries no
+        // inspecting or unpicking the way a notebook does.
+        if (surface == DrawingSurface.Disc)
+        {
+            if (args.Button == EnumMouseButton.Left)
+            {
+                BeginConnection(args, surface);
+            }
+
             return;
         }
 
@@ -95,7 +134,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         switch (TelescopeScopeState.Mode)
         {
             case ObservationMode.Draw:
-                BeginConnection(args);
+                BeginConnection(args, surface);
                 break;
             case ObservationMode.Inspect:
                 OpenNameDialog(args);
@@ -108,14 +147,15 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
     public void OnMouseMove(MouseEvent args)
     {
-        if (!TelescopeScopeState.IsScoped)
+        var surface = Surface;
+        if (surface == DrawingSurface.None)
         {
             hoveredStarHipId = null;
             drawHoverHipId = null;
             return;
         }
 
-        if (TelescopeScopeState.Mode != ObservationMode.Draw)
+        if (surface == DrawingSurface.Telescope && TelescopeScopeState.Mode != ObservationMode.Draw)
         {
             hoveredStarHipId = null;
             drawHoverHipId = null;
@@ -132,7 +172,10 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
     public void OnMouseUp(MouseEvent args)
     {
-        if (!TelescopeScopeState.IsScoped || args.Button != EnumMouseButton.Left || TelescopeScopeState.Mode != ObservationMode.Draw)
+        var surface = Surface;
+        if (surface == DrawingSurface.None
+            || args.Button != EnumMouseButton.Left
+            || (surface == DrawingSurface.Telescope && TelescopeScopeState.Mode != ObservationMode.Draw))
         {
             return;
         }
@@ -141,7 +184,15 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         drawHoverHipId = target?.Hip ?? drawHoverHipId;
         if (drawStartHipId is int start && drawHoverHipId is int end && start != end)
         {
-            bookClient.SendAddEdge(start, end);
+            if (surface == DrawingSurface.Disc)
+            {
+                discClient.SendEngrave(start, end);
+            }
+            else
+            {
+                bookClient.SendAddEdge(start, end);
+            }
+
             args.Handled = true;
         }
 
@@ -183,10 +234,20 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         var calendar = api.World.Calendar;
         var darkness = 1.0 - calendar.DayLightStrength;
+        var surface = Surface;
+
+        // Held is enough to see a disc's figure; raised is what it takes to cut a line into it. An
+        // instrument in a chest shows nothing, which is the whole of the rule.
+        var discFigure = SkyDiscHeld.Find(api.World.Player) is { } heldDisc
+            ? SkyDiscFigureStore.Read(heldDisc)
+            : null;
+        var showsDisc = discFigure is { IsBlank: false };
+        var showsBook = bookClient.HasLeftHandJournalBook();
+
         if ((!SkyStarSunMoonRenderer.ForceDaylightStars && darkness <= 0.02) ||
             cachedViewMatrix is null ||
             cachedProjectionMatrix is null ||
-            !TelescopeScopeState.IsScoped)
+            (surface == DrawingSurface.None && !showsDisc))
         {
             ClearInteractionTargets();
             return;
@@ -199,13 +260,24 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
-        if (!bookClient.HasLeftHandJournalBook())
+        // The telescope draws into the book, so without one it has nothing to draw on and nothing
+        // to show. The disc is its own page and asks for no book at all.
+        if (surface == DrawingSurface.Telescope && !showsBook)
         {
             ClearInteractionTargets();
             return;
         }
 
-        var journal = bookClient.ReadCurrentJournalOrEmpty();
+        var figures = new List<ConstellationRecord>();
+        if (showsBook)
+        {
+            figures.AddRange(bookClient.ReadCurrentJournalOrEmpty().Constellations);
+        }
+
+        if (showsDisc)
+        {
+            figures.Add(discFigure!.AsRecord());
+        }
 
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
         var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
@@ -216,9 +288,17 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             longitude);
 
         // Reused buffers rather than a fresh projection, filter and dictionary each frame: this runs
-        // on the render thread whenever the scope is up, over the whole catalog.
+        // on the render thread whenever an instrument is up, over the whole catalog.
+        //
+        // Except when nothing is being drawn. A disc merely carried in the hand shows its figure and
+        // nothing else, and the figure hangs on a handful of named stars — so a player walking about
+        // at night with a disc on their belt pays for those stars rather than for six thousand.
+        var starsToProject = surface == DrawingSurface.None
+            ? catalog.Stars.Where(star => discFigure!.Stars.Contains(star.Hip))
+            : catalog.Stars;
+
         StarRenderModel.ProjectVisibleStars(
-            catalog.Stars,
+            starsToProject,
             latitude,
             localSiderealAngle,
             Math.Max(config.StarBrightnessBias, config.GuideStarHighlightStrength),
@@ -231,7 +311,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         }
 
         ProjectStars(overlayStars, projectedStars);
-        var segments = ConstellationRenderModel.BuildConstellationSegments(journal.Constellations, overlayStarsByHip);
+        var segments = ConstellationRenderModel.BuildConstellationSegments(figures, overlayStarsByHip);
         var nextScreenSegments = new List<RenderedScreenSegment>();
 
         foreach (var segment in segments)
@@ -256,7 +336,10 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         api.Render.GlToggleBlend(true, EnumBlendMode.Standard);
         try
         {
-            DrawTelescopeDrawingFeedback();
+            if (surface != DrawingSurface.None)
+            {
+                DrawDrawingFeedback();
+            }
         }
         finally
         {
@@ -283,7 +366,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         return StarRenderModel.ProjectVisibleStars(stars.Where(star => star.IsGuideStar), latitudeDeg, localSiderealDeg, brightnessBias);
     }
 
-    private void DrawTelescopeDrawingFeedback()
+    private void DrawDrawingFeedback()
     {
         var hovered = FindProjectedStar(hoveredStarHipId);
         var start = FindProjectedStar(drawStartHipId);
@@ -396,7 +479,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
         screenSegments = [];
     }
 
-    private void BeginConnection(MouseEvent args)
+    private void BeginConnection(MouseEvent args, DrawingSurface surface)
     {
         var target = PickStar(args.X, args.Y);
         if (target is null)
@@ -404,7 +487,9 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             return;
         }
 
-        if (!bookClient.CanMutate(out var message))
+        // A disc needs no book, no ink and no quill: the figure goes into the disc in the hand, and
+        // whether that disc will take one is the server's answer to give when the line is finished.
+        if (surface == DrawingSurface.Telescope && !bookClient.CanMutate(out var message))
         {
             api.ShowChatMessage(message);
             return;
@@ -622,6 +707,14 @@ public sealed class ConstellationOverlayRenderer : IRenderer
     }
 
     private readonly record struct ProjectedStar(int Hip, float X, float Y);
+
+    /// <summary>Which instrument, if any, a line is being drawn through.</summary>
+    private enum DrawingSurface
+    {
+        None,
+        Telescope,
+        Disc,
+    }
 
     private readonly record struct RenderedScreenSegment(int ConstellationId, int StartHip, int EndHip, float StartX, float StartY, float EndX, float EndY);
 }

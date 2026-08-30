@@ -79,6 +79,10 @@ public sealed class SkyDiscAssetTests
         // as a mark somebody made.
         Assert.DoesNotContain(names, name => name.StartsWith("gold-", StringComparison.Ordinal));
 
+        // The one exception, and a placeholder: the figure engraved in the middle. It stands in for
+        // the constellation its owner draws until that figure is cut as real geometry.
+        Assert.Contains("figure-plate", names);
+
         // Round, not stepped: every row of the body is cut to a circle of radius seven about (8, 8),
         // to within the half unit a row's own depth allows.
         var body = elements
@@ -100,7 +104,32 @@ public sealed class SkyDiscAssetTests
             Assert.Equal(Math.Sqrt((7.0 * 7.0) - (depth * depth)), half, 3);
         }
 
+        // Flat on the disc's own face and inside the rim, so the figure reads as laid into the metal
+        // rather than sitting on it or spilling over the edge.
+        var plate = elements.Single(element => element.GetProperty("name").GetString() == "figure-plate");
+        var plateFrom = plate.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+        var plateTo = plate.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+
+        Assert.Equal(0.8, plateFrom[1], 3);
+        Assert.True(plateTo[1] - plateFrom[1] < 0.05, "The figure is engraved, not stuck on.");
+        Assert.Equal(8.0 - plateFrom[0], plateTo[0] - 8.0, 3);
+        Assert.Equal(8.0 - plateFrom[2], plateTo[2] - 8.0, 3);
+
+        // Its corners have to clear the rim's inner face, or the figure runs under the rim.
+        var rimInner = elements
+            .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
+                .StartsWith("sunrise-rim-segment-", StringComparison.Ordinal))
+            .Min(segment => Radius(segment, nearest: true));
+        var plateCorner = Math.Sqrt(((8.0 - plateFrom[0]) * (8.0 - plateFrom[0])) + ((8.0 - plateFrom[2]) * (8.0 - plateFrom[2])));
+        Assert.True(plateCorner <= rimInner + 0.5, $"The figure plate reaches {plateCorner}, past a rim at {rimInner}.");
+
         var textures = root.GetProperty("textures");
+        Assert.Equal("astraterra:item/sky-disc-figure", textures.GetProperty("figure").GetString());
+        Assert.Equal([32, 32], root.GetProperty("textureSizes").GetProperty("figure").EnumerateArray().Select(value => value.GetInt32()));
+        Assert.True(
+            File.Exists(Path.Combine(RepositoryRoot, "assets/astraterra/textures/item/sky-disc-figure.png")),
+            "The figure texture the shape names is not shipped.");
+
         Assert.Equal("game:block/metal/plate/tinbronze", textures.GetProperty("bronze").GetString());
 
         // Nothing on the shape is gold any more, but the code stays declared: a face can only use a
@@ -127,24 +156,22 @@ public sealed class SkyDiscAssetTests
         var rim = elements
             .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
                 .StartsWith("sunrise-rim-segment-", StringComparison.Ordinal))
-            .Select(Footprint)
             .ToList();
 
         Assert.NotEmpty(rim);
-        Assert.InRange(inner, rim.Min(box => Radius(box, nearest: true)), rim.Max(box => Radius(box, nearest: false)));
+        Assert.InRange(inner, rim.Min(segment => Radius(segment, nearest: true)), rim.Max(segment => Radius(segment, nearest: false)));
 
         // And stops inside the disc at every bearing. The body is stepped, so its edge is closer to
         // the centre at some bearings than others, and the closest of them is the one that counts.
         var body = elements
             .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
                 .StartsWith("body-", StringComparison.Ordinal))
-            .Select(Footprint)
             .ToList();
 
         Assert.NotEmpty(body);
         Assert.True(
-            inner + longest < body.Min(box => Radius(box, nearest: true)),
-            $"A mark reaching {inner + longest} runs off a disc whose nearest edge is at {body.Min(box => Radius(box, nearest: true))}.");
+            inner + longest < body.Min(row => Radius(row, nearest: true)),
+            $"A mark reaching {inner + longest} runs off a disc whose nearest edge is at {body.Min(row => Radius(row, nearest: true))}.");
     }
 
     /// <summary>The value of a <c>private const double</c> on a source file, by name.</summary>
@@ -156,33 +183,46 @@ public sealed class SkyDiscAssetTests
         return double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
     }
 
-    /// <summary>An element's extent in the disc's plane, as (x1, z1, x2, z2) about the centre.</summary>
-    private static (double X1, double Z1, double X2, double Z2) Footprint(JsonElement element)
+    /// <summary>
+    /// Where an element's corners actually land in the disc's plane, turned as the shape turns it.
+    /// </summary>
+    /// <remarks>
+    /// A turn is about the element's own origin, not the disc's, so a corner's distance from the
+    /// middle of the disc is not what the unturned box says it is. The rim segments are all turned,
+    /// so this has to do the turn before it measures anything.
+    /// </remarks>
+    private static IReadOnlyList<(double X, double Z)> Corners(JsonElement element)
     {
         var from = element.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
         var to = element.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+        var origin = element.TryGetProperty("rotationOrigin", out var authored)
+            ? authored.EnumerateArray().Select(value => value.GetDouble()).ToArray()
+            : [from[0], from[1], from[2]];
+        var turn = element.TryGetProperty("rotationY", out var rotationY)
+            ? rotationY.GetDouble() * Math.PI / 180.0
+            : 0.0;
 
-        return (from[0] - 8.0, from[2] - 8.0, to[0] - 8.0, to[2] - 8.0);
+        var corners = new List<(double X, double Z)>(4);
+        foreach (var x in new[] { from[0], to[0] })
+        {
+            foreach (var z in new[] { from[2], to[2] })
+            {
+                var dx = x - origin[0];
+                var dz = z - origin[2];
+                corners.Add((
+                    origin[0] + (dx * Math.Cos(turn)) + (dz * Math.Sin(turn)) - 8.0,
+                    origin[2] - (dx * Math.Sin(turn)) + (dz * Math.Cos(turn)) - 8.0));
+            }
+        }
+
+        return corners;
     }
 
-    /// <summary>
-    /// How far a box reaches from the centre of the disc: its nearest corner, or its furthest.
-    /// </summary>
-    /// <remarks>
-    /// The rim segments are turned about their own centres, which leaves every corner the same
-    /// distance out as it was, so unturned corners answer the question for a turned box too.
-    /// </remarks>
-    private static double Radius((double X1, double Z1, double X2, double Z2) box, bool nearest)
+    /// <summary>How far an element reaches from the centre of the disc: nearest corner, or furthest.</summary>
+    private static double Radius(JsonElement element, bool nearest)
     {
-        double[] corners =
-        [
-            Math.Sqrt((box.X1 * box.X1) + (box.Z1 * box.Z1)),
-            Math.Sqrt((box.X2 * box.X2) + (box.Z1 * box.Z1)),
-            Math.Sqrt((box.X1 * box.X1) + (box.Z2 * box.Z2)),
-            Math.Sqrt((box.X2 * box.X2) + (box.Z2 * box.Z2)),
-        ];
-
-        return nearest ? corners.Min() : corners.Max();
+        var radii = Corners(element).Select(corner => Math.Sqrt((corner.X * corner.X) + (corner.Z * corner.Z)));
+        return nearest ? radii.Min() : radii.Max();
     }
 
     [Fact]
@@ -230,16 +270,17 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void Past_Copper_What_A_Disc_Buys_Is_Room_To_Be_Engraved()
+    public void Metal_Buys_A_Disc_Room_For_One_Figure()
     {
         using var document = ReadJson("assets", "astraterra", "itemtypes", "sky-disc.json");
         var figures = document.RootElement.GetProperty("attributes").GetProperty("engravedFiguresByType");
 
         // Clay holds marks, not a memory: you inlay a figure into metal, and the disc worth keeping
-        // is the one that can carry the constellations you drew.
+        // is the one that can carry the constellation you drew. One of them — a disc is one object
+        // with one face, not a notebook.
         Assert.Equal(0, figures.GetProperty("*-clay").GetInt32());
-        Assert.Equal(1, figures.GetProperty("*-copper").GetInt32());
-        Assert.Equal(SkyDiscEngraving.MaxFigures, figures.GetProperty("*").GetInt32());
+        Assert.Equal(1, figures.GetProperty("*").GetInt32());
+        Assert.Equal(1, SkyDiscEngraving.MaxFigures);
     }
 
     [Fact]

@@ -78,9 +78,37 @@ public sealed class BootstrapSmokeTests
         // The wheel reaches the disc before the hotbar does, and only while the disc is up.
         Assert.Contains("SkyDiscReadingState.Turn(args.delta > 0 ? 1 : -1)", modSystem);
         Assert.Contains("api.Event.MouseWheelMove += OnMouseWheelMove", modSystem);
+
+        // A figure is cut into the disc by the server, so both halves of that have to be wired up:
+        // without the client half the disc can never ask, and without the server half nothing is
+        // ever written down.
+        Assert.Contains("skyDiscEngraveClient = new SkyDiscEngraveClient(api)", modSystem);
+        Assert.Contains("skyDiscEngraveClient.Register()", modSystem);
+        Assert.Contains("new SkyDiscEngraveServer().Register(api)", modSystem);
+        Assert.Contains(
+            "new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, skyDiscEngraveClient)",
+            modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Reset()", modSystem);
         Assert.Contains("SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets)", modSystem);
         Assert.Contains("AstraTerra startup step: client renderers skipped", modSystem);
+    }
+
+    [Fact]
+    public void A_Disc_Draws_On_The_Sky_When_It_Is_Up_And_Shows_Its_Figure_When_It_Is_Merely_Held()
+    {
+        var overlay = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/ConstellationOverlayRenderer.cs"));
+
+        // Held is enough to see a figure; raised is what it takes to cut one. Losing either half of
+        // that turns the disc into a telescope that works from a backpack.
+        Assert.Contains("SkyDiscReadingState.IsReading && SkyDiscHeld.IsHolding", overlay);
+        Assert.Contains("SkyDiscHeld.Find(api.World.Player)", overlay);
+
+        // A line drawn through the disc goes into the disc, not into the book on the other hand.
+        Assert.Contains("discClient.SendEngrave(start, end)", overlay);
+
+        // And a disc asks for no book, no ink and no quill.
+        Assert.Contains("surface == DrawingSurface.Telescope && !bookClient.CanMutate", overlay);
     }
 
     [Fact]
