@@ -111,6 +111,14 @@ way a globe does. A catalog can also ask Vintage Story's own moon to stand down,
 no moon of its own should. Only the drawing stops: moonlight, the moon phase the calendar reports,
 and the length of the day are untouched.
 
+A near body can be sighted as well as seen. The sextant reads it in broad daylight, alongside the sun
+and the moon and above the dark-sky rule the stars and planets sit under -- a giant filling a fifth
+of the sky at noon is the most conspicuous thing that world has, and an instrument that would not
+measure it would be refusing the one sight the world offers. The sight latches anywhere on the disc
+rather than at its centre, a sibling moon crossing the parent's face takes precedence over the face
+behind it, and on a world whose catalog stands Vintage Story's moon down, that moon is no longer
+sightable either.
+
 [AstraExtera](https://github.com/lalmei/astraextera) is what fills this in today, from the giant it
 authored for your save.
 

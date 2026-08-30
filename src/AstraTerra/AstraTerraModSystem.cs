@@ -225,7 +225,7 @@ public sealed class AstraTerraModSystem : ModSystem
         skyDiscFaceHud = new SkyDiscFaceHud(api);
         skyDiscFaceHud.TryOpen();
 
-        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient);
+        sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient, nearBodies);
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
         api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
         api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
@@ -346,6 +346,7 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         nearBodies = replacement ?? NearBodyCatalog.Empty;
         nearBodyRenderer?.Apply(nearBodies);
+        sextantReadingRenderer?.ReplaceNearBodies(nearBodies);
     }
 
     public override void StartServerSide(ICoreServerAPI api)
