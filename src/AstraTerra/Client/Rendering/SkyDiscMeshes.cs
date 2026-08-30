@@ -23,23 +23,27 @@ namespace AstraTerra.Client.Rendering;
 /// </remarks>
 public sealed class SkyDiscMeshes : IDisposable
 {
-    /// <summary>Where the sunset band is read: out on the open face, past the raised rim.</summary>
-    private const double SunsetRadius = 6.17;
-
-    private const double SunriseRadius = 4.66;
+    /// <summary>
+    /// Where every mark begins: at the rim, tucked a little under it so no hairline of bare face
+    /// shows between the two.
+    /// </summary>
+    /// <remarks>
+    /// Both bands start here. Which band a mark belongs to is its bearing — sunsets west, sunrises
+    /// east — and a scratch made at the rim is a scratch made at the rim whichever it was. Setting
+    /// the two off at different radii only made the same gesture look like two different ones.
+    /// </remarks>
+    private const double MarkInnerRadius = 4.75;
 
     // A scratch is a line cut across the surface, not an object put on it. So a mark is a hairline in
-    // width and long enough radially to run out past both edges of the band it belongs to. The two
-    // the band stops at are the same cut carried further — longer, never taller.
+    // width, running outward from the rim across the open face — far enough to be read, and stopping
+    // short of the disc's edge at every bearing. The two the band stops at are the same cut carried
+    // further: longer, never taller, and still inside the disc.
     private const double MarkWidth = 0.14;
-    private const double MarkLength = 2.4;
-    private const double EdgeMarkLength = 3.4;
+    private const double MarkLength = 1.15;
+    private const double EdgeMarkLength = 1.65;
 
-    /// <summary>The top of the disc's own face, which the sunset marks are cut into.</summary>
+    /// <summary>The top of the disc's own face, which every mark is cut into.</summary>
     private const double BodyTop = 0.8;
-
-    /// <summary>The top of the sunrise rim, which stands proud of the face.</summary>
-    private const double SunriseRimTop = 1.06;
 
     /// <summary>Sunk below the surface, so a mark reads as cut through it rather than laid on it.</summary>
     private const double MarkDepth = 0.08;
@@ -252,20 +256,15 @@ public sealed class SkyDiscMeshes : IDisposable
     /// The rim segments on the shape are placed by their own corners and merely turned to sit square
     /// to the rim, so a mark is placed the same way: put its centre on the circle at its own angle,
     /// then turn it by that angle so it lies along the radius. Zero degrees is the far side of the
-    /// disc's face, and the angle runs the way a bearing does.
-    /// <para>
-    /// The two bands sit at different heights: the sunrise band is cut into the raised rim, and the
-    /// sunset band into the flat of the disc outside it.
-    /// </para>
+    /// disc's face, and the angle runs the way a bearing does. The centre wanted is therefore half a
+    /// mark's length out from where the mark starts.
     /// </remarks>
     private static ShapeElement Scratch(ShapeElement template, SkyDiscFaceMark mark, int index)
     {
-        var sunset = mark.Event == SolarEvent.Sunset;
-        var radius = sunset ? SunsetRadius : SunriseRadius;
-        var surface = sunset ? BodyTop : SunriseRimTop;
         var length = mark.IsEdge ? EdgeMarkLength : MarkLength;
-        var floor = surface - MarkDepth;
-        var ceiling = surface + MarkProud;
+        var radius = MarkInnerRadius + (length / 2.0);
+        var floor = BodyTop - MarkDepth;
+        var ceiling = BodyTop + MarkProud;
         var radians = mark.NotchDeg * Math.PI / 180.0;
         var centreX = 8.0 + (radius * Math.Sin(radians));
         var centreZ = 8.0 + (radius * Math.Cos(radians));
