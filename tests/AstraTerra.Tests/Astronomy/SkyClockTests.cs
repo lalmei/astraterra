@@ -70,6 +70,17 @@ public sealed class SkyClockTests
     }
 
     [Fact]
+    public void Finds_A_Brief_Daylight_Window_Between_Coarse_Samples()
+    {
+        var reading = SkyClock.Read(totalDays: 10, HoursPerDay, BriefDaylightAltitudeDeg);
+
+        Assert.NotNull(reading.HoursUntilSunrise);
+        Assert.Equal(12.0 + (2.5 / 60.0), reading.HoursUntilSunrise!.Value, 3);
+        Assert.NotNull(reading.HoursUntilSunset);
+        Assert.Equal(12.0 + (12.5 / 60.0), reading.HoursUntilSunset!.Value, 3);
+    }
+
+    [Fact]
     public void Rejects_A_Zero_Length_Day()
     {
         Assert.Throws<ArgumentOutOfRangeException>(
@@ -84,5 +95,18 @@ public sealed class SkyClockTests
     {
         var hourOfDay = CelestialMath.GetLocalSolarTimeHours(totalDays, HoursPerDay);
         return PeakAltitudeDeg * Math.Sin(2.0 * Math.PI * (hourOfDay - 6.0) / HoursPerDay);
+    }
+
+    /// <summary>
+    /// A near-polar sun above the horizon for ten minutes, entirely between the 12:00 and 12:15
+    /// samples used by the coarse horizon search.
+    /// </summary>
+    private static double BriefDaylightAltitudeDeg(double totalDays)
+    {
+        const double peakHour = 12.0 + (7.5 / 60.0);
+        const double halfWindowHours = 5.0 / 60.0;
+        var hourOfDay = CelestialMath.GetLocalSolarTimeHours(totalDays, HoursPerDay);
+        var offset = (hourOfDay - peakHour) / halfWindowHours;
+        return 1.0 - (offset * offset);
     }
 }

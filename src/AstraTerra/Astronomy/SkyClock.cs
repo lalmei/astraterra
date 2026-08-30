@@ -28,7 +28,10 @@ public static class SkyClock
     /// <summary>Civil twilight. Above this the sky still reads as dusk or dawn rather than night.</summary>
     public const double CivilTwilightAltitudeDeg = -6.0;
 
-    private const double CoarseStepHours = 0.25;
+    // Near the polar circles, sunrise and sunset can both occur inside a 15-minute interval.
+    // Five-minute samples still keep this inexpensive while resolving the brief windows that the
+    // astrolabe can otherwise misreport as polar night.
+    private const double CoarseStepHours = 5.0 / 60.0;
     private const double MotionSampleHours = 0.05;
     private const int RefineIterations = 30;
 
