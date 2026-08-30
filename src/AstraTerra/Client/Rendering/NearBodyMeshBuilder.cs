@@ -19,7 +19,8 @@ namespace AstraTerra.Client.Rendering;
 /// <para>
 /// Vertices outside the globe are the ring plane, where there is no normal to speak of. Those take
 /// the body's overall lit fraction instead, so a ring dims with its planet's phase rather than
-/// blazing through the new-moon side.
+/// blazing through the new-moon side -- reached over a short band out from the edge, so the plane
+/// never disagrees with the limb it touches.
 /// </para>
 /// <para>
 /// A body's night side is drawn black rather than left out, because at night that is what it is: a
@@ -96,6 +97,23 @@ public static class NearBodyMeshBuilder
     /// </remarks>
     public const float DaylightGain = 1.45f;
 
+    /// <summary>
+    /// How far past the globe's edge the ring plane takes over the globe's own shading, in globe
+    /// radii.
+    /// </summary>
+    /// <remarks>
+    /// The ring plane has no normal, so it follows the planet's overall phase -- and on a body
+    /// showing a phase that is nothing like the shading just inside the edge, which is night. A
+    /// step between the two at the edge itself is a step the grid draws across a whole cell, and
+    /// half of that cell is globe: the unlit limb came out fringed with lit teeth. Even a body
+    /// with no ring at all has this margin around it, which is why the moons wore the fringe too.
+    /// So the plane leaves the edge at the shading the edge already has, and reaches its own over
+    /// several cells. Nothing is drawn in the gap -- a ring's inner edge stands off the planet,
+    /// and a ringless body's margin is transparent -- so this band is only ever seen as the
+    /// absence of a seam.
+    /// </remarks>
+    public const double RingPlaneBlend = 0.30;
+
     public static MeshData Build(
         IReadOnlyList<PlacedNearBody> bodies,
         float radius,
@@ -147,12 +165,31 @@ public static class NearBodyMeshBuilder
         double illuminatedFraction)
     {
         var distanceSquared = (faceX * faceX) + (faceY * faceY);
-        if (distanceSquared > 1.0)
+        if (distanceSquared <= 1.0)
         {
-            // The ring plane: no normal of its own, so it follows the globe's phase.
-            return (float)Math.Clamp(NightSideLight + (0.95 * illuminatedFraction), 0.0, 1.0);
+            return GlobeLight(faceX, faceY, distanceSquared, sunRight, sunUp, sunToward);
         }
 
+        // The ring plane: no normal of its own, so it follows the globe's phase -- but it leaves
+        // the globe's edge at the shading that edge has, so there is no step for a cell to smear
+        // back over the limb.
+        var distance = Math.Sqrt(distanceSquared);
+        var atLimb = GlobeLight(faceX / distance, faceY / distance, 1.0, sunRight, sunUp, sunToward);
+        var plane = (float)Math.Clamp(NightSideLight + (0.95 * illuminatedFraction), 0.0, 1.0);
+        var reach = Math.Clamp((distance - 1.0) / RingPlaneBlend, 0.0, 1.0);
+        var share = (float)(reach * reach * (3.0 - (2.0 * reach)));
+        return (atLimb * (1f - share)) + (plane * share);
+    }
+
+    /// <summary>The lit fraction on the globe itself, at a point given as its sphere normal's shadow.</summary>
+    private static float GlobeLight(
+        double faceX,
+        double faceY,
+        double distanceSquared,
+        double sunRight,
+        double sunUp,
+        double sunToward)
+    {
         var toward = Math.Max(LimbNormalFloor, Math.Sqrt(Math.Max(0.0, 1.0 - distanceSquared)));
         var lambert = (faceX * sunRight) + (faceY * sunUp) + (toward * sunToward);
         var lit = Math.Clamp((lambert + TerminatorSoftness) / (2.0 * TerminatorSoftness), 0.0, 1.0);

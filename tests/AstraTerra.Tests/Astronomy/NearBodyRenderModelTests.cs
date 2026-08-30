@@ -210,6 +210,33 @@ public sealed class NearBodyRenderModelTests
         Assert.True(NearBodyMeshBuilder.LightAt(-0.99, 0.0, 1.0, 0.0, 0.0, 0.5) < 0.1f);
     }
 
+    /// <summary>
+    /// The margin outside the globe is the ring plane, and it follows the whole body's phase. On an
+    /// unlit limb that is nothing like the shading just inside the edge, and a step there is a step
+    /// the grid draws across a cell whose inner half is globe: the dark limb came out fringed with
+    /// lit teeth. Every body has this margin, ring or no ring, which is why the moons wore it too.
+    /// </summary>
+    [Fact]
+    public void The_Ring_Plane_Leaves_The_Limb_At_The_Shading_The_Limb_Has()
+    {
+        // A gibbous phase: sun off to the right and behind us, so the left limb is night.
+        const double SunRight = 0.8;
+        const double SunToward = 0.6;
+        const double Illuminated = 0.6;
+
+        var insideTheLimb = NearBodyMeshBuilder.LightAt(-1.0, 0.0, SunRight, 0.0, SunToward, Illuminated);
+        var justOutside = NearBodyMeshBuilder.LightAt(-1.0 - (2.0 / NearBodyMeshBuilder.CellsAcrossGlobe), 0.0, SunRight, 0.0, SunToward, Illuminated);
+
+        Assert.True(insideTheLimb < 0.1f, $"the unlit limb came out at {insideTheLimb}");
+        Assert.True(
+            justOutside - insideTheLimb < 0.05f,
+            $"the plane jumps to {justOutside} one cell out from a limb at {insideTheLimb}");
+
+        // Out where a ring is actually drawn it has its phase in full, undimmed by the blend.
+        var wellOut = NearBodyMeshBuilder.LightAt(1.6, 0.0, SunRight, 0.0, SunToward, Illuminated);
+        Assert.Equal(NearBodyMeshBuilder.NightSideLight + (0.95f * (float)Illuminated), wellOut, 3);
+    }
+
     private static PlacedNearBody Placed(SkyDirection direction, SkyDirection sun, double illuminated)
         => new(
             Parent(0.0, 0.0),
