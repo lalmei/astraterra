@@ -19,6 +19,46 @@ public enum SolarMarkOutcome
 
 public sealed record SolarMarkResult(SolarMarkOutcome Outcome, SolarMark? Mark, string Message);
 
+public enum SolarBandEdge
+{
+    Low = 0,
+    High = 1
+}
+
+public enum SolarSolsticeDirection
+{
+    Southward = 0,
+    Northward = 1
+}
+
+/// <summary>The next end of one measured solar band, with enough meaning to name its season.</summary>
+public sealed record SolarTurnForecast(
+    int Day,
+    SolarBandEdge Edge,
+    double NotchDeg,
+    SolarSolsticeDirection Direction)
+{
+    /// <summary>
+    /// Names this turn at the hemisphere where the disc was scribed. At the equator, where summer
+    /// and winter do not select opposite hemispheres, names the sun's northward or southward turn.
+    /// </summary>
+    public string SolsticeName(double? latitudeDeg)
+    {
+        if (latitudeDeg is null || Math.Abs(latitudeDeg.Value) < 0.001)
+        {
+            return Direction == SolarSolsticeDirection.Northward
+                ? "northern solstice"
+                : "southern solstice";
+        }
+
+        var isNorthernHemisphere = latitudeDeg.Value > 0.0;
+        var isNorthwardTurn = Direction == SolarSolsticeDirection.Northward;
+        return isNorthernHemisphere == isNorthwardTurn
+            ? "summer solstice"
+            : "winter solstice";
+    }
+}
+
 /// <summary>
 /// What one arc of the disc shows: where the notches stop, and what stopping there means.
 /// </summary>
@@ -60,21 +100,47 @@ public sealed record SolarBandReading(
             : null;
 
     /// <summary>
-    /// The next day the sun should stand still, counted on from the last turn the disc caught.
-    /// This is the payout that matters to somebody who has never looked up: when to sow.
+    /// The next end of this band, counted on from the last turn the disc caught. Sunset and sunrise
+    /// put the same solstice at opposite ends of their respective bands, so the event is needed to
+    /// say which season the forecast means.
     /// </summary>
-    public int? NextTurnDay(int fromDay)
+    public SolarTurnForecast? NextTurn(int fromDay)
     {
-        if (!IsComplete || YearDays is not { } year || year <= 0)
+        if (!IsComplete
+            || YearDays is not { } year
+            || year <= 0
+            || LowDay is not { } lowDay
+            || HighDay is not { } highDay
+            || LowNotchDeg is not { } lowNotch
+            || HighNotchDeg is not { } highNotch)
         {
             return null;
         }
 
         var halfYear = year / 2.0;
-        var lastTurn = Math.Max(LowDay!.Value, HighDay!.Value);
-        var turnsSince = Math.Ceiling((fromDay - lastTurn) / halfYear);
-        return (int)Math.Round(lastTurn + (Math.Max(turnsSince, 0) * halfYear));
+        var lastEdge = lowDay > highDay ? SolarBandEdge.Low : SolarBandEdge.High;
+        var lastTurn = Math.Max(lowDay, highDay);
+        var turnsSince = Math.Max((long)Math.Ceiling((fromDay - lastTurn) / halfYear), 0L);
+        var nextEdge = turnsSince % 2 == 0
+            ? lastEdge
+            : lastEdge == SolarBandEdge.Low ? SolarBandEdge.High : SolarBandEdge.Low;
+        var direction = Event switch
+        {
+            SolarEvent.Sunset when nextEdge == SolarBandEdge.High => SolarSolsticeDirection.Northward,
+            SolarEvent.Sunset => SolarSolsticeDirection.Southward,
+            SolarEvent.Sunrise when nextEdge == SolarBandEdge.Low => SolarSolsticeDirection.Northward,
+            _ => SolarSolsticeDirection.Southward
+        };
+
+        return new SolarTurnForecast(
+            (int)Math.Round(lastTurn + (turnsSince * halfYear)),
+            nextEdge,
+            nextEdge == SolarBandEdge.Low ? lowNotch : highNotch,
+            direction);
     }
+
+    /// <summary>The next turn's world day, retained for callers that only need the date.</summary>
+    public int? NextTurnDay(int fromDay) => NextTurn(fromDay)?.Day;
 
     /// <summary>
     /// What the disc says, without saying more than it knows. It never announces a solstice at the

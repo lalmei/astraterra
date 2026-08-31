@@ -1,3 +1,5 @@
+using AstraTerra.Astronomy;
+using AstraTerra.Constellations;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
@@ -6,13 +8,14 @@ using Vintagestory.API.Common;
 namespace AstraTerra.Client.Rendering;
 
 /// <summary>
-/// Builds the disc the way its owner scratched it: a mark cut into it wherever the sun was seen.
+/// Builds the disc the way its owner worked it: solar scratches round the rim and its one figure
+/// engraved across the face.
 /// </summary>
 /// <remarks>
-/// The band lives on the itemstack, so two discs of the same item are different objects and must be
-/// drawn differently. Vintage Story hands an item one model, so the model is built here per stack
-/// and kept against a name for exactly what it looks like — a disc that has not been scratched since
-/// the last frame is never rebuilt, and two discs marked alike share one model.
+/// The band and figure live on the itemstack, so two discs of the same item are different objects
+/// and must be drawn differently. Vintage Story hands an item one model, so the model is built here
+/// per stack and kept against a name for exactly what it looks like — a disc that has not been
+/// worked since the last frame is never rebuilt, and two discs marked alike share one model.
 /// <para>
 /// A mark is a scratch, so it is drawn as the tarnish of a line cut through the surface rather than
 /// as anything standing on it. It is still geometry, because a disc's marks differ per stack and a
@@ -55,23 +58,33 @@ public sealed class SkyDiscMeshes : IDisposable
     /// </summary>
     private const double MarkProud = 0.01;
 
+    /// <summary>The narrow cut that joins two punched stars in the figure.</summary>
+    private const double FigureLineWidth = 0.14;
+
+    /// <summary>The square punch at every star the figure is hung on.</summary>
+    private const double FigureStarSize = 0.24;
+
     /// <summary>
-    /// The tarnish of a fresh cut, not an ornament. Gold is what a disc's owner puts into a mark
-    /// afterwards, so a mark is not born gold.
+    /// The shadow and exposed material in a fresh cut, not an ornament. This is a separate texture
+    /// from the rim: on clay, <c>bronze-dark</c> is still the clay of the rim itself and disappears
+    /// against the face, while <c>engraving</c> stays dark both before and after firing.
     /// </summary>
-    private const string MarkTexture = "bronze-dark";
+    private const string MarkTexture = "engraving";
+    private const string FigureTexture = "engraving";
     private const string ShapePath = "astraterra:shapes/item/sky-disc.json";
 
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, MultiTextureMeshRef> meshes = [];
+    private IReadOnlyDictionary<int, StarCatalogEntry> catalogByHip;
 
     /// <summary>Chunk meshes are built on worker threads, and the shape they are built from is shared.</summary>
     private readonly Lock gate = new();
     private Shape? baseShape;
 
-    public SkyDiscMeshes(ICoreClientAPI api)
+    public SkyDiscMeshes(ICoreClientAPI api, StarCatalog? catalog)
     {
         this.api = api;
+        catalogByHip = Index(catalog);
     }
 
     /// <summary>
@@ -81,10 +94,10 @@ public sealed class SkyDiscMeshes : IDisposable
     /// </summary>
     public static SkyDiscMeshes? Active { get; private set; }
 
-    public static void Install(ICoreClientAPI api)
+    public static void Install(ICoreClientAPI api, StarCatalog? catalog)
     {
         Reset();
-        Active = new SkyDiscMeshes(api);
+        Active = new SkyDiscMeshes(api, catalog);
     }
 
     public static void Reset()
@@ -100,19 +113,20 @@ public sealed class SkyDiscMeshes : IDisposable
     /// Uploading a model is an OpenGL call and OpenGL belongs to the main thread. A disc drawn where
     /// it lies goes through <see cref="BuildDisplayMesh"/> instead, which only tesselates.
     /// </remarks>
-    public MultiTextureMeshRef? Get(Item item, SolarBand? band)
+    public MultiTextureMeshRef? Get(Item item, SolarBand? band, SkyDiscFigure? figure)
     {
         var face = SkyDiscFace.Read(band);
-        if (face.Count == 0)
-        {
-            // An unscratched disc is the shape as authored, which the game already has a model for.
-            return null;
-        }
-
-        var key = CacheKey(item, face);
+        var key = CacheKey(item, face, figure);
         if (meshes.TryGetValue(key, out var cached) && !cached.Disposed)
         {
             return cached;
+        }
+
+        var sketch = SkyDiscFigureSketch.Project(figure, catalogByHip);
+        if (face.Count == 0 && sketch.Lines.Count == 0)
+        {
+            // An untouched disc is the shape as authored, which the game already has a model for.
+            return null;
         }
 
         if (!IsMainThread)
@@ -120,7 +134,7 @@ public sealed class SkyDiscMeshes : IDisposable
             return null;
         }
 
-        var built = Build(item, face);
+        var built = Build(item, face, sketch);
         if (built is null)
         {
             return null;
@@ -133,8 +147,8 @@ public sealed class SkyDiscMeshes : IDisposable
     /// <summary>
     /// A name for exactly what one disc looks like, which is what the game caches its model against.
     /// </summary>
-    public static string CacheKey(Item item, SolarBand? band)
-        => CacheKey(item, SkyDiscFace.Read(band));
+    public static string CacheKey(Item item, SolarBand? band, SkyDiscFigure? figure)
+        => CacheKey(item, SkyDiscFace.Read(band), figure);
 
     /// <summary>
     /// The disc's geometry, for a caller that draws it into a chunk rather than into a hand.
@@ -145,17 +159,22 @@ public sealed class SkyDiscMeshes : IDisposable
     /// whichever atlas the block is drawn from. Nothing back means an unscratched disc, which the
     /// caller already has a model for.
     /// </remarks>
-    public MeshData? BuildDisplayMesh(Item item, SolarBand? band, ITextureAtlasAPI targetAtlas)
+    public MeshData? BuildDisplayMesh(
+        Item item,
+        SolarBand? band,
+        SkyDiscFigure? figure,
+        ITextureAtlasAPI targetAtlas)
     {
         var face = SkyDiscFace.Read(band);
-        if (face.Count == 0)
+        var sketch = SkyDiscFigureSketch.Project(figure, catalogByHip);
+        if (face.Count == 0 && sketch.Lines.Count == 0)
         {
             return null;
         }
 
         lock (gate)
         {
-            var shape = MarkedShape(item, face);
+            var shape = MarkedShape(item, face, sketch);
             if (shape is null)
             {
                 return null;
@@ -178,6 +197,23 @@ public sealed class SkyDiscMeshes : IDisposable
 
     public void Dispose()
     {
+        ClearMeshes();
+        baseShape = null;
+    }
+
+    /// <summary>
+    /// Reprojects figures against a world-authored replacement catalog and retires the old models.
+    /// </summary>
+    public void ReplaceCatalog(StarCatalog replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+
+        ClearMeshes();
+        catalogByHip = Index(replacement);
+    }
+
+    private void ClearMeshes()
+    {
         foreach (var mesh in meshes.Values)
         {
             if (!mesh.Disposed)
@@ -187,14 +223,20 @@ public sealed class SkyDiscMeshes : IDisposable
         }
 
         meshes.Clear();
-        baseShape = null;
     }
 
-    private static string CacheKey(Item item, IReadOnlyList<SkyDiscFaceMark> face)
-        => $"{item.Code}|{SkyDiscFace.Key(face)}";
+    private static IReadOnlyDictionary<int, StarCatalogEntry> Index(StarCatalog? starCatalog)
+        => starCatalog?.Stars.ToDictionary(star => star.Hip)
+            ?? new Dictionary<int, StarCatalogEntry>();
+
+    private static string CacheKey(Item item, IReadOnlyList<SkyDiscFaceMark> face, SkyDiscFigure? figure)
+        => $"{item.Code}|band:{SkyDiscFace.Key(face)}|figure:{SkyDiscFigureSketch.Key(figure)}";
 
     /// <summary>The authored disc with this disc's own marks added to it.</summary>
-    private Shape? MarkedShape(Item item, IReadOnlyList<SkyDiscFaceMark> face)
+    private Shape? MarkedShape(
+        Item item,
+        IReadOnlyList<SkyDiscFaceMark> face,
+        SkyDiscFigureSketch sketch)
     {
         baseShape ??= Shape.TryGet(api, ShapePath);
         if (baseShape is null)
@@ -211,7 +253,13 @@ public sealed class SkyDiscMeshes : IDisposable
             return null;
         }
 
-        shape.Elements = [.. shape.Elements, .. face.Select((mark, index) => Scratch(template, mark, index))];
+        shape.Elements =
+        [
+            .. shape.Elements,
+            .. face.Select((mark, index) => Scratch(template, mark, index)),
+            .. sketch.Lines.Select((line, index) => FigureLine(template, line, index)),
+            .. sketch.Stars.Select((star, index) => FigureStar(template, star, index)),
+        ];
         return shape;
     }
 
@@ -230,9 +278,12 @@ public sealed class SkyDiscMeshes : IDisposable
         return textures;
     }
 
-    private MultiTextureMeshRef? Build(Item item, IReadOnlyList<SkyDiscFaceMark> face)
+    private MultiTextureMeshRef? Build(
+        Item item,
+        IReadOnlyList<SkyDiscFaceMark> face,
+        SkyDiscFigureSketch sketch)
     {
-        var shape = MarkedShape(item, face);
+        var shape = MarkedShape(item, face, sketch);
         if (shape is null)
         {
             return null;
@@ -240,9 +291,10 @@ public sealed class SkyDiscMeshes : IDisposable
 
         api.Tesselator.TesselateShape(item, shape, out MeshData? mesh);
         api.Logger.Notification(
-            "AstraTerra sky disc model built: item={0}; marks={1}; elements={2}; mesh={3}",
+            "AstraTerra sky disc model built: item={0}; marks={1}; figureLines={2}; elements={3}; mesh={4}",
             item.Code,
             face.Count,
+            sketch.Lines.Count,
             shape.Elements.Length,
             mesh is null ? "none" : mesh.VerticesCount.ToString());
 
@@ -280,6 +332,58 @@ public sealed class SkyDiscMeshes : IDisposable
         // Clone() copies the array but not the faces in it, and these have to carry the scratch
         // texture without the rim segment they were copied from taking it too. A face the template
         // does not have stays absent here, which is what the empty slots in the array mean.
+        element.FacesResolved = Faces(template, MarkTexture);
+
+        return element;
+    }
+
+    /// <summary>A narrow rectangular cut between two projected stars.</summary>
+    private static ShapeElement FigureLine(ShapeElement template, SkyDiscSketchLine line, int index)
+    {
+        var startX = 8.0 + line.StartX;
+        var startZ = 8.0 - line.StartY;
+        var endX = 8.0 + line.EndX;
+        var endZ = 8.0 - line.EndY;
+        var deltaX = endX - startX;
+        var deltaZ = endZ - startZ;
+        var length = Math.Sqrt((deltaX * deltaX) + (deltaZ * deltaZ));
+        var centreX = (startX + endX) / 2.0;
+        var centreZ = (startZ + endZ) / 2.0;
+        var floor = BodyTop - MarkDepth;
+
+        var element = template.Clone();
+        element.Name = $"figure-line-{index:000}";
+        element.From = [centreX - (FigureLineWidth / 2.0), floor, centreZ - (length / 2.0)];
+        element.To = [centreX + (FigureLineWidth / 2.0), BodyTop + MarkProud, centreZ + (length / 2.0)];
+        element.RotationOrigin = [centreX, floor, centreZ];
+        element.RotationY = Math.Atan2(deltaX, deltaZ) * 180.0 / Math.PI;
+        element.Children = null;
+        element.FacesResolved = Faces(template, FigureTexture);
+        return element;
+    }
+
+    /// <summary>A small diamond punched at a figure's star.</summary>
+    private static ShapeElement FigureStar(ShapeElement template, SkyDiscSketchStar star, int index)
+    {
+        var centreX = 8.0 + star.X;
+        var centreZ = 8.0 - star.Y;
+        var half = FigureStarSize / 2.0;
+        var floor = BodyTop - MarkDepth;
+
+        var element = template.Clone();
+        element.Name = $"figure-star-{index:000}-{star.Hip}";
+        element.From = [centreX - half, floor, centreZ - half];
+        element.To = [centreX + half, BodyTop + MarkProud, centreZ + half];
+        element.RotationOrigin = [centreX, floor, centreZ];
+        element.RotationY = 45.0;
+        element.Children = null;
+        element.FacesResolved = Faces(template, FigureTexture);
+        return element;
+    }
+
+    /// <summary>The template's six faces, copied so this new element can carry its own cut texture.</summary>
+    private static ShapeElementFace[] Faces(ShapeElement template, string texture)
+    {
         var templateFaces = template.FacesResolved ?? [];
         var faces = new ShapeElementFace[templateFaces.Length];
         for (var face = 0; face < faces.Length; face++)
@@ -291,15 +395,13 @@ public sealed class SkyDiscMeshes : IDisposable
 
             faces[face] = new ShapeElementFace
             {
-                Texture = MarkTexture,
+                Texture = texture,
                 Uv = existing.Uv is null ? null : (float[])existing.Uv.Clone(),
                 Rotation = existing.Rotation,
                 Enabled = existing.Enabled,
             };
         }
 
-        element.FacesResolved = faces;
-
-        return element;
+        return faces;
     }
 }

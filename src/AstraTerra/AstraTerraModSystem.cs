@@ -231,8 +231,10 @@ public sealed class AstraTerraModSystem : ModSystem
 
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
-        // The disc needs nothing from any catalog: it watches the sun Vintage Story already draws.
-        SkyDiscMeshes.Install(api);
+        // The solar band needs no catalog. A figure on the same disc does: its stored star ids are
+        // projected onto the face when a catalog is available, and the rest of the instrument keeps
+        // working if astronomy failed to load.
+        SkyDiscMeshes.Install(api, catalog);
         api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
 
         // Held open for the session: it draws nothing until a disc is raised, and it has to be an
@@ -303,6 +305,7 @@ public sealed class AstraTerraModSystem : ModSystem
 
         catalog = replacement;
         SkyStarSunMoonRenderer.ReplaceCatalog(replacement);
+        SkyDiscMeshes.Active?.ReplaceCatalog(replacement);
         constellationOverlayRenderer?.ReplaceCatalog(replacement);
         astrolabePlannerRenderer?.ReplaceCatalog(replacement);
         sextantReadingRenderer?.ReplaceCatalog(replacement);

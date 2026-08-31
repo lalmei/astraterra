@@ -29,6 +29,9 @@
     },
     "gold": {
       "base": "game:block/clay/{color}clay"
+    },
+    "engraving": {
+      "base": "game:block/soil/fertverylow"
     }
   },
   "maxstacksize": 1,

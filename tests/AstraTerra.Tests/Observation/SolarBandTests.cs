@@ -86,6 +86,49 @@ public sealed class SolarBandTests
     }
 
     [Fact]
+    public void A_Sunset_Band_Names_The_Next_Endpoint_And_Reverses_The_Season_Between_Hemispheres()
+    {
+        var reading = CompleteReading(
+            SolarEvent.Sunset,
+            lowNotchDeg: 230.0,
+            lowDay: 48,
+            highNotchDeg: 305.0,
+            highDay: 103,
+            yearDays: 110.0);
+
+        var next = reading.NextTurn(fromDay: 115);
+
+        Assert.NotNull(next);
+        Assert.Equal(158, next!.Day);
+        Assert.Equal(SolarBandEdge.Low, next.Edge);
+        Assert.Equal(230.0, next.NotchDeg);
+        Assert.Equal(SolarSolsticeDirection.Southward, next.Direction);
+        Assert.Equal("winter solstice", next.SolsticeName(49.2));
+        Assert.Equal("summer solstice", next.SolsticeName(-49.2));
+    }
+
+    [Fact]
+    public void Sunrise_And_Sunset_Put_The_Northward_Solstice_At_Opposite_Ends()
+    {
+        var sunset = CompleteReading(SolarEvent.Sunset, 230.0, 103, 305.0, 48, 110.0);
+        var sunrise = CompleteReading(SolarEvent.Sunrise, 55.0, 48, 120.0, 103, 110.0);
+
+        var sunsetTurn = sunset.NextTurn(fromDay: 115);
+        var sunriseTurn = sunrise.NextTurn(fromDay: 115);
+
+        Assert.NotNull(sunsetTurn);
+        Assert.NotNull(sunriseTurn);
+        Assert.Equal(SolarBandEdge.High, sunsetTurn!.Edge);
+        Assert.Equal(305.0, sunsetTurn.NotchDeg);
+        Assert.Equal(SolarBandEdge.Low, sunriseTurn!.Edge);
+        Assert.Equal(55.0, sunriseTurn.NotchDeg);
+        Assert.Equal(SolarSolsticeDirection.Northward, sunsetTurn.Direction);
+        Assert.Equal(SolarSolsticeDirection.Northward, sunriseTurn.Direction);
+        Assert.Equal("summer solstice", sunsetTurn.SolsticeName(LatitudeDeg));
+        Assert.Equal("summer solstice", sunriseTurn.SolsticeName(LatitudeDeg));
+    }
+
+    [Fact]
     public void The_Disc_Binds_To_Where_It_Was_First_Scratched()
     {
         var band = new SolarBand();
@@ -272,6 +315,27 @@ public sealed class SolarBandTests
 
         return band;
     }
+
+    private static SolarBandReading CompleteReading(
+        SolarEvent solarEvent,
+        double lowNotchDeg,
+        int lowDay,
+        double highNotchDeg,
+        int highDay,
+        double yearDays)
+        => new(
+            solarEvent,
+            MarkCount: 20,
+            NotchDeg: SolarBandPolicy.RoughArcNotchDeg,
+            lowNotchDeg,
+            lowDay,
+            LowConfirmed: true,
+            highNotchDeg,
+            highDay,
+            HighConfirmed: true,
+            SwingDeg: highNotchDeg - lowNotchDeg,
+            LatitudeDeg: LatitudeDeg,
+            YearDays: yearDays);
 
     /// <summary>Where the sun goes down on a given day, from the sunset condition itself.</summary>
     private static double SunsetAzimuthDeg(int day)
