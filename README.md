@@ -2,9 +2,11 @@
 
 ![astraterra](modicon.png)
 
-AstraTerra replaces the Vintage Story night sky with a real one: over 5,000 catalog stars, five planets on their true orbits, nine annual meteor showers, and comets that return on their own schedule, for Vintage Story 1.22+. The sky changes with latitude, season, and time; astronomical tools let you observe it, measure it, record your own constellations, and plan when to find them again. This allows to potentially remove maps, and calendars.
+AstraTerra replaces Vintage Story's night sky with a real star catalog: more than 5,000 stars, five planets on Keplerian orbits, nine annual meteor showers, and four comets that return on their own schedule. The sky tilts with latitude, turns with the hour, and changes with the season. For Vintage Story 1.22+.
 
-Teams could have someone focused on server on keeping track of time, and allow explorers to use navigational instruments to determine their location and path.
+Form a clay Sky Disc on your first day and mark where the sun rises and sets; after a year of marks it can tell you the length of the year, your latitude, where east or west lies, and when the sun will next stand still. Hold a telescope to zoom, resolve planets and deep-sky objects, and draw constellations into a vanilla book. Sight the sun, moon, a star, a planet, or a comet with a Sextant and sneak to write the reading down. Forecast a recorded figure, a named wanderer, or a comet with a Calibrated Astrolabe, and read the hour off the sun. Lie on your back (default Z) so the sky fills the view.
+
+`.stars calendar clock` or `none` will hide the vanilla date so the Sky Disc is the thing that tells you when the year turns. On a server, one player can keep the year and another can navigate by the instruments.
 
 Still in alpha. Many item models and recipes are placeholders, along with the UI/UX
 
@@ -18,10 +20,7 @@ Always looking for contributions, models, code, docs etc.
 
 ![AstraTerra's compact, magnitude-scaled stars over a Vintage Story landscape](docs/screenshots/starfiel.png)
 
-A catalog of more than 5,000 naked-eye stars replaces the vanilla cubemap with a rotating celestial sphere. Brightness and apparent size follow stellar magnitude, and the visible sky changes as you travel north or south and as the world moves through its year. Fifty registered deep-sky photographs reward careful telescope observation.  
-Star locations and images are from Stellarium's database.
-
-Behind them is the galaxy's own glow: a broad band with a bright core towards Sagittarius, split by the dark dust lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your latitude puts it. It is gone in twilight, back once the night is properly dark, and mostly washed out by a bright moon. It is generated from a model of the galaxy rather than photographed, so its shape can be tuned, or switched off entirely with `MilkyWayBrightness`.
+Look up. The vanilla cubemap is gone. In its place is a catalog of more than 5,000 stars, brightness and size following magnitude, turning with the hour and tilting as you walk north or south. Fifty deep-sky photographs resolve only under a telescope. Star positions and those plates come from Stellarium.
 
 #### Note
 
@@ -32,9 +31,19 @@ found within a JSON file in the mod's asset. The current one was build using Ste
 
 Similarly the deep sky views could be generated or use custom assets, or place a easter egg in your server ;).
 
+### Mark the year on a Sky Disc
+
+Form one from clay and fire it, or craft a copper or bronze one. Stand under open sky as the sun touches the horizon, then sneak and hold right click to scratch that day's mark. Right click holds the disc up to read the band. Scroll turns it in your hand. Sneak and right click the ground to set it down.
+
+After the band reaches an edge and turns back, the disc can tell you the length of the year, your latitude, where east or west lies, and when the sun will next stand still. Clay holds a five-degree notch; metal holds two and a half. The first mark binds the disc to that latitude.
+
+While the disc is held up under the stars, left-drag from star to star to cut one connected constellation into it. Press a figure into raw clay before firing; a fired clay disc will not take another line.
+
+`.stars calendar clock` hides the vanilla date and keeps the hour. `.stars calendar none` hides both.
+
 ### Measure the sky with a Sextant
 
-Hold right click and sight a star, the sun, or the moon to read its angle above the horizon. The sun and a visibly lit moon can be shot whenever they are up, so the Sextant works in daylight too. A daytime crescent is a perfectly good sight; an invisible new moon is not. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids. UI/UX may change depending on feedback.
+Hold right click and put the centre of your view on the sun, the moon, a star, a planet, or a comet. The readout is its angle above the horizon. The sun and a visibly lit moon can be shot whenever they are up, so the Sextant works in daylight. An invisible new moon is not offered as a target. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids.
 
 ![Sextant usage](docs/screenshots/sextant_azimuthal_grid.png)
 
@@ -42,11 +51,11 @@ Hold right click and sight a star, the sun, or the moon to read its angle above 
 
 ### Plan observations with a Calibrated Astrolabe
 
-Hold a written constellation book in your left hand and use the Calibrated Astrolabe to see a constellation's compass direction, altitude, rising or setting state, next transit, and horizon status. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days.
+Recover a ruined astrolabe and combine it with a brass plate. Hold the Calibrated Astrolabe in your main hand and a written book in your left hand, then hold right click. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days. The readout is compass direction, altitude, rising or setting, next transit, and whether the target can never rise where the plate was cut.
 
-It also tells the time of night, reading the hour off the sun's real position: the hour of the world day, whether it is daylight, dusk, night, or dawn, and how long until the next sunrise or sunset. The clock follows the forecast, so you can find the hour a constellation is best placed before waiting for it.
+A new one reads `no plate` and will not place a star. Stand under open sky after dusk and sneak-hold right click while it sights the pole. Afterwards every position it gives is for that latitude. Travel far enough and it reports the drift; past about eight degrees it asks to be recut. The clock is not engraved and follows you. It still shows if you hold no book.
 
-An astrolabe is engraved for one latitude, so a new one is blank until you cut its plate: stand under open sky after dusk and sneak-hold right click while it sights the pole. It needs no star catalog and no brass to do this, only the sky. Afterwards every reading answers for the latitude it was cut at. Travel far enough and it tells you how far you have strayed, and eventually it asks to be recut. Its clock is not engraved and follows you wherever you go.
+It aims with your book, not with the sky's own catalog. A wanderer nobody has picked out is not on the list. Comets are listed whether or not they are here.
 
 Every answer also says what it rests on: `from 3 sightings over 11 days` for a body you established yourself, `drawn from 7 stars` for one of your figures, `from the almanac, not your sightings` for a comet. A thin answer that sounds as confident as a thick one is a broken answer, whatever its numbers say.
 
@@ -56,13 +65,15 @@ Every answer also says what it rests on: `from 3 sightings over 11 days` for a b
 
 ![The Brass Telescope scoped view with a recorded constellation](docs/screenshots/create_constellation.png)
 
-The Brass Telescope provides a scoped observation view with several zoom levels. Draw between any two stars you can see, inspect and name saved patterns, or remove individual segments. Constellations are stored in a written vanilla book, so the same journal can be carried, shared, and read by another player. A stronger Precision Telescope and all 88 authored Modern IAU patterns are also included.
+Hold right click to scope in. Scroll to zoom (five steps on the brass telescope, ten on the precision one). Middle click cycles modes: **Observe**, **Create Constellation**, **Inspect Constellation**, **Remove Segment**. In Create, left-drag from one visible star to another. Any star on screen can start or end a line. Drawing needs a book in your left hand and ink and quill in your inventory. Hand that book to another player and they see your figures.
+
+`.stars build Ori` writes one of the 88 IAU figures into the held book. Creative inventory also has a full Star Catalog and The Zodiac.
 
 ### Lie down and watch the sky
 
 ![The seraph lying on its back in a meadow, hands folded behind the head](docs/screenshots/stargazing.png)
 
-Press **Z** to lie on your back on the ground, the same kind of toggle as sit-on-G. The seraph crouches, sits, and lowers itself down over about half a second, then rests with one knee drawn up and empty hands folded behind the head. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view. Move, jump, or press **Z** again to stand. Telescopes, the Sextant, and the Astrolabe all still work while you are lying down. The binding is remappable under Controls as **Lie down**.
+Press **Z** to lie on your back on the ground, the same kind of toggle as sit-on-G. The seraph crouches, sits, and lowers itself down over about half a second, then rests with one knee drawn up and empty hands folded behind the head. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view. Move, jump, or press **Z** again to stand. Telescopes, the Sextant, the Sky Disc, and the Astrolabe all still work while you are lying down. The binding is remappable under Controls as **Lie down**.
 
 ### Watch seasonal meteor showers
 
@@ -148,103 +159,67 @@ sightable either.
 [AstraExtera](https://github.com/lalmei/astraextera) is what fills this in today, from the giant it
 authored for your save.
 
-> ### New in v0.6.0: a year on a disc, and worlds in the eyepiece
+> ### New in v0.6.0
 >
-> Astronomy now begins with clay and a clear horizon, then reaches all the way to the moons of
-> Jupiter. This release adds an instrument whose answers take a year to earn, and turns the lights
-> a telescope found in earlier versions into worlds with size, phases, rings, and moons of their
-> own.The sky disk is meant to an early astronomy tool, you can make with clay or metals.
-> It meant to represent something like a nebra disk, you can save one constelation on it. shift and right click on sunset and sunrise to keep track of its position to see if you are moving towards or away from a soltisce, once you have a full gap measured you should access to the day of the years. 
+> Sky Disc, planets through a telescope, and a way to hide the vanilla date.
 >
-> - **The Sky Disc begins before metal.** Form one from clay and fire it, or make a finer copper or
->   bronze one. Mark where the sun crosses the horizon over the course of a world year; once the
->   band reaches an edge and turns back, the disc can tell you the length of the year, your latitude,
->   where east or west lies, and when the sun will next stand still. The scratches stay on the item,
->   and the disc can be set down face-up where it was worked.
-> - **One disc carries one figure.** Hold it up under the stars and drag from star to star to cut one
->   connected constellation into metal, or press it into raw clay before firing fixes it. Hold the
->   finished disc again and its figure returns to the sky it was drawn on.
-> - **The calendar can stop giving the answer away.** `.stars calendar clock` keeps the hour but
->   hides the date; `.stars calendar none` hides both. The choice is local and saved, so the Sky
->   Disc can be the thing that tells you when the year turns instead of a decoration beside a free
->   calendar.
-> - **Planets become worlds through a telescope.** Mars grows towards opposition, Saturn carries
->   its rings, and Jupiter's four Galilean moons and five moons of Saturn move on their own orbits
->   and disappear when their planet hides them. The photographic art also follows Venus through its
->   phases. Put the telescope down and they return to the points of light the naked eye can actually
->   see.
-> - **The Moon belongs to the same sky.** We replaced the moon, as suggested used a pixel art texture.
-> - **The solar system has two faces.** Pixel art made to sit with Vintage Story is the default;
->   `.stars solar-system photo` swaps in photorealistic images. Position, apparent size,
->   and moon orbits stay the same whichever art you choose.
-> - **Other worlds can have other skies.** A replacement catalog can now hang a nearby planet and
->   sibling moons overhead, shade them from the real sun direction, suppress the ordinary Moon, and
->   make those bodies valid daylight Sextant targets. [AstraExtera](https://github.com/lalmei/astraextera)
->   uses that hook for the giant authored for its worlds.
-> 
+> - **Sky Disc.** Form one from clay and fire it, or craft copper or bronze. Sneak and hold right
+>   click at sunrise or sunset to scratch the sun's place on the horizon. Right click reads the
+>   band. After the band turns back from an edge: year length, latitude, east or west, next
+>   solstice. Sneak-right-click the ground to set it down. Clay notches are 5°; metal 2.5°.
+> - **One constellation on the disc.** Hold it up and drag from star to star. One connected
+>   figure. Press it into raw clay before firing; fired clay will not take another line. Hold the
+>   disc and the figure returns to the sky.
+> - **Hide the date.** `.stars calendar clock` keeps the hour. `.stars calendar none` hides both.
+>   Saved locally.
+> - **Planets through a telescope.** Raise the glass and they become discs. Mars grows toward
+>   opposition. Saturn has rings. Jupiter's four moons and five of Saturn's move on their own
+>   orbits and vanish behind the planet. Put the telescope down and they are points of light again.
+> - **Moon.** Eight faces, bright limb toward the sun. A telescope shows a surface. Moonlight and
+>   the calendar phase are unchanged.
+> - **Pixel or photo.** Pixel art is the default. `.stars solar-system photo` swaps in
+>   photographs. Positions, sizes, and moon orbits stay the same. Photographs also show Venus's
+>   phases.
+> - **Other worlds.** A replacement catalog can hang a nearby planet and sibling moons, and the
+>   Sextant can sight them in daylight. [AstraExtera](https://github.com/lalmei/astraextera) uses
+>   this.
 >
-> This pass also fixes a scope that could remain stuck after changing slots, deep-sky plates
-> rebuilding their geometry every frame, brief polar sunrises that the clock could miss, resolved
-> planets flickering behind their old glow, invisible new moons being offered to the Sextant, and
-> constellation journals being overwritten when they could not be read.
+> Also fixed: a telescope that stayed scoped after swapping slots, deep-sky plates rebuilding every
+> frame, polar sunrises the clock could miss, planets flickering behind their old glow, invisible
+> new moons offered to the Sextant, and journals overwritten when they could not be read.
 
 <details>
-<summary><strong>🌌 Update v0.5.4: the Milky Way, and a sky you work out for yourself</strong></summary>
+<summary><strong>🌌 Update v0.5.4</strong></summary>
 <br>
-The galaxy's own glow entered the sky. And the instruments stopped handing you answers: what a
-moving body is, and what your astrolabe is engraved for, became things you establish by observing
-and writing down.
+Sextant sightings, astrolabe plate cutting, comets, and a handbook tab. If you are on v0.5.3, this
+also stops Z from crashing the client.
 
-- **The Milky Way.** A broad band with a bright core towards Sagittarius, split by the dark dust
-  lanes of the Great Rift, turning with the rest of the sky and leaning at whatever angle your
-  latitude puts it. It is generated from a model of the galaxy rather than photographed, so the
-  rift and the amber core fall out of the model rather than being painted. Gone in twilight, back
-  once the night is properly dark, washed out by a bright moon, so it is best near new moon. It
-  costs nothing measurable: 0.16–0.55 ms a frame with it on against 0.50–0.55 with it off, and no
-  extra draw calls. `MilkyWayBrightness` in `ModConfig/astraterra.json` takes `0`, and
-  `.stars render milkyway off` switches it off for a session.
-- **Write down what you saw, not what it was.** Sneak while holding the Sextant up, with a writable
-  book in your left hand and ink and quill in your inventory, and the book gains a dated entry: the
-  angle above the horizon, the bearing, how bright it looked, the day and hour, and the latitude you
-  stood at. The entry does not say what you sighted, and that is the point: it records that
-  *something* stood there at that hour.
-- **Then work it out.** `.stars sightings` lays your entries side by side, gathers them into the
-  sets it takes to be one body, and says how far apart the nights put them.
-  `.stars classify <set> star|wanderer|comet [name]` is where you say what it was. Nothing grades
-  the answer; that is what makes it yours. Call a set a wanderer and, if exactly one of the
-  wandering bodies was in all those places on all those nights, your name for it becomes the name
-  every instrument uses.
-- **Every answer says what it rests on.** `from 3 sightings over 11 days, to 0° 01′` for a
-  wanderer you established yourself, `drawn from 7 stars` for one of your own figures,
-  `from the almanac, not your sightings` for a comet, whose returns are somebody else's arithmetic.
-  A planet written down under an older version, with no sightings behind it, still aims, but it says
-  it is thin.
-- **The astrolabe's plate is yours to cut.** A new one is blank. Stand under open sky after dusk and
-  sneak-hold right click while it sights the pole, and it is engraved for that latitude. No star
-  catalog and no brass, only the sky.
-- **Comets come back on their own schedule.** Four of them, on their real orbital periods. The first
-  is Machholz, a little under two world years into a new world, so a world started today already has
-  one coming. It returns about every five years after that.
-- **An Astronomy tab in the in-game handbook**, so the instruments explain themselves without a
-  second screen.
-- **Fixed: pressing Z could crash the client.** The lie-down clips added in v0.5.3 left half of some
-  keyframes unwritten, and the game reads those fields without checking whether they are there. The
-  first time anyone lay down, the client went down with it. If you are on v0.5.3, this is the update
-  you want.
-- **For modders: the sky is replaceable.** Both the star catalog and the solar system can be swapped
-  for your own, so another mod can ship a different sky rather than patching this one's. That hook
-  is now used by [AstraExtera](https://github.com/lalmei/astraextera).
+- **Sextant sightings.** Sneak while holding the Sextant up. Book in the left hand, ink and quill
+  in inventory. The book gets a dated entry: altitude, bearing, brightness, day and hour, latitude.
+  It does not name what you sighted.
+- **Classify later.** `.stars sightings` groups the entries. `.stars classify 2 wanderer Ember` is
+  where you say what a set was. If exactly one wanderer fits all those places, that name is what
+  the instruments use.
+- **Astrolabe provenance.** Each answer says what it rests on: how many sightings, `drawn from N
+  stars`, or `from the almanac, not your sightings` for a comet. A planet recorded with no
+  sightings still aims, and says so.
+- **Cut the plate.** A new astrolabe is blank. After dusk, sneak-hold right click under open sky.
+  Readings are for that latitude. Travel far enough and it asks to be recut.
+- **Comets.** Four, on their own periods. Machholz first, a little under two world years in, then
+  about every five. Up for a couple of world weeks.
+- **Handbook.** Press H, Astronomy tab.
+- **Crash fix.** Pressing Z on v0.5.3 could crash the client. The lie-down clips had unwritten
+  keyframes.
+- **Modders.** Star catalog and solar system can be swapped.
+  [AstraExtera](https://github.com/lalmei/astraextera) uses this.
+- **Milky Way.** Added behind the stars. Off with `MilkyWayBrightness` 0 in
+  `ModConfig/astraterra.json`, or `.stars render milkyway off` for the session.
 
-**Two numbers we would like a second opinion on.** How bright the Milky Way should be, and how dark
-the night has to get before it appears. Both are single numbers, easy to move, and better judged by
-someone out there looking than by anyone reading a diff.
-[Open an issue](https://github.com/lalmei/astraterra/issues/new/choose), and screenshots are welcome.
+Still tuning brightness and how dark the night has to be before the band shows.
+[Open an issue](https://github.com/lalmei/astraterra/issues/new/choose) if you have a look.
 
-**One problem found while measuring the Milky Way.** Raising a telescope where many deep-sky plates
-were above the horizon was expensive, around 10 ms a frame with roughly forty plates up and the
-occasional long frame, because every visible plate re-uploaded its geometry every frame. It was not
-new and it was not the Milky Way, only the first time it had been measured properly. It was tracked
-as [#105](https://github.com/lalmei/astraterra/issues/105) and fixed in v0.6.0.
+Deep-sky plates rebuilding every frame under a telescope was found while measuring this release
+([#105](https://github.com/lalmei/astraterra/issues/105)) and fixed in v0.6.0.
 
 </details>
 
@@ -275,44 +250,23 @@ uploads for the sky pass every 30 seconds.
 
 </details>
 
-> ### Also in v0.5.2: the sky looks different, and we would like to hear about it
->
-> Getting the cost down meant changing how several things are drawn. None of it is settled, and the
-> judgements behind it are the kind that are better made by people actually observing than by anyone
-> reading a diff.
->
-> - **Constellation lines are continuous now**, a thin ribbon per edge instead of a trail of dots, and
->   each line stops short of the stars it joins. The dots were sized in degrees, so magnification
->   pulled them apart into a row of specks; a ribbon holds its weight at any zoom and cannot be
->   mistaken for a star.
-> - **The sky turns smoothly through a telescope.** It used to be redrawn only once it had moved a
->   twentieth of a degree. That is under a pixel at the naked eye, but seven to fourteen through a
->   scope, and it arrived as a visible step several times a second.
-> - **Scoped stars are the size the naked eye shows them at.** Raising a telescope used to halve every
->   bright star, because the scoped sprite fills less than half the quad the naked-eye one does.
-> - **Deep-sky plates now fade the catalogue out underneath them.** A plate is a photograph with its
->   own stars already in it, so over the Pleiades the photograph's stars are the stars; a degree away
->   the sky is the catalogue's again.
-> - **Star colours read slightly more saturated.** Colour rides on the mesh vertices now, where the
->   old path applied each tint twice.
->
-> If a line looks too heavy or too faint, a star too large under the scope, a plate too empty at its
-> edge, or a colour wrong, please say so, with a screenshot if you can. Line width, star size, and
-> how hard a plate fades are all single numbers and easy to move.
-> [Open an issue](https://github.com/lalmei/astraterra/issues/new/choose).
-
 ## Roadmap
 
 In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the [Moving Sky Objects](https://github.com/lalmei/astraterra/milestone/1) milestone.
 
+- ~~Seasonal meteor showers.~~ Shipped.
+- ~~Planets (named specific wandering bodies).~~ Shipped.
+- ~~Ability to lay down looking up.~~ Shipped.
+- ~~Ability to keep the astrolabe calibrated to a specific latitude, or recalibrate it to a different latitude without the star catalog.~~ Shipped.
 - New models astrological instruments.
 - Redo recipes for instruments and calibration.
 - Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap)
 - Modify architecture for more easier customization. Such as custom deep sky objects. The star catalog and the solar system are replaceable as of v0.5.4; deep sky objects are not yet.
 - Star Catalog randomizer loot tables for chest and ruins. (i.e. create a star catalog with Maya constellations for a Mayan Ruin, or other sky cultures.) much of the backend is there since sterallarium already contains much of this datasets.
+- ~~[Comets](https://github.com/lalmei/astraterra/issues/38). Authored apparitions with an anti-sunward tail.~~ Shipped.
 - New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in [sextant on land](https://github.com/lalmei/astraterra/issues/41), sighting a mountain to get its distance and height.
 
-Meteor radiants are fixed like catalog stars and do not need the [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) that the planets and comets are built on. [Instrument targeting](https://github.com/lalmei/astraterra/issues/40) will let the astrolabe and sextant point at moving bodies and meteor radiants.
+~~Comets sit on the same [shared ephemeris foundation](https://github.com/lalmei/astraterra/issues/36) the planets already use, since their right ascension and declination change with time.~~ Shipped. Meteor radiants are fixed like catalog stars and do not need that dependency. ~~[Instrument targeting](https://github.com/lalmei/astraterra/issues/40) for the astrolabe and sextant on planets and comets.~~ Shipped. Meteor radiants are not yet targets.
 
 ## Docs
 
@@ -346,4 +300,6 @@ Inspired by Minecraft's [Spyglass Astronomy](https://github.com/Nettakrim/Spygla
 
 The Brass Telescope item model is adapted from Fuami's MIT-licensed [Spyglass](https://mods.vintagestory.at/spyglass) mod. Modern IAU constellation line data and selected deep-sky assets are adapted from [Stellarium](https://github.com/stellarium/stellarium) sources. The Sextant item model transforms and recipe are adapted from the user's downloaded Realistic Surveying package. See `THIRD_PARTY_NOTICES.md`.
 
-Special thanks to Vintage Story Mod [AdAstra's](https://mods.vintagestory.at/show/mod/47577) LadyLioness.
+Special thanks for discussion to Vintage Story mod [AdAstra](https://mods.vintagestory.at/show/mod/47577)'s LadyLioness.
+
+Additional Super thanks for ALL the feedback and check by the numerous commenters below.

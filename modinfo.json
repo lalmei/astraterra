@@ -3,7 +3,7 @@
   "modid": "astraterra",
   "name": "AstraTerra",
   "authors": ["lalmei"],
-  "description": "Turns the night sky into an 5000+ starfield with latitude-aware seasons, craftable telescopes, authored constellation lines, deep-sky sights, and a client-local journal for naming and revisiting your own constellations.",
+  "description": "Replaces Vintage Story's night sky with a catalog of more than 5,000 stars, five planets, meteor showers, and returning comets. Craft a Sky Disc, telescope, Sextant, and astrolabe to measure, record, and predict what you see.",
   "version": "0.7.0",
   "dependencies": {
     "game": "1.22.2"
