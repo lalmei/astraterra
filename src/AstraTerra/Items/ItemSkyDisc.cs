@@ -80,7 +80,11 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
     /// runs on the threads that build chunk meshes, so it tesselates and never uploads.
     /// </remarks>
     public MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
-        => SkyDiscMeshes.Active?.BuildDisplayMesh(this, SolarBandStore.Read(slot?.Itemstack), targetAtlas)!;
+        => SkyDiscMeshes.Active?.BuildDisplayMesh(
+            this,
+            SolarBandStore.Read(slot?.Itemstack),
+            SkyDiscFigureStore.Read(slot?.Itemstack),
+            targetAtlas)!;
 
     /// <summary>
     /// What this disc looks like, as a name the game can cache a model against. Every disc of a
@@ -88,7 +92,10 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
     /// to every other.
     /// </summary>
     public string GetMeshCacheKey(ItemSlot slot)
-        => SkyDiscMeshes.CacheKey(this, SolarBandStore.Read(slot?.Itemstack));
+        => SkyDiscMeshes.CacheKey(
+            this,
+            SolarBandStore.Read(slot?.Itemstack),
+            SkyDiscFigureStore.Read(slot?.Itemstack));
 
     /// <summary>
     /// Draws this disc with its own marks on it, wherever it is being shown.
@@ -106,7 +113,10 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
     {
         base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
 
-        if (SkyDiscMeshes.Active?.Get(this, SolarBandStore.Read(itemstack)) is { } marked)
+        if (SkyDiscMeshes.Active?.Get(
+            this,
+            SolarBandStore.Read(itemstack),
+            SkyDiscFigureStore.Read(itemstack)) is { } marked)
         {
             renderinfo.ModelRef = marked;
         }

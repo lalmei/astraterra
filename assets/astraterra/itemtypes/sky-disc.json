@@ -21,6 +21,9 @@
       },
       "gold": {
         "base": "game:block/clay/redclay"
+      },
+      "engraving": {
+        "base": "game:block/soil/fertverylow"
       }
     },
     "*": {
@@ -32,6 +35,9 @@
       },
       "gold": {
         "base": "game:block/metal/plate/gold"
+      },
+      "engraving": {
+        "base": "game:block/metal/tarnished/{material}"
       }
     }
   },

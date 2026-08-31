@@ -56,7 +56,7 @@ public sealed class SkyDiscAssetTests
     }
 
     [Fact]
-    public void The_Shape_Is_A_Round_Disc_With_One_Rim_And_Nothing_Else_On_It()
+    public void The_Shape_Is_A_Round_Blank_Disc_With_One_Rim()
     {
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
         var root = document.RootElement;
@@ -79,9 +79,9 @@ public sealed class SkyDiscAssetTests
         // as a mark somebody made.
         Assert.DoesNotContain(names, name => name.StartsWith("gold-", StringComparison.Ordinal));
 
-        // The one exception, and a placeholder: the figure engraved in the middle. It stands in for
-        // the constellation its owner draws until that figure is cut as real geometry.
-        Assert.Contains("figure-plate", names);
+        // A constellation belongs to one itemstack, so the authored shape stays blank and the mesh
+        // builder adds that stack's actual figure as geometry.
+        Assert.DoesNotContain(names, name => name.StartsWith("figure-", StringComparison.Ordinal));
 
         // Round, not stepped: every row of the body is cut to a circle of radius seven about (8, 8),
         // to within the half unit a row's own depth allows.
@@ -104,31 +104,9 @@ public sealed class SkyDiscAssetTests
             Assert.Equal(Math.Sqrt((7.0 * 7.0) - (depth * depth)), half, 3);
         }
 
-        // Flat on the disc's own face and inside the rim, so the figure reads as laid into the metal
-        // rather than sitting on it or spilling over the edge.
-        var plate = elements.Single(element => element.GetProperty("name").GetString() == "figure-plate");
-        var plateFrom = plate.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
-        var plateTo = plate.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
-
-        Assert.Equal(0.8, plateFrom[1], 3);
-        Assert.True(plateTo[1] - plateFrom[1] < 0.05, "The figure is engraved, not stuck on.");
-        Assert.Equal(8.0 - plateFrom[0], plateTo[0] - 8.0, 3);
-        Assert.Equal(8.0 - plateFrom[2], plateTo[2] - 8.0, 3);
-
-        // Its corners have to clear the rim's inner face, or the figure runs under the rim.
-        var rimInner = elements
-            .Where(element => (element.GetProperty("name").GetString() ?? string.Empty)
-                .StartsWith("sunrise-rim-segment-", StringComparison.Ordinal))
-            .Min(segment => Radius(segment, nearest: true));
-        var plateCorner = Math.Sqrt(((8.0 - plateFrom[0]) * (8.0 - plateFrom[0])) + ((8.0 - plateFrom[2]) * (8.0 - plateFrom[2])));
-        Assert.True(plateCorner <= rimInner + 0.5, $"The figure plate reaches {plateCorner}, past a rim at {rimInner}.");
-
         var textures = root.GetProperty("textures");
-        Assert.Equal("astraterra:item/sky-disc-figure", textures.GetProperty("figure").GetString());
-        Assert.Equal([32, 32], root.GetProperty("textureSizes").GetProperty("figure").EnumerateArray().Select(value => value.GetInt32()));
-        Assert.True(
-            File.Exists(Path.Combine(RepositoryRoot, "assets/astraterra/textures/item/sky-disc-figure.png")),
-            "The figure texture the shape names is not shipped.");
+        Assert.Equal("game:block/metal/tarnished/tinbronze", textures.GetProperty("engraving").GetString());
+        Assert.Equal([16, 16], root.GetProperty("textureSizes").GetProperty("engraving").EnumerateArray().Select(value => value.GetInt32()));
 
         Assert.Equal("game:block/metal/plate/tinbronze", textures.GetProperty("bronze").GetString());
 
@@ -147,6 +125,11 @@ public sealed class SkyDiscAssetTests
             Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyDiscMeshes.cs"));
         var inner = Constant(meshes, "MarkInnerRadius");
         var longest = Math.Max(Constant(meshes, "MarkLength"), Constant(meshes, "EdgeMarkLength"));
+
+        // The rim uses bronze-dark as part of the authored model, but on clay that is the clay's own
+        // texture. A scratch must use the contrasting engraving material or it disappears on raw
+        // clay and on the fired disc even though its stored mark survived the kiln.
+        Assert.Contains("private const string MarkTexture = \"engraving\";", meshes, StringComparison.Ordinal);
 
         using var document = ReadJson("assets", "astraterra", "shapes", "item", "sky-disc.json");
         var elements = document.RootElement.GetProperty("elements").EnumerateArray().ToList();
@@ -285,6 +268,16 @@ public sealed class SkyDiscAssetTests
         Assert.False(engravable.GetProperty("*-clay").GetBoolean());
         Assert.True(engravable.GetProperty("*").GetBoolean());
 
+        // A cut must contrast with the face it is cut into. Metal uses its own tarnish; clay uses a
+        // dark earth texture, including while raw, which is the state shown while it is being drawn.
+        var firedTextures = fired.RootElement.GetProperty("texturesByType");
+        Assert.Equal(
+            "game:block/soil/fertverylow",
+            firedTextures.GetProperty("*-clay").GetProperty("engraving").GetProperty("base").GetString());
+        Assert.Equal(
+            "game:block/metal/tarnished/{material}",
+            firedTextures.GetProperty("*").GetProperty("engraving").GetProperty("base").GetString());
+
         // So the clay disc that can be drawn on is the raw one, which has to be an instrument at all
         // to be raised and drawn on.
         using var raw = ReadJson("assets", "astraterra", "itemtypes", "sky-disc-clay-raw.json");
@@ -293,6 +286,9 @@ public sealed class SkyDiscAssetTests
         Assert.Equal("AstraTerra.Items.ItemSkyDisc", rawRoot.GetProperty("class").GetString());
         Assert.Equal(1, rawRoot.GetProperty("attributes").GetProperty("engravedFigures").GetInt32());
         Assert.True(rawRoot.GetProperty("attributes").GetProperty("engravable").GetBoolean());
+        Assert.Equal(
+            "game:block/soil/fertverylow",
+            rawRoot.GetProperty("textures").GetProperty("engraving").GetProperty("base").GetString());
 
         // And what it fires into is the disc that shows the figure.
         Assert.Equal(

@@ -25,8 +25,8 @@ public sealed class SkyDiscRenderer : IRenderer
 
 
     private readonly ICoreClientAPI api;
-    private readonly LoadedTexture?[] lines = new LoadedTexture?[4];
-    private readonly string?[] lineTexts = new string?[4];
+    private readonly LoadedTexture?[] lines = new LoadedTexture?[5];
+    private readonly string?[] lineTexts = new string?[5];
 
     public SkyDiscRenderer(ICoreClientAPI api)
     {
@@ -49,9 +49,30 @@ public sealed class SkyDiscRenderer : IRenderer
         var day = (int)Math.Floor(api.World.Calendar.TotalDays);
 
         RenderLine(0, slot?.Itemstack?.GetName() ?? "Sky disc");
-        RenderLine(1, $"Sunsets: {band.Read(SolarEvent.Sunset).Describe()}");
-        RenderLine(2, $"Sunrises: {band.Read(SolarEvent.Sunrise).Describe()}");
-        RenderLine(3, DescribeNextTurn(band, day) ?? "Sneak and hold right click as the sun touches the horizon.");
+        var sunset = band.Read(SolarEvent.Sunset);
+        var sunrise = band.Read(SolarEvent.Sunrise);
+
+        RenderLine(1, $"Sunsets: {sunset.Describe()}");
+        RenderLine(2, $"Sunrises: {sunrise.Describe()}");
+
+        if (SkyDiscReadingState.LastMarkMessage is { } marked)
+        {
+            RenderLine(3, marked);
+            ClearLine(4);
+            return;
+        }
+
+        var forecasts = new[]
+        {
+            DescribeNextTurn(sunset, band.BoundLatitudeDeg, day),
+            DescribeNextTurn(sunrise, band.BoundLatitudeDeg, day)
+        }.Where(forecast => forecast is not null).ToList();
+
+        RenderLine(
+            3,
+            forecasts.FirstOrDefault()
+            ?? "Sneak and hold right click as the sun touches the horizon.");
+        RenderOptionalLine(4, forecasts.Skip(1).FirstOrDefault());
     }
 
     public void Dispose()
@@ -66,26 +87,18 @@ public sealed class SkyDiscRenderer : IRenderer
     /// The payout a farmer cares about, and the only forecast bronze can make: when the sun will next
     /// stand still. Offered only by a rim that has measured a whole year.
     /// </summary>
-    private static string? DescribeNextTurn(SolarBand band, int day)
+    private static string? DescribeNextTurn(SolarBandReading reading, double? latitudeDeg, int day)
     {
-        if (SkyDiscReadingState.LastMarkMessage is { } marked)
+        if (reading.NextTurn(day) is not { } turn)
         {
-            return marked;
+            return null;
         }
 
-        foreach (var solarEvent in new[] { SolarEvent.Sunset, SolarEvent.Sunrise })
-        {
-            var reading = band.Read(solarEvent);
-            if (reading.NextTurnDay(day) is { } turn)
-            {
-                var away = turn - day;
-                return away <= 0
-                    ? "The sun stands still about now."
-                    : $"The sun should stand still again on day {turn}, {away} days from now.";
-            }
-        }
-
-        return null;
+        var subject = reading.Event == SolarEvent.Sunset ? "sunset" : "sunrise";
+        var away = turn.Day - day;
+        return away <= 0
+            ? $"From the {subject} band alone, the {subject} is at its {turn.SolsticeName(latitudeDeg)} near {turn.NotchDeg:0.#}° about now."
+            : $"From the {subject} band alone, the {subject} should reach its {turn.SolsticeName(latitudeDeg)} near {turn.NotchDeg:0.#}° in about {away} days.";
     }
 
     private bool IsHoldingDisc()
@@ -115,6 +128,23 @@ public sealed class SkyDiscRenderer : IRenderer
 
         var x = (api.Render.FrameWidth - texture.Width) / 2f;
         api.Render.Render2DLoadedTexture(texture, x, TopOffset + (index * LineHeight), 1001f);
+    }
+
+    private void RenderOptionalLine(int index, string? text)
+    {
+        if (text is null)
+        {
+            ClearLine(index);
+            return;
+        }
+
+        RenderLine(index, text);
+    }
+
+    private void ClearLine(int index)
+    {
+        DeleteLine(index);
+        lineTexts[index] = null;
     }
 
     private void DeleteLine(int index)
