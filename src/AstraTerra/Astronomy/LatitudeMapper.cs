@@ -26,9 +26,17 @@ public static class LatitudeMapper
         return (int)Math.Floor((z - originZ) / WorldLatitudeBandSize);
     }
 
-    public static double MapWorldLongitude(double x, double mapSizeX, double mapSizeZ)
+    public static double MapWorldLongitude(double x, Vintagestory.API.Common.IWorldAccessor world)
     {
-        var polarEquatorDistance = mapSizeZ * 0.5;
+        ArgumentNullException.ThrowIfNull(world);
+        return MapWorldLongitude(
+            x,
+            world.BlockAccessor.MapSizeX,
+            WorldClimateScale.GetPolarEquatorDistance(world));
+    }
+
+    public static double MapWorldLongitude(double x, double mapSizeX, double polarEquatorDistance)
+    {
         if (mapSizeX <= 0 || polarEquatorDistance <= 0)
         {
             return 0;

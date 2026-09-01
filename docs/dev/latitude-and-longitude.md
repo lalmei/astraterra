@@ -105,7 +105,7 @@ inherits this.
 | --- | --- | --- |
 | `MapGameLatitude` | `OnGetLatitude`, scaled to degrees | **Yes** — delegates to the game |
 | `MapWorldZ` / `MapRepeatingLatitude` | Own triangle wave, `WorldLatitudeBandSize = 100000` | Fallback only, and see below |
-| `MapWorldLongitude` | Invented from `mapSizeZ` | **No** — nothing in the game to agree with |
+| `MapWorldLongitude` | `polarEquatorDistance`, centred on `mapSizeX * 0.5` | **Scale only** — Vintage Story has no longitude origin |
 
 **Latitude is handled correctly.** `MapGameLatitude` asks the calendar and multiplies by 90, so it
 inherits the real mapping, the `ZOffset`, and the repeating bands for free.
@@ -114,32 +114,22 @@ The `MapWorldZ` fallback only runs when `OnGetLatitude` is null, which never hap
 `GameCalendar`'s constructor always assigns one. Note its `WorldLatitudeBandSize` of 100,000 is half
 Vintage Story's actual 200,000-block cycle, so if it ever did run it would disagree.
 
-**Longitude is invented**, because there is nothing to inherit:
+**Longitude is invented**, because there is nothing to inherit — but it now uses the same
+`polarEquatorDistance` scale as latitude:
 
 ```csharp
-// LatitudeMapper.MapWorldLongitude
-var polarEquatorDistance = mapSizeZ * 0.5;   // 90 degrees of longitude
+// LatitudeMapper.MapWorldLongitude — polarEquatorDistance from world.Config, default 50_000
+var polarEquatorDistance = WorldClimateScale.GetPolarEquatorDistance(world);
 ```
 
-!!! warning "The longitude scale is derived from the wrong quantity"
-    This uses **half the map size** as the equator-to-pole distance. Vintage Story's actual
-    equator-to-pole distance is the `polarEquatorDistance` world-config value, defaulting to 50,000
-    blocks and **independent of map size**.
+!!! note "Longitude now matches Vintage Story's latitude scale"
+    `MapWorldLongitude` reads `polarEquatorDistance` from the world's synced configuration
+    (`world.Config`), falling back to 50,000 blocks when absent. With that fallback value, 90° of
+    longitude and 90° of latitude both cover 50,000 blocks, so eastward travel shifts the sky at
+    roughly 8,300 blocks per hour of rotation instead of the old map-size-derived scale. World
+    presets may configure a different distance, and both axes inherit it together.
 
-    On a 1,024,000-block world that is a factor of roughly **ten**: 90° of latitude covers 50,000
-    blocks while 90° of longitude covers 512,000. A degree of longitude and a degree of latitude
-    should cover comparable ground on a sphere, and here they do not.
-
-    | | Blocks for 90° | Blocks per hour of sky rotation |
-    | --- | --- | --- |
-    | Latitude (Vintage Story) | 50,000 | n/a |
-    | Longitude (AstraTerra, `mapSizeZ` = 1,024,000) | 512,000 | ~85,300 |
-    | Longitude, if it used `polarEquatorDistance` | 50,000 | ~8,300 |
-
-    The second row is why the longitude divergence is currently almost invisible: you would have to
-    walk 85,000 blocks east to shift the sky by an hour. Correcting the scale would make it visible
-    within a long but ordinary journey — which is exactly why the scale and the behaviour need
-    deciding together.
+    The prime meridian remains at `mapSizeX * 0.5`; only the degrees-per-block scale changed.
 
 ## The divergence, and how it is being resolved
 
