@@ -286,6 +286,12 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
             return;
         }
 
+        if (!HasScribingTool(byEntity))
+        {
+            SkyDiscReadingState.ReportMark(SkyDiscScribingTool.MissingMessage);
+            return;
+        }
+
         if (FindCrossing(slot, byEntity) is not { } sighting)
         {
             return;
@@ -349,6 +355,13 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
     /// </remarks>
     private static void Scratch(ItemSlot slot, EntityAgent byEntity)
     {
+        var isLocal = LocalObservationGate.IsLocalPlayerInteraction(byEntity);
+        if (!HasScribingTool(byEntity))
+        {
+            Report(isLocal, SkyDiscScribingTool.MissingMessage);
+            return;
+        }
+
         if (slot?.Itemstack is not { } stack
             || FindCrossing(slot, byEntity) is not ({ } crossing, var latitude))
         {
@@ -356,7 +369,6 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
         }
 
         var world = byEntity.World;
-        var isLocal = LocalObservationGate.IsLocalPlayerInteraction(byEntity);
         var band = SolarBandStore.ReadOrEmpty(stack);
         var result = band.Scratch(
             (int)Math.Floor(crossing.TotalDays),
@@ -378,6 +390,10 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
         // on the client.
         slot.MarkDirty();
     }
+
+    private static bool HasScribingTool(EntityAgent byEntity)
+        => byEntity is EntityPlayer playerEntity
+           && SkyDiscScribingTool.HasInHotbar(byEntity.World.PlayerByUid(playerEntity.PlayerUID));
 
     private static void Report(bool isLocal, string message)
     {
