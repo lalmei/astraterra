@@ -40,11 +40,21 @@ world clock  ->  local sidereal angle  ->  hour angle  ->  altitude / azimuth  -
 has turned:
 
 ```text
-sidereal = seasonalTurns * 360 + (localSolarHours - 12) * 15
+solarLongitude  = turns since the March equinox * 360
+solarRightAscension = eclipticToEquatorial(solarLongitude, obliquity).rightAscension
+localDayFraction = wrap(totalDays + longitude / 360)
+solarHourAngle = (localDayFraction - 0.5) * 360
+sidereal = solarRightAscension + solarHourAngle
 ```
 
 The sun transits at local noon, so at that instant sidereal time equals the sun's right ascension —
-which is what the seasonal term stands in for. Every solar hour after noon adds another 15°.
+not its ecliptic longitude. Those two angles agree at the equinoxes and solstices but differ by as
+much as about 2.47° between them at Earth's obliquity. Treating longitude as right ascension rotated
+the stellar sky almost ten clock minutes away from the sun at the worst point in the year.
+
+The daily term is a fraction of a complete rotation rather than `15°` per named clock hour. A
+16-hour world and a 30-hour world both turn through 360° per world day, put the sun on the meridian
+at their own local noon, and apply longitude as the same fraction of one rotation.
 
 !!! warning "Sidereal time must increase with time"
 Hour angle is `sidereal - rightAscension`,
@@ -53,12 +63,29 @@ entire sky — stars, constellations, deep-sky objects, grid lines — rotates *
 
 If you would like to make a custome world, solar system you can modify to have the place rotate in a different direction.
 
-The seasonal term also means the sidereal day is slightly _shorter_ than the solar day. The sky
-gains a full extra turn over one world year:
+The seasonal term also means the sidereal day is slightly _shorter_ than the solar day. Solar right
+ascension gains a full extra turn over one world year. Its instantaneous rate varies slightly with
+season because the obliquity transform is nonlinear; code that needs a position evaluates the
+sidereal angle at the requested timestamp rather than advancing it with a fixed `15°` rate.
 
-```text
-rate = 15 + 360 / (daysPerYear * hoursPerDay)   degrees per hour
-```
+### The visible sun is the measurement authority
+
+`CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates` describes the survival sun in the same
+equatorial frame as the stars. Its right ascension comes from the ecliptic-to-equatorial rotation.
+Its declination mirrors Vintage Story's survival formula, `tilt * sin(solarLongitude)`, with the
+same seasonal phase and shared axial tilt.
+
+That declination is intentionally the one the game draws, rather than a second solar ephemeris.
+`IGameCalendar.GetSunPosition` remains the authority for the sun's actual world direction, and the
+sextant and astrolabe continue to measure that vector directly. Projecting the shared equatorial sun
+with the sidereal angle is tested against the survival model to within the brass sextant's
+one-arcminute scale across seasons, latitudes, longitudes, day lengths, and year lengths.
+
+This is visual and instrumental agreement with Vintage Story's solar model, not a claim that its
+uniform seasonal orbit is a precision Earth ephemeris. In particular, the survival declination
+sinusoid differs from the exact obliquity rotation by up to about 0.26°, and the uniformly advancing
+season omits the real orbit's equation of centre. Replacing the visible sun with a higher-order
+ephemeris would be a separate compatibility decision; the star field must not do so by itself.
 
 ### 2. Hour angle to horizontal coordinates
 
