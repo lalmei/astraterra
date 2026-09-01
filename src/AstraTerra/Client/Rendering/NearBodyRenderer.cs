@@ -358,7 +358,7 @@ public static class VanillaMoonSuppressionPatch
         }
 
         // Either pass may have taken the moon: a moon world has none to show, and a world with one
-        // draws it from AstraTerra's own photographs instead of the game's disc.
+        // draws it from AstraTerra unless the player asked for Vintage Story's disc back.
         var hidden = NearBodyRenderer.HidesVanillaMoon || MoonDiscRenderer.HidesVanillaMoon;
         __instance.moonScale = hidden ? 0f : vanillaMoonScale;
     }

@@ -11,9 +11,16 @@ public sealed class AstraTerraConfig
     public string SkyGridMode { get; set; } = SkyGridModeParser.NoneValue;
 
     /// <summary>
-    /// Which set of pictures the sun's family is drawn from: the pixel art, or the photographs.
+    /// Which set of pictures the planets and their moons are drawn from: the pixel art, or the
+    /// photographs. The moon overhead is <see cref="MoonArt"/>.
     /// </summary>
     public string SolarSystemArt { get; set; } = SolarSystemArtStyleParser.PixelValue;
+
+    /// <summary>
+    /// Which picture the moon overhead is drawn from: the pixel art, the photographs, or Vintage
+    /// Story's own disc. Independent of <see cref="SolarSystemArt"/>, which is the planets.
+    /// </summary>
+    public string MoonArt { get; set; } = MoonArtStyleParser.PixelValue;
 
     /// <summary>
     /// How much of Vintage Story's own date and hour the character panel keeps showing. Defaults to
@@ -53,6 +60,9 @@ public sealed class AstraTerraConfig
 
     public SolarSystemArtStyle GetSolarSystemArtStyle()
         => SolarSystemArtStyleParser.ParseOrDefault(SolarSystemArt);
+
+    public MoonArtStyle GetMoonArtStyle()
+        => MoonArtStyleParser.ParseOrDefault(MoonArt);
 
     public CalendarDisplay GetCalendarDisplay()
         => CalendarDisplayParser.ParseOrDefault(CalendarDisplay);

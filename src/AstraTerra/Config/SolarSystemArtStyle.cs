@@ -1,13 +1,14 @@
 namespace AstraTerra.Config;
 
 /// <summary>
-/// Which set of pictures the solar system is drawn from: the pixel art, or the photographs.
+/// Which set of pictures the planets are drawn from: the pixel art, or the photographs.
 /// </summary>
 /// <remarks>
 /// The two sets say the same things about the sky — the same bodies, at the same widths, in the
 /// same places — and differ only in how they are drawn. The pixel art is the default because it
 /// sits with the game's own art; the photographs stay a command away for anyone who would rather
 /// have the real surfaces, and are the only set that draws a planet's phase as its own picture.
+/// The moon overhead is a separate setting.
 /// </remarks>
 public enum SolarSystemArtStyle
 {

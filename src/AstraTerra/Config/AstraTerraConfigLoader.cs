@@ -53,6 +53,15 @@ public static class AstraTerraConfigLoader
         }
 
         config.SolarSystemArt = SolarSystemArtStyleParser.ToConfigValue(solarSystemArt);
+        if (!MoonArtStyleParser.TryParse(config.MoonArt, out var moonArt))
+        {
+            api.Logger.Warning(
+                "AstraTerra config has unknown moon art '{0}'; using '{1}'.",
+                config.MoonArt,
+                MoonArtStyleParser.PixelValue);
+        }
+
+        config.MoonArt = MoonArtStyleParser.ToConfigValue(moonArt);
         if (!CalendarDisplayParser.TryParse(config.CalendarDisplay, out var calendarDisplay))
         {
             api.Logger.Warning(

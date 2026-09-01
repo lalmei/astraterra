@@ -116,7 +116,8 @@ There are two sets of pictures. Pixel art is what you get, drawn to sit with the
 `.stars solar-system photo` swaps in photographs of the real surfaces instead, and those go further:
 they show the face a planet's phase calls for, so Venus runs through crescent, half and full with the
 lit limb turned towards wherever the sun is. Everything else -- where a body is, how wide it draws,
-which moons are out -- is the same under either set.
+which moons are out -- is the same under either set. The moon overhead is its own setting:
+`.stars moon pixel|photo|vanilla`.
 
 Beside Jupiter are the four moons Galileo saw, and beside Saturn are five of its own. They swing back
 and forth on their real orbits, the inner ones over a night and the outer ones over a fortnight, and
@@ -125,12 +126,14 @@ the naked eye: put the glass down and the planets are points of light again.
 
 ### The moon, with a face of its own
 
-Vintage Story's moon steps aside for eight faces of the real one, turning through its phases as
-the calendar says it should, with the bright limb pointing at the sun wherever the sun is. The faces
-come from the same two sets the planets do -- pixel art by default, photographs of the real surface
-under `.stars solar-system photo`. It is drawn smaller than the game's own moon and larger than the real one -- about four times life size, which is
-where a moon that reads properly by eye and a moon that fits in an eyepiece meet -- so a telescope
-raised on it shows craters and maria rather than a bigger smooth disc. The moonlight, the phase the game reports and the length of the night are untouched.
+Vintage Story's moon steps aside for eight faces, turning through its phases as the calendar says it
+should, with the bright limb pointing at the sun wherever the sun is. Pixel art is the default;
+`.stars moon photo` uses photographs of the real surface; `.stars moon vanilla` puts the game's own
+disc back. The planets keep their own setting under `.stars solar-system`. The replacement moon is
+drawn smaller than the game's own disc and larger than the real one -- about four times life size,
+which is where a moon that reads properly by eye and a moon that fits in an eyepiece meet -- so a
+telescope raised on it shows craters and maria rather than a bigger smooth disc. The moonlight, the
+phase the game reports and the length of the night are untouched.
 
 ### Hang another world in the sky
 
