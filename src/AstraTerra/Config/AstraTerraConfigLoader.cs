@@ -1,4 +1,5 @@
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 
 namespace AstraTerra.Config;
 
@@ -6,9 +7,25 @@ public static class AstraTerraConfigLoader
 {
     private const string ConfigName = "astraterra.json";
 
-    public static AstraTerraConfig Load(ICoreClientAPI api)
+    public static AstraTerraConfig Load(ICoreAPI api)
     {
         var config = api.LoadModConfig<AstraTerraConfig>(ConfigName) ?? new AstraTerraConfig();
+        Normalize(config, api);
+        api.StoreModConfig(config, ConfigName);
+
+        return config;
+    }
+
+    public static AstraTerraConfig Load(ICoreClientAPI api)
+        => Load((ICoreAPI)api);
+
+    public static void Store(ICoreClientAPI api, AstraTerraConfig config)
+    {
+        api.StoreModConfig(config, ConfigName);
+    }
+
+    private static void Normalize(AstraTerraConfig config, ICoreAPI api)
+    {
         if (!StarfieldModeParser.TryParse(config.StarfieldMode, out var starfieldMode))
         {
             api.Logger.Warning(
@@ -55,12 +72,5 @@ public static class AstraTerraConfigLoader
         }
 
         config.DebugMeteorRateMultiplier = normalizedMeteorRateMultiplier;
-        Store(api, config);
-        return config;
-    }
-
-    public static void Store(ICoreClientAPI api, AstraTerraConfig config)
-    {
-        api.StoreModConfig(config, ConfigName);
     }
 }
