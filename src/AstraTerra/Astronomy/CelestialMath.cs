@@ -91,6 +91,27 @@ public static class CelestialMath
         return seasonalTurns * 360.0;
     }
 
+    /// <summary>
+    /// The visible survival sun in the equatorial frame used by the star catalogue.
+    /// </summary>
+    /// <remarks>
+    /// Vintage Story advances the seasons uniformly and applies axial tilt as a sinusoidal solar
+    /// declination. Right ascension is not ecliptic longitude: the shared obliquity rotation supplies
+    /// it, while the declination expression deliberately mirrors the survival sun that instruments
+    /// and the player actually see.
+    /// </remarks>
+    public static EquatorialCoordinates GetVanillaAlignedSolarEquatorialCoordinates(
+        double totalDays,
+        int daysPerYear,
+        double? equinoxDayOfYear = null)
+    {
+        var solarLongitudeDeg = GetSolarLongitudeDegrees(totalDays, daysPerYear, equinoxDayOfYear);
+        var rotated = EclipticToEquatorial(solarLongitudeDeg, eclipticLatitudeDeg: 0.0);
+        var declinationDeg = MeanObliquityDeg * Math.Sin(ToRadians(solarLongitudeDeg));
+
+        return new EquatorialCoordinates(rotated.RightAscensionDeg, declinationDeg);
+    }
+
     public static double GetVanillaAlignedLocalSiderealAngle(
         double totalDays,
         int daysPerYear,
@@ -104,14 +125,18 @@ public static class CelestialMath
             throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
         }
 
-        var solarLongitudeDeg = GetSolarLongitudeDegrees(totalDays, daysPerYear, equinoxDayOfYear);
-        var localSolarHours = PositiveModulo(totalDays * hoursPerDay, hoursPerDay) + longitudeDegrees / 15.0;
+        var solar = GetVanillaAlignedSolarEquatorialCoordinates(
+            totalDays,
+            daysPerYear,
+            equinoxDayOfYear);
+        var universalDayFraction = GetUniversalSolarTimeHours(totalDays, hoursPerDay) / hoursPerDay;
+        var localDayFraction = PositiveModulo(universalDayFraction + longitudeDegrees / 360.0, 1.0);
+        var solarHourAngleDeg = (localDayFraction - 0.5) * 360.0;
 
-        // The sun transits at local noon, so sidereal time equals the sun's right ascension
-        // (the seasonal term) at that moment and gains 15 deg for every solar hour after it.
-        // The hour angle in GetHorizontalCoordinates is sidereal - right ascension, so sidereal
-        // must increase with time for the sky to turn east to west.
-        return NormalizeDegrees(solarLongitudeDeg + ((localSolarHours - 12.0) * 15.0));
+        // The visible sun transits at local noon, when its hour angle is zero. Sidereal time is
+        // solar right ascension plus hour angle; deriving the daily term from a fraction of one
+        // rotation keeps custom-length world days on the same sky as the solar delegate.
+        return NormalizeDegrees(solar.RightAscensionDeg + solarHourAngleDeg);
     }
 
     /// <summary>Hour on the world's single universal clock, with no observer-position offset.</summary>

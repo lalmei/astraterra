@@ -37,9 +37,13 @@ public sealed class CelestialMathTests
         // Measured from a world whose year starts at the equinox, so the daily terms stand alone.
         var midnight = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0, daysPerYear: 24, hoursPerDay: 24, equinoxDayOfYear: 0);
         var noon = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays: 0.5, daysPerYear: 24, hoursPerDay: 24, equinoxDayOfYear: 0);
+        var noonSun = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(
+            totalDays: 0.5,
+            daysPerYear: 24,
+            equinoxDayOfYear: 0);
 
         Assert.Equal(180.0, midnight, 6);
-        Assert.Equal(7.5, noon, 6);
+        Assert.Equal(noonSun.RightAscensionDeg, noon, 6);
     }
 
     [Fact]
@@ -63,9 +67,16 @@ public sealed class CelestialMathTests
             hoursPerDay: hoursPerDay);
 
         var advance = SignedDelta(threeHoursLater - midnight);
+        var solarAtMidnight = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(100, daysPerYear);
+        var solarThreeHoursLater = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(
+            100 + (3.0 / hoursPerDay),
+            daysPerYear);
+        var expectedAdvance = 45.0 + CelestialMath.ShortestAngularDistanceDegrees(
+            solarAtMidnight.RightAscensionDeg,
+            solarThreeHoursLater.RightAscensionDeg);
 
         Assert.True(advance > 0, $"Sidereal time must advance as the day goes on, but moved {advance:0.###} deg.");
-        Assert.Equal(3.0 * (15.0 + (360.0 / (daysPerYear * hoursPerDay))), advance, 6);
+        Assert.Equal(expectedAdvance, advance, 6);
     }
 
     [Fact]
@@ -105,20 +116,117 @@ public sealed class CelestialMathTests
     }
 
     [Fact]
-    public void SolarLongitude_Is_The_Seasonal_Term_Of_The_Sidereal_Angle()
+    public void SolarRightAscension_Is_The_Seasonal_Term_Of_The_Sidereal_Angle()
     {
         const int daysPerYear = 360;
         const double hoursPerDay = 24;
 
-        // At local noon the sidereal angle is exactly the seasonal term, which is what makes that
-        // term stand in for solar longitude. Sampled across the year rather than at one date.
+        // At local noon the sidereal angle is the visible sun's right ascension. Ecliptic longitude
+        // is not substituted for it: obliquity separates the two between equinoxes and solstices.
         for (var day = 0; day < daysPerYear; day += 7)
         {
             var noon = day + 0.5;
             var sidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(noon, daysPerYear, hoursPerDay);
-            var solarLongitude = CelestialMath.GetSolarLongitudeDegrees(noon, daysPerYear);
+            var solar = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(noon, daysPerYear);
 
-            Assert.Equal(CelestialMath.NormalizeDegrees(solarLongitude), sidereal, 9);
+            Assert.Equal(solar.RightAscensionDeg, sidereal, 9);
+        }
+    }
+
+    [Theory]
+    [InlineData(16.0)]
+    [InlineData(24.0)]
+    [InlineData(30.0)]
+    public void LocalNoon_Puts_The_Sun_On_The_Meridian_For_Any_World_Day_Length(double hoursPerDay)
+    {
+        const int daysPerYear = 108;
+        const double longitudeDeg = 90.0;
+        const double localNoon = 20.5 - (longitudeDeg / 360.0);
+        var solar = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(localNoon, daysPerYear);
+        var sidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            localNoon,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg);
+
+        Assert.Equal(solar.RightAscensionDeg, sidereal, 9);
+    }
+
+    [Fact]
+    public void SolarDeclination_Follows_The_Survival_Seasonal_Phase()
+    {
+        const int daysPerYear = 360;
+        var equinox = CelestialMath.GetEquinoxDayOfYear(daysPerYear);
+
+        Assert.Equal(
+            0.0,
+            CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(equinox, daysPerYear).DeclinationDeg,
+            9);
+        Assert.Equal(
+            CelestialMath.MeanObliquityDeg,
+            CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(
+                equinox + (daysPerYear * 0.25),
+                daysPerYear).DeclinationDeg,
+            9);
+        Assert.Equal(
+            -CelestialMath.MeanObliquityDeg,
+            CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(
+                equinox + (daysPerYear * 0.75),
+                daysPerYear).DeclinationDeg,
+            9);
+
+        // Vintage Story's survival formula gives roughly +4 deg at yearRel 0.25.
+        Assert.InRange(
+            CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(
+                daysPerYear * 0.25,
+                daysPerYear).DeclinationDeg,
+            3.9,
+            4.1);
+    }
+
+    [Fact]
+    public void Modeled_Sun_Agrees_With_The_Survival_Sun_To_One_Arcminute()
+    {
+        var daysPerYearSamples = new[] { 12, 108, 360 };
+        var hoursPerDaySamples = new[] { 16.0, 24.0, 30.0 };
+        var seasonalFractions = new[] { 0.0, 0.125, 0.25, 0.5, 0.75 };
+        var dayFractions = new[] { 0.0, 0.25, 0.5, 0.75 };
+        var latitudes = new[] { -70.0, -45.0, 0.0, 45.0, 70.0 };
+        var longitudes = new[] { -180.0, -90.0, 0.0, 90.0, 180.0 };
+
+        foreach (var daysPerYear in daysPerYearSamples)
+        foreach (var hoursPerDay in hoursPerDaySamples)
+        foreach (var seasonalFraction in seasonalFractions)
+        foreach (var dayFraction in dayFractions)
+        foreach (var latitudeDeg in latitudes)
+        foreach (var longitudeDeg in longitudes)
+        {
+            var totalDays = CelestialMath.GetEquinoxDayOfYear(daysPerYear)
+                            + (seasonalFraction * daysPerYear)
+                            + dayFraction;
+            var solar = CelestialMath.GetVanillaAlignedSolarEquatorialCoordinates(totalDays, daysPerYear);
+            var sidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+                totalDays,
+                daysPerYear,
+                hoursPerDay,
+                longitudeDeg);
+            var projected = CelestialMath.GetHorizontalCoordinates(
+                solar.RightAscensionDeg,
+                solar.DeclinationDeg,
+                latitudeDeg,
+                sidereal);
+            var survival = SurvivalSunHorizontal(
+                totalDays,
+                daysPerYear,
+                latitudeDeg,
+                longitudeDeg);
+            var separationDeg = HorizontalSeparationDegrees(projected, survival);
+
+            Assert.True(
+                separationDeg <= 1.0 / 60.0,
+                $"Sun differed by {separationDeg * 60.0:0.###} arcmin at " +
+                $"year={daysPerYear}, hours={hoursPerDay}, season={seasonalFraction}, " +
+                $"day={dayFraction}, lat={latitudeDeg}, lon={longitudeDeg}.");
         }
     }
 
@@ -307,6 +415,54 @@ public sealed class CelestialMathTests
         Assert.Equal(137.5, equatorial.RightAscensionDeg, 6);
         Assert.Equal(12.25, equatorial.DeclinationDeg, 6);
     }
+
+    private static HorizontalCoordinates SurvivalSunHorizontal(
+        double totalDays,
+        int daysPerYear,
+        double latitudeDeg,
+        double longitudeDeg)
+    {
+        var solarLongitudeDeg = CelestialMath.GetSolarLongitudeDegrees(totalDays, daysPerYear);
+        var declination = ToRadians(
+            CelestialMath.MeanObliquityDeg * Math.Sin(ToRadians(solarLongitudeDeg)));
+        var latitude = ToRadians(latitudeDeg);
+        var localDayFraction = PositiveModulo(totalDays + longitudeDeg / 360.0, 1.0);
+        var hourAngle = ToRadians((localDayFraction - 0.5) * 360.0);
+        var sinAltitude = (Math.Sin(declination) * Math.Sin(latitude))
+                          + (Math.Cos(declination) * Math.Cos(latitude) * Math.Cos(hourAngle));
+        var altitude = Math.Asin(Math.Clamp(sinAltitude, -1.0, 1.0));
+        var azimuth = Math.Atan2(
+            -Math.Sin(hourAngle),
+            (Math.Tan(declination) * Math.Cos(latitude))
+            - (Math.Sin(latitude) * Math.Cos(hourAngle)));
+
+        return new HorizontalCoordinates(
+            CelestialMath.NormalizeDegrees(ToDegrees(azimuth)),
+            ToDegrees(altitude));
+    }
+
+    private static double HorizontalSeparationDegrees(
+        HorizontalCoordinates left,
+        HorizontalCoordinates right)
+    {
+        var leftAltitude = ToRadians(left.AltitudeDeg);
+        var rightAltitude = ToRadians(right.AltitudeDeg);
+        var azimuthDifference = ToRadians(left.AzimuthDeg - right.AzimuthDeg);
+        var cosine = (Math.Sin(leftAltitude) * Math.Sin(rightAltitude))
+                     + (Math.Cos(leftAltitude) * Math.Cos(rightAltitude) * Math.Cos(azimuthDifference));
+
+        return ToDegrees(Math.Acos(Math.Clamp(cosine, -1.0, 1.0)));
+    }
+
+    private static double PositiveModulo(double value, double modulus)
+    {
+        var wrapped = value % modulus;
+        return wrapped < 0 ? wrapped + modulus : wrapped;
+    }
+
+    private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
+
+    private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 
     private static double SignedDelta(double degrees)
     {
