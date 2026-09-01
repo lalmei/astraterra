@@ -17,6 +17,25 @@ public sealed class SkyClockTests
     }
 
     [Fact]
+    public void Reports_Local_Solar_Time_Without_Changing_The_Timestamp_Used_For_The_Sun()
+    {
+        double? firstSampledTotalDays = null;
+
+        var reading = SkyClock.Read(
+            totalDays: 10.5,
+            hoursPerDay: HoursPerDay,
+            days =>
+            {
+                firstSampledTotalDays ??= days;
+                return 45.0;
+            },
+            longitudeDegrees: 90.0);
+
+        Assert.Equal(18.0, reading.LocalTimeHours, 6);
+        Assert.Equal(10.5, firstSampledTotalDays!.Value, 6);
+    }
+
+    [Fact]
     public void Midnight_Is_Night_And_Counts_Down_To_Sunrise()
     {
         var reading = ReadAtHour(0);
@@ -93,7 +112,7 @@ public sealed class SkyClockTests
     /// <summary>A sun that rises at 06:00, peaks at noon and sets at 18:00.</summary>
     private static double SyntheticSunAltitudeDeg(double totalDays)
     {
-        var hourOfDay = CelestialMath.GetLocalSolarTimeHours(totalDays, HoursPerDay);
+        var hourOfDay = CelestialMath.GetUniversalSolarTimeHours(totalDays, HoursPerDay);
         return PeakAltitudeDeg * Math.Sin(2.0 * Math.PI * (hourOfDay - 6.0) / HoursPerDay);
     }
 
@@ -105,7 +124,7 @@ public sealed class SkyClockTests
     {
         const double peakHour = 12.0 + (7.5 / 60.0);
         const double halfWindowHours = 5.0 / 60.0;
-        var hourOfDay = CelestialMath.GetLocalSolarTimeHours(totalDays, HoursPerDay);
+        var hourOfDay = CelestialMath.GetUniversalSolarTimeHours(totalDays, HoursPerDay);
         var offset = (hourOfDay - peakHour) / halfWindowHours;
         return 1.0 - (offset * offset);
     }

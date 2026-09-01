@@ -199,7 +199,8 @@ public sealed class ConstellationBookServer
                 packet.Hour,
                 packet.LatitudeDeg,
                 packet.ResolutionDeg > 0.0 ? packet.ResolutionDeg : InstrumentResolution.BrassSextantDeg,
-                double.IsFinite(packet.SiderealAngleDeg) ? packet.SiderealAngleDeg : null);
+                double.IsFinite(packet.SiderealAngleDeg) ? packet.SiderealAngleDeg : null,
+                double.IsFinite(packet.LongitudeDeg) ? packet.LongitudeDeg : null);
 
             ConstellationBookService.WriteObservationLog(stack, log);
             slot.MarkDirty();

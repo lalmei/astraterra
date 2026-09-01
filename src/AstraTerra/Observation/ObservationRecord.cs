@@ -23,12 +23,16 @@ namespace AstraTerra.Observation;
 /// for the sun and the moon.
 /// </param>
 /// <param name="Day">Whole world day of the sighting.</param>
-/// <param name="Hour">Hour of that day, so two nights can be compared at the same hour.</param>
+/// <param name="Hour">Hour on the world's universal clock, so entries stay comparable across a journey.</param>
 /// <param name="LatitudeDeg">Where the observer stood. Marks taken elsewhere do not compare.</param>
 /// <param name="ResolutionDeg">What the instrument reads to. See <see cref="InstrumentResolution"/>.</param>
 /// <param name="SiderealAngleDeg">
 /// How far the sky had turned when the sighting was taken. Null for an entry written before the
 /// book kept it, which can still be read but cannot be compared with another night.
+/// </param>
+/// <param name="LongitudeDeg">
+/// Where east-west the observer stood when the sighting was written. Null on older entries. Together
+/// with <paramref name="Hour"/> this pins the moment to the world's single clock.
 /// </param>
 public sealed record ObservationRecord(
     long Id,
@@ -39,7 +43,8 @@ public sealed record ObservationRecord(
     double Hour,
     double LatitudeDeg,
     double ResolutionDeg,
-    double? SiderealAngleDeg = null
+    double? SiderealAngleDeg = null,
+    double? LongitudeDeg = null
 )
 {
     /// <summary>

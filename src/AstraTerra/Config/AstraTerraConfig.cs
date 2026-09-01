@@ -25,6 +25,12 @@ public sealed class AstraTerraConfig
     /// When false, vanilla's sun ignores longitude and the whole world shares one time zone.
     /// </summary>
     public bool LongitudeAwareSun { get; set; } = true;
+
+    /// <summary>
+    /// Which hour the player sees on the character panel and instruments. The world's stored clock
+    /// remains universal regardless.
+    /// </summary>
+    public string DisplayedClockTime { get; set; } = DisplayedClockTimeParser.LocalSolarValue;
     public float StarBrightnessBias { get; set; } = 1.0f;
 
     /// <summary>
@@ -50,6 +56,9 @@ public sealed class AstraTerraConfig
 
     public CalendarDisplay GetCalendarDisplay()
         => CalendarDisplayParser.ParseOrDefault(CalendarDisplay);
+
+    public DisplayedClockTime GetDisplayedClockTime()
+        => DisplayedClockTimeParser.ParseOrDefault(DisplayedClockTime);
 
     /// <summary>The Milky Way multiplier, clamped and with a non-finite setting treated as absent.</summary>
     public float GetMilkyWayBrightness()
