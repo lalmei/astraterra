@@ -243,6 +243,19 @@ public sealed class CelestialMathTests
     }
 
     [Theory]
+    [InlineData(0.5f, 90.0, 0.75f)]
+    [InlineData(0.9f, 90.0, 0.15f)]
+    [InlineData(0.1f, -90.0, 0.85f)]
+    [InlineData(0.25f, 360.0, 0.25f)]
+    public void Longitude_Shifts_The_Solar_Delegate_By_A_Fraction_Of_One_Rotation(
+        float dayRel,
+        double longitudeDegrees,
+        float expected)
+    {
+        Assert.Equal(expected, CelestialMath.ApplyLongitudeToDayRel(dayRel, longitudeDegrees), 5);
+    }
+
+    [Theory]
     [InlineData(0.0, 0.0, 0.0)]
     [InlineData(180.0, 180.0, 0.0)]
     [InlineData(90.0, 90.0, CelestialMath.MeanObliquityDeg)]

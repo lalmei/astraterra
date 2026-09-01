@@ -365,9 +365,16 @@ entirely.
 
 ## The Sun And The Moon
 
-The sun and moon are **not** modelled by AstraTerra. They come from Vintage Story itself, via
-`IGameCalendar.GetSunPosition` and `GetMoonPosition`. The mod measures the bodies the game actually
-draws, rather than a parallel model that could drift out of agreement with the visible daylight.
+The moon is not modelled by AstraTerra, and the sun's latitude and seasonal motion still come from
+Vintage Story. Both are read through `IGameCalendar.GetSunPosition` and `GetMoonPosition`, so the mod
+measures the bodies the game actually draws rather than maintaining a second visible-sun model.
+
+When `longitudeAwareSun` is enabled, AstraTerra wraps the solar delegate that Vintage Story's
+survival mod installed. The wrapper changes only `dayRel`, by `longitude / 360` of one rotation, and
+then calls the captured delegate with the original position and year. The survival delegate therefore
+continues to own latitude, axial tilt and seasonal declination while local solar noon shifts with X.
+The server's `astraterra.json` is authoritative for this flag and sends the decision to every client;
+a remote client's local copy cannot make its sun disagree with the server's daylight calculation.
 
 Both return a unit vector in the same world space described above, with `Y = sin(altitude)`.
 
@@ -393,6 +400,29 @@ that factor supplies the minus sign. Expanded, vanilla returns exactly
 
 Both accept a `totalDays` argument, so positions can be sampled into the future. The astrolabe
 relies on this to move its clock along with its forecast.
+
+### Replaceable solar motion and startup order
+
+`IGameCalendar.OnGetSolarSphericalCoords` is a public settable delegate. The calendar constructor
+starts with a degenerate placeholder, the survival mod replaces it during client `LevelFinalize` and
+server `GameReady`, and any other mod may replace it again.
+
+AstraTerra registers for those same ready stages and defers its assignment until the stage's handlers
+have finished. It then captures and chains the delegate it found. Client and server use separate
+installer instances, including in integrated single-player, and disabling or disposing the wrapper
+restores the captured delegate only when AstraTerra's own wrapper is still installed.
+
+This is cooperative rather than exclusive ownership. A sun mod already installed at the ready stage
+is preserved and receives the longitude-shifted `dayRel`; a mod that assigns the property later wins
+and clobbers AstraTerra's wrapper. In the latter case the sextant and astrolabe still follow the newly
+visible sun because they call `GetSunPosition`, while AstraTerra's longitude-shifted star field no
+longer stays synchronized with it. Passing both the shifted time and the original `posX` also means a
+third-party delegate that already applies longitude would apply it twice; such a mod should disable
+`longitudeAwareSun` on the server or coordinate delegate ownership explicitly.
+
+The base survival delegate's seasonal declination is retained by the wrapper. The separate
+[solar-declination issue](https://github.com/lalmei/astraterra/issues/31) tracks what, if anything,
+AstraTerra's independent sidereal approximation should say about that motion.
 
 ### The moon's picture, and only its picture
 
@@ -442,17 +472,13 @@ nullable: at a polar day or polar night no crossing exists, and the astrolabe sa
 inventing an hour.
 
 Clock time itself is `CelestialMath.GetLocalSolarTimeHours`, deliberately _without_ a longitude
-term, so the astrolabe agrees with the clock the game shows elsewhere.
+term in this implementation step, so the astrolabe agrees with the universal clock the game shows.
 
-!!! note "Longitude is applied to the sky, not the clock"
-`GetVanillaAlignedLocalSiderealAngle` shifts the star field by `longitude / 15` hours, so
-travelling east or west rotates the sky. The displayed hour does not shift, because vanilla's
-own clock does not. Note also that the `/ 15` conversion assumes a 24-hour day; on a world with
-a different `hoursPerDay` the longitude offset is scaled accordingly.
-
-    Vintage Story has **no longitude concept at all**, and its sun ignores world X entirely, so this
-    shift has nothing to stay in step with. See [Latitude And Longitude](latitude-and-longitude.md)
-    for where the observer position comes from and why this is an unresolved divergence.
+!!! note "Longitude changes the sun and sky, not the internal clock"
+    `GetVanillaAlignedLocalSiderealAngle` rotates the star field by longitude, and the solar delegate
+    wrapper shifts the visible sun by the same fraction of a rotation. The world's stored time remains
+    one universal timestamp. Displaying that timestamp as a local or zoned hour is a separate concern;
+    see [Latitude And Longitude](latitude-and-longitude.md) for the observer mapping.
 
 ## What The Render Thread May Do
 

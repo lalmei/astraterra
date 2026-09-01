@@ -38,6 +38,8 @@ public sealed class AstraTerraModSystem : ModSystem
     private NearBodyRenderer? nearBodyRenderer;
     private MoonDiscRenderer? moonDiscRenderer;
     private NearBodyCatalog nearBodies = NearBodyCatalog.Empty;
+    private LongitudeAwareSunInstaller? clientLongitudeAwareSunInstaller;
+    private LongitudeAwareSunInstaller? serverLongitudeAwareSunInstaller;
 
     public override void Start(ICoreAPI api)
     {
@@ -61,18 +63,25 @@ public sealed class AstraTerraModSystem : ModSystem
 
     public override void AssetsLoaded(ICoreAPI api)
     {
+        config = AstraTerraConfigLoader.Load(api);
         if (api is ICoreClientAPI clientApi)
         {
-            config = AstraTerraConfigLoader.Load(clientApi);
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}",
+                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}; longitudeAwareSun(local)={7}",
                 config.StarfieldMode,
                 config.SkyGridMode,
                 config.StarBrightnessBias,
                 config.ShowMinimalHud,
                 config.ShowReticle,
                 config.DebugGuideStarEmphasisDefault,
-                config.DebugMeteorRateMultiplier);
+                config.DebugMeteorRateMultiplier,
+                config.LongitudeAwareSun);
+        }
+        else
+        {
+            api.Logger.Event(
+                "AstraTerra startup step: config loaded: longitudeAwareSun={0}",
+                config.LongitudeAwareSun);
         }
 
         try
@@ -153,6 +162,7 @@ public sealed class AstraTerraModSystem : ModSystem
 
     public override void StartClientSide(ICoreClientAPI api)
     {
+        clientLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartClient(api);
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
         AstrolabeCalibrationState.Reset();
@@ -372,6 +382,8 @@ public sealed class AstraTerraModSystem : ModSystem
 
     public override void StartServerSide(ICoreServerAPI api)
     {
+        config ??= AstraTerraConfigLoader.Load(api);
+        serverLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartServer(api, config.LongitudeAwareSun);
         new ConstellationBookServer(() => catalog).Register(api);
         new SkyDiscEngraveServer().Register(api);
         new StarsServerCommands(() => catalog, () => planets).Register(api);
@@ -382,6 +394,8 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         telescopeZoomPatcher?.Stop();
         skyDiscFiringPatch.Stop();
+        clientLongitudeAwareSunInstaller?.Dispose();
+        serverLongitudeAwareSunInstaller?.Dispose();
         VanillaCalendarHooks.Reset();
         telescopeScopeController?.Stop();
         skyLyingController?.Stop();

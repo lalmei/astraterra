@@ -6,6 +6,12 @@ namespace AstraTerra.Tests.Config;
 public sealed class AstraTerraConfigTests
 {
     [Fact]
+    public void Longitude_Aware_Sun_Is_Enabled_By_Default()
+    {
+        Assert.True(new AstraTerraConfig().LongitudeAwareSun);
+    }
+
+    [Fact]
     public void Debug_Meteor_Rate_Defaults_To_Real_Time()
     {
         var config = new AstraTerraConfig();

@@ -20,6 +20,11 @@ public sealed class AstraTerraConfig
     /// showing all of it; the disc only becomes an instrument once this is turned down.
     /// </summary>
     public string CalendarDisplay { get; set; } = CalendarDisplayParser.FullValue;
+
+    /// <summary>
+    /// When false, vanilla's sun ignores longitude and the whole world shares one time zone.
+    /// </summary>
+    public bool LongitudeAwareSun { get; set; } = true;
     public float StarBrightnessBias { get; set; } = 1.0f;
 
     /// <summary>

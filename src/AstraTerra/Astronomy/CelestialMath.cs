@@ -116,7 +116,7 @@ public static class CelestialMath
 
     /// <summary>
     /// Hour of the world day for a calendar timestamp, matching the clock the game itself shows.
-    /// Longitude is deliberately left out: vanilla's clock does not shift with world X either.
+    /// Longitude is deliberately left out: the world's internal clock remains universal.
     /// </summary>
     public static double GetLocalSolarTimeHours(double totalDays, double hoursPerDay)
     {
@@ -127,6 +127,12 @@ public static class CelestialMath
 
         return PositiveModulo(totalDays * hoursPerDay, hoursPerDay);
     }
+
+    /// <summary>
+    /// Shifts the fractional day passed to vanilla's sun delegate by observer longitude.
+    /// </summary>
+    public static float ApplyLongitudeToDayRel(float dayRel, double longitudeDegrees)
+        => (float)PositiveModulo(dayRel + longitudeDegrees / 360.0, 1.0);
 
     public static double ClassifyAltitudeDeg(double rightAscensionDeg, double declinationDeg, double latitudeDeg, double localSiderealDeg)
         => GetHorizontalCoordinates(rightAscensionDeg, declinationDeg, latitudeDeg, localSiderealDeg).AltitudeDeg;
