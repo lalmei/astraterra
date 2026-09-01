@@ -126,7 +126,8 @@ public sealed class ConstellationBookClient
         double hour,
         double latitudeDeg,
         double resolutionDeg,
-        double? siderealAngleDeg = null)
+        double? siderealAngleDeg = null,
+        double? longitudeDeg = null)
     {
         SendMutation(new ConstellationBookMutationPacket
         {
@@ -138,7 +139,8 @@ public sealed class ConstellationBookClient
             Hour = hour,
             LatitudeDeg = latitudeDeg,
             ResolutionDeg = resolutionDeg,
-            SiderealAngleDeg = siderealAngleDeg ?? double.NaN
+            SiderealAngleDeg = siderealAngleDeg ?? double.NaN,
+            LongitudeDeg = longitudeDeg ?? double.NaN
         });
     }
 

@@ -1,3 +1,4 @@
+using AstraTerra.Astronomy;
 using AstraTerra.Config;
 using Vintagestory.API.Client;
 
@@ -42,6 +43,38 @@ public static class VanillaCalendarHooks
 
     public static CalendarDisplay Display => config?.GetCalendarDisplay() ?? CalendarDisplay.Full;
 
+    public static DisplayedClockTime ClockTime => config?.GetDisplayedClockTime() ?? DisplayedClockTime.LocalSolar;
+
+    public static float GetDisplayedHourOfDay(Vintagestory.API.Common.IGameCalendar calendar)
+    {
+        if (api?.World?.Player?.Entity is null)
+        {
+            return calendar.HourOfDay;
+        }
+
+        var hoursPerDay = Math.Max(1.0, calendar.HoursPerDay);
+        var longitude = ClockDisplay.MapWorldLongitude(api.World.Player.Entity.Pos.X, api.World);
+        var displayed = ClockDisplay.GetDisplayedSolarTimeHours(
+            calendar.TotalDays,
+            hoursPerDay,
+            longitude,
+            ClockTime);
+        return (float)displayed;
+    }
+
+    public static (int Hour, int Minute) GetDisplayedClockParts(float displayedHour)
+    {
+        var hour = (int)displayedHour;
+        var minute = (int)((displayedHour - hour) * 60f);
+        if (minute >= 60)
+        {
+            hour++;
+            minute -= 60;
+        }
+
+        return (hour, minute);
+    }
+
     /// <summary>
     /// What the date line says instead. It never reports a wrong date and never looks like a
     /// failure: it says the reckoning is not being kept, which is exactly what has happened.
@@ -58,8 +91,7 @@ public static class VanillaCalendarHooks
             return "unreckoned";
         }
 
-        var hour = (int)hourOfDay;
-        var minute = (int)((hourOfDay - hour) * 60f);
+        var (hour, minute) = GetDisplayedClockParts(hourOfDay);
         return $"unreckoned, {hour:00}:{minute:00}";
     }
 }

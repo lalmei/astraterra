@@ -53,7 +53,8 @@ public sealed class ObservationLog
         double hour,
         double latitudeDeg,
         double resolutionDeg,
-        double? siderealAngleDeg = null)
+        double? siderealAngleDeg = null,
+        double? longitudeDeg = null)
     {
         var record = new ObservationRecord(
             nextId++,
@@ -64,7 +65,8 @@ public sealed class ObservationLog
             hour,
             latitudeDeg,
             resolutionDeg,
-            siderealAngleDeg);
+            siderealAngleDeg,
+            longitudeDeg);
         observations.Add(record);
         return record;
     }

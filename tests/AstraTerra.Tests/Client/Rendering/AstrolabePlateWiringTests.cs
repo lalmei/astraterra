@@ -21,13 +21,23 @@ public sealed class AstrolabePlateWiringTests
         Assert.Contains("var latitude = plateLatitude.Value;", source);
 
         // Longitude stays live on purpose: it moves the hour of transit, not the horizon.
-        Assert.Contains("LatitudeMapper.MapWorldLongitude", source);
+        Assert.Contains("ClockDisplay.MapWorldLongitude", source);
 
         // Nothing between reading the plate and taking the reading may reintroduce the player's own
         // latitude, which is exactly what this feature removed.
         var planner = source[source.IndexOf("var plateLatitude", StringComparison.Ordinal)..];
         planner = planner[..planner.IndexOf("AstrolabeService.Read", StringComparison.Ordinal)];
         Assert.DoesNotContain("MapGameLatitude", planner);
+    }
+
+    [Fact]
+    public void Forecast_Clock_Uses_The_Forecast_Timestamp_For_Both_Local_And_World_Time()
+    {
+        var source = ReadSource("Client", "Rendering", "AstrolabePlannerRenderer.cs");
+
+        Assert.Contains("FormatSkyClock(clock, hoursPerDay, totalDays)", source);
+        Assert.Contains("GetUniversalSolarTimeHours(totalDays, hoursPerDay)", source);
+        Assert.DoesNotContain("GetUniversalSolarTimeHours(calendar.TotalDays", source);
     }
 
     [Fact]

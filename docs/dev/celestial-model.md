@@ -471,14 +471,21 @@ circles, where the sun can rise and set again inside the old 15-minute interval.
 nullable: at a polar day or polar night no crossing exists, and the astrolabe says so rather than
 inventing an hour.
 
-Clock time itself is `CelestialMath.GetLocalSolarTimeHours`, deliberately _without_ a longitude
-term in this implementation step, so the astrolabe agrees with the universal clock the game shows.
+Clock time on the astrolabe is local apparent solar time at the observer's longitude. The world's
+internal clock stays universal; `CelestialMath.GetUniversalSolarTimeHours` reads that clock and
+`CelestialMath.GetLocalSolarTimeHours` shifts it by `(longitude / 360) * hoursPerDay`. Which hour the
+character panel shows is configured separately via `displayedClockTime` in `astraterra.json`:
+`local` (the default), `universal`, or `zones`. Zoned time divides the circumference into one
+whole-clock-hour step per zone, so custom world-day lengths keep integer clock readings.
 
-!!! note "Longitude changes the sun and sky, not the internal clock"
-    `GetVanillaAlignedLocalSiderealAngle` rotates the star field by longitude, and the solar delegate
-    wrapper shifts the visible sun by the same fraction of a rotation. The world's stored time remains
-    one universal timestamp. Displaying that timestamp as a local or zoned hour is a separate concern;
-    see [Latitude And Longitude](latitude-and-longitude.md) for the observer mapping.
+!!! note "Longitude is real in the sky and on the displayed clock"
+    AstraTerra installs its own `OnGetSolarSphericalCoords` wrapper that shifts the sun — and
+    therefore daylight — with world X, chaining whatever delegate the survival mod installed rather
+    than replacing it outright. The star field already shifted with longitude; the sun now matches.
+    Set `longitudeAwareSun` to `false` in `astraterra.json` to keep vanilla's single time zone.
+
+    See [Latitude And Longitude](latitude-and-longitude.md) for the world-config scale and the
+    observer-position pipeline.
 
 ## What The Render Thread May Do
 

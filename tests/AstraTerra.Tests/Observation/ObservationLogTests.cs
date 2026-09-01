@@ -62,13 +62,53 @@ public sealed class ObservationLogTests
     public void Round_Trips_Through_Json()
     {
         var log = new ObservationLog();
-        log.Record(34.2, 118.0, 1.4, 412, 21.5, 51.0, InstrumentResolution.BrassSextantDeg);
+        log.Record(
+            34.2,
+            118.0,
+            1.4,
+            412,
+            21.5,
+            51.0,
+            InstrumentResolution.BrassSextantDeg,
+            siderealAngleDeg: 90.0,
+            longitudeDeg: -73.5);
         log.Record(-2.0, 4.0, null, 480, 5.25, 51.0, InstrumentResolution.CrossStaffDeg);
 
         var loaded = ObservationLogPersistence.Deserialize(ObservationLogPersistence.Serialize(log));
 
         Assert.Equal(log.Observations, loaded.Observations);
+        Assert.Equal(-73.5, loaded.Observations[0].LongitudeDeg);
         Assert.Equal(3, loaded.Record(1.0, 1.0, null, 481, 5.0, 51.0, InstrumentResolution.CrossStaffDeg).Id);
+    }
+
+    [Fact]
+    public void Older_Json_Without_Longitude_Loads_With_Unknown_Provenance()
+    {
+        const string json = """
+            {
+              "schemaVersion": 1,
+              "nextId": 2,
+              "observations": [
+                {
+                  "id": 1,
+                  "altitudeDeg": 34.2,
+                  "azimuthDeg": 118.0,
+                  "visualMagnitude": 1.4,
+                  "day": 412,
+                  "hour": 21.5,
+                  "latitudeDeg": 51.0,
+                  "resolutionDeg": 0.016666666666666666,
+                  "siderealAngleDeg": 90.0
+                }
+              ],
+              "nextClaimId": 1,
+              "claims": []
+            }
+            """;
+
+        var loaded = ObservationLogPersistence.Deserialize(json);
+
+        Assert.Null(loaded.Observations.Single().LongitudeDeg);
     }
 
     [Fact]

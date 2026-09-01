@@ -114,11 +114,8 @@ public static class CelestialMath
         return NormalizeDegrees(solarLongitudeDeg + ((localSolarHours - 12.0) * 15.0));
     }
 
-    /// <summary>
-    /// Hour of the world day for a calendar timestamp, matching the clock the game itself shows.
-    /// Longitude is deliberately left out: the world's internal clock remains universal.
-    /// </summary>
-    public static double GetLocalSolarTimeHours(double totalDays, double hoursPerDay)
+    /// <summary>Hour on the world's single universal clock, with no observer-position offset.</summary>
+    public static double GetUniversalSolarTimeHours(double totalDays, double hoursPerDay)
     {
         if (hoursPerDay <= 0)
         {
@@ -126,6 +123,51 @@ public static class CelestialMath
         }
 
         return PositiveModulo(totalDays * hoursPerDay, hoursPerDay);
+    }
+
+    /// <summary>
+    /// Local apparent solar time at an observer longitude. One full trip around the world shifts by
+    /// one complete world day, including on worlds that do not divide a day into 24 hours.
+    /// </summary>
+    public static double GetLocalSolarTimeHours(
+        double totalDays,
+        double hoursPerDay,
+        double longitudeDegrees = 0)
+        => ApplyLongitudeToSolarHours(
+            GetUniversalSolarTimeHours(totalDays, hoursPerDay),
+            longitudeDegrees,
+            hoursPerDay);
+
+    public static double ApplyLongitudeToSolarHours(
+        double universalSolarHours,
+        double longitudeDegrees,
+        double hoursPerDay)
+    {
+        if (hoursPerDay <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
+        }
+
+        return PositiveModulo(
+            universalSolarHours + longitudeDegrees / 360.0 * hoursPerDay,
+            hoursPerDay);
+    }
+
+    /// <summary>
+    /// Discrete whole-clock-hour zones. A 24-hour world has 24 zones; a 16-hour world has 16.
+    /// </summary>
+    public static double ApplyTimeZoneToSolarHours(
+        double universalSolarHours,
+        double longitudeDegrees,
+        double hoursPerDay)
+    {
+        if (hoursPerDay <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
+        }
+
+        var zoneOffsetHours = Math.Round(longitudeDegrees / 360.0 * hoursPerDay);
+        return PositiveModulo(universalSolarHours + zoneOffsetHours, hoursPerDay);
     }
 
     /// <summary>

@@ -67,7 +67,7 @@ public sealed class AstraTerraModSystem : ModSystem
         if (api is ICoreClientAPI clientApi)
         {
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}; longitudeAwareSun(local)={7}",
+                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}; longitudeAwareSun(local)={7}; displayedClockTime={8}",
                 config.StarfieldMode,
                 config.SkyGridMode,
                 config.StarBrightnessBias,
@@ -75,7 +75,8 @@ public sealed class AstraTerraModSystem : ModSystem
                 config.ShowReticle,
                 config.DebugGuideStarEmphasisDefault,
                 config.DebugMeteorRateMultiplier,
-                config.LongitudeAwareSun);
+                config.LongitudeAwareSun,
+                config.DisplayedClockTime);
         }
         else
         {

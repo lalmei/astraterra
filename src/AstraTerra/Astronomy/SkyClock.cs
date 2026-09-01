@@ -38,7 +38,8 @@ public static class SkyClock
     public static SkyClockReading Read(
         double totalDays,
         double hoursPerDay,
-        Func<double, double> sunAltitudeDegAt)
+        Func<double, double> sunAltitudeDegAt,
+        double longitudeDegrees = 0)
     {
         ArgumentNullException.ThrowIfNull(sunAltitudeDegAt);
         if (hoursPerDay <= 0)
@@ -46,7 +47,10 @@ public static class SkyClock
             throw new ArgumentOutOfRangeException(nameof(hoursPerDay), hoursPerDay, "Hours per day must be positive.");
         }
 
-        var localTimeHours = CelestialMath.GetLocalSolarTimeHours(totalDays, hoursPerDay);
+        var localTimeHours = CelestialMath.GetLocalSolarTimeHours(
+            totalDays,
+            hoursPerDay,
+            longitudeDegrees);
         var sunAltitudeDeg = sunAltitudeDegAt(totalDays);
         var hoursUntilSunrise = FindNextHorizonCrossing(totalDays, hoursPerDay, sunAltitudeDegAt, rising: true);
         var hoursUntilSunset = FindNextHorizonCrossing(totalDays, hoursPerDay, sunAltitudeDegAt, rising: false);

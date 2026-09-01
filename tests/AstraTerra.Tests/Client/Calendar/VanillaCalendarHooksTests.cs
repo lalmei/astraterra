@@ -36,6 +36,14 @@ public sealed class VanillaCalendarHooksTests
     }
 
     [Fact]
+    public void Displayed_Clock_Parts_Preserve_The_Game_Clock_Formatting()
+    {
+        VanillaCalendarHooks.Reset();
+
+        Assert.Equal((18, 30), VanillaCalendarHooks.GetDisplayedClockParts(displayedHour: 18.5f));
+    }
+
+    [Fact]
     public void Nothing_Is_Redacted_Before_A_Client_Has_Been_Wired_Up()
     {
         VanillaCalendarHooks.Reset();

@@ -62,6 +62,15 @@ public static class AstraTerraConfigLoader
         }
 
         config.CalendarDisplay = CalendarDisplayParser.ToConfigValue(calendarDisplay);
+        if (!DisplayedClockTimeParser.TryParse(config.DisplayedClockTime, out var displayedClockTime))
+        {
+            api.Logger.Warning(
+                "AstraTerra config has unknown displayed clock time '{0}'; using '{1}'.",
+                config.DisplayedClockTime,
+                DisplayedClockTimeParser.LocalSolarValue);
+        }
+
+        config.DisplayedClockTime = DisplayedClockTimeParser.ToConfigValue(displayedClockTime);
         var normalizedMeteorRateMultiplier = config.GetDebugMeteorRateMultiplier();
         if (normalizedMeteorRateMultiplier != config.DebugMeteorRateMultiplier)
         {

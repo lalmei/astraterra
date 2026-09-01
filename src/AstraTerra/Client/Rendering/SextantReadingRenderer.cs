@@ -209,7 +209,8 @@ public sealed class SextantReadingRenderer : IRenderer
             calendar.HourOfDay,
             latitude,
             InstrumentResolution.BrassSextantDeg,
-            siderealAngle);
+            siderealAngle,
+            longitude);
     }
 
     private void TrackSneak()

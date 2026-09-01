@@ -68,6 +68,10 @@ public sealed class ConstellationBookMutationPacket
     /// <summary>What the observer says those entries were. See <see cref="Observation.SkyClass"/>.</summary>
     [ProtoMember(18)]
     public int SkyClass;
+
+    /// <summary>Observer longitude when the sighting was written, or NaN on older clients.</summary>
+    [ProtoMember(19)]
+    public double LongitudeDeg = double.NaN;
 }
 
 [ProtoContract]

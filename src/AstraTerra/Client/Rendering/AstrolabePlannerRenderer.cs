@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Config;
 using AstraTerra.Constellations;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
@@ -278,8 +279,12 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             return cachedClockLine;
         }
 
-        var clock = SkyClock.Read(totalDays, hoursPerDay, days => SunAltitudeDegAt(position, days));
-        cachedClockLine = FormatSkyClock(clock, hoursPerDay);
+        var clock = SkyClock.Read(
+            totalDays,
+            hoursPerDay,
+            days => SunAltitudeDegAt(position, days),
+            longitudeDegrees: ClockDisplay.MapWorldLongitude(position.X, api.World));
+        cachedClockLine = FormatSkyClock(clock, hoursPerDay, totalDays);
         cachedClockMinute = minute;
         cachedClockPositionKey = positionKey;
         return cachedClockLine;
@@ -291,7 +296,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         return SkyBodyModel.FromWorldDirection("Sun", vector.X, vector.Y, vector.Z)?.AltitudeDeg ?? 0.0;
     }
 
-    private static string FormatSkyClock(SkyClockReading clock, double hoursPerDay)
+    private string FormatSkyClock(SkyClockReading clock, double hoursPerDay, double totalDays)
     {
         var phase = clock.Phase switch
         {
@@ -310,7 +315,14 @@ public sealed class AstrolabePlannerRenderer : IRenderer
                 ? $"sunrise in {sunrise:0.0} h"
                 : "the sun does not rise";
 
-        return $"{FormatClockTime(clock.LocalTimeHours, hoursPerDay)} — {phase}, sun {clock.SunAltitudeDeg:+0.0;-0.0;0.0}°, {next}";
+        var timeLine = FormatClockTime(clock.LocalTimeHours, hoursPerDay);
+        var universalHours = CelestialMath.GetUniversalSolarTimeHours(totalDays, hoursPerDay);
+        if (Math.Abs(clock.LocalTimeHours - universalHours) > 0.05)
+        {
+            timeLine += $" ({FormatClockTime(universalHours, hoursPerDay)} world)";
+        }
+
+        return $"{timeLine} — {phase}, sun {clock.SunAltitudeDeg:+0.0;-0.0;0.0}°, {next}";
     }
 
     private static string FormatClockTime(double localTimeHours, double hoursPerDay)
