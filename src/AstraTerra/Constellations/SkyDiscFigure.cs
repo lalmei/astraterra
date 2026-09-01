@@ -20,6 +20,9 @@ public enum SkyDiscEngraveOutcome
     /// <summary>Fired clay: it holds the figure it was fired with, and no more.</summary>
     TooHard,
 
+    /// <summary>No loose flint or knife is ready in the hotbar to cut the line.</summary>
+    NoScribingTool,
+
     /// <summary>A second figure. A disc holds one.</summary>
     NoRoom,
 }
@@ -78,7 +81,12 @@ public sealed class SkyDiscFigure
     /// Nothing is written unless the answer is <see cref="SkyDiscEngraveOutcome.Engraved"/>, so a
     /// refusal leaves the figure exactly as it was and can be reported and forgotten.
     /// </remarks>
-    public SkyDiscEngraveResult Engrave(int startHip, int endHip, int figuresAllowed, bool workable = true)
+    public SkyDiscEngraveResult Engrave(
+        int startHip,
+        int endHip,
+        int figuresAllowed,
+        bool workable = true,
+        bool hasScribingTool = true)
     {
         if (figuresAllowed <= 0)
         {
@@ -92,6 +100,13 @@ public sealed class SkyDiscFigure
             return new SkyDiscEngraveResult(
                 SkyDiscEngraveOutcome.TooHard,
                 "The clay is fired hard. A figure goes into it before it is baked, not after.");
+        }
+
+        if (!hasScribingTool)
+        {
+            return new SkyDiscEngraveResult(
+                SkyDiscEngraveOutcome.NoScribingTool,
+                SkyDiscScribingTool.MissingMessage);
         }
 
         if (startHip == endHip)

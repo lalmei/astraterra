@@ -1,4 +1,5 @@
 using AstraTerra.Constellations;
+using AstraTerra.Observation;
 using Vintagestory.API.Datastructures;
 using Xunit;
 
@@ -103,6 +104,18 @@ public sealed class SkyDiscFigureTests
         Assert.True(figure.Engrave(100, 200, Metal, workable: true).Changed);
         Assert.True(figure.Engrave(200, 300, Metal, workable: true).Changed);
         Assert.True(figure.IsOnePiece);
+    }
+
+    [Fact]
+    public void A_Figure_Cannot_Be_Scratched_Without_Flint_Or_A_Knife()
+    {
+        var figure = new SkyDiscFigure();
+
+        var result = figure.Engrave(100, 200, Metal, hasScribingTool: false);
+
+        Assert.Equal(SkyDiscEngraveOutcome.NoScribingTool, result.Outcome);
+        Assert.Equal(SkyDiscScribingTool.MissingMessage, result.Message);
+        Assert.Empty(figure.Edges);
     }
 
     [Fact]

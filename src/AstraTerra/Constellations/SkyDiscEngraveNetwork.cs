@@ -78,7 +78,8 @@ public sealed class SkyDiscEngraveServer
             packet.StartHip,
             packet.EndHip,
             SkyDiscEngraving.FiguresAllowed(stack),
-            SkyDiscEngraving.IsWorkable(stack));
+            SkyDiscEngraving.IsWorkable(stack),
+            SkyDiscScribingTool.HasInHotbar(player));
         if (!result.Changed)
         {
             return new SkyDiscEngraveResponsePacket { Message = result.Message };

@@ -125,6 +125,19 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Both_Kinds_Of_Disc_Scratch_Require_A_Scribing_Tool_In_The_Hotbar()
+    {
+        var item = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Items/ItemSkyDisc.cs"));
+        var engraving = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src/AstraTerra/Constellations/SkyDiscEngraveNetwork.cs"));
+
+        Assert.Contains("if (!HasScribingTool(byEntity))", item);
+        Assert.Contains("SkyDiscScribingTool.MissingMessage", item);
+        Assert.Contains("SkyDiscScribingTool.HasInHotbar(player)", engraving);
+    }
+
+    [Fact]
     public void Firing_A_Clay_Disc_Hardens_It_Rather_Than_Wiping_It()
     {
         var patch = File.ReadAllText(
