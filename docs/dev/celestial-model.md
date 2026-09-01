@@ -426,10 +426,12 @@ AstraTerra's independent sidereal approximation should say about that motion.
 
 ### The moon's picture, and only its picture
 
-`MoonDiscRenderer` draws the moon from photographs of the real one and asks Vintage Story to put its
-own disc away, through the same `moonScale` suppression a moon world uses. Nothing else changes:
+`MoonDiscRenderer` draws the moon from the pictures the player asked for — pixel art, photographs of
+the real one, or Vintage Story's own disc — and asks the game to put its disc away except when
+vanilla was chosen, through the same `moonScale` suppression a moon world uses. Nothing else changes:
 where the moon is, what phase it is in, how bright the night is and how the phase advances are still
-the calendar's, read fresh each frame — so anything that moves the game's moon moves this one.
+the calendar's, read fresh each frame — so anything that moves the game's moon moves this one. The
+planets keep `SolarSystemArt`; the moon overhead is `MoonArt`.
 
 | Question | Answered by |
 | --- | --- |

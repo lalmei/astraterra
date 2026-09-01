@@ -116,18 +116,37 @@ This only touches what your own client displays. An administrator asking the ser
 .stars solar-system photo
 ```
 
-The planets, their moons and the moon overhead are drawn from pictures, and the mod ships two sets
-of them. `pixel` is the default: pixel art, drawn to sit with the game's own. `photo` is the older
-set, photographs of the real surfaces — Jupiter's belts, Saturn's rings edge-on, the moon's craters
-at the eyepiece.
+The planets and their moons are drawn from pictures, and the mod ships two sets of them. `pixel` is
+the default: pixel art, drawn to sit with the game's own. `photo` is the older set, photographs of
+the real surfaces — Jupiter's belts, Saturn's rings edge-on.
 
 Only the pictures change. Where a body is, how wide it draws, which of its moons are out and which
 has slipped behind it are the same either way, because both sets are cut to the same square. The one
 thing the photographs alone carry is a planet's phase as its own picture: they draw Venus and Mars
 crescent, half and full as the geometry demands, while the pixel art draws each planet the one way
-it is drawn. The moon keeps its eight faces in both sets.
+it is drawn.
+
+The moon overhead is a separate setting.
 
 The choice takes effect at once and is saved in `ModConfig/astraterra.json`.
+
+## The Moon Overhead
+
+```text
+.stars moon pixel
+.stars moon photo
+.stars moon vanilla
+```
+
+The moon you see in the sky is its own picture, independent of the planets. `pixel` is the default:
+eight faces of pixel art, with the bright limb turned toward the sun. `photo` uses photographs of
+the real surface, the same eight faces, so a telescope shows craters rather than a larger smooth
+disc. `vanilla` puts Vintage Story's own moon back.
+
+Position, phase, moonlight and the length of the night stay the calendar's in every case. Only the
+picture changes, or is left alone.
+
+The choice takes effect at once and is saved as `MoonArt` in `ModConfig/astraterra.json`.
 
 ## Recovery And Debug Commands
 

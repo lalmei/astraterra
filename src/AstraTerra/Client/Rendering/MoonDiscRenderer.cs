@@ -7,15 +7,16 @@ using Vintagestory.API.MathTools;
 namespace AstraTerra.Client.Rendering;
 
 /// <summary>
-/// Draws the moon from photographs of the real one, in place of the game's own disc.
+/// Draws the moon from the pictures the player asked for, in place of the game's own disc — or
+/// stands down and leaves that disc alone.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Only the picture changes. Where the moon is, what phase it is in, how much light it sheds and how
 /// that phase advances are all still Vintage Story's — this reads them and draws what they describe,
-/// so a mod or a command that moves the moon moves this too. What it adds is a moon worth pointing a
-/// telescope at: eight faces of the real surface, at a modest four-times-life angle that still fits
-/// in the precision eyepiece, so magnification shows craters rather than a larger smooth disc.
+/// so a mod or a command that moves the moon moves this too. Pixel art and photographs are eight
+/// faces of a surface worth pointing a telescope at; vanilla is the original disc, for anyone who
+/// would rather have it back.
 /// </para>
 /// <para>
 /// A pass of its own rather than part of the star pass, because the moon is up in daylight and the
@@ -106,6 +107,12 @@ public sealed class MoonDiscRenderer : IRenderer
             return false;
         }
 
+        var moonArt = config.GetMoonArtStyle();
+        if (!MoonArtStyleParser.ReplacesVanillaMoon(moonArt))
+        {
+            return false;
+        }
+
         var entity = api.World.Player?.Entity;
         if (entity is null)
         {
@@ -116,7 +123,9 @@ public sealed class MoonDiscRenderer : IRenderer
         var moonPosition = calendar.GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var direction = new SkyDirection(moonPosition.X, moonPosition.Y, moonPosition.Z);
         var face = MoonDiscModel.SelectFace(calendar.MoonPhaseExact);
-        var textureId = ResolveTexture(face, SolarSystemTextures.Resolve(face.TexturePath, config.GetSolarSystemArtStyle()));
+        var textureId = ResolveTexture(
+            face,
+            SolarSystemTextures.Resolve(face.TexturePath, MoonArtStyleParser.ToTextureStyle(moonArt)));
         if (textureId == 0)
         {
             // With no picture there is nothing to put in the game's moon's place, so it keeps the sky.

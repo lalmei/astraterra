@@ -63,7 +63,7 @@ The stars also rise a little earlier each night, so the sky tells the season as 
 
 ### The Moon
 
-The Moon uses eight faces, with the bright limb turned towards the sun. Vintage Story's moonlight, the calendar's phase, and the length of the night are untouched. A telescope shows a surface rather than a larger smooth disc.
+The Moon uses eight faces, with the bright limb turned towards the sun. Vintage Story's moonlight, the calendar's phase, and the length of the night are untouched. A telescope shows a surface rather than a larger smooth disc. Pixel art is the default. `.stars moon photo` uses photographs of the real surface; `.stars moon vanilla` puts Vintage Story's own disc back. The planets are a separate setting: `.stars solar-system`.
 
 ## Brass Telescope
 
@@ -213,7 +213,7 @@ Once AstraTerra writes the first constellation into a book, vanilla book editing
 
 `.stars build Ori` writes one of the 88 IAU figures into the held book. Built figures are ordinary journal entries afterwards. Use the [Constellation Build Cheat Sheet](constellation-cheat-sheet.md) for the three-letter codes.
 
-See the [Command Reference](commands.md) for the full `.stars` list, including sightings, calendar hiding, and solar-system art.
+See the [Command Reference](commands.md) for the full `.stars` list, including sightings, calendar hiding, solar-system art, and the moon overhead.
 
 ## Meteor Showers
 

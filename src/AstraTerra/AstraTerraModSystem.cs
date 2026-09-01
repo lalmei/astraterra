@@ -67,9 +67,11 @@ public sealed class AstraTerraModSystem : ModSystem
         if (api is ICoreClientAPI clientApi)
         {
             api.Logger.Event(
-                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; starBrightnessBias={2:0.00}; showMinimalHud={3}; showReticle={4}; debugGuideStarEmphasis={5}; debugMeteorRateMultiplier={6:0.00}; longitudeAwareSun(local)={7}; displayedClockTime={8}",
+                "AstraTerra startup step: config loaded: starfieldMode={0}; skyGridMode={1}; solarSystemArt={2}; moonArt={3}; starBrightnessBias={4:0.00}; showMinimalHud={5}; showReticle={6}; debugGuideStarEmphasis={7}; debugMeteorRateMultiplier={8:0.00}; longitudeAwareSun(local)={9}; displayedClockTime={10}",
                 config.StarfieldMode,
                 config.SkyGridMode,
+                config.SolarSystemArt,
+                config.MoonArt,
                 config.StarBrightnessBias,
                 config.ShowMinimalHud,
                 config.ShowReticle,

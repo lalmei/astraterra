@@ -96,9 +96,14 @@ public sealed class StarsClientCommands
                 .HandleWith(args => TextCommandResult.Success(SetStarfieldMode(api, GetStringArg(args, 0))))
             .EndSubCommand()
             .BeginSubCommand("solar-system")
-                .WithDescription("Choose which pictures the sun's family is drawn from: pixel art, or photographs.")
+                .WithDescription("Choose which pictures the planets and their moons are drawn from: pixel art, or photographs.")
                 .WithArgs(api.ChatCommands.Parsers.Word("pixel|photo"))
                 .HandleWith(args => TextCommandResult.Success(SetSolarSystemArt(api, GetStringArg(args, 0))))
+            .EndSubCommand()
+            .BeginSubCommand("moon")
+                .WithDescription("Choose which picture the moon overhead is drawn from: pixel art, photographs, or Vintage Story's own disc.")
+                .WithArgs(api.ChatCommands.Parsers.Word("pixel|photo|vanilla"))
+                .HandleWith(args => TextCommandResult.Success(SetMoonArt(api, GetStringArg(args, 0))))
             .EndSubCommand()
             .BeginSubCommand("sky-grid")
                 .WithArgs(api.ChatCommands.Parsers.Word("none|horizontal|equatorial|both"))
@@ -353,9 +358,9 @@ public sealed class StarsClientCommands
     }
 
     /// <summary>
-    /// Swaps the art the planets, their moons and our own moon are drawn from. Nothing about where
-    /// they are or how wide they draw changes: the two sets are cut to the same convention, so this
-    /// is the pictures and only the pictures.
+    /// Swaps the art the planets and their moons are drawn from. Nothing about where they are or how
+    /// wide they draw changes: the two sets are cut to the same convention, so this is the pictures
+    /// and only the pictures. The moon overhead is its own setting.
     /// </summary>
     private string SetSolarSystemArt(ICoreClientAPI api, string value)
     {
@@ -371,9 +376,32 @@ public sealed class StarsClientCommands
         return style switch
         {
             SolarSystemArtStyle.Photo =>
-                "Solar system art set to photo: the planets, their moons and the moon are drawn from photographs, "
+                "Solar system art set to photo: the planets and their moons are drawn from photographs, "
                 + "each planet showing the phase it is actually in.",
-            _ => "Solar system art set to pixel: the planets, their moons and the moon are drawn from the pixel art."
+            _ => "Solar system art set to pixel: the planets and their moons are drawn from the pixel art."
+        };
+    }
+
+    /// <summary>
+    /// Swaps the picture the moon overhead is drawn from, or puts Vintage Story's own disc back.
+    /// The planets keep whatever <c>.stars solar-system</c> chose.
+    /// </summary>
+    private string SetMoonArt(ICoreClientAPI api, string value)
+    {
+        if (!MoonArtStyleParser.TryParse(value, out var style))
+        {
+            return "Usage: .stars moon pixel|photo|vanilla";
+        }
+
+        config.MoonArt = MoonArtStyleParser.ToConfigValue(style);
+        AstraTerraConfigLoader.Store(api, config);
+        api.Logger.Notification("AstraTerra moon art changed: art={0}", config.MoonArt);
+
+        return style switch
+        {
+            MoonArtStyle.Photo => "Moon set to photo: the moon is drawn from photographs of the real surface.",
+            MoonArtStyle.Vanilla => "Moon set to vanilla: Vintage Story's own disc is back.",
+            _ => "Moon set to pixel: the moon is drawn from the pixel art."
         };
     }
 

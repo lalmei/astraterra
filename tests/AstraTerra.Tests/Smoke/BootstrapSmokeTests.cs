@@ -356,6 +356,30 @@ public sealed class BootstrapSmokeTests
     }
 
     [Fact]
+    public void Vanilla_Moon_Art_Leaves_Vintage_Storys_Disc_In_Place()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/MoonDiscRenderer.cs"));
+        var drawStart = renderer.IndexOf("private bool Draw()", StringComparison.Ordinal);
+        var drawEnd = renderer.IndexOf("private void EnsureMesh(", drawStart, StringComparison.Ordinal);
+
+        Assert.True(drawStart >= 0 && drawEnd > drawStart);
+        var draw = renderer[drawStart..drawEnd];
+        Assert.Contains("MoonArtStyleParser.ReplacesVanillaMoon(moonArt)", draw, StringComparison.Ordinal);
+        Assert.Contains("MoonArtStyleParser.ToTextureStyle(moonArt)", draw, StringComparison.Ordinal);
+        Assert.DoesNotContain("GetSolarSystemArtStyle()", draw, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_Moon_Command_Offers_Pixel_Photo_And_Vanilla()
+    {
+        var commands = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Commands/StarsClientCommands.cs"));
+
+        Assert.Contains("BeginSubCommand(\"moon\")", commands, StringComparison.Ordinal);
+        Assert.Contains("pixel|photo|vanilla", commands, StringComparison.Ordinal);
+        Assert.Contains("Usage: .stars moon pixel|photo|vanilla", commands, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Sky_Renderer_Reset_Clears_Static_Session_State_In_Source()
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
@@ -411,6 +435,8 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("ShowReticle", props);
         Assert.Contains("DebugGuideStarEmphasisDefault", props);
         Assert.Contains("DebugMeteorRateMultiplier", props);
+        Assert.Contains("MoonArt", props);
+        Assert.Contains("SolarSystemArt", props);
     }
 
     private static string RepositoryRoot
