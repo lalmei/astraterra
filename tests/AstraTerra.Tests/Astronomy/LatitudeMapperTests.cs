@@ -5,6 +5,8 @@ namespace AstraTerra.Tests.Astronomy;
 
 public sealed class LatitudeMapperTests
 {
+    private const double DefaultPolarEquatorDistance = WorldClimateScale.DefaultPolarEquatorDistance;
+
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(0.25, 45.0)]
@@ -57,13 +59,45 @@ public sealed class LatitudeMapperTests
     }
 
     [Theory]
-    [InlineData(50000, 0.0)]
-    [InlineData(100000, 90.0)]
-    [InlineData(150000, 180.0)]
-    [InlineData(200000, -90.0)]
-    [InlineData(250000, 0.0)]
-    public void World_X_Maps_To_Repeating_Longitude(double x, double expectedLongitude)
+    [InlineData(125000, 0.0)]
+    [InlineData(150000, 45.0)]
+    [InlineData(175000, 90.0)]
+    [InlineData(200000, 135.0)]
+    [InlineData(225000, 180.0)]
+    [InlineData(100000, -45.0)]
+    [InlineData(75000, -90.0)]
+    public void World_X_Maps_To_Repeating_Longitude_At_Default_Polar_Distance(double x, double expectedLongitude)
     {
-        Assert.Equal(expectedLongitude, LatitudeMapper.MapWorldLongitude(x, mapSizeX: 100000, mapSizeZ: 100000), 6);
+        Assert.Equal(
+            expectedLongitude,
+            LatitudeMapper.MapWorldLongitude(x, mapSizeX: 250000, DefaultPolarEquatorDistance),
+            6);
+    }
+
+    [Fact]
+    public void Longitude_Degrees_Per_Block_Do_Not_Depend_On_Map_Size()
+    {
+        const double mapSizeSmall = 250000;
+        const double mapSizeLarge = 1024000;
+        const double offsetWest = -50000;
+
+        var smallX = (mapSizeSmall * 0.5) + offsetWest;
+        var largeX = (mapSizeLarge * 0.5) + offsetWest;
+
+        Assert.Equal(
+            LatitudeMapper.MapWorldLongitude(smallX, mapSizeSmall, DefaultPolarEquatorDistance),
+            LatitudeMapper.MapWorldLongitude(largeX, mapSizeLarge, DefaultPolarEquatorDistance),
+            6);
+    }
+
+    [Fact]
+    public void A_Shorter_Polar_Distance_Makes_Longitude_Change_Faster()
+    {
+        const double mapSizeX = 200000;
+        const double x = 130000;
+        var atDefault = LatitudeMapper.MapWorldLongitude(x, mapSizeX, DefaultPolarEquatorDistance);
+        var atHalfScale = LatitudeMapper.MapWorldLongitude(x, mapSizeX, polarEquatorDistance: 25000);
+
+        Assert.True(Math.Abs(atHalfScale) > Math.Abs(atDefault));
     }
 }

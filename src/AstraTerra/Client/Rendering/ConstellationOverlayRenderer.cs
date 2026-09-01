@@ -272,7 +272,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
             : [];
 
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
-        var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World.BlockAccessor.MapSizeX, api.World.BlockAccessor.MapSizeZ);
+        var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
             calendar.TotalDays,
             Math.Max(1, calendar.DaysPerYear),

@@ -196,10 +196,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
         // Longitude is not engraved on a plate — it only shifts what hour a star transits, not where
         // the horizon falls — so the instrument keeps reading it live wherever it is carried.
-        var longitude = LatitudeMapper.MapWorldLongitude(
-            position.X,
-            api.World.BlockAccessor.MapSizeX,
-            api.World.BlockAccessor.MapSizeZ);
+        var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World);
         var selectedIndex = AstrolabeReadingState.NormalizeTargetIndex(targets.Count);
         var selectedTarget = targets[selectedIndex];
         var awayComet = FormatAwayComet(selectedTarget, forecastTotalDays, daysPerYear);
