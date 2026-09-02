@@ -139,9 +139,9 @@ The choice takes effect at once and is saved in `ModConfig/astraterra.json`.
 ```
 
 The moon you see in the sky is its own picture, independent of the planets. `pixel` is the default:
-eight faces of pixel art, with the bright limb turned toward the sun. `photo` uses photographs of
-the real surface, the same eight faces, so a telescope shows craters rather than a larger smooth
-disc. `vanilla` puts Vintage Story's own moon back.
+one surface portrait held upright while a curved shadow follows the phase and turns toward the sun.
+`photo` uses a photograph of the real surface, so a telescope shows craters rather than a larger
+smooth disc. `vanilla` puts Vintage Story's own moon back.
 
 Position, phase, moonlight and the length of the night stay the calendar's in every case. Only the
 picture changes, or is left alone.

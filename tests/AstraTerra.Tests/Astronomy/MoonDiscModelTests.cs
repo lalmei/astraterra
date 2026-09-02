@@ -34,37 +34,14 @@ public sealed class MoonDiscModelTests
     }
 
     /// <summary>
-    /// The thing everybody notices when it is wrong: the bright limb points at the sun, wherever the
-    /// sun is and whichever edge of the picture that limb was drawn on.
+    /// The surface portrait keeps its own orientation. The mesh turns the light separately, so the
+    /// phase cannot carry Tycho around the face.
     /// </summary>
     [Fact]
-    public void The_Bright_Limb_Points_At_The_Sun()
-    {
-        var moon = new SkyDirection(0.0, 0.6, -0.8);            // up in the north
-        var sun = new SkyDirection(0.8, -0.6, 0.0);             // down in the east, as at moonrise
-
-        var waxing = MoonDiscModel.RightAxis(moon, sun, litOnRight: true);
-        var waning = MoonDiscModel.RightAxis(moon, sun, litOnRight: false);
-
-        // The picture's lit edge and the sun are on the same side of the moon in both cases: the
-        // right edge for a waxing face, the left for a waning one.
-        Assert.True(Dot(waxing, sun) > 0.5);
-        Assert.True(Dot(waning, sun) < -0.5);
-
-        // And both are tangents: an axis with any lean towards or away from the observer would skew
-        // the picture rather than turn it.
-        Assert.Equal(0.0, Dot(waxing, moon), 9);
-        Assert.Equal(0.0, Dot(waning, moon), 9);
-    }
-
-    [Fact]
-    public void A_Full_Moon_Hangs_Level_Rather_Than_Pointing_Nowhere()
+    public void The_Surface_Portrait_Hangs_Level()
     {
         var moon = new SkyDirection(0.0, 0.6, -0.8);
-
-        // The sun directly behind the observer has no direction on the sky to turn towards, and a
-        // full face has no limb that needs one.
-        var axis = MoonDiscModel.RightAxis(moon, new SkyDirection(0.0, -0.6, 0.8), litOnRight: true);
+        var axis = MoonDiscModel.SurfaceRightAxis(moon);
 
         Assert.Equal(1.0, Math.Sqrt(Dot(axis, axis)), 9);
         Assert.Equal(0.0, axis.Y, 9);
@@ -79,7 +56,7 @@ public sealed class MoonDiscModelTests
     {
         var moon = new SkyDirection(0.0, 1.0, 0.0);
 
-        var corners = MoonDiscModel.BuildQuad(moon, new SkyDirection(1.0, 0.0, 0.0), MoonDiscModel.Faces[4]);
+        var corners = MoonDiscModel.BuildQuad(moon);
 
         Assert.Equal(4, corners.Count);
         Assert.Equal(7.0, MoonDiscModel.AngularDiameterDeg);

@@ -63,7 +63,7 @@ The stars also rise a little earlier each night, so the sky tells the season as 
 
 ### The Moon
 
-The Moon uses eight faces, with the bright limb turned towards the sun. Vintage Story's moonlight, the calendar's phase, and the length of the night are untouched. A telescope shows a surface rather than a larger smooth disc. Pixel art is the default. `.stars moon photo` uses photographs of the real surface; `.stars moon vanilla` puts Vintage Story's own disc back. The planets are a separate setting: `.stars solar-system`.
+The Moon keeps one surface portrait upright while a curved shadow follows the calendar's phase and turns towards the sun. Vintage Story's moonlight and the length of the night are untouched. A telescope shows a surface rather than a larger smooth disc. Pixel art is the default. `.stars moon photo` uses a photograph of the real surface; `.stars moon vanilla` puts Vintage Story's own disc back. The planets are a separate setting: `.stars solar-system`.
 
 ## Brass Telescope
 
