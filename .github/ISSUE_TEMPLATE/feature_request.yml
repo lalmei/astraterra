@@ -9,7 +9,7 @@ body:
     attributes:
       label: Mod Version
       description: What AstraTerra version are you using?
-      placeholder: v0.8.0
+      placeholder: v0.9.0
     validations:
       required: false
   - type: dropdown
