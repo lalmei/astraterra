@@ -1,307 +1,104 @@
 <!--
-  AstraTerra — ModDB description, in the HTML the mods.vintagestory.at TinyMCE editor accepts.
+  Paste everything below this comment into the ModDB description source view.
 
-  Keep this file in sync with README.md by hand: edit both, then paste this file's
-  contents (everything below this comment) into the ModDB description source view.
+      make moddb-preview   render a local preview
+      make moddb-copy      copy the paste-ready HTML
 
-      make moddb-preview   render it locally, with working spoilers and real screenshots
-      make moddb-copy      put the paste-ready HTML on the clipboard
-
-  Notes:
-  - Screenshots are marked with <!- - image: ... - -> comments. The ModDB editor cannot
-    reach repo paths, so upload each shot to the mod page and drop the <img> in its place.
-  - Only plain tags are used (p / h3 / h4 / ul / li / table / a / strong / em) plus the
-    site's own spoiler markup, so TinyMCE does not rewrite them on save.
-  - Coloured callouts: there is no admonition plugin on that editor, but inline styles on
-    a <div> or <p> do survive a save there — the Watersheds mod page uses exactly this, and
-    that is where the pattern below and the spoiler styling came from. Recipe:
-
-        <div style="background: BG; border: 1px solid BORDER; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: TEXT; line-height: 1.6;">
-        <p style="margin: 0 0 8px;"><strong>Title</strong></p>
-        <p style="margin: 0 0 8px;">Body.</p></div>
-
-    Palette used below: warning #f7e9c3 / #ddc27e / #6b4e12, success #d4edda / #a3d4ad /
-    #2d5a3a, info #dce8f5 / #a9c6e4 / #1f3b5c, feedback #e8dcf0 / #c4a8d8 / #4a2a5c.
-  - Every spoiler title starts with a literal &#9662; triangle. The site gives the toggle
-    no affordance of its own, so the arrow is what tells readers the bar is clickable; it
-    has to be text, since a CSS ::after cannot be pasted in.
-  - The whole description sits in one wrapper <div> that sets the parchment background and
-    a 960px reading column, and each spoiler carries its own inline styles rather than
-    trusting the site's default spoiler CSS. Both are borrowed from the same page.
-  - Paste, then hit Preview before saving: if the site's valid_elements strips the styles,
-    fall back to plain <span style="color: ...; background-color: ...;"> runs, which the
-    existing description already proves survive.
+  Screenshot comments mark files that must be uploaded through ModDB. Keep the wrapper and inline
+  styles: TinyMCE preserves them, while repository CSS is not available on the mod page.
 -->
 
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 960px; margin: 0 auto; background: #f0ebe0; padding: 24px; border-radius: 6px;">
-<!-- image: docs/screenshots/starfiel.png — banner shot for the top of the page -->
+<div style="background: #f3efe6; border: 1px solid #d8d0c3; border-radius: 6px; padding: 20px; max-width: 960px; margin: 0 auto; color: #2f2f2f; line-height: 1.6;">
 
-<p>AstraTerra replaces Vintage Story's night sky with a real star catalog: more than 5,000 stars, five planets on Keplerian orbits, nine annual meteor showers, and four comets that return on their own schedule. The sky tilts with latitude, turns with the hour, and changes with the season. For Vintage Story 1.22+.</p>
+<p><strong>AstraTerra replaces Vintage Story's night sky with 5,044 catalog stars, 50 deep-sky objects, five planets, nine annual meteor showers, and four returning comets.</strong> The sky changes with the hour, season, latitude, and longitude. For Vintage Story 1.22+.</p>
 
-<p><strong>What you can do.</strong> Form a clay Sky Disc on your first day and mark where the sun rises and sets; after a year of marks it can tell you the length of the year, your latitude, where east or west lies, and when the sun will next stand still. Hold a telescope to zoom, resolve planets and deep-sky objects, and draw constellations into a vanilla book. Sight the sun, moon, a star, a planet, or a comet with a Sextant and sneak to write the reading down. Forecast a recorded figure, a named wanderer, or a comet with a Calibrated Astrolabe, and read the hour off the sun. Lie on your back (default Z) so the sky fills the view.</p>
-
-<p><code>.stars calendar clock</code> or <code>none</code> will hide the vanilla date so the Sky Disc is the thing that tells you when the year turns. On a server, one player can keep the year and another can navigate by the instruments.</p>
+<p>Mark a year of sunrises on a Sky Disc. Measure lights with a Sextant and write the readings into a book. Draw constellations through a telescope. Cut an astrolabe plate for your latitude and use your own records to plan another observation.</p>
 
 <div style="background: #f7e9c3; border: 1px solid #ddc27e; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #6b4e12; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9888; Still in alpha</strong></p>
-<p style="margin: 0 0 8px;">Many item models and recipes are placeholders, along with the UI/UX. Do check the third party notices for the original creators for some placeholder models. If you are not attributed, or if the license was not read correctly, please give us the chance to correct it.</p>
+<p style="margin: 0 0 8px;"><strong>Alpha</strong></p>
+<p style="margin: 0;">Some models, recipes, and bits of UI are placeholders. Bug reports and screenshots belong on the <a href="https://github.com/lalmei/astraterra/issues">issue tracker</a>.</p>
 </div>
 
-<div style="background: #d4edda; border: 1px solid #a3d4ad; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #2d5a3a; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#10003; Contributions welcome</strong></p>
-<p style="margin: 0 0 8px;">Models, code, docs, translations, screenshots. All of it. <a href="https://github.com/lalmei/astraterra">Repository and issue tracker</a>.</p>
-</div>
-
-<h3>What is new</h3>
+<h3>v0.9.0: Longitude Update</h3>
 
 <div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#127756; v0.6.0</strong></p>
-<p style="margin: 0 0 8px;">Sky Disc, planets through a telescope, and a way to hide the vanilla date.</p>
 <ul>
-<li><strong>Sky Disc.</strong> Form one from clay and fire it, or craft copper or bronze. Sneak and hold right click at sunrise or sunset to scratch the sun's place on the horizon. Right click reads the band. After the band turns back from an edge: year length, latitude, east or west, next solstice. Sneak-right-click the ground to set it down. Clay notches are 5°; metal 2.5°.</li>
-<li><strong>One constellation on the disc.</strong> Hold it up and drag from star to star. One connected figure. Press it into raw clay before firing; fired clay will not take another line. Hold the disc and the figure returns to the sky.</li>
-<li><strong>Hide the date.</strong> <code>.stars calendar clock</code> keeps the hour. <code>.stars calendar none</code> hides both. Saved locally.</li>
-<li><strong>Planets through a telescope.</strong> Raise the glass and they become discs. Mars grows toward opposition. Saturn has rings. Jupiter's four moons and five of Saturn's move on their own orbits and vanish behind the planet. Put the telescope down and they are points of light again.</li>
-<li><strong>Moon.</strong> Eight faces, bright limb toward the sun. A telescope shows a surface. Moonlight and the calendar phase are unchanged.</li>
-<li><strong>Pixel or photo.</strong> Pixel art is the default. <code>.stars solar-system photo</code> swaps for photorealistic textures. Positions, sizes, and moon orbits stay the same.</li>
-<li><strong>Other worlds.</strong> A replacement catalog can hang a nearby planet and sibling moons, and the Sextant can sight them in daylight. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses this.</li>
+<li><strong>Longitude.</strong> World X now shifts the sun, daylight, and star field. Noon is local instead of happening everywhere at once.</li>
+<li><strong>Clock display.</strong> The server keeps universal time. The character panel and instruments can show local solar time, universal time, or whole-hour zones.</li>
+<li><strong>Sun and stars.</strong> The star field stays aligned with the visible sun on worlds with custom year lengths.</li>
+<li><strong>Moon art.</strong> Choose AstraTerra pixel art, photographic textures, or Vintage Story's original moon.</li>
 </ul>
-<p style="margin: 0 0 8px;">Also fixed: a telescope that stayed scoped after swapping slots, deep-sky plates rebuilding every frame, polar sunrises the clock could miss, planets flickering behind their old glow, invisible new moons offered to the Sextant, and journals overwritten when they could not be read.</p>
+<p style="margin: 0;">Server owners can set <code>longitudeAwareSun</code> to <code>false</code> in <code>ModConfig/astraterra.json</code> to keep Vintage Story's single time zone.</p>
 </div>
+
+<h3>The sky</h3>
+
+<!-- image: docs/screenshots/starfiel.png - magnitude-scaled stars over a Vintage Story landscape -->
+
+<p>Apparent magnitude controls each star's brightness and size. Fifty Stellarium deep-sky plates stay faint until a telescope resolves them. The Milky Way sits behind the catalog.</p>
+
+<p>Mercury, Venus, Mars, Jupiter, and Saturn move on Keplerian orbits. Nine meteor showers return during fixed parts of the world year. Four comets follow their own schedules and point their tails away from the sun. Miss Halley's first pass and the next one is in world year 78. Plan accordingly.</p>
+
+<h3>Instruments</h3>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127756; v0.5.4</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; Sky Disc</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
-<p style="margin: 0 0 8px;">Sextant sightings, astrolabe plate cutting, comets, and a handbook tab. If you are on v0.5.3, this also stops Z from crashing the client.</p>
-<ul>
-<li><strong>Sextant sightings.</strong> Sneak while holding the Sextant up. Book in the left hand, ink and quill in inventory. The book gets a dated entry: altitude, bearing, brightness, day and hour, latitude. It does not name what you sighted.</li>
-<li><strong>Classify later.</strong> <code>.stars sightings</code> groups the entries. <code>.stars classify 2 wanderer Ember</code> is where you say what a set was. If exactly one wanderer fits all those places, that name is what the instruments use.</li>
-<li><strong>Astrolabe provenance.</strong> Each answer says what it rests on: how many sightings, <em>drawn from N stars</em>, or <em>from the almanac, not your sightings</em> for a comet. A planet recorded with no sightings still aims, and says so.</li>
-<li><strong>Cut the plate.</strong> A new astrolabe is blank. After dusk, sneak-hold right click under open sky. Readings are for that latitude. Travel far enough and it asks to be recut.</li>
-<li><strong>Comets.</strong> Four, on their own periods. Machholz first, a little under two world years in, then about every five. Up for a couple of world weeks.</li>
-<li><strong>Handbook.</strong> Press H, Astronomy tab.</li>
-<li><strong>Crash fix.</strong> Pressing Z on v0.5.3 could crash the client. The lie-down clips had unwritten keyframes.</li>
-<li><strong>Modders.</strong> Star catalog and solar system can be swapped. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses this.</li>
-<li><strong>Milky Way.</strong> Added behind the stars. Off with <code>MilkyWayBrightness</code> 0 in <code>ModConfig/astraterra.json</code>, or <code>.stars render milkyway off</code> for the session.</li>
-</ul>
-<p style="margin: 0 0 8px;">Deep-sky plates rebuilding every frame under a telescope was found while measuring this release (<a href="https://github.com/lalmei/astraterra/issues/105">#105</a>) and fixed in v0.6.0.</p>
-</div>
-
-<div style="background: #e8dcf0; border: 1px solid #c4a8d8; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #4a2a5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9997; Still tuning</strong></p>
-<p style="margin: 0 0 8px;">Milky Way brightness and how dark the night has to be before it shows. <a href="https://github.com/lalmei/astraterra/issues/new/choose">Open an issue</a> if you have a look. Screenshots help.</p>
-</div>
-
-<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#128301; Other skies</strong></p>
-<p style="margin: 0 0 8px;"><a href="https://github.com/lalmei/astraextera">AstraExtera</a> replaces this sky as a companion mod. Any mod can use the same swap.</p>
-</div>
+<p>Form one from clay and fire it, or craft copper or bronze. At sunrise or sunset, sneak and hold right click under open sky to scratch the sun's place on the horizon. Keep marking until the band reaches an edge and turns back. The disc then gives year length, latitude, east or west, and the next solstice.</p>
+<p>Right click reads it. Scroll turns it. Sneak-right-click the ground to set it down. Hold it up at night and left-drag between stars to engrave one connected constellation. Keep loose flint or a knife in the hotbar. A fired clay disc will not take a new figure.</p>
 </div>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127769; v0.5.3: lying down looks like lying down</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; Telescope and constellation book</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p style="margin: 0 0 8px;">Pressing <strong>Z</strong> used to tip the seraph backwards in one piece, feet still planted, until it arched into a bridge and landed flat. With empty hands the arms came off their shoulders and the elbows separated.</p>
-<ul>
-<li><strong>It sits down now.</strong> Crouch, sit, lower the back onto the ground, over about half a second. Standing up runs the same movement backwards, a little quicker, and only when you stand up on purpose, so walking out of it is still instant.</li>
-<li><strong>The pose rests.</strong> One knee drawn up, the other leg long, the chest rising and falling, and empty hands folded behind the head with the elbows on the ground.</li>
-<li><strong>The arms are attached again.</strong> The old pose was authored in an animation version that turns a limb about its model's corner rather than its joint, which on the seraph pulls a raised arm off the shoulder. Everything is version 0 now, the same as every clip the game ships.</li>
-</ul>
-<!-- image: docs/screenshots/stargazing.png — the seraph resting on its back, hands folded behind the head -->
+<!-- image: docs/screenshots/create_constellation.png - telescope view with a recorded constellation -->
+<p>Hold right click to use the scope. Scroll changes zoom. Middle click cycles Observe, Create Constellation, Inspect Constellation, and Remove Segment. Drawing needs a writable book in the left hand plus ink and quill. The lines and names are stored in the book.</p>
+<p>Under magnification, planets become discs. Saturn has rings. Jupiter's four Galilean moons and five of Saturn's moons move independently and disappear when their planet hides them.</p>
 </div>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9889; v0.5.2: the sky pass got cheap</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; Sextant</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p style="margin: 0 0 8px;">The whole sky used to be drawn one object at a time, every frame. It is now batched, cached, and measured, and the numbers moved by more than a little.</p>
-<table style="border-collapse: collapse; width: 100%;" border="1">
-<tbody>
-<tr>
-<td>&nbsp;</td>
-<td>before</td>
-<td>after</td>
-</tr>
-<tr>
-<td>Draw calls per frame, carrying a journal</td>
-<td>6,716</td>
-<td><strong>4</strong></td>
-</tr>
-<tr>
-<td>Draw calls per frame, no journal</td>
-<td>2,988</td>
-<td><strong>3</strong></td>
-</tr>
-<tr>
-<td>Record allocations per second</td>
-<td>~400,000</td>
-<td><strong>none in steady state</strong></td>
-</tr>
-<tr>
-<td>Constellation line geometry</td>
-<td>3,728 quads</td>
-<td><strong>148</strong></td>
-</tr>
-<tr>
-<td>Star projections per second</td>
-<td>60</td>
-<td><strong>~5</strong></td>
-</tr>
-</tbody>
-</table>
-<p style="margin: 0 0 8px;">The before figures come from a real <code>client-main.log</code> with 2,988 stars and 3,728 constellation dots visible, where the star projection alone cost over 10 ms a frame and produced about a gigabyte of garbage a minute, which players saw as stutter and as a client that would not give memory back.</p>
-<p style="margin: 0 0 8px;">Stars, planets and constellation lines are each one batched mesh now, rebuilt only when the sky has actually turned, with the turn between rebuilds carried by a single rotation so nothing steps.</p>
-<p style="margin: 0 0 8px;">You can measure it yourself: <code>.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off</code> switches each path off independently, and the debug log reports milliseconds, draw calls and mesh uploads for the sky pass every 30 seconds.</p>
-</div>
-</div>
-
-<h3>Features</h3>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127756; An Earth night sky.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<!-- image: docs/screenshots/starfiel.png — magnitude-scaled stars over a Vintage Story landscape -->
-
-<p>Look up. The vanilla cubemap is gone. In its place is a catalog of more than 5,000 stars, brightness and size following magnitude, turning with the hour and tilting as you walk north or south. Fifty deep-sky photographs resolve only under a telescope. Star positions and those plates come from Stellarium.</p>
-
-<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #1f3b5c; line-height: 1.6;">
-<p style="margin: 0 0 8px;"><strong>&#9432; Note for server owners and modders</strong></p>
-<p style="margin: 0 0 8px;">Without a clear date to start from we are just using the current Earth-centered locations.</p>
-<p style="margin: 0 0 8px;">Right now the star field is only defined by the star catalog configuration, found within a JSON file in the mod's assets. The current one was built using the Stellarium dataset. One could procedurally generate it during world creation, or add/edit stars.</p>
-<p style="margin: 0 0 8px;">Similarly the deep sky views could be generated or use custom assets, or place an easter egg in your server ;).</p>
-</div>
+<!-- image: docs/screenshots/sextant_azimuthal_grid.png - Sextant sighting with the azimuthal grid -->
+<p>Hold right click and center the sight on the sun, moon, a star, a planet, or a comet. The readout gives altitude above the horizon. Middle click cycles the equatorial and horizontal grids.</p>
+<p>Sneak while sighting to write an observation into the book in your left hand. Ink and quill are required. The entry records angle, bearing, brightness, position, and time, but not what you aimed at. Use <code>.stars sightings</code> to group observations and <code>.stars classify &lt;set&gt; star|wanderer|comet [name]</code> to record your conclusion.</p>
+<p>Sighting the sun currently costs you nothing. A real navigator would use a shade glass.</p>
 </div>
 </div>
 
 <div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127769; Mark the year on a Sky Disc.</div>
+<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; Calibrated Astrolabe</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Form one from clay and fire it, or craft a copper or bronze one. Stand under open sky as the sun touches the horizon, then sneak and hold right click to scratch that day's mark. Right click holds the disc up to read the band. Scroll turns it in your hand. Sneak and right click the ground to set it down.</p>
-
-<p>After the band reaches an edge and turns back, the disc can tell you the length of the year, your latitude, where east or west lies, and when the sun will next stand still. Clay holds a five-degree notch; metal holds two and a half. The first mark binds the disc to that latitude; carry it too far north or south and it refuses the next scratch.</p>
-
-<p>While the disc is held up under the stars, left-drag from star to star to cut one connected constellation into it. No book and no ink. Press a figure into raw clay before firing; a fired clay disc will not take another line. Hold the finished disc and the figure returns to the sky.</p>
-
-<p><code>.stars calendar clock</code> hides the vanilla date and keeps the hour. <code>.stars calendar none</code> hides both. Until you do, the disc is measuring something the character panel already gives you for free.</p>
+<!-- image: docs/screenshots/astrolabe.png - Calibrated Astrolabe readout -->
+<p>Recover a ruined astrolabe and fit it with a brass plate. After dusk, sneak-hold right click under open sky to cut the plate for that latitude. Travel far enough and it asks to be recut.</p>
+<p>Hold right click with a written book in the left hand to plan an observation. Middle click changes target. Scroll moves the forecast by an hour; sneak-scroll moves it by seven days. The readout gives direction, altitude, rising or setting, and next transit. It also says whether the answer came from your sightings, a recorded figure, or the comet almanac.</p>
 </div>
 </div>
 
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128207; Measure the sky with a Sextant.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Hold right click and put the centre of your view on the sun, the moon, a star, a planet, or a comet. The readout is its angle above the horizon. The sun and a visibly lit moon can be shot whenever they are up, so the Sextant works in daylight. An invisible new moon is not offered as a target. While sighting, middle click cycles through angle only, a rose equatorial grid, a cyan azimuthal grid, and both grids.</p>
-
-<!-- image: docs/screenshots/sextant_azimuthal_grid.png — sextant sighting with the azimuthal grid -->
-
-<p><strong>Sneak while sighting to write the reading down.</strong> With a writable book in your left hand and ink and quill in your inventory, the book gains a dated entry: the angle, the bearing, how bright it looked, the day and hour, and the latitude you stood at. It does not record what you sighted. Working that out is the game. <code>.stars sightings</code> gathers your entries into the sets it takes to be one body and says how far the nights moved each one; <code>.stars classify &lt;set&gt; star|wanderer|comet [name]</code> is where you say what it was. Name a wanderer correctly and your name for it becomes the name every instrument uses.</p>
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#129517; Plan observations with a Calibrated Astrolabe.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Recover a ruined astrolabe and combine it with a brass plate. Hold the Calibrated Astrolabe in your main hand and a written book in your left hand, then hold right click. Middle click changes the target; scroll forecasts by an hour, or sneak-scroll by seven days. The readout is compass direction, altitude, rising or setting, next transit, and whether the target can never rise where the plate was cut.</p>
-
-<p>A new one reads <em>no plate</em> and will not place a star. Stand under open sky after dusk and sneak-hold right click while it sights the pole. Afterwards every position it gives is for that latitude. Travel far enough and it reports the drift; past about eight degrees it asks to be recut. The clock is not engraved and follows you. It still shows if you hold no book.</p>
-
-<p>It aims with your book, not with the sky's own catalog. A wanderer nobody has picked out is not on the list. Comets are listed whether or not they are here.</p>
-
-<p>Every answer also says what it rests on: <em>from 3 sightings over 11 days</em> for a body you established yourself, <em>drawn from 7 stars</em> for one of your figures, <em>from the almanac, not your sightings</em> for a comet. A thin answer that sounds as confident as a thick one is a broken answer, whatever its numbers say.</p>
-
-<!-- image: docs/screenshots/astrolabe.png — astrolabe readout -->
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128301; Observe and record constellations.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<!-- image: docs/screenshots/create_constellation.png — telescope scoped view with a recorded constellation -->
-
-<p>Hold right click to scope in. Scroll to zoom (five steps on the brass telescope, ten on the precision one). Middle click cycles modes: <strong>Observe</strong>, <strong>Create Constellation</strong>, <strong>Inspect Constellation</strong>, <strong>Remove Segment</strong>. In Create, left-drag from one visible star to another. Any star on screen can start or end a line. Drawing needs a book in your left hand and ink and quill in your inventory. Hand that book to another player and they see your figures.</p>
-
-<p>The Precision Telescope uses the same modes. <code>.stars build Ori</code> writes one of the 88 IAU figures into the held book. Creative inventory also has a full Star Catalog and The Zodiac.</p>
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128564; Lie down and watch the sky.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<!-- image: docs/screenshots/stargazing.png — the seraph lying on its back in a meadow -->
-
-<p>Press <strong>Z</strong> to lie on your back on the ground, the same kind of toggle as sit-on-G. The seraph crouches, sits, and lowers itself down over about half a second, then rests with one knee drawn up and empty hands folded behind the head. In first person the camera drops to eye level with the grass and looks straight up, so the sky fills the view. Move, jump, or press <strong>Z</strong> again to stand.</p>
-
-<p>Telescopes, the Sextant, and the Calibrated Astrolabe all still work while you are lying down. The binding is remappable under Controls as <strong>Lie down</strong>.</p>
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#127776; Watch seasonal meteor showers.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Nine major annual showers recur at fixed points in the world's year. Their visible rate follows the published peak strength, how high the radiant is above the horizon, sky darkness, and moonlight. Short streaks near the radiant and longer streaks farther away preserve the perspective that makes a real shower appear to radiate from one point in the sky.</p>
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#129680; Follow the wandering planets.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Mercury, Venus, Mars, Jupiter and Saturn move against the fixed stars on real orbits, solved from published orbital elements rather than animated along a path. A world year is a year of that motion, whatever the world's day count, so Jupiter takes about twelve world years to come back around and Venus swings between the evening and morning sky within a season, brightening and fading as it goes.</p>
-
-<p>Chart Mars over a couple of world weeks and it will turn back on itself. Nobody scripted that retrograde loop: it is what the sky does when the world overtakes a slower planet on the inside.</p>
-</div>
-</div>
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#9732; Wait for a comet.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Four comets return on their real orbital periods. Each is up for a couple of world weeks, and across those nights it crosses the sky, brightens as it rounds perihelion, and fades again. The tail leans away from the sun, as a real one does, rather than trailing the direction of travel.</p>
-
-<p>You will not wait long for the first. <strong>Machholz</strong> arrives a little under two world years in and comes back every five and a bit. <strong>Halley</strong> makes its first pass in your third year, and it is the bright one, the only comet here that outshines every star in the sky. <strong>Tuttle</strong> follows in year four, then every fourteen; <strong>Tempel-Tuttle</strong> in year nine, then every thirty-three.</p>
-
-<p>Do go out for Halley. Its second pass is in world year 78, and the honest advice for anyone who sleeps through the first one is to start a family, raise them well, and impress upon them the importance of looking up.</p>
-
-<p>A comet's returns are the almanac's arithmetic rather than yours, and the astrolabe says so when it aims at one.</p>
-</div>
-</div>
-
-
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128506; Roadmap.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>In no order what so ever. Items with an issue have a design sketch and a suggested implementation behind the link; the moving sky objects are grouped under the <a href="https://github.com/lalmei/astraterra/milestone/1">Moving Sky Objects</a> milestone.</p>
+<h3>Other controls</h3>
 
 <ul>
-<li><span style="text-decoration: line-through;">Seasonal meteor showers.</span> Shipped.</li>
-<li><span style="text-decoration: line-through;">Planets (named specific wandering bodies).</span> Shipped.</li>
-<li><span style="text-decoration: line-through;">Ability to lay down looking up.</span> Shipped.</li>
-<li><span style="text-decoration: line-through;">Ability to keep the astrolabe calibrated to a specific latitude, or recalibrate it to a different latitude without the star catalog.</span> Shipped.</li>
-<li>New models for astronomical instruments.</li>
-<li>Redo recipes for instruments and calibration.</li>
-<li>Using a simple sextant on the sun will damage one of your eyes, requiring an eye patch for non-blurry vision.</li>
-<li>Recipe for specific lenses, using gem grinding tools (use vanilla if available since it is part of the VS roadmap).</li>
-<li>Modify architecture for easier customization, such as custom deep sky objects. The star catalog and the solar system are replaceable as of v0.5.4; deep sky objects are not yet.</li>
-<li>Star Catalog randomizer loot tables for chests and ruins (i.e. create a star catalog with Maya constellations for a Mayan ruin, or other sky cultures). Much of the backend is there since Stellarium already contains much of these datasets.</li>
-<li><span style="text-decoration: line-through;"><a href="https://github.com/lalmei/astraterra/issues/38">Comets</a>. Authored apparitions with an anti-sunward tail.</span> Shipped.</li>
-<li>New Classes: Astronomer, Surveyer, High-Priest. The Surveyer's tool is sketched in <a href="https://github.com/lalmei/astraterra/issues/41">sextant on land</a>, sighting a mountain to get its distance and height.</li>
+<li><strong>Lie down:</strong> press <strong>Z</strong>. Move, jump, or press Z again to stand. The binding is remappable, and the instruments still work from the ground.</li>
+<li><code>.stars calendar full|clock|none</code> controls how much of Vintage Story's date and hour appears. Hide the date if the Sky Disc should earn its keep.</li>
+<li><code>.stars solar-system pixel|photo</code> changes the planet textures.</li>
+<li><code>.stars moon pixel|photo|vanilla</code> changes the moon.</li>
+<li><code>.stars starfield astraterra|both|vanilla</code> switches between the catalog sky and Vintage Story's cubemap.</li>
 </ul>
 
-<p><span style="text-decoration: line-through;">Comets sit on the same <a href="https://github.com/lalmei/astraterra/issues/36">shared ephemeris foundation</a> the planets already use, since their right ascension and declination change with time.</span> Shipped. Meteor radiants are fixed like catalog stars and do not need that dependency. <span style="text-decoration: line-through;"><a href="https://github.com/lalmei/astraterra/issues/40">Instrument targeting</a> for the astrolabe and sextant on planets and comets.</span> Shipped. Meteor radiants are not yet targets.</p>
-</div>
+<h3>Other worlds</h3>
+
+<p>The near-body API lets a companion mod place a parent planet and sibling moons in the sky, shade them from the real sun direction, and make them valid Sextant targets. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses it.</p>
+
+<div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 16px 0; color: #1f3b5c; line-height: 1.6;">
+<p style="margin: 0;"><strong>Need the full controls?</strong> Read the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/guide.md">player guide</a> and <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/commands.md">command reference</a>.</p>
 </div>
 
+<h3>Credits</h3>
 
-<div class="spoiler" style="border: 1px solid #cfc9be; border-radius: 4px; margin: 20px 0; overflow: hidden; background: #eee9de;">
-<div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; &#128218; Attribution.</div>
-<div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
-<p>Inspired by Minecraft's <a href="https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main">Spyglass Astronomy</a>.</p>
+<p>Inspired by Minecraft's <a href="https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main">Spyglass Astronomy</a>. The Brass Telescope model is adapted from Fuami's MIT-licensed <a href="https://mods.vintagestory.at/spyglass">Spyglass</a> mod. Modern IAU constellation lines and selected deep-sky assets come from <a href="https://github.com/stellarium/stellarium">Stellarium</a>. Full licenses and asset notes are in <a href="https://github.com/lalmei/astraterra/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
 
-<p>The Brass Telescope item model is adapted from Fuami's MIT-licensed <a href="https://mods.vintagestory.at/spyglass">Spyglass</a> mod. Modern IAU constellation line data and selected deep-sky assets are adapted from <a href="https://github.com/stellarium/stellarium">Stellarium</a> sources. See the third party notices in the repository.</p>
-
-<p>Special thanks for discussion to Vintage Story mod <a href="https://mods.vintagestory.at/show/mod/47577">AdAstra</a>'s LadyLioness.</p>
-<p>Additional Super thanks for ALL the feedback and checks done by the numerous commenters below. Including but not limited to: @Rythillian, @Bin, @Fey_Shadow,@nuwabi, @itsDuskie, @Dannyftm, @ffish, @pollo_frito_22, @LaurieIAU</p>
-</p>
-</div>
-</div>
+<p>Thanks to LadyLioness of <a href="https://mods.vintagestory.at/show/mod/47577">AdAstra</a>, and to Rythillian, Bin, Fey_Shadow, nuwabi, itsDuskie, Dannyftm, ffish, pollo_frito_22, and LaurieIAU for testing and arguing with the sky.</p>
 
 </div>
