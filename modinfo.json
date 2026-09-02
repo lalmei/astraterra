@@ -4,7 +4,7 @@
   "name": "AstraTerra",
   "authors": ["lalmei"],
   "description": "Replaces Vintage Story's night sky with a catalog of more than 5,000 stars, five planets, meteor showers, and returning comets. Craft a Sky Disc, telescope, Sextant, and astrolabe to measure, record, and predict what you see.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "dependencies": {
     "game": "1.22.2"
   }
