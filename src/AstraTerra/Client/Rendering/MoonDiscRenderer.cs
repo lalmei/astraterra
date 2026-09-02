@@ -151,7 +151,7 @@ public sealed class MoonDiscRenderer : IRenderer
         // and the bright limb points at the sun this moon is actually lit by.
         var sunPosition = calendar.GetSunPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var sun = new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z);
-        EnsureMesh(direction, sun, MoonPhaseExactAt(calendar, moonTotalDays));
+        EnsureMesh(direction, sun, VanillaMoonPhase.ExactAt(calendar, moonTotalDays));
         if (mesh is null)
         {
             return false;
@@ -248,17 +248,6 @@ public sealed class MoonDiscRenderer : IRenderer
         lastSun = sun;
         lastPhaseExact = phaseExact;
     }
-
-    /// <summary>
-    /// The phase the moon is in at the instant it is being drawn at. The API exposes only the
-    /// world's current phase, so the calendar's own <c>GetMoonPhase</c> is asked directly when it
-    /// can be reached; without it the moon keeps the world's phase, which at worst lags its shifted
-    /// position by half a world day of orbit.
-    /// </summary>
-    private static double MoonPhaseExactAt(IGameCalendar calendar, double totalDays)
-        => calendar is Vintagestory.Common.GameCalendar gameCalendar
-            ? gameCalendar.GetMoonPhase(totalDays)
-            : calendar.MoonPhaseExact;
 
     /// <param name="texturePath">
     /// The picture the face resolves to under the art the player has chosen, which is what is

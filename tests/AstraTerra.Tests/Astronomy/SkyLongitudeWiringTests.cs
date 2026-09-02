@@ -35,6 +35,10 @@ public sealed class SkyLongitudeWiringTests
         var source = File.ReadAllText(Path.Combine([RepositoryRoot(), "src", "AstraTerra", .. relativePath]));
 
         Assert.Contains("LocalMoonTime.MoonTotalDays", source);
+
+        // The phase and its brightness belong to the instant the moon is read at, not to now.
+        Assert.DoesNotContain("calendar.MoonPhaseExact", source);
+        Assert.DoesNotContain("calendar.MoonPhaseBrightness", source);
         Assert.DoesNotContain("GetMoonPosition(position.XYZ, calendar.TotalDays)", source);
         Assert.DoesNotContain("GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays)", source);
     }

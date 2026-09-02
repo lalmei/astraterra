@@ -260,7 +260,9 @@ public sealed class SextantReadingRenderer : IRenderer
             var moonVector = calendar.GetMoonPosition(position.XYZ, moonTotalDays);
             var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
             if (moon is not null
-                && MoonSightingPolicy.IsSightable(moon.AltitudeDeg, calendar.MoonPhaseBrightness))
+                && MoonSightingPolicy.IsSightable(
+                    moon.AltitudeDeg,
+                    VanillaMoonPhase.BrightnessAt(calendar, moonTotalDays)))
             {
                 yield return moon;
             }

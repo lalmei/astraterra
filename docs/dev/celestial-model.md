@@ -473,7 +473,7 @@ snapping a pre-phased photograph.
 | --- | --- |
 | Where | `GetMoonPosition(pos, LocalMoonTime.MoonTotalDays(...))` |
 | Surface | The full portrait selected by `MoonArt` |
-| Phase | Continuous `GetMoonPhase` lighting in `MoonDiscMeshBuilder` |
+| Phase | Continuous `VanillaMoonPhase.ExactAt` lighting in `MoonDiscMeshBuilder` |
 | Which way up | The portrait stays level through `MoonDiscModel.SurfaceRightAxis`; only its light turns sunward |
 | How wide | `AngularDiameterDeg`: 7°, matching Vintage Story's own disc |
 
@@ -487,10 +487,20 @@ snapping a pre-phased photograph.
 
     The wrapper's shift is a pure offset in time, so `LocalMoonTime.MoonTotalDays` reads the game's
     own moon a fraction of a day later instead — position and phase together, through the calendar's
-    own `GetMoonPhase`. That is only done **where AstraTerra draws the moon itself**. Under
+    own `GetMoonPhase`, with `VanillaMoonPhase` interpolating the game's brightness table at that
+    same instant so the sextant offers the moon it is actually drawing. That is only done **where
+    AstraTerra draws the moon itself**. Under
     `moonArt=vanilla` the game draws its own disc, so the mod leaves the moon on world time and the
     sextant goes on measuring the body actually in the sky; the moon then keeps vanilla's single
     time zone while the rest of the sky does not, which is the cost of not owning the disc.
+
+!!! warning "Moonlight stays on the world's moon, and so do eclipses"
+    `GetDayLightStrength` takes its sun from the longitude-aware delegate but its moon from the
+    cached `GetMoonPosition(z)`, which no observer position reaches. Night brightness therefore
+    follows the world's moon while the disc overhead is the observer's, and vanilla's eclipse
+    darkening compares the local sun against the universal moon. Moving those would mean patching
+    the calendar's cached moon angles themselves — which also moves vanilla's own disc, and has no
+    single answer on a server with players at different longitudes. Tracked separately.
 
 Vintage Story's own moon is about **7°** across — 256 quad units at `moonScale * 1.1`, hung at distance
 50. `AngularDiameterDeg = 7.0` keeps the replacement photograph at that familiar apparent size. This
