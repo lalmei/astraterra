@@ -212,7 +212,7 @@ public sealed class AstraTerraModSystem : ModSystem
                 {
                     var calendar = api.World.Calendar;
                     var position = api.World.Player.Entity.Pos;
-                    var longitude = LatitudeMapper.MapWorldLongitude(position.X, api.World);
+                    var longitude = ObserverLongitude.ForObserver(position.X, api.World);
                     return CelestialMath.GetVanillaAlignedLocalSiderealAngle(
                         calendar.TotalDays,
                         Math.Max(1, calendar.DaysPerYear),

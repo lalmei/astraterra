@@ -92,6 +92,27 @@ public sealed class LongitudeAwareSunControllerTests
     }
 
     [Fact]
+    public void The_Sky_Only_Counts_The_Wrapper_As_Installed_While_The_Calendar_Still_Holds_It()
+    {
+        SolarSphericalCoordsDelegate baseDelegate = (_, _, _, _) => new SolarSphericalCoords(1f, 2f);
+        SolarSphericalCoordsDelegate laterMod = (_, _, _, _) => new SolarSphericalCoords(3f, 4f);
+        var controller = new LongitudeAwareSunController(_ => 90.0);
+
+        Assert.False(controller.IsInstalledOn(baseDelegate));
+
+        controller.Configure(longitudeAwareSunEnabled: true, baseDelegate);
+        var installed = controller.MarkLifecycleReady(baseDelegate);
+
+        Assert.True(controller.IsInstalledOn(installed.Delegate));
+
+        // Another mod assigning the property wins, and the star field must stop shifting with it.
+        Assert.False(controller.IsInstalledOn(laterMod));
+
+        controller.Configure(longitudeAwareSunEnabled: false, installed.Delegate);
+        Assert.False(controller.IsInstalledOn(installed.Delegate));
+    }
+
+    [Fact]
     public void Separate_Controllers_Keep_Client_And_Server_Delegate_State_Independent()
     {
         float clientDayRel = -1;

@@ -45,6 +45,13 @@ public sealed class LongitudeAwareSunController
         this.longitudeProvider = longitudeProvider ?? throw new ArgumentNullException(nameof(longitudeProvider));
     }
 
+    /// <summary>
+    /// Whether the delegate the calendar is holding right now is this controller's own wrapper. A
+    /// later mod that assigns the property wins, and this reads false again from that moment.
+    /// </summary>
+    public bool IsInstalledOn(SolarSphericalCoordsDelegate? current)
+        => installedDelegate is not null && ReferenceEquals(current, installedDelegate);
+
     public SunDelegateUpdate Configure(bool longitudeAwareSunEnabled, SolarSphericalCoordsDelegate? current)
     {
         enabled = longitudeAwareSunEnabled;
@@ -148,13 +155,6 @@ public sealed class LongitudeAwareSunController
 /// </summary>
 public sealed class LongitudeAwareSunInstaller : IDisposable
 {
-    private static readonly System.Func<double, IWorldAccessor, double>? CanonicalLongitudeMapper =
-        typeof(LatitudeMapper)
-            .GetMethod(
-                nameof(LatitudeMapper.MapWorldLongitude),
-                [typeof(double), typeof(IWorldAccessor)])
-            ?.CreateDelegate<System.Func<double, IWorldAccessor, double>>();
-
     public const string ChannelName = "astraterralongitudesun";
 
     private readonly ICoreAPI api;
@@ -169,7 +169,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     private LongitudeAwareSunInstaller(ICoreAPI api)
     {
         this.api = api;
-        controller = new LongitudeAwareSunController(x => MapWorldLongitude(x, api.World));
+        controller = new LongitudeAwareSunController(x => LatitudeMapper.MapWorldLongitude(x, api.World));
     }
 
     public static LongitudeAwareSunInstaller StartClient(ICoreClientAPI api)
@@ -185,6 +185,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
             .RegisterMessageType<LongitudeAwareSunConfigPacket>()
             .SetMessageHandler<LongitudeAwareSunConfigPacket>(installer.OnServerConfig);
         api.Event.LevelFinalize += installer.OnClientLevelFinalize;
+        ObserverLongitude.FollowSun(() => installer.SunFollowsLongitude);
         api.Logger.Event("AstraTerra startup step: longitude-aware sun awaiting server configuration");
         return installer;
     }
@@ -210,6 +211,12 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         return installer;
     }
 
+    /// <summary>
+    /// Whether this side's sun is currently drawn with the longitude term. False before the server
+    /// has sent its policy, when that policy is off, and after another mod has taken the delegate.
+    /// </summary>
+    public bool SunFollowsLongitude => !disposed && controller.IsInstalledOn(CurrentDelegate());
+
     public void Dispose()
     {
         if (disposed)
@@ -220,6 +227,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         if (clientApi is not null)
         {
             clientApi.Event.LevelFinalize -= OnClientLevelFinalize;
+            ObserverLongitude.Reset();
         }
 
         if (serverApi is not null)
@@ -304,58 +312,5 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         {
             api.Logger.Event("AstraTerra startup step: longitude-aware sun removed; prior solar delegate restored");
         }
-    }
-
-    // #122 depends on #44, but this branch must still build and behave correctly against main. Use
-    // #44's canonical world overload when it is present and the same calculation as a standalone
-    // fallback while this PR is reviewed before that prerequisite lands.
-    private static double MapWorldLongitude(double x, IWorldAccessor world)
-    {
-        if (CanonicalLongitudeMapper is not null)
-        {
-            return CanonicalLongitudeMapper(x, world);
-        }
-
-        const double defaultPolarEquatorDistance = 50000.0;
-        var configured = world.Config?.GetInt("polarEquatorDistance", -1) ?? -1;
-        var polarEquatorDistance = configured > 0 ? configured : defaultPolarEquatorDistance;
-        if (configured <= 0)
-        {
-            var configuredText = world.Config?.GetString("polarEquatorDistance", null);
-            if (configuredText is not null
-                && int.TryParse(configuredText, out var parsed)
-                && parsed > 0)
-            {
-                polarEquatorDistance = parsed;
-            }
-        }
-
-        var mapSizeX = world.BlockAccessor.MapSizeX;
-        if (mapSizeX <= 0 || polarEquatorDistance <= 0)
-        {
-            return 0;
-        }
-
-        var circumference = polarEquatorDistance * 4.0;
-        var delta = PositiveModulo(x - mapSizeX * 0.5, circumference);
-        if (delta > circumference * 0.5)
-        {
-            delta -= circumference;
-        }
-
-        var degrees = delta / polarEquatorDistance * 90.0;
-        var wrapped = degrees % 360.0;
-        if (wrapped <= -180.0)
-        {
-            return wrapped + 360.0;
-        }
-
-        return wrapped > 180.0 ? wrapped - 360.0 : wrapped;
-    }
-
-    private static double PositiveModulo(double value, double modulus)
-    {
-        var wrapped = value % modulus;
-        return wrapped < 0 ? wrapped + modulus : wrapped;
     }
 }

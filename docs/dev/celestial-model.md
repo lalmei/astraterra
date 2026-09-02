@@ -442,8 +442,10 @@ restores the captured delegate only when AstraTerra's own wrapper is still insta
 This is cooperative rather than exclusive ownership. A sun mod already installed at the ready stage
 is preserved and receives the longitude-shifted `dayRel`; a mod that assigns the property later wins
 and clobbers AstraTerra's wrapper. In the latter case the sextant and astrolabe still follow the newly
-visible sun because they call `GetSunPosition`, while AstraTerra's longitude-shifted star field no
-longer stays synchronized with it. Passing both the shifted time and the original `posX` also means a
+visible sun because they call `GetSunPosition`, and the star field returns to universal time on the
+next frame rather than drifting away from it: `ObserverLongitude` asks the installer whether the
+calendar is still holding AstraTerra's own wrapper, so losing it removes the longitude term from the
+whole sky at once. Passing both the shifted time and the original `posX` also means a
 third-party delegate that already applies longitude would apply it twice; such a mod should disable
 `longitudeAwareSun` on the server or coordinate delegate ownership explicitly.
 
@@ -505,7 +507,10 @@ circles, where the sun can rise and set again inside the old 15-minute interval.
 nullable: at a polar day or polar night no crossing exists, and the astrolabe says so rather than
 inventing an hour.
 
-Clock time on the astrolabe is local apparent solar time at the observer's longitude. The world's
+Clock time on the astrolabe is local apparent solar time at the observer's longitude, as long as
+that longitude reaches the sky at all: `ObserverLongitude.ForObserver` reads zero whenever the
+visible sun is not the longitude-aware one, and every reading collapses to the world's single solar
+time with it. The world's
 internal clock stays universal; `CelestialMath.GetUniversalSolarTimeHours` reads that clock and
 `CelestialMath.GetLocalSolarTimeHours` shifts it by `(longitude / 360) * hoursPerDay`. Which hour the
 character panel shows is configured separately via `displayedClockTime` in `astraterra.json`:
@@ -516,7 +521,10 @@ whole-clock-hour step per zone, so custom world-day lengths keep integer clock r
     AstraTerra installs its own `OnGetSolarSphericalCoords` wrapper that shifts the sun — and
     therefore daylight — with world X, chaining whatever delegate the survival mod installed rather
     than replacing it outright. The star field already shifted with longitude; the sun now matches.
-    Set `longitudeAwareSun` to `false` in `astraterra.json` to keep vanilla's single time zone.
+    Set `longitudeAwareSun` to `false` in `astraterra.json` to keep vanilla's single time zone —
+    the star field, the instruments and the displayed clock all fall back with the sun, because
+    every one of them reads its longitude through `ObserverLongitude.ForObserver`, which answers
+    zero unless AstraTerra's wrapper is the delegate the calendar is holding at that moment.
 
     See [Latitude And Longitude](latitude-and-longitude.md) for the world-config scale and the
     observer-position pipeline.
@@ -617,6 +625,9 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Sky turns east to west                        | `CelestialMathTests.Stars_Travel_East_To_West_Across_The_Night`                                              |
 | Sidereal time advances                        | `CelestialMathTests.VanillaAlignedSidereal_AdvancesWithTimeOfDay`                                            |
 | Sidereal time gains going east                | `CelestialMathTests.VanillaAlignedSidereal_AppliesLongitudeOffset`                                           |
+| The sky drops longitude when the sun does     | `ObserverLongitudeTests.The_Registered_Installer_Decides_Every_Time_It_Is_Asked`                             |
+| Only the sun's wrapper maps longitude itself  | `SkyLongitudeWiringTests.Only_The_Sun_Wrapper_Maps_Longitude_Without_Asking_Whether_The_Sun_Follows_It`      |
+| A clobbered wrapper stops counting as installed | `LongitudeAwareSunControllerTests.The_Sky_Only_Counts_The_Wrapper_As_Installed_While_The_Calendar_Still_Holds_It` |
 | Transit counts down                           | `AstrolabeServiceTests.Read_Counts_Down_To_The_Next_Transit`                                                 |
 | Sidereal day is shorter than solar            | `AstrolabeServiceTests.SiderealCycle_Runs_Slightly_Shorter_Than_The_Solar_Day`                               |
 | Rising is east of the meridian                | `AstrolabeServiceTests.Read_Uses_Live_Sky_Direction_To_Distinguish_Rising_And_Setting`                       |
