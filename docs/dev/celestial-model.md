@@ -453,18 +453,23 @@ AstraTerra's independent sidereal approximation should say about that motion.
 
 ### The moon's picture, and only its picture
 
-`MoonDiscRenderer` draws the moon from the pictures the player asked for — pixel art, photographs of
-the real one, or Vintage Story's own disc — and asks the game to put its disc away except when
-vanilla was chosen, through the same `moonScale` suppression a moon world uses. Nothing else changes:
+`MoonDiscRenderer` draws the moon from the surface portrait the player asked for — pixel art, a
+photograph of the real one, or Vintage Story's own disc — and asks the game to put its disc away
+except when vanilla was chosen, through the same `moonScale` suppression a moon world uses. Nothing
+else changes:
 where the moon is, what phase it is in, how bright the night is and how the phase advances are still
 the calendar's, read fresh each frame — so anything that moves the game's moon moves this one. The
-planets keep `SolarSystemArt`; the moon overhead is `MoonArt`.
+planets keep `SolarSystemArt`; the moon overhead is `MoonArt`. The surface mesh stays level while
+per-vertex lighting turns independently towards the sun. That separation keeps Tycho fixed in the
+portrait and gives intermediate calendar phases their own curved terminator instead of rotating and
+snapping a pre-phased photograph.
 
 | Question | Answered by |
 | --- | --- |
 | Where | `GetMoonPosition(pos, totalDays)` |
-| Which of the eight faces | `MoonPhaseExact`, rounded on a month that wraps |
-| Which way up | The bright limb turns to the sun: `MoonDiscModel.RightAxis` |
+| Surface | The full portrait selected by `MoonArt` |
+| Phase | Continuous `MoonPhaseExact` lighting in `MoonDiscMeshBuilder` |
+| Which way up | The portrait stays level through `MoonDiscModel.SurfaceRightAxis`; only its light turns sunward |
 | How wide | `AngularDiameterDeg`: 7°, matching Vintage Story's own disc |
 
 Vintage Story's own moon is about **7°** across — 256 quad units at `moonScale * 1.1`, hung at distance
@@ -472,12 +477,12 @@ Vintage Story's own moon is about **7°** across — 256 quad units at `moonScal
 is about thirteen times the real moon's half-degree diameter, and it overflows the precision
 telescope's field at high magnification, so a scope raised on it shows a crop of the lunar surface.
 
-!!! warning "The night side is black, and black is a hole in a daytime sky"
-    Each face is a full disc with its dark side painted in, which is what the moon is: after dark it
-    is drawn opaque and takes a bite out of the star field behind it. By day the same black would be
+!!! warning "The night side is dark, and darkness is a hole in a daytime sky"
+    The mesh dims the unlit side to faint earthshine, which is what the moon is: after dark it is
+    drawn opaque and takes a bite out of the star field behind it. By day the same dark disc would be
     a disc of night punched into a blue sky, so the pass crossfades to additive blending as daylight
-    comes up — black adds nothing, and only the lit crescent survives, which is also what a daytime
-    moon looks like.
+    comes up — darkness adds almost nothing, and only the lit face survives, which is also what a
+    daytime moon looks like.
 
     Two draws of one quad, and the reason the moon is a pass of its own rather than part of the star
     pass: the star pass stops at dawn, and the moon does not.

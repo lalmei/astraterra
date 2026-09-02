@@ -6,10 +6,10 @@ namespace AstraTerra.Config;
 /// </summary>
 /// <remarks>
 /// The planets keep their own setting. This is only the moon in this world's sky, not the moons of
-/// Jupiter. Pixel art is the default because it sits with the game's own; the photographs are the
-/// same eight faces of the real surface; and vanilla is the original disc for anyone who would
-/// rather have that back. Position, phase, moonlight and the length of the night are untouched in
-/// every case — only the picture changes, or is left alone.
+/// Jupiter. Pixel art is the default because it sits with the game's own; photo uses the real lunar
+/// surface; and vanilla is the original disc for anyone who would rather have that back. Position,
+/// phase, moonlight and the length of the night are untouched in every case — only the picture
+/// changes, or is left alone.
 /// </remarks>
 public enum MoonArtStyle
 {
@@ -68,8 +68,8 @@ public static class MoonArtStyleParser
         => style is not MoonArtStyle.Vanilla;
 
     /// <summary>
-    /// The solar-system art folder that holds this moon's eight faces. Only meaningful while a
-    /// replacement moon is being drawn.
+    /// The solar-system art folder that holds the moon portrait. Only meaningful while a replacement
+    /// moon is being drawn.
     /// </summary>
     public static SolarSystemArtStyle ToTextureStyle(MoonArtStyle style)
         => style == MoonArtStyle.Photo ? SolarSystemArtStyle.Photo : SolarSystemArtStyle.Pixel;

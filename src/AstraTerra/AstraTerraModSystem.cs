@@ -236,8 +236,8 @@ public sealed class AstraTerraModSystem : ModSystem
         nearBodyRenderer.Apply(nearBodies);
         api.Event.RegisterRenderer(nearBodyRenderer, EnumRenderStage.Opaque, "AstraTerraNearBodies");
 
-        // The moon needs no star catalog either: it draws what Vintage Story's own calendar already
-        // says, from AstraTerra's photographs of the real one. Registered after the near bodies so
+        // The moon needs no star catalog either: it lights AstraTerra's surface portrait from what
+        // Vintage Story's own calendar already says. Registered after the near bodies so
         // that a moon world, which has no moon, wins the argument over the vanilla disc.
         moonDiscRenderer = new MoonDiscRenderer(api, config);
         api.Event.RegisterRenderer(moonDiscRenderer, EnumRenderStage.Opaque, "AstraTerraMoonDisc");

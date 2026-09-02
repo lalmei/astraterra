@@ -47,7 +47,7 @@ public sealed class MoonDiscRenderer : IRenderer
     private MeshRef? mesh;
     private SkyDirection lastDirection;
     private SkyDirection lastSun;
-    private string? lastFaceId;
+    private double lastPhaseExact = double.NaN;
     private bool renderingDisabledAfterFailure;
 
     public MoonDiscRenderer(ICoreClientAPI api, AstraTerraConfig config)
@@ -122,7 +122,7 @@ public sealed class MoonDiscRenderer : IRenderer
         var calendar = api.World.Calendar;
         var moonPosition = calendar.GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var direction = new SkyDirection(moonPosition.X, moonPosition.Y, moonPosition.Z);
-        var face = MoonDiscModel.SelectFace(calendar.MoonPhaseExact);
+        var face = MoonDiscModel.FullFace;
         var textureId = ResolveTexture(
             face,
             SolarSystemTextures.Resolve(face.TexturePath, MoonArtStyleParser.ToTextureStyle(moonArt)));
@@ -142,7 +142,7 @@ public sealed class MoonDiscRenderer : IRenderer
 
         var sunPosition = calendar.GetSunPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var sun = new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z);
-        EnsureMesh(direction, sun, face);
+        EnsureMesh(direction, sun, calendar.MoonPhaseExact);
         if (mesh is null)
         {
             return false;
@@ -213,22 +213,19 @@ public sealed class MoonDiscRenderer : IRenderer
     }
 
     /// <summary>
-    /// Rebuilds the moon's quad when it has actually moved, turned with the sun, or changed face.
+    /// Rebuilds the moon when it has actually moved or its continuous illumination has changed.
     /// </summary>
-    private void EnsureMesh(SkyDirection direction, SkyDirection sun, MoonPhaseFace face)
+    private void EnsureMesh(SkyDirection direction, SkyDirection sun, double phaseExact)
     {
         if (mesh is not null
-            && lastFaceId == face.Id
+            && PhaseSeparation(phaseExact, lastPhaseExact) < 0.01
             && Separation(direction, lastDirection) < PositionToleranceRadians
             && Separation(sun, lastSun) < PositionToleranceRadians)
         {
             return;
         }
 
-        var meshData = DeepSkyQuadMeshBuilder.Build(
-            MoonDiscModel.BuildQuad(direction, sun, face),
-            SkyDistance,
-            subdivisions: 2);
+        var meshData = MoonDiscMeshBuilder.Build(direction, sun, phaseExact, SkyDistance);
         if (mesh is null)
         {
             mesh = api.Render.UploadMesh(meshData);
@@ -240,7 +237,7 @@ public sealed class MoonDiscRenderer : IRenderer
 
         lastDirection = direction;
         lastSun = sun;
-        lastFaceId = face.Id;
+        lastPhaseExact = phaseExact;
     }
 
     /// <param name="texturePath">
@@ -287,6 +284,17 @@ public sealed class MoonDiscRenderer : IRenderer
     {
         var dot = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
         return Math.Acos(Math.Clamp(dot, -1.0, 1.0));
+    }
+
+    private static double PhaseSeparation(double left, double right)
+    {
+        if (!double.IsFinite(left) || !double.IsFinite(right))
+        {
+            return double.PositiveInfinity;
+        }
+
+        var distance = Math.Abs((left - right) % 8.0);
+        return Math.Min(distance, 8.0 - distance);
     }
 
     private static float[] IdentityModelMatrix()

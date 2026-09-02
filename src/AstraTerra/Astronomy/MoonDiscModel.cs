@@ -1,24 +1,26 @@
 namespace AstraTerra.Astronomy;
 
 /// <summary>
-/// One of the moon's eight faces: the picture to draw, and which limb of it is lit.
+/// One of the moon's eight authored phase assets.
 /// </summary>
 /// <param name="LitOnRight">
-/// True for a waxing face, whose bright limb is on the right of the picture. It is what turns the
-/// image the right way round in the sky: the bright limb has to point at the sun, and which edge of
-/// the picture that is depends on where in the month the moon is.
+/// True for a waxing face, whose authored bright limb is on the right of the picture. Runtime moon
+/// rendering uses the full face and lights it continuously, but the phase set remains a checked
+/// asset contract and is useful anywhere a discrete calendar face is needed.
 /// </param>
 public sealed record MoonPhaseFace(string Id, string DisplayName, bool LitOnRight, string TexturePath);
 
 /// <summary>
-/// Where the moon is drawn, how wide, which face, and which way up.
+/// Where the moon is drawn, how wide, and which way its surface is held.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Vintage Story already decides where the moon is and what phase it is in — the calendar reports
 /// both, moonlight follows them, and nothing here changes any of that. What this replaces is the
-/// picture: eight photographs of the real moon in place of the game's own disc, at the same apparent
-/// width as the disc it replaces.
+/// picture: a portrait of the real moon in place of the game's own disc, at the same apparent width
+/// as the disc it replaces. The renderer lights that fixed portrait rather than rotating a
+/// pre-phased picture, so Tycho and the rest of the surface do not travel around the disc with the
+/// terminator.
 /// </para>
 /// <para>
 /// Nothing in here draws or touches the game. It is the arithmetic between the calendar's moon and a
@@ -57,6 +59,9 @@ public static class MoonDiscModel
         new("waning-crescent", "Waning Crescent", false, "astraterra:environment/solar-system/moon-waning-crescent")
     ];
 
+    /// <summary>The unshadowed surface portrait used while the renderer supplies the phase.</summary>
+    public static MoonPhaseFace FullFace => Faces[4];
+
     /// <summary>
     /// The face nearest the phase the calendar reports, on a month that wraps: a phase just short of
     /// eight is a new moon again, not a waning crescent.
@@ -76,28 +81,15 @@ public static class MoonDiscModel
     }
 
     /// <summary>
-    /// Which way the picture's horizontal runs, so that its bright limb points at the sun.
+    /// Which way the surface portrait's horizontal runs.
     /// </summary>
     /// <remarks>
-    /// The one thing about a moon that everybody notices when it is wrong. The bright limb faces the
-    /// sun always — that is what a phase is — so the picture is turned until it does, rather than hung
-    /// level and left to disagree with the sky. A waxing face is lit on its right, so its right edge
-    /// goes sunward; a waning face is lit on its left, so its left edge does.
-    /// <para>
-    /// A full moon has the sun behind the observer, where it has no direction on the sky to point at,
-    /// and the picture is symmetric anyway: it hangs level.
-    /// </para>
+    /// The portrait hangs level on the local sky. Illumination has its own sunward axis in the moon
+    /// mesh, so changing phase turns the shadow without turning Tycho or any other landmark.
     /// </remarks>
-    public static SkyDirection RightAxis(SkyDirection moon, SkyDirection sun, bool litOnRight)
-    {
-        var sunward = SkyTangent.Tangent(moon, sun, fallback: SkyTangent.Horizontal(moon));
-        return litOnRight ? sunward : SkyTangent.Negate(sunward);
-    }
+    public static SkyDirection SurfaceRightAxis(SkyDirection moon) => SkyTangent.Horizontal(moon);
 
     /// <summary>The moon's picture as four corners on the sky sphere.</summary>
-    public static IReadOnlyList<DeepSkyDirection> BuildQuad(SkyDirection moon, SkyDirection sun, MoonPhaseFace face)
-    {
-        ArgumentNullException.ThrowIfNull(face);
-        return SkyTangent.BuildQuad(moon, RightAxis(moon, sun, face.LitOnRight), AngularDiameterDeg);
-    }
+    public static IReadOnlyList<DeepSkyDirection> BuildQuad(SkyDirection moon)
+        => SkyTangent.BuildQuad(moon, SurfaceRightAxis(moon), AngularDiameterDeg);
 }
