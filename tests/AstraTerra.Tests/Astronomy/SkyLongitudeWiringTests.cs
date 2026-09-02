@@ -23,7 +23,29 @@ public sealed class SkyLongitudeWiringTests
         Assert.Equal(["LongitudeAwareSunInstaller.cs", "ObserverLongitude.cs"], offenders);
     }
 
+    /// <summary>
+    /// Both moon reads have to go through <c>LocalMoonTime</c>, or the moon quietly goes back to
+    /// universal time while everything drawn around it stays on the observer's.
+    /// </summary>
+    [Theory]
+    [InlineData("Client", "Rendering", "MoonDiscRenderer.cs")]
+    [InlineData("Client", "Rendering", "SextantReadingRenderer.cs")]
+    public void The_Moon_Is_Never_Read_Straight_Off_The_World_Clock(params string[] relativePath)
+    {
+        var source = File.ReadAllText(Path.Combine([RepositoryRoot(), "src", "AstraTerra", .. relativePath]));
+
+        Assert.Contains("LocalMoonTime.MoonTotalDays", source);
+        Assert.DoesNotContain("GetMoonPosition(position.XYZ, calendar.TotalDays)", source);
+        Assert.DoesNotContain("GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays)", source);
+    }
+
     private static IEnumerable<string> EnumerateSources()
+        => Directory.EnumerateFiles(
+            Path.Combine(RepositoryRoot(), "src", "AstraTerra"),
+            "*.cs",
+            SearchOption.AllDirectories);
+
+    private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "AstraTerra.sln")))
@@ -31,7 +53,6 @@ public sealed class SkyLongitudeWiringTests
             directory = directory.Parent;
         }
 
-        var root = directory?.FullName ?? throw new DirectoryNotFoundException("Could not locate repository root.");
-        return Directory.EnumerateFiles(Path.Combine(root, "src", "AstraTerra"), "*.cs", SearchOption.AllDirectories);
+        return directory?.FullName ?? throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 }

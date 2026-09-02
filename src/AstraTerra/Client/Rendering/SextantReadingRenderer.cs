@@ -244,12 +244,20 @@ public sealed class SextantReadingRenderer : IRenderer
             yield return sun;
         }
 
+        var longitude = ObserverLongitude.ForObserver(position.X, api.World);
+
         // A moon world has no moon of its own, and the near-body pass has already taken Vintage
         // Story's off the sky. Sighting it anyway would hand back an angle to a body that is not
         // there to be seen.
         if (!NearBodyRenderer.HidesVanillaMoon)
         {
-            var moonVector = calendar.GetMoonPosition(position.XYZ, calendar.TotalDays);
+            // Sight the moon that is drawn: the disc AstraTerra draws is read at the observer's own
+            // time, and vanilla's is not, so the instrument follows whichever one is in the sky.
+            var moonTotalDays = LocalMoonTime.MoonTotalDays(
+                calendar.TotalDays,
+                longitude,
+                MoonDiscRenderer.HidesVanillaMoon);
+            var moonVector = calendar.GetMoonPosition(position.XYZ, moonTotalDays);
             var moon = SkyBodyModel.FromWorldDirection("Moon", moonVector.X, moonVector.Y, moonVector.Z);
             if (moon is not null
                 && MoonSightingPolicy.IsSightable(moon.AltitudeDeg, calendar.MoonPhaseBrightness))
@@ -259,7 +267,6 @@ public sealed class SextantReadingRenderer : IRenderer
         }
 
         var latitude = LatitudeMapper.MapGameLatitude(position.Z, calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
-        var longitude = ObserverLongitude.ForObserver(position.X, api.World);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
             calendar.TotalDays,
             Math.Max(1, calendar.DaysPerYear),
