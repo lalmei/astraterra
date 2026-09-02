@@ -91,6 +91,10 @@
 
 <p>The near-body API lets a companion mod place a parent planet and sibling moons in the sky, shade them from the real sun direction, and make them valid Sextant targets. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses it.</p>
 
+<h3>How we test</h3>
+
+<p>Every change goes through tests for the astronomy math, catalogs, instruments, and saved data. CI builds against Vintage Story 1.22.2, packages the same ZIP players install, and builds the docs. Before a release, we deploy that ZIP and work through the in-game checklist after a full restart. The tests catch logic errors. They cannot tell us whether a telescope, moon, animation, or item model actually looks right.</p>
+
 <div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 16px 0; color: #1f3b5c; line-height: 1.6;">
 <p style="margin: 0;"><strong>Need the full controls?</strong> Read the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/guide.md">player guide</a> and <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/commands.md">command reference</a>.</p>
 </div>

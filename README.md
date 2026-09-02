@@ -83,6 +83,10 @@ AstraTerra also exposes a near-body API for worlds that orbit something larger. 
 
 See the [command reference](docs/player/commands.md) for constellation, sighting, admin, and diagnostic commands.
 
+## How we test
+
+Every change goes through tests for the astronomy math, catalogs, instruments, and saved data. CI builds against Vintage Story 1.22.2, packages the same ZIP players install, and builds the docs. Before a release, we deploy that ZIP and work through the in-game checklist after a full restart. The tests catch logic errors. They cannot tell us whether a telescope, moon, animation, or item model actually looks right.
+
 ## Docs and development
 
 - [Player Guide](docs/player/guide.md)
