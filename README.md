@@ -87,6 +87,10 @@ See the [command reference](docs/player/commands.md) for constellation, sighting
 
 Every change goes through tests for the astronomy math, catalogs, instruments, and saved data. CI builds against Vintage Story 1.22.2, packages the same ZIP players install, and builds the docs. Before a release, we deploy that ZIP and work through the in-game checklist after a full restart. The tests catch logic errors. They cannot tell us whether a telescope, moon, animation, or item model actually looks right.
 
+That is why I also test each release manually on a 24 GB M3 MacBook Air with a mostly vanilla-plus set of mods I regularly use: Carry On, Butchering, Better Ruins, Blood Trail, QP Chisel, Buzzwords, Terra Pretty, Watershed, D.E.A.D., Farseer, Footsteps, Food Shelves, Hydrate or Diedrate, RealSmoke, Place On Slabs, Terrain Slabs, Tankards, Vanilla More Molds, Waterfall, and others.
+
+I wish Vintage Story offered an easier way to automate this kind of compatibility testing. If the developers provide one, I intend to add it to this process.
+
 ## Docs and development
 
 - [Player Guide](docs/player/guide.md)
