@@ -142,6 +142,7 @@ anchor them. Three clocks were in play and only two agreed:
 | Vintage Story's sun and daylight | No | **Yes**, while `longitudeAwareSun` is on |
 | AstraTerra's star field | Yes, always | Yes, but only when the sun does |
 | AstraTerra's astrolabe clock | No | **Yes**, as displayed local time |
+| The moon | No | **Yes** where AstraTerra draws it; vanilla's own disc cannot be moved |
 
 This was settled on [issue #43](https://github.com/lalmei/astraterra/issues/43) in favour of making
 longitude real: AstraTerra installs its own `OnGetSolarSphericalCoords` that uses `posX`, so the sun,

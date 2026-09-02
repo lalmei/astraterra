@@ -394,7 +394,10 @@ entirely.
 
 The moon is not modelled by AstraTerra, and the sun's latitude and seasonal motion still come from
 Vintage Story. Both are read through `IGameCalendar.GetSunPosition` and `GetMoonPosition`, so the mod
-measures the bodies the game actually draws rather than maintaining a second visible-sun model.
+measures the bodies the game actually draws rather than maintaining a second visible-sun model. The
+moon is read at the observer's own instant rather than the world's wherever AstraTerra draws it —
+see [the moon's picture](#the-moons-picture-and-only-its-picture) for why longitude cannot reach it
+any other way.
 
 When `longitudeAwareSun` is enabled, AstraTerra wraps the solar delegate that Vintage Story's
 survival mod installed. The wrapper changes only `dayRel`, by `longitude / 360` of one rotation, and
@@ -468,11 +471,26 @@ snapping a pre-phased photograph.
 
 | Question | Answered by |
 | --- | --- |
-| Where | `GetMoonPosition(pos, totalDays)` |
+| Where | `GetMoonPosition(pos, LocalMoonTime.MoonTotalDays(...))` |
 | Surface | The full portrait selected by `MoonArt` |
-| Phase | Continuous `MoonPhaseExact` lighting in `MoonDiscMeshBuilder` |
+| Phase | Continuous `GetMoonPhase` lighting in `MoonDiscMeshBuilder` |
 | Which way up | The portrait stays level through `MoonDiscModel.SurfaceRightAxis`; only its light turns sunward |
 | How wide | `AngularDiameterDeg`: 7°, matching Vintage Story's own disc |
+
+!!! warning "The moon is the one body the longitude-aware sun cannot take with it"
+    `IGameCalendar.GetMoonPosition(pos, totalDays)` forwards only `pos.Z`, and there is no moon
+    counterpart to `OnGetSolarSphericalCoords`. Left alone, a world with the wrapper installed would
+    keep the moon on universal time while the sun, the daylight and the star field moved off it:
+    about an hour of drift per 8,300 blocks travelled east at the default `polarEquatorDistance`,
+    which is a full moon rising near noon after a long enough walk, and a moon standing against the
+    wrong constellations.
+
+    The wrapper's shift is a pure offset in time, so `LocalMoonTime.MoonTotalDays` reads the game's
+    own moon a fraction of a day later instead — position and phase together, through the calendar's
+    own `GetMoonPhase`. That is only done **where AstraTerra draws the moon itself**. Under
+    `moonArt=vanilla` the game draws its own disc, so the mod leaves the moon on world time and the
+    sextant goes on measuring the body actually in the sky; the moon then keeps vanilla's single
+    time zone while the rest of the sky does not, which is the cost of not owning the disc.
 
 Vintage Story's own moon is about **7°** across — 256 quad units at `moonScale * 1.1`, hung at distance
 50. `AngularDiameterDeg = 7.0` keeps the replacement photograph at that familiar apparent size. This
@@ -625,6 +643,8 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Sky turns east to west                        | `CelestialMathTests.Stars_Travel_East_To_West_Across_The_Night`                                              |
 | Sidereal time advances                        | `CelestialMathTests.VanillaAlignedSidereal_AdvancesWithTimeOfDay`                                            |
 | Sidereal time gains going east                | `CelestialMathTests.VanillaAlignedSidereal_AppliesLongitudeOffset`                                           |
+| The drawn moon follows the sun east            | `LocalMoonTimeTests.An_Eastward_Observer_Reads_The_Moon_Later_In_The_Day`                                    |
+| A vanilla moon is measured where it is drawn   | `LocalMoonTimeTests.A_Vanilla_Moon_Is_Left_On_The_Worlds_Own_Time`                                           |
 | The sky drops longitude when the sun does     | `ObserverLongitudeTests.The_Registered_Installer_Decides_Every_Time_It_Is_Asked`                             |
 | Only the sun's wrapper maps longitude itself  | `SkyLongitudeWiringTests.Only_The_Sun_Wrapper_Maps_Longitude_Without_Asking_Whether_The_Sun_Follows_It`      |
 | A clobbered wrapper stops counting as installed | `LongitudeAwareSunControllerTests.The_Sky_Only_Counts_The_Wrapper_As_Installed_While_The_Calendar_Still_Holds_It` |

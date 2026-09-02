@@ -120,7 +120,14 @@ public sealed class MoonDiscRenderer : IRenderer
         }
 
         var calendar = api.World.Calendar;
-        var moonPosition = calendar.GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
+
+        // This pass owns the disc, so the moon may be read at the observer's own time rather than
+        // the world's, which is what keeps it in step with the longitude-aware sun and star field.
+        var moonTotalDays = LocalMoonTime.MoonTotalDays(
+            calendar.TotalDays,
+            ObserverLongitude.ForObserver(entity.Pos.X, api.World),
+            astraTerraDrawsTheMoon: true);
+        var moonPosition = calendar.GetMoonPosition(entity.Pos.XYZ, moonTotalDays).Clone().Normalize();
         var direction = new SkyDirection(moonPosition.X, moonPosition.Y, moonPosition.Z);
         var face = MoonDiscModel.FullFace;
         var textureId = ResolveTexture(
@@ -140,9 +147,11 @@ public sealed class MoonDiscRenderer : IRenderer
             return true;
         }
 
+        // The visible sun is already the observer's, so both bodies are now in the same local frame
+        // and the bright limb points at the sun this moon is actually lit by.
         var sunPosition = calendar.GetSunPosition(entity.Pos.XYZ, calendar.TotalDays).Clone().Normalize();
         var sun = new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z);
-        EnsureMesh(direction, sun, calendar.MoonPhaseExact);
+        EnsureMesh(direction, sun, MoonPhaseExactAt(calendar, moonTotalDays));
         if (mesh is null)
         {
             return false;
@@ -239,6 +248,17 @@ public sealed class MoonDiscRenderer : IRenderer
         lastSun = sun;
         lastPhaseExact = phaseExact;
     }
+
+    /// <summary>
+    /// The phase the moon is in at the instant it is being drawn at. The API exposes only the
+    /// world's current phase, so the calendar's own <c>GetMoonPhase</c> is asked directly when it
+    /// can be reached; without it the moon keeps the world's phase, which at worst lags its shifted
+    /// position by half a world day of orbit.
+    /// </summary>
+    private static double MoonPhaseExactAt(IGameCalendar calendar, double totalDays)
+        => calendar is Vintagestory.Common.GameCalendar gameCalendar
+            ? gameCalendar.GetMoonPhase(totalDays)
+            : calendar.MoonPhaseExact;
 
     /// <param name="texturePath">
     /// The picture the face resolves to under the art the player has chosen, which is what is
