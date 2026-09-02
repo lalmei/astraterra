@@ -20,8 +20,11 @@ public sealed class AstrolabePlateWiringTests
         Assert.Contains("AstrolabeCalibrationStore.ReadLatitude", source);
         Assert.Contains("var latitude = plateLatitude.Value;", source);
 
-        // Longitude stays live on purpose: it moves the hour of transit, not the horizon.
-        Assert.Contains("ClockDisplay.MapWorldLongitude", source);
+        // Longitude stays live on purpose: it moves the hour of transit, not the horizon. It is
+        // read through ObserverLongitude so the instrument goes back to universal time whenever the
+        // visible sun does.
+        Assert.Contains("ObserverLongitude.ForObserver", source);
+        Assert.DoesNotContain("LatitudeMapper.MapWorldLongitude", source);
 
         // Nothing between reading the plate and taking the reading may reintroduce the player's own
         // latitude, which is exactly what this feature removed.

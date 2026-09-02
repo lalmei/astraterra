@@ -131,16 +131,16 @@ var polarEquatorDistance = WorldClimateScale.GetPolarEquatorDistance(world);
 
     The prime meridian remains at `mapSizeX * 0.5`; only the degrees-per-block scale changed.
 
-## The divergence, and how it is being resolved
+## The divergence, and how it was resolved
 
-Because Vintage Story's sun ignores longitude and AstraTerra's star field does not, travelling east
-or west drifts the stars out of step with the sun that is supposed to anchor them. Three clocks are
-in play and only two agree:
+Vintage Story's own sun ignores longitude, so while AstraTerra's star field shifted with X and the
+sun did not, travelling east or west drifted the stars out of step with the sun that is supposed to
+anchor them. Three clocks were in play and only two agreed:
 
-| Clock | Longitude applied today? | After the decision below |
+| Clock | Longitude applied before | Longitude applied now |
 | --- | --- | --- |
-| Vintage Story's sun and daylight | No | **Yes** |
-| AstraTerra's star field | **Yes** | Yes |
+| Vintage Story's sun and daylight | No | **Yes**, while `longitudeAwareSun` is on |
+| AstraTerra's star field | Yes, always | Yes, but only when the sun does |
 | AstraTerra's astrolabe clock | No | **Yes**, as displayed local time |
 
 This was settled on [issue #43](https://github.com/lalmei/astraterra/issues/43) in favour of making
@@ -158,12 +158,20 @@ multiplayer sync changes.
     weighed and accepted rather than overlooked; it ships behind a config flag so a server owner can
     keep vanilla's single time zone.
 
-Tracked work: [#122](https://github.com/lalmei/astraterra/issues/122) (the longitude-aware sun),
+!!! warning "The sky may only use a longitude the sun has"
+    Turning the flag off, or another mod taking the solar delegate back, would otherwise recreate
+    the very divergence this resolved — a star field shifted east of a sun that never moved. Nothing
+    outside `LongitudeAwareSunInstaller` maps observer longitude for itself: the star field, the
+    instruments, the recorded sightings and the displayed clock all go through
+    `ObserverLongitude.ForObserver`, which answers zero unless AstraTerra's wrapper is the delegate
+    the calendar is holding right then.
+
+Shipped: [#44](https://github.com/lalmei/astraterra/issues/44) (the scale above, a prerequisite —
+at the old scale longitude would have been too coarse to notice),
+[#122](https://github.com/lalmei/astraterra/issues/122) (the longitude-aware sun) and
 [#123](https://github.com/lalmei/astraterra/issues/123) (displayed local time, and what a recorded
-sighting's hour means once the hour depends on where you stand),
-[#124](https://github.com/lalmei/astraterra/issues/124) (longitude by chronometer), and
-[#44](https://github.com/lalmei/astraterra/issues/44), which is now a prerequisite rather than
-something to hold back — at the current scale longitude would be too coarse to notice at all.
+sighting's hour means once the hour depends on where you stand). Still open:
+[#124](https://github.com/lalmei/astraterra/issues/124) (longitude by chronometer).
 
 ## Related
 

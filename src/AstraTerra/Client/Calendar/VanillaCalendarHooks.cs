@@ -53,7 +53,7 @@ public static class VanillaCalendarHooks
         }
 
         var hoursPerDay = Math.Max(1.0, calendar.HoursPerDay);
-        var longitude = ClockDisplay.MapWorldLongitude(api.World.Player.Entity.Pos.X, api.World);
+        var longitude = ObserverLongitude.ForObserver(api.World.Player.Entity.Pos.X, api.World);
         var displayed = ClockDisplay.GetDisplayedSolarTimeHours(
             calendar.TotalDays,
             hoursPerDay,

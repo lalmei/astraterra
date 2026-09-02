@@ -83,7 +83,7 @@ public sealed class SkyCoordinateGridRenderer : IRenderer
         var latitude = LatitudeMapper.MapGameLatitude(
             playerPosition.Z,
             calendar.OnGetLatitude is null ? null : z => calendar.OnGetLatitude(z));
-        var longitude = LatitudeMapper.MapWorldLongitude(playerPosition.X, api.World);
+        var longitude = ObserverLongitude.ForObserver(playerPosition.X, api.World);
         var localSiderealAngle = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
             calendar.TotalDays,
             Math.Max(1, calendar.DaysPerYear),
