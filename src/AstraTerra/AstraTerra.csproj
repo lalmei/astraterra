@@ -3,6 +3,7 @@
     <AssemblyName>AstraTerra</AssemblyName>
     <RootNamespace>AstraTerra</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <VintageStoryPath Condition="'$(VINTAGE_STORY)' != ''">$(VINTAGE_STORY)</VintageStoryPath>
     <VintageStoryPath Condition="'$(VintageStoryPath)' == ''">/Applications/Vintage Story.app</VintageStoryPath>
@@ -46,6 +47,14 @@
     </Content>
     <Content Include="..\..\modicon.png">
       <Link>modicon.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\LICENSE">
+      <Link>LICENSE</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\THIRD_PARTY_NOTICES.md">
+      <Link>THIRD_PARTY_NOTICES.md</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

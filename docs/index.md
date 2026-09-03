@@ -40,3 +40,7 @@ Astra Terra turns Vintage Story’s sky into a scientifically grounded astronomy
 - [Manual Verification](dev/manual-verification.md): in-game smoke checks before release.
 - [Product Scope](dev/product-scope.md): current goals, non-goals, and deferred work.
 - [Reference Sky Rendering Notes](dev/reference-sky-rendering-notes.md): findings from local reference sky packages.
+
+## License
+
+AstraTerra is licensed under the [GNU Affero General Public License, version 3 only](https://github.com/lalmei/astraterra/blob/main/LICENSE) (`AGPL-3.0-only`). Third-party assets retain the licenses and attribution listed in [THIRD_PARTY_NOTICES.md](https://github.com/lalmei/astraterra/blob/main/THIRD_PARTY_NOTICES.md).

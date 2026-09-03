@@ -111,6 +111,10 @@ For an in-game smoke test, run `make deploy`, enable AstraTerra, and follow [Man
 
 Models, code, documentation, translations, and screenshots are welcome. Rough edges are tracked in the issue list rather than repeated here.
 
+## License
+
+AstraTerra is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Third-party assets retain the licenses and attribution listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Attribution
 
 Inspired by Minecraft's [Spyglass Astronomy](https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main).
