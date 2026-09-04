@@ -95,6 +95,9 @@ public sealed class AstraTerraModSystem : ModSystem
                 "astraterra:data/guide-stars.v1.json",
                 "astraterra:data/sky-cultures.v1.json",
                 "astraterra:data/deep-sky.v1.json");
+            // The sky a found disc's maker is allowed to have engraved from. Set on both sides at
+            // asset time, because the item that fills a disc in has no other way to reach a catalog.
+            FoundSkyDisc.Install(catalog);
             api.Logger.Event(
                 "AstraTerra startup step: astronomy catalog loaded: stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}",
                 catalog.Stars.Count,
@@ -397,6 +400,7 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         telescopeZoomPatcher?.Stop();
         skyDiscFiringPatch.Stop();
+        FoundSkyDisc.Reset();
         clientLongitudeAwareSunInstaller?.Dispose();
         serverLongitudeAwareSunInstaller?.Dispose();
         VanillaCalendarHooks.Reset();
