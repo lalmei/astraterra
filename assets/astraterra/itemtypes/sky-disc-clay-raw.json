@@ -84,6 +84,20 @@
       },
       "scale": 1
     },
+    "moldrackable": true,
+    "onmoldrackTransform": {
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 90
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.5
+      },
+      "scale": 1
+    },
     "engravedFigures": 1,
     "engravable": true,
     "arcNotchDeg": 5
