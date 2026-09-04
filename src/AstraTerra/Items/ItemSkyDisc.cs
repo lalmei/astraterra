@@ -39,6 +39,10 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
         bool firstEvent,
         ref EnumHandHandling handling)
     {
+        // The last chance to fill in a disc that came out of the ground: whatever else this click
+        // turns out to be, it happens with the disc in hand and before anything is read off it.
+        FillIfFound(slot, byEntity);
+
         // Sneaking at the ground sets the disc down; sneaking at the sky scratches it. Ground
         // storage is a collectible behaviour, and behaviours only ever run through the base call,
         // so hand the click over before claiming it. Aiming at the horizon selects no block, which
@@ -389,6 +393,56 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
         // Without this the scratch exists only in the server's copy, and the face that reads it is
         // on the client.
         slot.MarkDirty();
+    }
+
+    /// <summary>
+    /// A found disc lying on the ground fills itself in where it fell.
+    /// </summary>
+    /// <remarks>
+    /// One of two ways in, because there are two ways a disc reaches a player: dropped as an entity,
+    /// or handed straight into an inventory by whatever generated it. This covers the first and
+    /// costs one attribute read a tick for the second or two a disc spends in the grass.
+    /// </remarks>
+    public override void OnGroundIdle(EntityItem entityItem)
+    {
+        base.OnGroundIdle(entityItem);
+
+        if (entityItem?.Itemstack is not { } stack || !FoundSkyDisc.IsUnfilled(stack))
+        {
+            return;
+        }
+
+        if (FoundSkyDisc.TryFill(stack, entityItem.World, LatitudeAt(entityItem.World, entityItem.Pos.Z)))
+        {
+            entityItem.WatchedAttributes.MarkPathDirty("itemstack");
+        }
+    }
+
+    /// <summary>The other way in: a disc that was never dropped, only put in a hand.</summary>
+    private static void FillIfFound(ItemSlot? slot, EntityAgent? byEntity)
+    {
+        if (slot?.Itemstack is not { } stack
+            || byEntity is null
+            || !FoundSkyDisc.IsUnfilled(stack))
+        {
+            return;
+        }
+
+        if (FoundSkyDisc.TryFill(stack, byEntity.World, LatitudeAt(byEntity.World, byEntity.Pos.Z)))
+        {
+            // Without this the year exists only in the server's copy, and the face that shows it is
+            // drawn on the client.
+            slot.MarkDirty();
+        }
+    }
+
+    /// <summary>Where in the world a thing is, as the instruments here mean latitude.</summary>
+    private static double LatitudeAt(IWorldAccessor? world, double z)
+    {
+        var calendar = world?.Calendar;
+        return LatitudeMapper.MapGameLatitude(
+            z,
+            calendar?.OnGetLatitude is null ? null : mapZ => calendar.OnGetLatitude(mapZ));
     }
 
     private static bool HasScribingTool(EntityAgent byEntity)

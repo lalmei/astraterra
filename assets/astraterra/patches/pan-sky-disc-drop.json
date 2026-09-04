@@ -1,0 +1,18 @@
+[
+  {
+    "file": "game:blocktypes/wood/pan",
+    "op": "add",
+    "path": "/attributes/panningDrops/@(bonysoil|bonysoil-.*)/-",
+    "value": {
+      "type": "item",
+      "code": "astraterra:sky-disc-tinbronze",
+      "attributes": {
+        "astraterraFoundDisc": "bonysoil"
+      },
+      "chance": {
+        "avg": 0.00065,
+        "var": 0
+      }
+    }
+  }
+]

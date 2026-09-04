@@ -126,9 +126,17 @@ While the disc is held up under the stars, left-drag from one visible star to an
 
 Hold the finished disc in either hand and its figure returns to the sky. Press a figure into **raw clay** before you fire it; a fired clay disc will not take another line. Metal can be engraved whenever you like.
 
+### Somebody else's disc
+
+Pan bony soil long enough and one may come up already finished: a tin bronze disc with a whole year of sunrises and sunsets on its rim and one constellation cut into its face. It is a record, not a head start. Hold it up and it reads out a latitude — but not yours. The band was scribed wherever its maker lived, so it tells you how far from the equator somebody else stood, and it refuses your own marks: the sun does not set where this disc was made. Carry it to that latitude and it will take a scratch again.
+
+The figure on it is one its maker could actually see from there, and it returns to the sky in your hands like any other. You can add lines to it, as long as they join what is already cut.
+
 ### Set it down
 
 Sneak and right click the ground and the disc lies there, face up, scratches and all. An empty hand and a right click pick it back up. Aim at a block when you mean to place it; aiming at the horizon is how you mark.
+
+A disc also stands in a **mold rack**, five to a rack, and sits in a display case or on a shelf — each one showing its own marks and its own figure.
 
 ### Limits
 
