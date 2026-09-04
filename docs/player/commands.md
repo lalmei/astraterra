@@ -109,6 +109,34 @@ and the choice is saved in `ModConfig/astraterra.json`.
 This only touches what your own client displays. An administrator asking the server the time with
 `/time` still gets a straight answer.
 
+## The Hour, And Where You Stand
+
+There is no command for this one — it is two settings in `ModConfig/astraterra.json`, because on a
+server the sun is not a per-player choice.
+
+```json
+{
+  "longitudeAwareSun": true,
+  "displayedClockTime": "local"
+}
+```
+
+`longitudeAwareSun` decides whether world X acts as longitude at all. Left on, the sun, the daylight,
+the star field and every instrument shift east and west together, about one hour of sky per 8,300
+blocks. Set to `false`, the world keeps Vintage Story's single time zone and the whole sky falls back
+with it. The server's copy of this setting wins and is sent to every client.
+
+`displayedClockTime` decides which hour you are shown: `local` (continuous local solar time, the
+default), `universal` (the world's own clock), or `zones` (rounded to whole clock hours, so a world
+day divides into even time zones). The world's internal clock is universal either way — this changes
+the reading, not the world.
+
+`.stars debug` reports the latitude AstraTerra is using and how far the sky has turned, which already
+includes the longitude term.
+
+See [Longitude and the local hour](guide.md#longitude-and-the-local-hour) in the player guide for
+what this changes in play.
+
 ## The Solar System's Pictures
 
 ```text
