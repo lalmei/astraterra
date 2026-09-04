@@ -150,6 +150,16 @@ public sealed class BootstrapSmokeTests
         Assert.Contains("SkyDiscFigureStore.FigureJsonAttribute", patch);
         Assert.Contains("SolarBandStore.BandJsonAttribute", patch);
 
+        // The kiln does not survive its own firing: KillFire hands the kiln's slots to the ground
+        // storage that replaces it and tells the world. The carry has to go back on before that, or
+        // it is written to a block entity nobody is looking at any more.
+        Assert.Contains("nameof(BlockEntityPitKiln.KillFire)", patch);
+        Assert.Contains("KillFirePrefix", patch);
+
+        // Off the type, not out of a name: a string lookup is one more way for this to resolve to
+        // nothing on a game whose survival mod was not loaded where Harmony looks for it.
+        Assert.Contains("typeof(BlockEntityPitKiln)", patch);
+
         // Patched by hand, not by attribute: an assembly-wide PatchAll on the client would claim it
         // as well, and it would then be applied twice in single player.
         Assert.DoesNotContain("[HarmonyPatch]", patch);
