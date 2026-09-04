@@ -1,6 +1,6 @@
 # AstraTerra Player Guide
 
-AstraTerra replaces Vintage Story's night sky with a catalog of more than 5,000 stars. Five planets move among them. Nine meteor showers return each year. Four comets return on their own periods. The sky tilts with latitude, turns with the hour, and changes with the season.
+AstraTerra replaces Vintage Story's night sky with a catalog of more than 5,000 stars. Five planets move among them. Nine meteor showers return each year. Four comets return on their own periods. The sky tilts with latitude, turns with the hour, changes with the season, and keeps a local hour that depends on how far east or west you have walked.
 
 The instruments let you measure what you see, write it down, and plan when to find it again.
 
@@ -9,6 +9,7 @@ Everything below is also written into the Vintage Story handbook. Press **H** an
 ## What You Can Do
 
 - Watch a catalog sky of more than 5,000 stars that changes as you travel north or south.
+- Carry your own hour east and west: world X acts as longitude, so the sun, the daylight and the stars shift together as you travel.
 - Watch nine annual meteor showers and four returning comets.
 - Form a Sky Disc from clay on your first day, mark sunrises and sunsets, and after a year of marks read the length of the year, your latitude, and when the sun will next stand still.
 - Cut one constellation into that same disc.
@@ -49,9 +50,17 @@ To see stars, draw constellations, or sight anything but the sun and a lit moon,
 
 A telescope still zooms when those conditions fail; the star work does not. The astrolabe predicts rather than observes, so it works in daylight, indoors, and in bad weather.
 
+### Where you are
+
+Two numbers decide what the sky over you looks like and what hour it is: **latitude**, how far north or south you have walked, and **longitude**, how far east or west.
+
+Latitude is Vintage Story's own. It comes from world Z, it is what tilts the sky, and every instrument here answers for the latitude you are standing at.
+
+Longitude is AstraTerra's, because Vintage Story does not have one. It comes from world X. See [Longitude and the local hour](#longitude-and-the-local-hour) below.
+
 ### Limits
 
-Vintage Story has latitude. It does not have longitude. The sun's hour depends on Z; walking east or west does not change local solar time. On a world whose climate is not set to realistic, latitude is stuck and the sky does not change as you travel. The equator is not at z = 0. Use `.stars debug` if you need the latitude AstraTerra is actually using.
+On a world whose climate is not set to `realistic`, latitude is stuck at one value everywhere, and the sky does not change as you travel north or south. The equator is not at z = 0 — it sits wherever the world seed put it. Latitude also repeats: keep walking north and you come back to the equator, then to a south pole. Use `.stars debug` if you need the latitude AstraTerra is actually using.
 
 ### Latitude and the turning of the night
 
@@ -60,6 +69,32 @@ Walk north and the pole star climbs; walk south and it sinks, while stars you ha
 The whole sky wheels around the pole. A constellation low in the east after dusk is high overhead hours later. Its best moment is its **transit**, when it crosses the meridian at its highest. In the northern hemisphere, Polaris sits near the north celestial pole: it shows north, and its angle above the horizon is your latitude.
 
 The stars also rise a little earlier each night, so the sky tells the season as well as the hour.
+
+### Longitude and the local hour
+
+Vintage Story has no longitude. Its sun reads world Z for latitude and the world clock for the hour, and ignores world X entirely: sunrise happens at the same instant for every player on a server, wherever they stand. The whole world is one time zone.
+
+AstraTerra makes east and west matter. World X becomes longitude, and the sun, the daylight, the star field, the instruments and the hour you are shown all shift together with it. Walk east and the sun rises earlier for you; walk far enough west and it is still morning where your neighbour is having dusk.
+
+**The scale.** Longitude uses the same yardstick as latitude — the world's `polarEquatorDistance`, 50,000 blocks by default. So 90° of longitude is 50,000 blocks, one hour of the sky's rotation is about **8,300 blocks**, and the whole 360° comes back around after 200,000 blocks. This is a walk, not a stroll; a nearby second base is in the same hour as your first. The prime meridian — longitude 0° — is the middle of the map, and east of it is ahead.
+
+**The world's own clock never changes.** There is still one universal time underneath, and it is what the server schedules, saves, and syncs on. Longitude changes the hour you are *shown*, not the hour the world keeps. `/time` still gives an administrator a straight answer.
+
+**What the sky does, the clock does.** The star field, the sextant, the astrolabe's clock and the character panel all take their longitude from the same place, and that place answers zero unless the visible sun is the one AstraTerra shifted. So they never disagree with each other: if longitude is switched off, or another mod takes the sun back, the whole sky and every reading fall back to universal time together rather than drifting east of a sun that never moved.
+
+**A sighting still compares.** A reading written into a book keeps the universal hour along with the longitude you stood at, so two marks taken a thousand blocks apart still line up when the book does its arithmetic.
+
+#### Settings
+
+Both live in `ModConfig/astraterra.json`. On a server the sun setting is the server's to make, and it is sent to every client.
+
+| Setting | Values | Default | What it does |
+| --- | --- | --- | --- |
+| `longitudeAwareSun` | `true`, `false` | `true` | Whether the sun and daylight move with world X at all. Set `false` to keep Vintage Story's single time zone — the stars and instruments follow it back. |
+| `displayedClockTime` | `local`, `universal`, `zones` | `local` | Which hour you are shown. `local` is continuous local solar time. `universal` is the world's own clock. `zones` rounds to whole clock hours, so a world day divides into even time zones. |
+
+!!! warning "Longitude changes more than the sky"
+    Because daylight now depends on where you stand, everything downstream of the sun follows it — crops, temperature, mob spawning, other mods, and other players on the same server keeping different hours from you. That is the point of the feature, and it is why there is a switch: a server that wants vanilla's one time zone should set `longitudeAwareSun` to `false`.
 
 ### The Moon
 

@@ -167,6 +167,29 @@ multiplayer sync changes.
     `ObserverLongitude.ForObserver`, which answers zero unless AstraTerra's wrapper is the delegate
     the calendar is holding right then.
 
+### Who reads observer longitude
+
+Every consumer goes through one accessor, `ObserverLongitude.ForObserver(x, world)`, which returns
+`LatitudeMapper.MapWorldLongitude` while AstraTerra's solar wrapper is the installed delegate and
+zero otherwise. Nothing maps longitude for itself.
+
+| Consumer | What longitude does there |
+| --- | --- |
+| `LongitudeAwareSunInstaller` | Shifts `dayRel` by `longitude / 360` before calling the captured survival delegate; latitude, tilt and declination stay the delegate's |
+| `SkyStarSunMoonRenderer`, `ConstellationOverlayRenderer`, `SkyCoordinateGridRenderer`, `NearBodyRenderer` | Enters the local sidereal angle via `CelestialMath.GetVanillaAlignedLocalSiderealAngle` |
+| `MoonDiscRenderer` / `LocalMoonTime` | Reads position and phase at the observer's own instant |
+| `VanillaCalendarHooks`, and `PrettyDatePatch` through it | The hour written into the character panel, per `displayedClockTime` |
+| `AstrolabePlannerRenderer` into `AstrolabeService` | Clock readings and forecasts |
+| `SextantReadingRenderer` into `ObservationLog` | The longitude stored alongside a sighting's universal hour |
+| `AstraTerraModSystem`'s `.stars debug` sidereal provider | The reported sidereal angle already carries the longitude term |
+
+### Settings
+
+| Key | Values | Default | Scope |
+| --- | --- | --- | --- |
+| `longitudeAwareSun` | `true` / `false` | `true` | Server-authoritative; the decision is sent to every client, so a client's local copy cannot make its sun disagree with the server's daylight |
+| `displayedClockTime` | `local` / `universal` / `zones` | `local` | Client display only. `zones` rounds the offset to whole clock hours (`round(longitude / 360 * hoursPerDay)`), so custom day lengths keep integer readings |
+
 Shipped: [#44](https://github.com/lalmei/astraterra/issues/44) (the scale above, a prerequisite —
 at the old scale longitude would have been too coarse to notice),
 [#122](https://github.com/lalmei/astraterra/issues/122) (the longitude-aware sun) and
@@ -177,3 +200,5 @@ sighting's hour means once the hour depends on where you stand). Still open:
 ## Related
 
 - [Celestial Model](celestial-model.md) — how the sidereal angle these feed into becomes a position in the sky
+- [Player Guide: Longitude and the local hour](../player/guide.md#longitude-and-the-local-hour) — the same thing said to a player, and the two settings
+- [Command Reference: The Hour, And Where You Stand](../player/commands.md#the-hour-and-where-you-stand) — the settings as shipped JSON
