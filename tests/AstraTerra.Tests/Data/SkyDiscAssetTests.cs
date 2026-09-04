@@ -38,6 +38,26 @@ public sealed class SkyDiscAssetTests
         Assert.Equal(1, transform.GetProperty("scale").GetInt32());
     }
 
+    [Theory]
+    [InlineData("sky-disc.json")]
+    [InlineData("sky-disc-clay-raw.json")]
+    public void A_Disc_Stands_In_A_Mold_Rack(string itemType)
+    {
+        using var document = ReadJson("assets", "astraterra", "itemtypes", itemType);
+        var attributes = document.RootElement.GetProperty("attributes");
+
+        // The rack molds are kept on. A disc is the same flat round object a mold is, it is the one
+        // vertical rack the game has, and a fired disc is worth standing somewhere it can be seen.
+        Assert.True(attributes.GetProperty("moldrackable").GetBoolean());
+
+        // Molds lie flat in the horizontal plane and stand up in the rack by a quarter turn about z.
+        // The disc lies the same way, so it stands the same way; without the turn it lies flat in
+        // mid-air with its face pointing at the ceiling.
+        Assert.Equal(
+            90,
+            attributes.GetProperty("onmoldrackTransform").GetProperty("rotation").GetProperty("z").GetInt32());
+    }
+
     [Fact]
     public void The_Inventory_Icon_Faces_The_Disc_Toward_The_Camera()
     {
