@@ -77,18 +77,31 @@ Install [uv](https://docs.astral.sh/uv/) before running the documentation target
 ## Repository Layout
 
 ```text
-assets/astraterra/        Runtime JSON, language, shapes, recipes, and textures
+assets/astraterra/        Runtime JSON, handbook pages, language, shapes, recipes, and textures
 src/AstraTerra/           Vintage Story code mod
 tests/AstraTerra.Tests/   Unit and asset tests
-tools/cataloggen/         Developer-only catalog generation tool
+tools/cataloggen/         Developer-only star catalog generator
+tools/milkywaygen/        Developer-only Milky Way texture generator
+tools/deepsky/            Stellarium deep-sky plate importer
 docs/player/              Player-facing documentation
 docs/dev/                 Developer-facing documentation
 ```
 
+Inside `src/AstraTerra/`, `Astronomy/` is the pure sky model, `Client/` is everything that draws or
+reads input, `Items/` is the Vintage Story item entry point, `Constellations/` and `Observation/` own
+what a book and an instrument remember, and `Commands/` and `Config/` are the two ways a player
+changes anything. [Architecture](architecture.md) goes through the boundaries between them.
+
 ## Core References
 
-- [Architecture](architecture.md)
-- [Data Pipeline](data-pipeline.md)
-- [Manual Verification](manual-verification.md)
-- [Product Scope](product-scope.md)
-- [Reference Sky Rendering Notes](reference-sky-rendering-notes.md)
+- [Architecture](architecture.md) — which folder owns what, and the boundaries between them
+- [Celestial Model](celestial-model.md) — world clock to a position in the sky, and what the render thread may do
+- [Latitude And Longitude](latitude-and-longitude.md) — where the observer's position comes from, and what Vintage Story does and does not provide
+- [Extending AstraTerra](extending.md) — the public catalog-replacement API for other mods
+- [Data Pipeline](data-pipeline.md) — the committed catalog assets and the generators behind them
+- [Manual Verification](manual-verification.md) — in-game smoke checks before release
+- [Product Scope](product-scope.md) — goals, non-goals, and deferred work
+- [Reference Sky Rendering Notes](reference-sky-rendering-notes.md) — historical findings that set the rendering baseline
+
+Start with **Architecture** for the map, **Celestial Model** for the astronomy, and **Extending** if
+you are writing another mod against this one rather than changing it.

@@ -7,7 +7,6 @@ docs_dir: docs
 site_dir: site
 exclude_docs: |
   README.md
-  dev/README.md
 
 theme:
   name: materialx
@@ -59,12 +58,14 @@ nav:
   - Player:
       - Guide: player/guide.md
       - Commands: player/commands.md
+      - Configuration: player/configuration.md
       - Constellation Build Cheat Sheet: player/constellation-cheat-sheet.md
   - Developer:
       - Guide: dev/index.md
       - Architecture: dev/architecture.md
       - Celestial Model: dev/celestial-model.md
       - Latitude And Longitude: dev/latitude-and-longitude.md
+      - Extending AstraTerra: dev/extending.md
       - Data Pipeline: dev/data-pipeline.md
       - Manual Verification: dev/manual-verification.md
       - Product Scope: dev/product-scope.md

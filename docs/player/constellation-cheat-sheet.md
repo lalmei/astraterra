@@ -2,7 +2,8 @@
 
 Use `.stars build` to add any of the 88 Modern IAU constellation patterns to the constellation book in your left hand.
 
-If you just want to observe the Internationally defined Constallations. Just grab a blank book, a quil/ink, and use the cheat commands bellow.
+If you only want to observe the constellations the IAU already defined, rather than drawing your own,
+take a blank book and ink and quill and use the commands below.
 
 ## Before You Build
 
@@ -43,6 +44,10 @@ For a smaller test book containing only the traditional twelve zodiac constellat
 ```
 
 This adds a book titled **The Zodiac** in sign order from Aries through Pisces. Ophiuchus is not part of this traditional twelve-sign test set.
+
+`/stars give-wanderers` adds **The Wanderers**, a book that already names all five planets, so the
+Sextant and Astrolabe use those names without identifying each planet yourself. All three commands
+need the `give` privilege and do not require ink and quill.
 
 ## Popular Starting Points
 

@@ -1,7 +1,8 @@
 # AstraTerra Data Pipeline
 
-Runtime catalog assets are committed under `assets/astraterra/data/`. Builds and tests must not depend on rerunning the catalog generator.
-We could do it later, but for now it is an one shot.
+Runtime catalog assets are committed under `assets/astraterra/data/`. Builds and tests must not
+depend on rerunning the catalog generator: the generators below are run by hand when a catalog needs
+to change, and their output is reviewed and committed like any other file.
 
 ## Catalog Generator
 
@@ -62,6 +63,7 @@ exists.
 - `sky-cultures/*.json`: authored constellation line data.
 - `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
 - `meteor-showers.v1.json`: annual meteor showers. Radiant, peak solar longitude, activity half-width, and peak ZHR, hand-authored from the IMO Meteor Shower Calendar working list.
+- `comets.v1.json`: authored comet apparitions. Real orbital period and first perihelion in world years, a window half-width, a brightness curve, and a track of right-ascension/declination keyframes indexed by signed phase against perihelion. The periods and the parent showers are real; the tracks and peak magnitudes are authored for the game. The loader rejects a comet that could never be seen rather than letting it fail silently, because on a body due once every thirteen years "never appears" and "not due yet" look identical.
 - `textures/environment/milky-way.png`: the galaxy's unresolved glow, equirectangular in galactic coordinates, +90 deg on the first row and longitude running +180 to -180 left to right.
 - `planets.v1.json`: the five naked-eye planets and the observer's own orbit. Six Keplerian elements and their per-century rates per body, hand-authored from JPL's *Approximate Positions of the Major Planets* Table 1 (valid 1800–2050), plus a magnitude zero point, a linear phase coefficient, and a tint.
 

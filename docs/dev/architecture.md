@@ -22,25 +22,29 @@ The convention here is narrower than "no Vintage Story types", which the asset l
 
 The astrolabe is the one item with a second interaction: sneak and right click cuts its plate. `AstrolabeCalibrationPolicy` holds the pure half — how far the observer has strayed from the plate, whether the sky allows a sighting, how far along one is — and `AstrolabeCalibrationStore` keeps the cut latitude in the itemstack's own attributes, so the plate belongs to the instrument rather than to whoever is holding it. The server is the side that writes it, because the server owns the stack; `AstrolabeCalibrationState` is only the client's progress bar. Every planner reading is then answered for the plate's latitude, never for the player's live position — that substitution is the whole feature, and a source-level test pins it because a regression to live latitude would look like the instrument simply working. Longitude stays live: it shifts the hour of transit, not where the horizon falls.
 
-`Constellations/` owns the client-local journal model, graph merge/split behavior, stable saved IDs, and persistence.
+`Constellations/` owns the journal model, graph merge/split behavior, stable saved IDs, and persistence. The journal is no longer client-local: it lives in the book itemstack, and every mutation goes to the server over the `astraterraconstellationbook` channel, because the server owns the stack. `ConstellationBookClient` sends and `ConstellationBookServer` validates and writes. `ConstellationJournalStore` is now only the migration path for journals saved per-world before the book carried them.
 
 A book carries two journals in two separate item attributes: `astraterraJournalJson` for drawn figures and `astraterraPlanetJson` for identified planets. They are kept apart so that writing one cannot disturb the other, and so a book written before planets existed still reads. Only the readable page is shared, rebuilt from both whenever either is written.
 
 Planet names are the observer's, not the catalog's. `PlanetCatalog` carries `Mars` for the mod's own use, but nothing shows it: an unrecorded planet reads as `PlanetJournal.UnidentifiedDisplayName` everywhere, and the real names reach a player only through a prepared book. Anything that displays a planet must resolve its name through the held book's `PlanetJournal` at the moment of display rather than baking it into a cached model, or swapping books will not rename the sky.
 
-`Commands/` owns `.stars` command behavior and debug formatting.
+`Commands/` owns command behavior and debug formatting, on both sides: `StarsClientCommands` registers the `.stars` group against the book in the player's hand and the client's own settings, `StarsServerCommands` registers the `/stars` group for the privileged ones — `goto-lat`, and the three prepared-book commands.
 
-`Config/` owns file-backed mod settings.
+`Config/` owns file-backed mod settings. `AstraTerraConfigLoader.Load` runs in `AssetsLoaded` on both sides: it reads `ModConfig/astraterra.json`, normalises every enum-valued key with a warning for anything unrecognised, and writes the file straight back, which is how a key the player left out gets filled in and a key the mod no longer knows gets dropped. One instance is then held for the session and read live by the renderers, so a `.stars` command that changes a value and calls `Store` takes effect on the next frame while a hand-edited file needs a restart. `LongitudeAwareSun` is the exception to per-client ownership: the server's value is the one `LongitudeAwareSunInstaller` sends to every client. Four keys — `SelectionSnapRadiusDeg`, `ShowMinimalHud`, `ShowReticle`, `DebugGuideStarEmphasisDefault` — are still round-tripped through the file but have no consumer; the [configuration reference](../player/configuration.md#keys-with-no-effect) says so out loud rather than leaving a player to find out.
 
 `Infrastructure/` is kept narrow: asset loading and small support helpers.
+
+`AstraTerraModSystem` is also the mod's only public surface. Its five `Replace*` methods swap a catalog for the rest of the session and push it into every consumer already built; everything else in the assembly is public only because the tests reach it. See [Extending AstraTerra](extending.md).
 
 ## Asset Layout
 
 ```text
 assets/astraterra/
-├── data/
+├── config/handbook/   In-game handbook pages, one file per page
+├── data/              Catalog assets, versioned by filename
 ├── itemtypes/
-├── lang/
+├── lang/              Item names, descriptions, and the handbook text itself
+├── patches/           JSON patches against vanilla assets, and the generated seraph clips
 ├── recipes/grid/
 ├── shapes/item/
 └── textures/
@@ -48,17 +52,19 @@ assets/astraterra/
 
 Runtime catalog assets are versioned by filename.
 
-`assets/astraterra/data/star_catalog.v1.json` : Contains the defined stars. Modifing this file can change which stars you see.
+`assets/astraterra/data/star-catalog.v1.json` : the fixed stars. Editing this file changes which stars are in the sky, and the HIP ids in it are what every recorded constellation is stored against.
 
 `assets/astraterra/data/comets.v1.json` : Authored comet apparitions — period and phase in world years, a window, a brightness curve, and a track of keyframes across the apparition. Server owners can add their own; the loader rejects a comet that could never be seen rather than letting it fail silently, because on a body due once every thirteen years "never appears" and "not due yet" look identical.
 
-`assets/astraterra/data/deep-sky.v1.json` : Contains the defined sky images, in our reserved for nebulas, galaxy and other deep sky objects. We use real astronomy photograhs, but these can also be pre-generated.
+`assets/astraterra/data/deep-sky.v1.json` : the telescope-only plates — nebulae, galaxies and clusters. The shipped ones are real photographs registered by four right-ascension/declination corners, but a generated image with the same registration works the same way.
 
 `assets/astraterra/textures/environment/milky-way.png` : The galaxy's own glow, as an equirectangular map in galactic coordinates. Generated by `tools/milkywaygen/` from a disc-plus-bulge model rather than adapted from a photograph, so it carries no third-party licence and its shape can be changed by parameter.
 
 Sky-culture files are registered through `assets/astraterra/data/sky-cultures.v1.json`, with individual culture files under `assets/astraterra/data/sky-cultures/`.
 
-The Sky-culture allows you to predefined different sets of constalations, which might be useful for Custom Stories, and lore.
+The in-game handbook is `assets/astraterra/config/handbook/`, one JSON file per page, numbered so they sort into reading order. Each file is only a `pageCode`, a `categoryCode` and two translation keys; the page's actual words live in `assets/astraterra/lang/en.json` under `game:astraterra-handbook-*-title` and `-text`. The text is one long HTML string per page, so it is edited in the lang file rather than in the handbook file, and it uses `<hk>` for a keybinding and `handbook://` links to reach items and other pages. Item tooltips are `itemdesc-astraterra-*` in the same file, duplicated under an `astraterra:` prefix. A mechanic gated on something the player has to be carrying belongs in both the handbook page and the [player guide](../player/guide.md), because a gate that is only enforced in code reads as a broken item.
+
+A sky culture is a named set of constellation lines, which is where a custom or lore-specific set of figures goes.
 
 ## Rendering Baseline
 

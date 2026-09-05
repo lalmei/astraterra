@@ -1,6 +1,13 @@
 # Reference Sky Rendering Notes
 
-These notes summarize findings from local reference sky implementation packages inspected under `~/Downloads/reference-package_0*`.
+Historical research notes. They record what was learned from local reference sky implementation
+packages while AstraTerra's rendering baseline was being settled, and they are kept because the
+decisions in [Architecture](architecture.md#rendering-baseline) refer back to them.
+
+The packages themselves were inspected from a local download directory and are not in this
+repository, so nothing here is reproducible from a checkout. Treat it as the reasoning behind the
+baseline rather than as a description of the current code — [Celestial Model](celestial-model.md)
+and [Architecture](architecture.md) are what the renderers actually do now.
 
 ## Rendering Takeaways
 

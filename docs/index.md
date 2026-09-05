@@ -30,7 +30,8 @@ Astra Terra turns Vintage Story’s sky into a scientifically grounded astronomy
 ## Player Docs
 
 - [Player Guide](player/guide.md): what AstraTerra adds and how to use its instruments.
-- [Command Reference](player/commands.md): `.stars` commands for saved constellations and debugging, and the clock and longitude settings.
+- [Command Reference](player/commands.md): every `.stars` and `/stars` command.
+- [Configuration Reference](player/configuration.md): every key in `ModConfig/astraterra.json`, its default, and what it does.
 - [Constellation Build Cheat Sheet](player/constellation-cheat-sheet.md): three-letter codes for `.stars build`.
 
 ## Developer Docs
@@ -39,6 +40,7 @@ Astra Terra turns Vintage Story’s sky into a scientifically grounded astronomy
 - [Architecture](dev/architecture.md): runtime systems and ownership boundaries.
 - [Celestial Model](dev/celestial-model.md): the sky's coordinates, the sun and moon, and the clock.
 - [Latitude And Longitude](dev/latitude-and-longitude.md): where the observer's position comes from, and how longitude was invented.
+- [Extending AstraTerra](dev/extending.md): the catalog-replacement API another mod builds a sky on.
 - [Data Pipeline](dev/data-pipeline.md): committed catalog assets and generation tools.
 - [Manual Verification](dev/manual-verification.md): in-game smoke checks before release.
 - [Product Scope](dev/product-scope.md): current goals, non-goals, and deferred work.

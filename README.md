@@ -2,19 +2,24 @@
 
 ![astraterra](modicon.png)
 
-AstraTerra replaces Vintage Story's night sky with a catalog of 5,044 stars, 50 deep-sky objects, five planets, nine annual meteor showers, and four returning comets. The sky turns with the hour, changes with the season, and tilts as you travel north or south. Vintage Story 1.22+.
+AstraTerra replaces Vintage Story's night sky with a catalog of 5,044 stars, 50 deep-sky objects, five planets, nine annual meteor showers, and four returning comets. The sky turns with the hour, changes with the season, tilts as you travel north or south, and keeps a local hour that depends on how far east or west you have walked. Vintage Story 1.22+.
 
 The instruments are the actual game. Mark a year of sunrises on a Sky Disc. Measure a light above the horizon with a Sextant, write the reading down, and work out what moved. Draw constellations into a book through a telescope. Cut an astrolabe plate for your latitude and use your own records to plan another observation.
 
 > AstraTerra is still alpha. Some models, recipes, and bits of UI are placeholders. If a borrowed asset is missing from [the third-party notices](THIRD_PARTY_NOTICES.md), please open an issue so we can fix it.
 
-## v0.9.0: Longitude Update
+## Recent releases
 
-- World X now acts as longitude. Travel east or west and the sun, daylight, and star field shift together.
-- The server still keeps one universal clock. `displayedClockTime` can show `local` solar time, `universal` time, or whole-hour `zones` in the character panel and instruments.
-- Set `longitudeAwareSun` to `false` in `ModConfig/astraterra.json` if the server should keep Vintage Story's single time zone.
-- The star field now stays aligned with the visible sun on worlds with custom year lengths.
-- The moon can use AstraTerra pixel art, photographic textures, or Vintage Story's original disc.
+**v0.10** — Somebody else's sky disc turns up in panned bony soil, finished, scribed at a latitude
+that is not yours. Discs stand five to a mold rack. The moon is read at the observer's own instant,
+so its position and phase follow the local hour rather than the world's, and the star field takes a
+longitude only while the sun has one.
+
+**v0.9** — World X acts as longitude: travel east or west and the sun, daylight, and star field
+shift together. The server still keeps one universal clock, and `DisplayedClockTime` chooses whether
+the character panel and instruments show `local` solar time, `universal` time, or whole-hour `zones`.
+Set `LongitudeAwareSun` to `false` in `ModConfig/astraterra.json` for Vintage Story's single time
+zone. The moon can use AstraTerra pixel art, photographic textures, or Vintage Story's original disc.
 
 ## The sky
 
@@ -30,9 +35,13 @@ Mercury, Venus, Mars, Jupiter, and Saturn move on Keplerian orbits. Nine meteor 
 
 Form a clay disc and fire it, or craft one from copper or bronze. Under open sky at sunrise or sunset, sneak and hold right click to scratch the sun's place on the horizon. Keep marking until the band reaches an edge and turns back. The finished band gives the year length, latitude, east or west, and the next solstice.
 
-Right click reads the disc. Scroll turns it. Sneak-right-click the ground to set it down. Clay uses five-degree notches. Metal uses two-and-a-half-degree notches. The first mark binds the disc to that latitude.
+Right click reads the disc. Scroll turns it. Sneak-right-click the ground to set it down, or stand five in a mold rack. Clay uses five-degree notches. Metal uses two-and-a-half-degree notches. The first mark binds the disc to that latitude.
 
-Hold the disc up at night and left-drag between stars to cut one connected constellation. Keep loose flint or a knife in the hotbar. Raw clay takes the figure before firing. A fired clay disc will not.
+Hold the disc up at night and left-drag between stars to cut one connected constellation. Raw clay takes the figure before firing. A fired clay disc will not.
+
+Nothing is cut into a disc without loose flint or a knife somewhere in the hotbar — marks and figures alike.
+
+Pan bony soil long enough and a finished bronze disc may come up: a whole year of somebody else's sunrises and one constellation, scribed at a latitude that is not yours. It refuses your marks until you carry it to the latitude it was made at.
 
 ### Telescope and constellation book
 
@@ -70,7 +79,7 @@ Press **Z** to lie on your back. Move, jump, or press **Z** again to stand. The 
 
 Pixel art is the default for planets and the moon. Use `.stars solar-system photo` for photographic planet textures. Use `.stars moon pixel|photo|vanilla` for the moon. These settings change pictures, not positions, phases, or orbits.
 
-AstraTerra also exposes a near-body API for worlds that orbit something larger. A companion mod can place a parent planet and sibling moons in the sky, shade them from the real sun direction, and make them valid Sextant targets. [AstraExtera](https://github.com/lalmei/astraextera) uses that API.
+Another mod can replace any of AstraTerra's catalogs — the stars, the planets, the comets, the meteor showers — and add near bodies, which are the parent planet and sibling moons of a world that is itself a moon. They are shaded from the real sun direction and are valid Sextant targets. [AstraExtera](https://github.com/lalmei/astraextera) uses that API; [Extending AstraTerra](docs/dev/extending.md) documents it.
 
 ## Useful settings
 
@@ -81,7 +90,7 @@ AstraTerra also exposes a near-body API for worlds that orbit something larger. 
 - `.stars moon pixel|photo|vanilla` changes moon art.
 - `.stars render stars|constellations|deepsky|meteors|comets|milkyway|all on|off` toggles individual render paths.
 
-See the [command reference](docs/player/commands.md) for constellation, sighting, admin, and diagnostic commands.
+See the [command reference](docs/player/commands.md) for constellation, sighting, admin, and diagnostic commands, and the [configuration reference](docs/player/configuration.md) for the settings that have no command — including `MilkyWayBrightness`, which switches the band off at zero.
 
 ## How we test
 
@@ -95,7 +104,9 @@ I wish Vintage Story offered an easier way to automate this kind of compatibilit
 
 - [Player Guide](docs/player/guide.md)
 - [Command Reference](docs/player/commands.md)
+- [Configuration Reference](docs/player/configuration.md)
 - [Developer Guide](docs/dev/index.md)
+- [Extending AstraTerra](docs/dev/extending.md) — replacing a catalog from another mod
 - [Issue tracker](https://github.com/lalmei/astraterra/issues)
 
 Build and test:
