@@ -139,7 +139,7 @@ anchor them. Three clocks were in play and only two agreed:
 
 | Clock | Longitude applied before | Longitude applied now |
 | --- | --- | --- |
-| Vintage Story's sun and daylight | No | **Yes**, while `longitudeAwareSun` is on |
+| Vintage Story's sun and daylight | No | **Yes**, while `LongitudeAwareSun` is on |
 | AstraTerra's star field | Yes, always | Yes, but only when the sun does |
 | AstraTerra's astrolabe clock | No | **Yes**, as displayed local time |
 | The moon | No | **Yes** where AstraTerra draws it; vanilla's own disc cannot be moved |
@@ -178,7 +178,7 @@ zero otherwise. Nothing maps longitude for itself.
 | `LongitudeAwareSunInstaller` | Shifts `dayRel` by `longitude / 360` before calling the captured survival delegate; latitude, tilt and declination stay the delegate's |
 | `SkyStarSunMoonRenderer`, `ConstellationOverlayRenderer`, `SkyCoordinateGridRenderer`, `NearBodyRenderer` | Enters the local sidereal angle via `CelestialMath.GetVanillaAlignedLocalSiderealAngle` |
 | `MoonDiscRenderer` / `LocalMoonTime` | Reads position and phase at the observer's own instant |
-| `VanillaCalendarHooks`, and `PrettyDatePatch` through it | The hour written into the character panel, per `displayedClockTime` |
+| `VanillaCalendarHooks`, and `PrettyDatePatch` through it | The hour written into the character panel, per `DisplayedClockTime` |
 | `AstrolabePlannerRenderer` into `AstrolabeService` | Clock readings and forecasts |
 | `SextantReadingRenderer` into `ObservationLog` | The longitude stored alongside a sighting's universal hour |
 | `AstraTerraModSystem`'s `.stars debug` sidereal provider | The reported sidereal angle already carries the longitude term |
@@ -187,8 +187,8 @@ zero otherwise. Nothing maps longitude for itself.
 
 | Key | Values | Default | Scope |
 | --- | --- | --- | --- |
-| `longitudeAwareSun` | `true` / `false` | `true` | Server-authoritative; the decision is sent to every client, so a client's local copy cannot make its sun disagree with the server's daylight |
-| `displayedClockTime` | `local` / `universal` / `zones` | `local` | Client display only. `zones` rounds the offset to whole clock hours (`round(longitude / 360 * hoursPerDay)`), so custom day lengths keep integer readings |
+| `LongitudeAwareSun` | `true` / `false` | `true` | Server-authoritative; the decision is sent to every client, so a client's local copy cannot make its sun disagree with the server's daylight |
+| `DisplayedClockTime` | `local` / `universal` / `zones` | `local` | Client display only. `zones` rounds the offset to whole clock hours (`round(longitude / 360 * hoursPerDay)`), so custom day lengths keep integer readings |
 
 Shipped: [#44](https://github.com/lalmei/astraterra/issues/44) (the scale above, a prerequisite —
 at the old scale longitude would have been too coarse to notice),

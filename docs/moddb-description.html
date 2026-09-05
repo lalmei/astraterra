@@ -19,16 +19,17 @@
 <p style="margin: 0;">Some models, recipes, and bits of UI are placeholders. Bug reports and screenshots belong on the <a href="https://github.com/lalmei/astraterra/issues">issue tracker</a>.</p>
 </div>
 
-<h3>v0.9.0: Longitude Update</h3>
+<h3>Recent releases</h3>
 
 <div style="background: #e4e9dc; border: 1px solid #b9c8a4; border-radius: 4px; padding: 12px 16px; margin: 0 0 16px; color: #38431f; line-height: 1.6;">
 <ul>
-<li><strong>Longitude.</strong> World X now shifts the sun, daylight, and star field. Noon is local instead of happening everywhere at once.</li>
+<li><strong>Somebody else's disc (v0.10).</strong> Pan bony soil and a finished bronze Sky Disc may come up: a year of another observer's sunrises and one constellation, scribed at a latitude that is not yours. It refuses your marks until you carry it home.</li>
+<li><strong>Longitude (v0.9).</strong> World X shifts the sun, daylight, and star field. Noon is local instead of happening everywhere at once.</li>
 <li><strong>Clock display.</strong> The server keeps universal time. The character panel and instruments can show local solar time, universal time, or whole-hour zones.</li>
 <li><strong>Sun and stars.</strong> The star field stays aligned with the visible sun on worlds with custom year lengths.</li>
 <li><strong>Moon art.</strong> Choose AstraTerra pixel art, photographic textures, or Vintage Story's original moon.</li>
 </ul>
-<p style="margin: 0;">Server owners can set <code>longitudeAwareSun</code> to <code>false</code> in <code>ModConfig/astraterra.json</code> to keep Vintage Story's single time zone.</p>
+<p style="margin: 0;">Server owners can set <code>LongitudeAwareSun</code> to <code>false</code> in <code>ModConfig/astraterra.json</code> to keep Vintage Story's single time zone.</p>
 </div>
 
 <h3>The sky</h3>
@@ -45,7 +46,8 @@
 <div class="spoiler-toggle" style="padding: 12px 15px; background: #e5dfd4; font-size: 1.1em; font-weight: 600; color: #333; text-align: center;">&#9662;&nbsp; Sky Disc</div>
 <div class="spoiler-text" style="padding: 15px; line-height: 1.6; color: #333; background: #eee9de; border-top: 1px solid #cfc9be;">
 <p>Form one from clay and fire it, or craft copper or bronze. At sunrise or sunset, sneak and hold right click under open sky to scratch the sun's place on the horizon. Keep marking until the band reaches an edge and turns back. The disc then gives year length, latitude, east or west, and the next solstice.</p>
-<p>Right click reads it. Scroll turns it. Sneak-right-click the ground to set it down. Hold it up at night and left-drag between stars to engrave one connected constellation. Keep loose flint or a knife in the hotbar. A fired clay disc will not take a new figure.</p>
+<p>Right click reads it. Scroll turns it. Sneak-right-click the ground to set it down, or stand five in a mold rack. Hold it up at night and left-drag between stars to engrave one connected constellation. A fired clay disc will not take a new figure.</p>
+<p>Nothing is cut into a disc without loose flint or a knife somewhere in the hotbar &mdash; marks and figures alike.</p>
 </div>
 </div>
 
@@ -89,7 +91,7 @@
 
 <h3>Other worlds</h3>
 
-<p>The near-body API lets a companion mod place a parent planet and sibling moons in the sky, shade them from the real sun direction, and make them valid Sextant targets. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses it.</p>
+<p>Another mod can replace any of AstraTerra's catalogs &mdash; the stars, the planets, the comets, the meteor showers &mdash; and add near bodies, which are the parent planet and sibling moons of a world that is itself a moon. They are shaded from the real sun direction and are valid Sextant targets. <a href="https://github.com/lalmei/astraextera">AstraExtera</a> uses it.</p>
 
 <h3>How we test</h3>
 
@@ -100,7 +102,7 @@
 <p>I wish Vintage Story offered an easier way to automate this kind of compatibility testing. If the developers provide one, I intend to add it to this process.</p>
 
 <div style="background: #dce8f5; border: 1px solid #a9c6e4; border-radius: 4px; padding: 12px 16px; margin: 16px 0; color: #1f3b5c; line-height: 1.6;">
-<p style="margin: 0;"><strong>Need the full controls?</strong> Read the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/guide.md">player guide</a> and <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/commands.md">command reference</a>.</p>
+<p style="margin: 0;"><strong>Need the full controls?</strong> Read the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/guide.md">player guide</a>, the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/commands.md">command reference</a>, and the <a href="https://github.com/lalmei/astraterra/blob/main/docs/player/configuration.md">configuration reference</a>.</p>
 </div>
 
 <h3>License</h3>

@@ -90,11 +90,14 @@ Both live in `ModConfig/astraterra.json`. On a server the sun setting is the ser
 
 | Setting | Values | Default | What it does |
 | --- | --- | --- | --- |
-| `longitudeAwareSun` | `true`, `false` | `true` | Whether the sun and daylight move with world X at all. Set `false` to keep Vintage Story's single time zone — the stars and instruments follow it back. |
-| `displayedClockTime` | `local`, `universal`, `zones` | `local` | Which hour you are shown. `local` is continuous local solar time. `universal` is the world's own clock. `zones` rounds to whole clock hours, so a world day divides into even time zones. |
+| `LongitudeAwareSun` | `true`, `false` | `true` | Whether the sun and daylight move with world X at all. Set `false` to keep Vintage Story's single time zone — the stars and instruments follow it back. |
+| `DisplayedClockTime` | `local`, `universal`, `zones` | `local` | Which hour you are shown. `local` is continuous local solar time. `universal` is the world's own clock. `zones` rounds to whole clock hours, so a world day divides into even time zones. |
+
+Neither has a command, so change them with the game closed. See the
+[Configuration Reference](configuration.md) for the rest of the file.
 
 !!! warning "Longitude changes more than the sky"
-    Because daylight now depends on where you stand, everything downstream of the sun follows it — crops, temperature, mob spawning, other mods, and other players on the same server keeping different hours from you. That is the point of the feature, and it is why there is a switch: a server that wants vanilla's one time zone should set `longitudeAwareSun` to `false`.
+    Because daylight now depends on where you stand, everything downstream of the sun follows it — crops, temperature, mob spawning, other mods, and other players on the same server keeping different hours from you. That is the point of the feature, and it is why there is a switch: a server that wants vanilla's one time zone should set `LongitudeAwareSun` to `false`.
 
 ### The Moon
 
@@ -141,6 +144,9 @@ The Sky Disc scratches where the sun crosses the horizon. After enough marks, th
 
 ### How to mark
 
+Keep a **flint or a knife anywhere in your hotbar** — nothing is ever cut into a disc without one,
+and without it the disc says so instead of marking.
+
 Stand under open sky as the sun touches the horizon. **Sneak and hold right click**: the disc comes up and tells you the notch the mark would fall on. Keep holding for about a second and it scratches the rim there. Let go early and nothing is marked. Come back another evening and mark again. Sunrises go on one rim, sunsets on the other.
 
 You are marking the sun crossing the *true* horizon, not the moment you clicked. A hill in the way costs you nothing. Missing evenings to rain or sleep costs nothing either: you need enough marks to find the ends of the band, not every day of the year.
@@ -157,7 +163,7 @@ The sun sets due west at the equinoxes and swings evenly either side of that poi
 
 ### One constellation on the disc
 
-While the disc is held up under the stars, left-drag from one visible star to another. The line is cut into the disc. No book, ink, or quill. Every later line has to join the figure already there; a line that touches none of it is a second constellation, and there is no room for it.
+While the disc is held up under the stars, left-drag from one visible star to another. The line is cut into the disc. No book, ink, or quill — but the same flint or knife the marks need. Every later line has to join the figure already there; a line that touches none of it is a second constellation, and there is no room for it.
 
 Hold the finished disc in either hand and its figure returns to the sky. Press a figure into **raw clay** before you fire it; a fired clay disc will not take another line. Metal can be engraved whenever you like.
 
@@ -262,7 +268,7 @@ See the [Command Reference](commands.md) for the full `.stars` list, including s
 
 Nine showers recur at the same fraction of every configured world year. A shower is worth watching when its season is near the peak, its radiant is above the horizon, and the sky is dark. A bright moon drowns the faint meteors but not the brightest ones.
 
-The strongest catalog shower is the Geminids. On the default 108-day calendar, a useful test is **month 9, day 8 at about 02:00**, from roughly **32.5° north**. The exact count still changes with longitude and moon phase. Use `.stars debug` to check the latitude reported by AstraTerra.
+The strongest catalog shower is the Geminids. On the default 108-day calendar its peak lands on **month 12, day 4**, and about **02:00** from roughly **32.5° north** puts the radiant high. The count you actually see still changes with longitude and moon phase. Use `.stars debug` to check the latitude AstraTerra is using.
 
 Each streak points back toward its shower's radiant. Streaks close to that point are short; streaks farther across the sky are longer.
 
@@ -280,12 +286,36 @@ Machholz arrives a little under two world years in. Halley makes its first pass 
 
 The periods and the parent showers are real. The tracks across the sky and the peak brightnesses are authored for the game rather than computed from an orbit.
 
-## Starfield Comparison Debug Modes
+## When the sky is not doing what you expect
 
-Use `.stars starfield astraterra|both|vanilla` to switch the visible starfield immediately:
+Most of these are the sky behaving correctly. `.stars debug` reports the latitude AstraTerra is
+using, how far the sky has turned, and its verdict on whether you can see the sky at all — it is the
+first thing to run, and the line to paste into a bug report.
 
-- `astraterra` shows only AstraTerra's catalog and is the default.
-- `both` overlays AstraTerra and Vintage Story stars for alignment comparison.
-- `vanilla` shows only Vintage Story's original cubemap.
+| What you see | Why |
+| --- | --- |
+| No stars at all | The sky is too bright, too cloudy, or blocked overhead. `.stars debug` says which. |
+| Vintage Story's stars, not AstraTerra's | `.stars starfield vanilla` is set. `.stars starfield astraterra` puts it back. |
+| The same sky however far north you walk | The world's climate is not `realistic`, so Vintage Story reports one latitude everywhere. Nothing can fix this from inside the mod. |
+| A constellation you drew is missing | Its lines live in the book. You only see them while you are holding that book. |
+| A constellation never comes up | At your latitude it may never rise. The astrolabe says so outright, and it is answering for the latitude its plate was cut at, not the one you are standing at. |
+| A planet called **Wandering star** | Nothing has named it. Identify it with the Sextant, or hold a book that already names it. |
+| The astrolabe reads **no plate** | A new one is blank. Sneak-hold right click under open sky after dusk to cut it. |
+| The astrolabe's positions are wrong after a long walk | The plate is still cut for where you cut it. Past about eight degrees of latitude it asks to be recut. |
+| The Sky Disc will not take a mark | No flint or knife in the hotbar; or the disc has been carried too far from the latitude of its first mark; or you are inside a polar circle, where the sun does not set to be marked. |
+| A meteor shower that produces nothing | A shower's rate is meteors per hour of *real* watching. A strong one at 120 an hour averages one streak every 30 real seconds, and a world hour goes by in about two real minutes. |
+| Your neighbour's sunrise is not yours | Longitude, working as designed. You are east or west of them. |
+| The moon keeps a different hour from everything else | Only under `.stars moon vanilla`. Vintage Story draws that disc, so AstraTerra cannot move it off the world's single time zone. |
 
-The selected value is saved as `StarfieldMode` in `ModConfig/astraterra.json`.
+## Settings
+
+Most of what you can change is a `.stars` command that takes effect at once and saves itself:
+`starfield`, `sky-grid`, `solar-system`, `moon`, `calendar`. Two things have no command because on a
+server they are not a per-player choice: `LongitudeAwareSun` and `DisplayedClockTime`. A few more,
+including how brightly the Milky Way draws, are only ever edited in the file.
+
+- [Configuration Reference](configuration.md) — every key in `ModConfig/astraterra.json`, its default, and what it does.
+- [Command Reference](commands.md) — every `.stars` and `/stars` command.
+
+If you are comparing AstraTerra's sky against Vintage Story's, `.stars starfield both` draws them on
+top of each other, which is the fastest way to see whether the two agree about where a star is.

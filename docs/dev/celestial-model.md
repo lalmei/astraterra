@@ -2,7 +2,11 @@
 
 How AstraTerra turns a world clock into positions in the sky. Every renderer — starfield,
 constellation overlay, sky grid, sextant, astrolabe — reads from this one pipeline, so a sign error
-here moves the entire sky at once. So it is important we are aligned. Somethings may diverg from vanilla when not defined, and making the assumptions we are in a spherical world.
+here moves the entire sky at once.
+
+The model assumes a spherical world with Earth's obliquity. Where Vintage Story defines a quantity,
+AstraTerra reads the game's own rather than keeping a second one; where it does not, the sections
+below say what was assumed instead.
 
 ## Coordinate Conventions
 
@@ -57,11 +61,11 @@ The daily term is a fraction of a complete rotation rather than `15°` per named
 at their own local noon, and apply longitude as the same fraction of one rotation.
 
 !!! warning "Sidereal time must increase with time"
-Hour angle is `sidereal - rightAscension`,
-so if the sidereal angle _decreases_ as the day goes on, the hour angle decreases too and the
-entire sky — stars, constellations, deep-sky objects, grid lines — rotates **west to east**.
-
-If you would like to make a custome world, solar system you can modify to have the place rotate in a different direction.
+    Hour angle is `sidereal - rightAscension`, so if the sidereal angle _decreases_ as the day goes
+    on, the hour angle decreases too and the entire sky — stars, constellations, deep-sky objects,
+    grid lines — rotates **west to east**. That is the sign to check first when the whole sky is
+    wrong at once; a world that genuinely wants to turn the other way inverts it here and nowhere
+    else.
 
 The seasonal term also means the sidereal day is slightly _shorter_ than the solar day. Solar right
 ascension gains a full extra turn over one world year. Its instantaneous rate varies slightly with
@@ -303,14 +307,14 @@ equinoxDay     = daysPerYear * SpringEquinoxYearFraction
     `CelestialMathTests.Betelgeuse_Comes_To_The_Meridian_At_Midnight_In_December` pins it.
 
 !!! warning "A day of the year is not a season"
-`daysPerYear` is **world configuration**. Vintage Story's default is 108, but a world can be
-created with 12 or 360. An event pinned to "day 224" therefore lands in a different season on
-every world, while 140° of solar longitude is late summer on all of them.
+    `daysPerYear` is **world configuration**. Vintage Story's default is 108, but a world can be
+    created with 12 or 360. An event pinned to "day 224" therefore lands in a different season on
+    every world, while 140° of solar longitude is late summer on all of them.
 
-    `MeteorShowerActivityTests` pins it across 12-, 108- and 360-day
-    years, and those tests fail loudly if day-of-year anchoring is reintroduced.
-
-Since testing is not automated yet, this kinda error can lead correct on the world you happened to test and wrong everywhere else. Specially if you test in a flat world.
+    `MeteorShowerActivityTests` pins it across 12-, 108- and 360-day years, and those tests fail
+    loudly if day-of-year anchoring is reintroduced. Nothing in the game catches it: an event
+    anchored to a day reads correctly on whichever world you happened to test and wrong on every
+    other one.
 
 ### Measuring distance from an anchor
 
@@ -387,8 +391,8 @@ a point source and survives a bright sky; surface brightness is the first thing 
 away. So the band is gone below `TwilightFloor` darkness, and a full moon removes most of what is
 left. A Milky Way that ignored either would read as a decal painted on the sky.
 
-`MilkyWayBrightness` in `ModConfig/astraterra.json` scales the result, and zero switches the band off
-entirely.
+`MilkyWayBrightness` in `ModConfig/astraterra.json` scales the result, clamped to 0–2, and zero
+switches the band off entirely.
 
 ## The Sun And The Moon
 
@@ -399,7 +403,7 @@ moon is read at the observer's own instant rather than the world's wherever Astr
 see [the moon's picture](#the-moons-picture-and-only-its-picture) for why longitude cannot reach it
 any other way.
 
-When `longitudeAwareSun` is enabled, AstraTerra wraps the solar delegate that Vintage Story's
+When `LongitudeAwareSun` is enabled, AstraTerra wraps the solar delegate that Vintage Story's
 survival mod installed. The wrapper changes only `dayRel`, by `longitude / 360` of one rotation, and
 then calls the captured delegate with the original position and year. The survival delegate therefore
 continues to own latitude, axial tilt and seasonal declination while local solar noon shifts with X.
@@ -409,10 +413,10 @@ a remote client's local copy cannot make its sun disagree with the server's dayl
 Both return a unit vector in the same world space described above, with `Y = sin(altitude)`.
 
 !!! warning "Vanilla's vector looks mirrored but is not"
-`GetSunPosition` builds Z as `sin(zenith) * cos(azimuth)` with no negation, which reads as if
-vanilla referenced its azimuth to `+Z` (south). It does not. Its zenith angle is
-`2pi - acos(sin(altitude))`, which lands in the fourth quadrant where **sine is negative**, and
-that factor supplies the minus sign. Expanded, vanilla returns exactly
+    `GetSunPosition` builds Z as `sin(zenith) * cos(azimuth)` with no negation, which reads as if
+    vanilla referenced its azimuth to `+Z` (south). It does not. Its zenith angle is
+    `2pi - acos(sin(altitude))`, which lands in the fourth quadrant where **sine is negative**, and
+    that factor supplies the minus sign. Expanded, vanilla returns exactly
 
     ```text
     X = cos(altitude) * sin(azimuth)
@@ -450,7 +454,7 @@ next frame rather than drifting away from it: `ObserverLongitude` asks the insta
 calendar is still holding AstraTerra's own wrapper, so losing it removes the longitude term from the
 whole sky at once. Passing both the shifted time and the original `posX` also means a
 third-party delegate that already applies longitude would apply it twice; such a mod should disable
-`longitudeAwareSun` on the server or coordinate delegate ownership explicitly.
+`LongitudeAwareSun` on the server or coordinate delegate ownership explicitly.
 
 The base survival delegate's seasonal declination is retained by the wrapper. The separate
 [solar-declination issue](https://github.com/lalmei/astraterra/issues/31) tracks what, if anything,
@@ -541,7 +545,7 @@ visible sun is not the longitude-aware one, and every reading collapses to the w
 time with it. The world's
 internal clock stays universal; `CelestialMath.GetUniversalSolarTimeHours` reads that clock and
 `CelestialMath.GetLocalSolarTimeHours` shifts it by `(longitude / 360) * hoursPerDay`. Which hour the
-character panel shows is configured separately via `displayedClockTime` in `astraterra.json`:
+character panel shows is configured separately via `DisplayedClockTime` in `astraterra.json`:
 `local` (the default), `universal`, or `zones`. Zoned time divides the circumference into one
 whole-clock-hour step per zone, so custom world-day lengths keep integer clock readings.
 
@@ -549,7 +553,7 @@ whole-clock-hour step per zone, so custom world-day lengths keep integer clock r
     AstraTerra installs its own `OnGetSolarSphericalCoords` wrapper that shifts the sun — and
     therefore daylight — with world X, chaining whatever delegate the survival mod installed rather
     than replacing it outright. The star field already shifted with longitude; the sun now matches.
-    Set `longitudeAwareSun` to `false` in `astraterra.json` to keep vanilla's single time zone —
+    Set `LongitudeAwareSun` to `false` in `astraterra.json` to keep vanilla's single time zone —
     the star field, the instruments and the displayed clock all fall back with the sun, because
     every one of them reads its longitude through `ObserverLongitude.ForObserver`, which answers
     zero unless AstraTerra's wrapper is the delegate the calendar is holding at that moment.
@@ -673,7 +677,7 @@ questions: the mean is what the pass costs, the peak is what the player felt.
 | Element rates match their semi-major axes     | `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law`                                                 |
 | Vanilla vectors need no rotation              | `SkyBodyModelTests.Recovers_The_Angles_Vintage_Story_Encoded`                                                |
 | The per-frame sky path allocates nothing       | `StarRenderModelTests.ProjectVisibleStars_Into_A_Reused_Buffer_Allocates_Nothing_Per_Frame`                  |
-| Constellation marks are one batched draw      | `ConstellationDotMeshBuilderTests`, `BootstrapSmokeTests.Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars` |
+| Constellation marks are one batched draw      | `ConstellationLineMeshBuilderTests`, `BootstrapSmokeTests.Telescope_Deep_Sky_Plates_Render_In_Front_Of_Catalog_Stars` |
 | Stars batch by sprite, not one draw each      | `SkyBillboardMeshBuilderTests`, `BootstrapSmokeTests.Stars_Are_Drawn_As_Batches_Rather_Than_One_Quad_Each`   |
 | A journal book can be carried in the off-hand | `BookOffhandStorageTests`                                                                                    |
 | Draw loops do not allocate a tint per body    | `BootstrapSmokeTests.The_Star_And_Planet_Draw_Loops_Do_Not_Allocate_A_Tint_Per_Body`                         |

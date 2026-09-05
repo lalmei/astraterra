@@ -1,23 +1,40 @@
 # AstraTerra Command Reference
 
-AstraTerra uses the `.stars` command group.
+AstraTerra registers a `stars` command group on both sides, and Vintage Story's own prefixes decide
+which one you get.
+
+| Prefix | Runs on | Commands |
+| --- | --- | --- |
+| `.stars` | your own client | everything about the book in your hand, the sky you are looking at, and the client's own settings |
+| `/stars` | the server | `debug`, `goto-lat`, `give-catalog`, `give-zodiac`, `give-wanderers` |
+
+`.stars debug` and `/stars debug` both exist and report the same kind of thing from their own side.
+Everything else appears under one prefix only, so a command that answers `no such command` is
+usually being typed with the wrong one.
+
+The server commands need privileges: `chat` for the group, `tp` for `goto-lat`, and `give` for the
+three book commands.
 
 ## Player Commands
 
 ```text
 .stars list
-.stars info [id|name|selected]
+.stars info <id|name|selected>
 .stars name <id|selected> <name>
 .stars select <id|name>
 .stars delete <id|selected>
 ```
+
+All of these read and write the constellation book in your **left hand**; without one they say so.
+Mutating commands also need ink and quill in your inventory.
 
 ```text
 .stars sightings
 .stars classify <set|#entry> <star|wanderer|comet> [name]
 ```
 
-Use `.stars list` to see constellations in the book held in your left hand. Use `.stars info selected` after drawing or selecting a constellation to see its star count, segment count, best visibility window, season summary, and current state. Mutating commands require ink and quill in your inventory.
+`.stars info selected`, run after drawing or selecting a constellation, gives its star count, segment
+count, best visibility window, season summary, and current state.
 
 ## Sightings
 
@@ -116,26 +133,31 @@ server the sun is not a per-player choice.
 
 ```json
 {
-  "longitudeAwareSun": true,
-  "displayedClockTime": "local"
+  "LongitudeAwareSun": true,
+  "DisplayedClockTime": "local"
 }
 ```
 
-`longitudeAwareSun` decides whether world X acts as longitude at all. Left on, the sun, the daylight,
+`LongitudeAwareSun` decides whether world X acts as longitude at all. Left on, the sun, the daylight,
 the star field and every instrument shift east and west together, about one hour of sky per 8,300
 blocks. Set to `false`, the world keeps Vintage Story's single time zone and the whole sky falls back
 with it. The server's copy of this setting wins and is sent to every client.
 
-`displayedClockTime` decides which hour you are shown: `local` (continuous local solar time, the
+`DisplayedClockTime` decides which hour you are shown: `local` (continuous local solar time, the
 default), `universal` (the world's own clock), or `zones` (rounded to whole clock hours, so a world
 day divides into even time zones). The world's internal clock is universal either way — this changes
 the reading, not the world.
+
+Both keys take effect when the mod loads them, so change them with the game closed and restart. The
+mod rewrites the file on every start, which is how it fills in keys you have not set; a key it does
+not recognise is dropped when it does.
 
 `.stars debug` reports the latitude AstraTerra is using and how far the sky has turned, which already
 includes the longitude term.
 
 See [Longitude and the local hour](guide.md#longitude-and-the-local-hour) in the player guide for
-what this changes in play.
+what this changes in play, and the [Configuration Reference](configuration.md) for every other key
+in the file.
 
 ## The Solar System's Pictures
 
@@ -182,7 +204,7 @@ The choice takes effect at once and is saved as `MoonArt` in `ModConfig/astrater
 .stars comets
 .stars connect <hipA> <hipB>
 .stars debug
-.stars goto-lat <degrees>
+/stars goto-lat <degrees>
 .stars daylight-stars on
 .stars daylight-stars off
 .stars starfield astraterra
@@ -197,7 +219,7 @@ The choice takes effect at once and is saved as `MoonArt` in `ModConfig/astrater
 .stars render stars|constellations|deepsky|meteors|comets|milkyway|all off
 ```
 
-`connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics. `goto-lat` helps test different sky latitudes in the current world. `daylight-stars` is intended for testing and should be turned off for normal play.
+`connect` is a recovery path for creating a segment from known HIP star IDs. `debug` shows latitude and sky-orientation diagnostics, including the sky-exposure verdict behind a sky that will not draw. `goto-lat` is a server command (`tp` privilege) that teleports you to a Z giving that latitude, for testing different skies in one world. `daylight-stars` is intended for testing and should be turned off for normal play.
 
 `starfield` changes the active sky immediately and saves the choice in `ModConfig/astraterra.json`:
 
