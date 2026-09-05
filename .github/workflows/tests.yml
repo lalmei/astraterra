@@ -1,0 +1,84 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  VINTAGE_STORY_VERSION: 1.22.2
+  VINTAGE_STORY_ARCHIVE_URL: https://cdn.vintagestory.at/gamefiles/stable/vs_client_linux-x64_1.22.2.tar.gz
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test on Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Cache Vintage Story client
+        uses: actions/cache@v6
+        with:
+          path: .vintagestory
+          key: vintagestory-${{ runner.os }}-${{ env.VINTAGE_STORY_VERSION }}
+
+      # The mod and its tests compile against the shipped game assemblies, so CI needs
+      # the Linux client next to the checkout. Only the DLLs are used; nothing is run.
+      - name: Install Vintage Story references
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f 2>/dev/null | grep -q .; then
+            mkdir -p "$GITHUB_WORKSPACE/.vintagestory" "$RUNNER_TEMP/vintagestory"
+            curl -fL "$VINTAGE_STORY_ARCHIVE_URL" -o "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz"
+            tar -xzf "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz" -C "$GITHUB_WORKSPACE/.vintagestory"
+          fi
+
+          vintagestory_api="$(find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | head -n 1)"
+          if [[ -z "$vintagestory_api" ]]; then
+            echo "Could not find VintagestoryAPI.dll after extracting Vintage Story." >&2
+            exit 1
+          fi
+
+          echo "VINTAGE_STORY=$(dirname "$vintagestory_api")" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        run: make test TEST_ARGS="--logger trx --results-directory TestResults"
+
+      - name: Build mod
+        run: make build
+
+      - name: Package mod
+        run: make package
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-linux
+          path: TestResults/*.trx
+          if-no-files-found: warn

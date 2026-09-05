@@ -6,6 +6,7 @@ DOTNET_ENV := PATH="$(DOTNET_ROOT):$$PATH" DOTNET_CLI_HOME="$(DOTNET_CLI_HOME)"
 DOTNET := $(DOTNET_ENV) dotnet
 
 CONFIGURATION ?= Release
+TEST_ARGS ?=
 TARGET_FRAMEWORK := net10.0
 GAME_APP ?= /Applications/Vintage Story.app
 MODS_DIR ?= $(HOME)/Library/Application Support/VintagestoryData/Mods
@@ -35,8 +36,11 @@ help:
 	@printf "  make bump-minor-version  Increment minor version, reset patch to 0, build, and deploy\n"
 	@printf "  make bump-patch-version  Increment patch version, build, and deploy\n"
 
+# Portable shell: these run on Linux CI as well as locally, and use no zsh syntax.
+test build package: SHELL := /bin/sh
+
 test:
-	@env $(DOTNET_ENV) dotnet test tests/AstraTerra.Tests/AstraTerra.Tests.csproj -c $(CONFIGURATION) -v minimal
+	@env $(DOTNET_ENV) dotnet test tests/AstraTerra.Tests/AstraTerra.Tests.csproj -c $(CONFIGURATION) -v minimal $(TEST_ARGS)
 
 build:
 	@env $(DOTNET_ENV) dotnet build src/AstraTerra/AstraTerra.csproj -c $(CONFIGURATION) -v minimal

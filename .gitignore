@@ -2,6 +2,7 @@
 .dotnet-home/
 bin/
 obj/
+.vintagestory/
 TestResults/
 dist/
 site/
