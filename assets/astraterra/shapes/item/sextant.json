@@ -1,429 +1,10 @@
 {
   "editor": {
+    "editorVersion": "VSMC2v0.5.0",
     "allAngles": true,
     "backdrops": [],
     "attachments": []
   },
-  "textures": {
-    "linen": "game:block/linen",
-    "rusty-iron": "game:block/metal/ingot/copper",
-    "charred": "game:block/wood/debarked/birch"
-  },
-  "elements": [
-    {
-      "name": "origin",
-      "from":[8.0,0.0,8.0],
-      "to":[8.0,0.0,8.0],
-      "faces": {},
-      "rotationOrigin":[8.0,0.0,8.0],
-      "scaleX": 1.0,
-      "scaleY": 1.0,
-      "scaleZ": 1.0,
-      "children": [
-        {
-          "name": "sextant-mid",
-          "from":[2.3825433850288391,8.1797895431518555,-0.52597653865814209],
-          "to":[2.782543385028839,8.4797895431518562,3.4740234613418579],
-          "faces": {
-            "east": {
-              "texture": "#rusty-iron",
-              "uv":[4.0,5.5,8.0,6.0]
-            },
-            "west": {
-              "texture": "#rusty-iron",
-              "uv":[1.5,0.0,5.5,0.5]
-            },
-            "up": {
-              "texture": "#rusty-iron",
-              "uv":[5.5,8.5,6.0,12.5]
-            },
-            "down": {
-              "texture": "#rusty-iron",
-              "uv":[0.0,0.0,0.5,4.0],
-              "windMode": [
-                -1,
-                -1,
-                -1,
-                -1
-              ]
-            }
-          },
-          "rotationOrigin":[2.5825433850288393,8.1797895431518555,-0.52597653865814209],
-          "rotationX": 81.0,
-          "rotationY": -15.0,
-          "scaleX": 1.0,
-          "scaleY": 1.0,
-          "scaleZ": 1.0,
-          "children": [
-            {
-              "name": "sextant-circle",
-              "from":[-0.3,0.2,-0.5],
-              "to":[0.7,0.7,0.5],
-              "faces": {
-                "north": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,14.5,1.0,15.0]
-                },
-                "east": {
-                  "texture": "#rusty-iron",
-                  "uv":[11.5,10.0,12.5,10.5]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,12.0,1.0,12.5]
-                },
-                "west": {
-                  "texture": "#rusty-iron",
-                  "uv":[2.5,11.5,3.5,12.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[6.5,3.0,7.5,4.0]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[3.5,3.5,4.5,4.5]
-                }
-              },
-              "rotationOrigin":[0.2,0.2,0.0],
-              "rotationY": -45.0,
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-w",
-              "from":[0.0,0.1,0.0],
-              "to":[0.4,0.4,5.0],
-              "faces": {
-                "east": {
-                  "texture": "#rusty-iron",
-                  "uv":[1.0,5.5,6.0,6.0]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[11.5,9.0,12.0,9.5]
-                },
-                "west": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,5.5,5.0,6.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[2.0,0.0,2.5,5.0]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[7.0,0.0,7.5,5.0]
-                }
-              },
-              "rotationOrigin":[0.2,0.1,0.0],
-              "rotationY": -45.0,
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "children": [
-                {
-                  "name": "sextant-dial1",
-                  "from":[-0.6,-0.1,0.8],
-                  "to":[0.0,0.5,1.0],
-                  "faces": {
-                    "north": {
-                      "texture": "#rusty-iron",
-                      "uv":[0.5,10.0,1.0,10.5]
-                    },
-                    "east": {
-                      "texture": "#rusty-iron",
-                      "uv":[1.0,13.5,1.5,14.0]
-                    },
-                    "south": {
-                      "texture": "#rusty-iron",
-                      "uv":[8.0,4.5,8.5,5.0]
-                    },
-                    "west": {
-                      "texture": "#rusty-iron",
-                      "uv":[15.0,0.0,15.5,0.5]
-                    },
-                    "up": {
-                      "texture": "#rusty-iron",
-                      "uv":[1.0,2.0,1.5,2.5]
-                    },
-                    "down": {
-                      "texture": "#rusty-iron",
-                      "uv":[12.0,2.0,12.5,2.5]
-                    }
-                  },
-                  "rotationOrigin":[0.0,0.2,0.8],
-                  "scaleX": 1.0,
-                  "scaleY": 1.0,
-                  "scaleZ": 1.0,
-                  "uv":[0.0,0.0]
-                },
-                {
-                  "name": "sextant-dial2",
-                  "from":[-0.6,-0.1,2.5],
-                  "to":[0.0,0.5,2.7],
-                  "faces": {
-                    "north": {
-                      "texture": "#rusty-iron",
-                      "uv":[3.5,4.5,4.0,5.0]
-                    },
-                    "east": {
-                      "texture": "#rusty-iron",
-                      "uv":[12.5,4.5,13.0,5.0]
-                    },
-                    "south": {
-                      "texture": "#rusty-iron",
-                      "uv":[1.5,14.5,2.0,15.0]
-                    },
-                    "west": {
-                      "texture": "#rusty-iron",
-                      "uv":[0.5,5.5,1.0,6.0]
-                    },
-                    "up": {
-                      "texture": "#rusty-iron",
-                      "uv":[3.0,7.5,3.5,8.0]
-                    },
-                    "down": {
-                      "texture": "#rusty-iron",
-                      "uv":[10.0,3.0,10.5,3.5]
-                    }
-                  },
-                  "rotationOrigin":[0.0,0.2,2.5],
-                  "scaleX": 1.0,
-                  "scaleY": 1.0,
-                  "scaleZ": 1.0,
-                  "uv":[0.0,0.0]
-                },
-                {
-                  "name": "sextant-dial3",
-                  "from":[-0.6,-0.1,4.0],
-                  "to":[0.0,0.5,4.2],
-                  "faces": {
-                    "north": {
-                      "texture": "#rusty-iron",
-                      "uv":[1.0,10.0,1.5,10.5]
-                    },
-                    "east": {
-                      "texture": "#rusty-iron",
-                      "uv":[9.0,4.5,9.5,5.0]
-                    },
-                    "south": {
-                      "texture": "#rusty-iron",
-                      "uv":[2.5,4.5,3.0,5.0]
-                    },
-                    "west": {
-                      "texture": "#rusty-iron",
-                      "uv":[10.5,7.5,11.0,8.0]
-                    },
-                    "up": {
-                      "texture": "#rusty-iron",
-                      "uv":[3.5,4.5,4.0,5.0]
-                    },
-                    "down": {
-                      "texture": "#rusty-iron",
-                      "uv":[14.0,8.0,14.5,8.5]
-                    }
-                  },
-                  "rotationOrigin":[0.0,0.2,4.0],
-                  "scaleX": 1.0,
-                  "scaleY": 1.0,
-                  "scaleZ": 1.0,
-                  "uv":[0.0,0.0]
-                }
-              ],
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-e",
-              "from":[0.0,0.1,0.0],
-              "to":[0.4,0.4,5.0],
-              "faces": {
-                "east": {
-                  "texture": "#rusty-iron",
-                  "uv":[8.5,14.0,13.5,14.5]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.5,7.0,1.0,7.5]
-                },
-                "west": {
-                  "texture": "#rusty-iron",
-                  "uv":[4.0,4.5,9.0,5.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[10.0,7.5,10.5,12.5]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[6.5,2.5,7.0,7.5]
-                }
-              },
-              "rotationOrigin":[0.2,0.1,0.0],
-              "rotationY": 45.0,
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-s",
-              "from":[-2.8,0.2,2.8],
-              "to":[3.2,0.4,3.2],
-              "faces": {
-                "north": {
-                  "texture": "#rusty-iron",
-                  "uv":[9.5,8.0,15.5,8.5]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[9.5,0.0,15.5,0.5]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[3.0,15.0,9.0,15.5]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,0.0,6.0,0.5],
-                  "windMode": [
-                    -1,
-                    -1,
-                    -1,
-                    -1
-                  ]
-                }
-              },
-              "rotationOrigin":[0.2,0.2,3.0],
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-s2",
-              "from":[-1.8,0.2,1.8],
-              "to":[2.2,0.4,2.2],
-              "faces": {
-                "north": {
-                  "texture": "#rusty-iron",
-                  "uv":[10.5,8.5,14.5,9.0]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[5.0,11.5,9.0,12.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[2.0,14.0,6.0,14.5]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[4.5,1.0,8.5,1.5]
-                }
-              },
-              "rotationOrigin":[0.2,0.2,2.0],
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-telescope",
-              "from":[0.2,0.1,0.9],
-              "to":[2.2,0.7,1.5],
-              "faces": {
-                "north": {
-                  "texture": "#rusty-iron",
-                  "uv":[7.0,3.0,9.0,3.5]
-                },
-                "east": {
-                  "texture": "#rusty-iron",
-                  "uv":[5.5,3.0,6.0,3.5]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[5.5,0.5,7.5,1.0]
-                },
-                "west": {
-                  "texture": "#rusty-iron",
-                  "uv":[9.0,5.5,9.5,6.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[4.0,12.5,6.0,13.0]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[2.5,1.5,4.5,2.0]
-                }
-              },
-              "rotationOrigin":[0.2,0.4,1.2],
-              "rotationX": 45.0,
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            },
-            {
-              "name": "sextant-circle2",
-              "from":[-0.3,0.1,3.5],
-              "to":[0.7,0.6,4.5],
-              "faces": {
-                "north": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,14.5,1.0,15.0]
-                },
-                "east": {
-                  "texture": "#rusty-iron",
-                  "uv":[11.5,10.0,12.5,10.5]
-                },
-                "south": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,12.0,1.0,12.5]
-                },
-                "west": {
-                  "texture": "#rusty-iron",
-                  "uv":[2.5,11.5,3.5,12.0]
-                },
-                "up": {
-                  "texture": "#rusty-iron",
-                  "uv":[6.5,3.0,7.5,4.0],
-                  "windMode": [
-                    -1,
-                    -1,
-                    -1,
-                    -1
-                  ]
-                },
-                "down": {
-                  "texture": "#rusty-iron",
-                  "uv":[0.0,0.0,1.0,1.0],
-                  "windMode": [
-                    -1,
-                    -1,
-                    -1,
-                    -1
-                  ]
-                }
-              },
-              "rotationOrigin":[0.2,0.1,4.0],
-              "rotationY": 45.0,
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "uv":[0.0,0.0]
-            }
-          ],
-          "uv":[0.0,0.0]
-        }
-      ],
-      "uv":[0.0,0.0]
-    }
-  ],
-  "animations": [],
   "textureWidth": 16,
   "textureHeight": 16,
   "textureSizes": {
@@ -439,5 +20,320 @@
       16,
       16
     ]
-  }
+  },
+  "textures": {
+    "linen": "game:block/linen",
+    "rusty-iron": "game:block/metal/ingot/copper",
+    "charred": "game:block/wood/debarked/birch"
+  },
+  "elements": [
+    {
+      "name": "origin",
+      "from":[8.0,-3.3949999809265137,7.005000114440918],
+      "to":[8.0,-3.3949999809265137,7.005000114440918],
+      "faces": {
+        "north":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+        "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+        "south":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+        "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+        "up":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+        "down":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false}
+      },
+      "rotationOrigin":[8.0,-1.3949999809265137,7.005000114440918],
+      "rotationX": 6.0,
+      "rotationZ": 15.0,
+      "uv":[0.0,0.0],
+      "children": [
+        {
+          "name": "sextant-mid",
+          "from":[2.3825433850288391,8.1797895431518555,-0.52597653865814209],
+          "to":[2.782543385028839,8.4797895431518562,3.4740234613418579],
+          "faces": {
+            "north":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "east":{"texture": "#rusty-iron", "uv": [4.0, 5.5, 8.0, 6.0]},
+            "south":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "west":{"texture": "#rusty-iron", "uv": [1.5, 0.0, 5.5, 0.5]},
+            "up":{"texture": "#rusty-iron", "uv": [5.5, 8.5, 6.0, 12.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 0.5, 4.0], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[2.5825433850288393,8.1797895431518555,-0.52597653865814209],
+          "rotationX": 81.0,
+          "rotationY": -15.0,
+          "uv":[0.0,0.0],
+          "children": [
+            {
+              "name": "sextant-circle",
+              "from":[-0.3,0.2,-0.5],
+              "to":[0.7,0.7,0.5],
+              "faces": {
+                "north":{"texture": "#rusty-iron", "uv": [0.0, 14.5, 1.0, 15.0]},
+                "east":{"texture": "#rusty-iron", "uv": [11.5, 10.0, 12.5, 10.5]},
+                "south":{"texture": "#rusty-iron", "uv": [0.0, 12.0, 1.0, 12.5]},
+                "west":{"texture": "#rusty-iron", "uv": [2.5, 11.5, 3.5, 12.0]},
+                "up":{"texture": "#rusty-iron", "uv": [6.5, 3.0, 7.5, 4.0]},
+                "down":{"texture": "#rusty-iron", "uv": [3.5, 3.5, 4.5, 4.5]}
+              },
+              "rotationOrigin":[0.2,0.2,0.0],
+              "rotationY": -45.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "sextant-w",
+              "from":[0.0,0.1,0.0],
+              "to":[0.4,0.4,5.0],
+              "faces": {
+                "north":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "east":{"texture": "#rusty-iron", "uv": [1.0, 5.5, 6.0, 6.0]},
+                "south":{"texture": "#rusty-iron", "uv": [11.5, 9.0, 12.0, 9.5]},
+                "west":{"texture": "#rusty-iron", "uv": [0.0, 5.5, 5.0, 6.0]},
+                "up":{"texture": "#rusty-iron", "uv": [2.0, 0.0, 2.5, 5.0]},
+                "down":{"texture": "#rusty-iron", "uv": [7.0, 0.0, 7.5, 5.0]}
+              },
+              "rotationOrigin":[0.2,0.1,0.0],
+              "rotationY": -45.0,
+              "uv":[0.0,0.0],
+              "children": [
+                {
+                  "name": "sextant-dial1",
+                  "from":[-0.6,-0.1,0.8],
+                  "to":[0.0,0.5,1.0],
+                  "faces": {
+                    "north":{"texture": "#rusty-iron", "uv": [0.5, 10.0, 1.0, 10.5]},
+                    "east":{"texture": "#rusty-iron", "uv": [1.0, 13.5, 1.5, 14.0]},
+                    "south":{"texture": "#rusty-iron", "uv": [8.0, 4.5, 8.5, 5.0]},
+                    "west":{"texture": "#rusty-iron", "uv": [15.0, 0.0, 15.5, 0.5]},
+                    "up":{"texture": "#rusty-iron", "uv": [1.0, 2.0, 1.5, 2.5]},
+                    "down":{"texture": "#rusty-iron", "uv": [12.0, 2.0, 12.5, 2.5]}
+                  },
+                  "rotationOrigin":[0.0,0.2,0.8],
+                  "uv":[0.0,0.0]
+                },
+                {
+                  "name": "sextant-dial2",
+                  "from":[-0.6,-0.1,2.5],
+                  "to":[0.0,0.5,2.7],
+                  "faces": {
+                    "north":{"texture": "#rusty-iron", "uv": [3.5, 4.5, 4.0, 5.0]},
+                    "east":{"texture": "#rusty-iron", "uv": [12.5, 4.5, 13.0, 5.0]},
+                    "south":{"texture": "#rusty-iron", "uv": [1.5, 14.5, 2.0, 15.0]},
+                    "west":{"texture": "#rusty-iron", "uv": [0.5, 5.5, 1.0, 6.0]},
+                    "up":{"texture": "#rusty-iron", "uv": [3.0, 7.5, 3.5, 8.0]},
+                    "down":{"texture": "#rusty-iron", "uv": [10.0, 3.0, 10.5, 3.5]}
+                  },
+                  "rotationOrigin":[0.0,0.2,2.5],
+                  "uv":[0.0,0.0]
+                },
+                {
+                  "name": "sextant-dial3",
+                  "from":[-0.6,-0.1,4.0],
+                  "to":[0.0,0.5,4.2],
+                  "faces": {
+                    "north":{"texture": "#rusty-iron", "uv": [1.0, 10.0, 1.5, 10.5]},
+                    "east":{"texture": "#rusty-iron", "uv": [9.0, 4.5, 9.5, 5.0]},
+                    "south":{"texture": "#rusty-iron", "uv": [2.5, 4.5, 3.0, 5.0]},
+                    "west":{"texture": "#rusty-iron", "uv": [10.5, 7.5, 11.0, 8.0]},
+                    "up":{"texture": "#rusty-iron", "uv": [3.5, 4.5, 4.0, 5.0]},
+                    "down":{"texture": "#rusty-iron", "uv": [14.0, 8.0, 14.5, 8.5]}
+                  },
+                  "rotationOrigin":[0.0,0.2,4.0],
+                  "uv":[0.0,0.0]
+                }
+              ]
+            },
+            {
+              "name": "sextant-e",
+              "from":[0.0,0.1,0.0],
+              "to":[0.4,0.4,5.0],
+              "faces": {
+                "north":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "east":{"texture": "#rusty-iron", "uv": [8.5, 14.0, 13.5, 14.5]},
+                "south":{"texture": "#rusty-iron", "uv": [0.5, 7.0, 1.0, 7.5]},
+                "west":{"texture": "#rusty-iron", "uv": [4.0, 4.5, 9.0, 5.0]},
+                "up":{"texture": "#rusty-iron", "uv": [10.0, 7.5, 10.5, 12.5]},
+                "down":{"texture": "#rusty-iron", "uv": [6.5, 2.5, 7.0, 7.5]}
+              },
+              "rotationOrigin":[0.2,0.1,0.0],
+              "rotationY": 45.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "sextant-s",
+              "from":[-2.8,0.2,2.8],
+              "to":[3.2,0.4,3.2],
+              "faces": {
+                "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 15.5, 8.5]},
+                "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 15.5, 0.5]},
+                "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 9.0, 15.5]},
+                "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 6.0, 0.5], "windMode": [-1, -1, -1, -1]}
+              },
+              "rotationOrigin":[0.2,0.2,3.0],
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "sextant-s2",
+              "from":[-1.8,0.2,1.8],
+              "to":[2.2,0.4,2.2],
+              "faces": {
+                "north":{"texture": "#rusty-iron", "uv": [10.5, 8.5, 14.5, 9.0]},
+                "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "south":{"texture": "#rusty-iron", "uv": [5.0, 11.5, 9.0, 12.0]},
+                "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+                "up":{"texture": "#rusty-iron", "uv": [2.0, 14.0, 6.0, 14.5]},
+                "down":{"texture": "#rusty-iron", "uv": [4.5, 1.0, 8.5, 1.5]}
+              },
+              "rotationOrigin":[0.2,0.2,2.0],
+              "uv":[0.0,0.0],
+              "children": []
+            },
+            {
+              "name": "sextant-telescope",
+              "from":[0.2,0.1,0.9],
+              "to":[2.2,0.7,1.5],
+              "faces": {
+                "north":{"texture": "#rusty-iron", "uv": [7.0, 3.0, 9.0, 3.5]},
+                "east":{"texture": "#rusty-iron", "uv": [5.5, 3.0, 6.0, 3.5]},
+                "south":{"texture": "#rusty-iron", "uv": [5.5, 0.5, 7.5, 1.0]},
+                "west":{"texture": "#rusty-iron", "uv": [9.0, 5.5, 9.5, 6.0]},
+                "up":{"texture": "#rusty-iron", "uv": [4.0, 12.5, 6.0, 13.0]},
+                "down":{"texture": "#rusty-iron", "uv": [2.5, 1.5, 4.5, 2.0]}
+              },
+              "rotationOrigin":[0.2,0.4,1.2],
+              "rotationX": 45.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "sextant-circle2",
+              "from":[-0.3,0.1,3.5],
+              "to":[0.7,0.6,4.5],
+              "faces": {
+                "north":{"texture": "#rusty-iron", "uv": [0.0, 14.5, 1.0, 15.0]},
+                "east":{"texture": "#rusty-iron", "uv": [11.5, 10.0, 12.5, 10.5]},
+                "south":{"texture": "#rusty-iron", "uv": [0.0, 12.0, 1.0, 12.5]},
+                "west":{"texture": "#rusty-iron", "uv": [2.5, 11.5, 3.5, 12.0]},
+                "up":{"texture": "#rusty-iron", "uv": [6.5, 3.0, 7.5, 4.0], "windMode": [-1, -1, -1, -1]},
+                "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 1.0, 1.0], "windMode": [-1, -1, -1, -1]}
+              },
+              "rotationOrigin":[0.2,0.1,4.0],
+              "rotationY": 45.0,
+              "uv":[0.0,0.0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sextant_curve",
+      "from":[11.118717193603516,8.4801301956176758,9.6867599487304688],
+      "to":[11.118717193603516,8.4801301956176758,9.6867599487304688],
+      "faces": {
+        "north":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]},
+        "east":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]},
+        "south":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]},
+        "west":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]},
+        "up":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]},
+        "down":{"texture": "#linen", "uv": [0.0, 0.0, 0.5, 0.5]}
+      },
+      "rotationOrigin":[11.118718147277832,8.48012924194336,9.6867599487304688],
+      "rotationX": 83.009963989257813,
+      "rotationY": 1.6991216966744105E-07,
+      "rotationZ": 3.2545521259307861,
+      "uv":[0.0,0.0],
+      "children": [
+        {
+          "name": "sextant-s (2) (3)",
+          "from":[0.0,0.0,-0.10000000149011612],
+          "to":[3.0,0.20000000298023224,0.29999999850988424],
+          "faces": {
+            "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 12.5, 8.5]},
+            "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 12.5, 0.5]},
+            "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 6.0, 15.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 3.0, 0.5], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[2.9999976191498376,-7.3638249631358121E-07,0.0999979683579113],
+          "rotationX": -1.0145564374397509E-05,
+          "rotationY": 4.1776615944399964E-07,
+          "rotationZ": -6.3929746829671785E-07,
+          "uv":[0.0,0.0],
+          "children": []
+        },
+        {
+          "name": "sextant-s (2) (4) (2)",
+          "from":[-1.0369999408721924,-0.014677922241389751,0.67452108860015869],
+          "to":[0.063000082969665527,0.18532207775860954,1.074521088600159],
+          "faces": {
+            "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 10.5, 8.5]},
+            "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 10.5, 0.5]},
+            "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 4.0, 15.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 1.0, 0.5], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[1.9629975557327271,-0.014677540399134159,0.874034583568573],
+          "rotationX": -1.3471165895462036,
+          "rotationY": -22.461725234985352,
+          "rotationZ": -0.26750090718269348,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "sextant-s (2) (4)",
+          "from":[2.334568977355957,0.060578007251024246,-1.1195597648620605],
+          "to":[3.9345690011978149,0.26057800725102354,-0.71955976486206019],
+          "faces": {
+            "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 11.0, 8.5]},
+            "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 11.0, 0.5]},
+            "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 4.5, 15.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 1.5, 0.5], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[5.3345675468444824,0.060577478259801865,-0.91955894231796265],
+          "rotationX": 1.3470964431762695,
+          "rotationY": 22.461725234985352,
+          "rotationZ": -0.26750087738037109,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "sextant-s (2)",
+          "from":[3.11378812789917,0.14379999041557312,-2.6301639080047607],
+          "to":[3.61378812789917,0.34379999041557241,-2.2301639080047604],
+          "faces": {
+            "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 10.0, 8.5]},
+            "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 10.0, 0.5]},
+            "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 3.5, 15.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 0.5, 0.5], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[6.1137843132019043,0.14380089938640594,-2.4301633834838867],
+          "rotationX": 3.2151186466217041,
+          "rotationY": 44.605003356933594,
+          "rotationZ": -1.3190724849700928,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "sextant-s (2) (5)",
+          "from":[-1.9163389205932617,-0.24395272135734558,1.3173122406005859],
+          "to":[-1.4163389205932617,-0.043952721357346292,1.7173122406005863],
+          "faces": {
+            "north":{"texture": "#rusty-iron", "uv": [9.5, 8.0, 10.0, 8.5]},
+            "east":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "south":{"texture": "#rusty-iron", "uv": [9.5, 0.0, 10.0, 0.5]},
+            "west":{"texture": "#", "uv": [0.0, 0.0, 1.0, 1.0], "enabled": false, "autoUv": false, "snapUV": false},
+            "up":{"texture": "#rusty-iron", "uv": [3.0, 15.0, 3.5, 15.5]},
+            "down":{"texture": "#rusty-iron", "uv": [0.0, 0.0, 0.5, 0.5], "windMode": [-1, -1, -1, -1]}
+          },
+          "rotationOrigin":[1.0836580991744995,-0.24395178258419037,1.5173121690750122],
+          "rotationX": 3.2151172161102295,
+          "rotationY": -44.600002288818359,
+          "rotationZ": -1.3190722465515137,
+          "uv":[0.0,0.0]
+        }
+      ]
+    }
+  ],
+  "animations": []
 }
