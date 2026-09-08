@@ -497,8 +497,14 @@ public sealed class StarsClientCommands
         }
     }
 
+    /// <summary>
+    /// Reads one parsed argument. Counts the parsers rather than asking for
+    /// <see cref="TextCommandCallingArgs.ArgCount"/>: an "all the rest" parser reports its own
+    /// count as -1, which drags that total below zero and would hide every argument on any
+    /// subcommand that ends in a free-text name.
+    /// </summary>
     private static string GetStringArg(TextCommandCallingArgs args, int index)
     {
-        return index < args.ArgCount ? args[index]?.ToString() ?? string.Empty : string.Empty;
+        return index < args.Parsers.Count ? args[index]?.ToString() ?? string.Empty : string.Empty;
     }
 }
