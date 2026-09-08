@@ -17,6 +17,7 @@ public sealed class StarsCommandService
     private readonly Func<double>? siderealAngleProvider;
     private readonly Func<int>? dayOfYearProvider;
     private readonly Func<int>? daysPerYearProvider;
+    private readonly string? drawnBy;
     private int? selectedId;
 
     public StarsCommandService(
@@ -31,7 +32,8 @@ public sealed class StarsCommandService
         Func<double>? siderealAngleProvider = null,
         Func<int>? dayOfYearProvider = null,
         int daysPerYear = 365,
-        Func<int>? daysPerYearProvider = null)
+        Func<int>? daysPerYearProvider = null,
+        string? drawnBy = null)
     {
         this.journal = journal;
         this.onChanged = onChanged;
@@ -45,6 +47,7 @@ public sealed class StarsCommandService
         this.dayOfYearProvider = dayOfYearProvider;
         this.daysPerYear = daysPerYear;
         this.daysPerYearProvider = daysPerYearProvider;
+        this.drawnBy = drawnBy;
     }
 
     public string List()
@@ -78,6 +81,11 @@ public sealed class StarsCommandService
             parts.Add($"window={season.MonthWindow}");
             parts.Add($"season={season.SeasonSummary}");
             parts.Add($"state={season.State}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(record.DiscoveredBy))
+        {
+            parts.Add($"drawn by {record.DiscoveredBy.Trim()}");
         }
 
         return string.Join("; ", parts);
@@ -178,10 +186,10 @@ public sealed class StarsCommandService
             return $"Authored constellation {displayName} needs at least two available stars.";
         }
 
-        var record = journal.AddEdgeAndMerge(edges[0].A, edges[0].B);
+        var record = journal.AddEdgeAndMerge(edges[0].A, edges[0].B, drawnBy);
         for (var i = 1; i < edges.Count; i++)
         {
-            record = journal.AddEdgeAndMerge(edges[i].A, edges[i].B);
+            record = journal.AddEdgeAndMerge(edges[i].A, edges[i].B, drawnBy);
         }
 
         record = record with { Name = displayName };

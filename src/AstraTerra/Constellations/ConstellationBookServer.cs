@@ -94,7 +94,7 @@ public sealed class ConstellationBookServer
 
         try
         {
-            var result = ApplyMutation(journal, packet);
+            var result = ApplyMutation(journal, packet, player);
             if (!result.Success)
             {
                 return Error(result.Message);
@@ -142,6 +142,20 @@ public sealed class ConstellationBookServer
         try
         {
             var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
+            if (packet.Action == ConstellationBookMutationActions.CreditPlanet)
+            {
+                var credited = journal.Credit(packet.PlanetId, packet.Name);
+                ConstellationBookService.WritePlanetJournal(stack, journal);
+                slot.MarkDirty();
+                return new ConstellationBookResponsePacket
+                {
+                    Success = true,
+                    Message = string.IsNullOrWhiteSpace(credited.DiscoveredBy)
+                        ? $"{journal.DisplayName(packet.PlanetId)} is no longer credited to anybody."
+                        : $"{journal.DisplayName(packet.PlanetId)} was found by {credited.DiscoveredBy}."
+                };
+            }
+
             var record = journal.Rename(packet.PlanetId, packet.Name);
 
             ConstellationBookService.WritePlanetJournal(stack, journal);
@@ -285,26 +299,35 @@ public sealed class ConstellationBookServer
         }
     }
 
-    private MutationResult ApplyMutation(ConstellationJournal journal, ConstellationBookMutationPacket packet)
+    private MutationResult ApplyMutation(
+        ConstellationJournal journal,
+        ConstellationBookMutationPacket packet,
+        IServerPlayer player)
     {
         switch (packet.Action)
         {
             case ConstellationBookMutationActions.AddEdge:
-                return AddEdge(journal, packet.StartHip, packet.EndHip);
+                return AddEdge(journal, packet.StartHip, packet.EndHip, player.PlayerName);
             case ConstellationBookMutationActions.Rename:
                 return Rename(journal, packet.ConstellationId, packet.Name);
+            case ConstellationBookMutationActions.CreditConstellation:
+                return Credit(journal, packet.ConstellationId, packet.Name);
             case ConstellationBookMutationActions.RemoveEdge:
                 return RemoveEdge(journal, packet.ConstellationId, packet.StartHip, packet.EndHip);
             case ConstellationBookMutationActions.Delete:
                 return Delete(journal, packet.ConstellationId);
             case ConstellationBookMutationActions.Build:
-                return Build(journal, packet.Target);
+                return Build(journal, packet.Target, player.PlayerName);
             default:
                 return MutationResult.Failure("Unknown constellation book action.");
         }
     }
 
-    private static MutationResult AddEdge(ConstellationJournal journal, int startHip, int endHip)
+    private static MutationResult AddEdge(
+        ConstellationJournal journal,
+        int startHip,
+        int endHip,
+        string? drawnBy)
     {
         if (startHip == endHip)
         {
@@ -313,7 +336,7 @@ public sealed class ConstellationBookServer
 
         var createsNewConstellation = !journal.Constellations.Any(record =>
             record.Edges.Any(edge => edge.A == startHip || edge.A == endHip || edge.B == startHip || edge.B == endHip));
-        var record = journal.AddEdgeAndMerge(startHip, endHip);
+        var record = journal.AddEdgeAndMerge(startHip, endHip, drawnBy);
         return MutationResult.SuccessResult(
             $"Connected stars {startHip} and {endHip} in constellation #{record.Id}.",
             createsNewConstellation ? record.Id : 0);
@@ -329,6 +352,31 @@ public sealed class ConstellationBookServer
 
         journal.Replace(record with { Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim() });
         return MutationResult.SuccessResult($"Named constellation #{record.Id}.");
+    }
+
+    /// <summary>
+    /// Writes down who found a figure, in the observer's own words.
+    /// </summary>
+    /// <remarks>
+    /// Any name at all is allowed. A figure can be credited to somebody who has never played here,
+    /// to a whole expedition, or to nobody, because a book is a record of what its writer believes
+    /// and there is nothing here for the server to check it against.
+    /// </remarks>
+    private static MutationResult Credit(ConstellationJournal journal, int constellationId, string name)
+    {
+        var record = journal.Constellations.FirstOrDefault(record => record.Id == constellationId);
+        if (record is null)
+        {
+            return MutationResult.Failure($"Constellation not found: {constellationId}");
+        }
+
+        var credit = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        journal.Replace(record with { DiscoveredBy = credit });
+        var label = ConstellationBookService.FormatDisplayName(record);
+        return MutationResult.SuccessResult(
+            credit is null
+                ? $"{label} is no longer credited to anybody."
+                : $"{label} was drawn by {credit}.");
     }
 
     private static MutationResult RemoveEdge(ConstellationJournal journal, int constellationId, int startHip, int endHip)
@@ -358,9 +406,9 @@ public sealed class ConstellationBookServer
         return MutationResult.SuccessResult($"Deleted constellation #{constellationId}.");
     }
 
-    private MutationResult Build(ConstellationJournal journal, string target)
+    private MutationResult Build(ConstellationJournal journal, string target, string? drawnBy)
     {
-        var service = new StarsCommandService(journal, catalog: catalogProvider());
+        var service = new StarsCommandService(journal, catalog: catalogProvider(), drawnBy: drawnBy);
         var output = service.Build(target);
         return output.StartsWith("Built ", StringComparison.Ordinal)
             ? MutationResult.SuccessResult(output)

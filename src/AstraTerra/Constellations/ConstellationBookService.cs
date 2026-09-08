@@ -273,7 +273,14 @@ public static class ConstellationBookService
             lines.Add("Constellations");
             foreach (var record in journal.Constellations.OrderBy(record => record.Id))
             {
-                lines.Add($"- {FormatDisplayName(record)}: stars={CountStars(record)}; segments={record.Edges.Count}");
+                // Inherited figures, and figures drawn before the book kept who drew them, have
+                // nobody to credit, so the line stays exactly as it read before.
+                var drawn = string.IsNullOrWhiteSpace(record.DiscoveredBy)
+                    ? string.Empty
+                    : $"; drawn by {record.DiscoveredBy.Trim()}";
+                lines.Add(
+                    $"- {FormatDisplayName(record)}: stars={CountStars(record)}; "
+                    + $"segments={record.Edges.Count}{drawn}");
             }
         }
 

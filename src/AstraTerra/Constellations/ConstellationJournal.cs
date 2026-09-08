@@ -25,6 +25,10 @@ public sealed class ConstellationJournal
     public ConstellationRecord CreateFromEdge(int a, int b) => CreateFromEdges((a, b));
 
     public ConstellationRecord CreateFromEdges(params (int A, int B)[] edges)
+        => CreateFromEdges(null, edges);
+
+    /// <param name="drawnBy">Who drew it, or null when nobody in the world did.</param>
+    public ConstellationRecord CreateFromEdges(string? drawnBy, params (int A, int B)[] edges)
     {
         var tick = nextTick++;
         var record = new ConstellationRecord(
@@ -32,12 +36,18 @@ public sealed class ConstellationJournal
             null,
             tick,
             tick,
-            edges.Select(CreateEdge).ToList());
+            edges.Select(CreateEdge).ToList(),
+            Trim(drawnBy));
         constellations.Add(record);
         return record;
     }
 
-    public ConstellationRecord AddEdgeAndMerge(int a, int b)
+    /// <param name="drawnBy">
+    /// Who drew this segment. It becomes the figure's credit only when the segment starts a new
+    /// figure: joining two existing figures leaves the credit with whoever drew the older of them,
+    /// so a single connecting line cannot take somebody else's work.
+    /// </param>
+    public ConstellationRecord AddEdgeAndMerge(int a, int b, string? drawnBy = null)
     {
         var edge = CreateEdge((a, b));
         var touched = constellations
@@ -46,7 +56,7 @@ public sealed class ConstellationJournal
 
         if (touched.Count == 0)
         {
-            return CreateFromEdges((a, b));
+            return CreateFromEdges(drawnBy, (a, b));
         }
 
         foreach (var record in touched)
@@ -56,6 +66,8 @@ public sealed class ConstellationJournal
 
         var tick = nextTick++;
         var survivingName = touched.OrderByDescending(record => record.ModifiedTick).FirstOrDefault(record => !string.IsNullOrWhiteSpace(record.Name))?.Name;
+        var survivingCredit = touched.OrderBy(record => record.CreatedTick)
+            .FirstOrDefault(record => !string.IsNullOrWhiteSpace(record.DiscoveredBy))?.DiscoveredBy;
         var mergedEdges = touched.SelectMany(record => record.Edges)
             .Append(edge)
             .GroupBy(existing => (existing.A, existing.B))
@@ -63,7 +75,13 @@ public sealed class ConstellationJournal
             .OrderBy(existing => existing.EdgeOrder)
             .ToList();
 
-        var merged = new ConstellationRecord(touched.Min(record => record.Id), survivingName, touched.Min(record => record.CreatedTick), tick, mergedEdges);
+        var merged = new ConstellationRecord(
+            touched.Min(record => record.Id),
+            survivingName,
+            touched.Min(record => record.CreatedTick),
+            tick,
+            mergedEdges,
+            survivingCredit ?? Trim(drawnBy));
         constellations.Add(merged);
         return merged;
     }
@@ -88,7 +106,8 @@ public sealed class ConstellationJournal
                 isLargest ? record.Name : null,
                 isLargest ? record.CreatedTick : nextTick,
                 nextTick++,
-                component.ToList());
+                component.ToList(),
+                record.DiscoveredBy);
             constellations.Add(split);
             splitRecords.Add(split);
         }
@@ -125,6 +144,9 @@ public sealed class ConstellationJournal
 
         return new ConstellationJournal(snapshot.NextId, snapshot.NextTick, snapshot.NextEdgeOrder, snapshot.Constellations);
     }
+
+    private static string? Trim(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private ConstellationEdge CreateEdge((int A, int B) edge)
     {
