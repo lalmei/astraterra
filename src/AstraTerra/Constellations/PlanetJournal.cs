@@ -102,6 +102,21 @@ public sealed class PlanetJournal
     private static string? Trim(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    /// <summary>
+    /// Sets who found a wanderer outright, which is what the observer's own command does.
+    /// </summary>
+    /// <remarks>
+    /// Unlike the credit the book stamps on its own, this overwrites: the observer is correcting
+    /// their own record, and the name they give need not belong to anybody who plays here.
+    /// </remarks>
+    public PlanetRecord Credit(string planetId, string? discoveredBy)
+    {
+        var record = Identify(planetId);
+        var credited = record with { DiscoveredBy = Trim(discoveredBy) };
+        planets[planets.IndexOf(record)] = credited;
+        return credited;
+    }
+
     public bool Remove(string planetId)
     {
         var record = Find(planetId);

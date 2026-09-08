@@ -23,6 +23,7 @@ three book commands.
 .stars name <id|selected> <name>
 .stars select <id|name>
 .stars delete <id|selected>
+.stars credit <constellation|wanderer> <id|selected|name> [discoverer]
 ```
 
 All of these read and write the constellation book in your **left hand**; without one they say so.
@@ -59,6 +60,29 @@ A bound wanderer is written down with the name of whoever found it, and the book
 `- Oakchild — found by Astra`. The credit stays with the first observer to pin that body, so a book
 that is handed on, and renamed by its new owner, still says whose work it was. Books written before
 this, and prepared books nobody in the world discovered, simply have no line to show.
+
+The same is true of a figure you draw: the book records who drew it, `.stars info` reports it, and
+the page reads `- Lantern: stars=6; segments=5; drawn by Astra`. Joining two existing figures with
+one segment leaves the credit with whoever drew the older of them, and splitting a figure leaves
+every part credited to the same person, so no single line can take somebody else's work.
+
+## Credit
+
+```text
+.stars credit constellation 3 Astra
+.stars credit constellation selected The Sanguine Expedition
+.stars credit wanderer Oakchild Astra
+.stars credit wanderer Oakchild
+```
+
+`.stars credit` writes down who found something, in your own words. Any name is allowed: a friend
+who has stopped playing, a whole expedition, somebody who never existed. Nothing is checked against
+who is on the server, because the book is a record of what its writer believes rather than of what
+the game observed. Leave the name off to credit nobody and clear the line.
+
+A constellation is addressed the way it is everywhere else — by id, by name, or as `selected`. A
+wanderer is addressed by the name you gave it, which is the only name the book ever shows for one.
+The discoverer runs to the end of the line, so a name with spaces in it needs no quotes.
 
 Nothing checks your answer against the sky, and that is deliberate: a classification the game has
 already graded is a quiz, not a discovery. Being wrong is allowed, and you find out the way an

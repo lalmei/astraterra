@@ -102,6 +102,8 @@ public static class ConstellationBookMutationActions
     public const string Delete = "delete";
     public const string Build = "build";
     public const string RenamePlanet = "renamePlanet";
+    public const string CreditPlanet = "creditPlanet";
+    public const string CreditConstellation = "creditConstellation";
     public const string RecordObservation = "recordObservation";
     public const string ClassifySighting = "classifySighting";
 
@@ -112,7 +114,7 @@ public static class ConstellationBookMutationActions
     /// the game recognised something.
     /// </remarks>
     public static bool IsPlanetAction(string action)
-        => action is RenamePlanet;
+        => action is RenamePlanet or CreditPlanet;
 
     /// <summary>Actions that write the ledger of sightings rather than either journal.</summary>
     public static bool IsObservationAction(string action)

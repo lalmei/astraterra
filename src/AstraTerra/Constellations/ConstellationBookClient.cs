@@ -114,6 +114,28 @@ public sealed class ConstellationBookClient
         });
     }
 
+    /// <summary>Sends who the observer says found a wanderer. Any name at all, or none.</summary>
+    public void SendCreditPlanet(string planetId, string? discoveredBy)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.CreditPlanet,
+            PlanetId = planetId,
+            Name = discoveredBy ?? string.Empty
+        });
+    }
+
+    /// <summary>Sends who the observer says drew a figure. Any name at all, or none.</summary>
+    public void SendCreditConstellation(int constellationId, string? discoveredBy)
+    {
+        SendMutation(new ConstellationBookMutationPacket
+        {
+            Action = ConstellationBookMutationActions.CreditConstellation,
+            ConstellationId = constellationId,
+            Name = discoveredBy ?? string.Empty
+        });
+    }
+
     /// <summary>
     /// Sends a sighting to be written down. The body's identity is deliberately not sent: what the
     /// observer measured is a direction and a moment, and what stood there is theirs to work out.
@@ -143,6 +165,10 @@ public sealed class ConstellationBookClient
             LongitudeDeg = longitudeDeg ?? double.NaN
         });
     }
+
+    public PlanetJournal ReadCurrentPlanetJournalOrEmpty()
+        => ConstellationBookService.ReadPlanetJournalOrEmpty(
+            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
 
     public ObservationLog ReadCurrentObservationLogOrEmpty()
         => ConstellationBookService.ReadObservationLogOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);

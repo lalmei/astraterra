@@ -80,6 +80,15 @@ public sealed class StarsClientCommands
                 .HandleWith(args => TextCommandResult.Success(
                     Classify(api, GetStringArg(args, 0), GetStringArg(args, 1), GetStringArg(args, 2))))
             .EndSubCommand()
+            .BeginSubCommand("credit")
+                .WithDescription("Say who found a figure or a wanderer. Any name; leave it off to credit nobody.")
+                .WithArgs(
+                    api.ChatCommands.Parsers.Word("constellation|wanderer"),
+                    api.ChatCommands.Parsers.Word("id|selected|name"),
+                    api.ChatCommands.Parsers.OptionalAll("discoverer"))
+                .HandleWith(args => TextCommandResult.Success(
+                    Credit(GetStringArg(args, 0), GetStringArg(args, 1), GetStringArg(args, 2))))
+            .EndSubCommand()
             .BeginSubCommand("comets")
                 .WithDescription("Report every comet: whether it is up now, or how long until it returns.")
                 .HandleWith(_ => TextCommandResult.Success(Comets(api)))
@@ -235,6 +244,70 @@ public sealed class StarsClientCommands
 
         bookClient.SendRename(id.Value, name);
         return "Constellation rename requested.";
+    }
+
+    /// <summary>
+    /// Writes down who found something, in the observer's own words.
+    /// </summary>
+    /// <remarks>
+    /// The name is not checked against anybody who plays here, and it is not meant to be. A figure
+    /// can be credited to a friend who has since stopped playing, to a whole expedition, or to a
+    /// person who never existed, because the book records what its writer believes.
+    /// </remarks>
+    private string Credit(string kind, string target, string? discoverer)
+    {
+        if (!bookClient.CanMutate(out var message))
+        {
+            return message;
+        }
+
+        var trimmedKind = kind?.Trim().ToLowerInvariant();
+        if (trimmedKind is "wanderer" or "planet" or "wandering")
+        {
+            var planetId = ResolvePlanetId(target);
+            if (planetId is null)
+            {
+                return $"No wandering star called {target} in this book. "
+                       + "Use the name you gave it, from .stars sightings or the book's own page.";
+            }
+
+            bookClient.SendCreditPlanet(planetId, discoverer);
+            return "Credit requested.";
+        }
+
+        if (trimmedKind is not ("constellation" or "figure"))
+        {
+            return "Say what to credit: constellation, or wanderer.";
+        }
+
+        var id = BuildService().ResolveId(ResolveSelectedTarget(target));
+        if (id is null)
+        {
+            return $"Constellation not found: {target}";
+        }
+
+        bookClient.SendCreditConstellation(id.Value, discoverer);
+        return "Credit requested.";
+    }
+
+    /// <summary>
+    /// Finds a wanderer by the name the observer gave it, which is the only name the book ever shows.
+    /// </summary>
+    private string? ResolvePlanetId(string target)
+    {
+        var trimmed = target?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0)
+        {
+            return null;
+        }
+
+        var journal = bookClient.ReadCurrentPlanetJournalOrEmpty();
+        return journal.Planets
+            .FirstOrDefault(record => string.Equals(
+                journal.DisplayName(record.PlanetId),
+                trimmed,
+                StringComparison.OrdinalIgnoreCase))
+            ?.PlanetId;
     }
 
     private string Delete(string target)

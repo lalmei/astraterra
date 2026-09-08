@@ -202,6 +202,29 @@ public sealed class PlanetJournalTests
     }
 
     [Fact]
+    public void The_Observer_Can_Credit_A_Wanderer_To_Anybody_At_All()
+    {
+        var journal = new PlanetJournal();
+        journal.Rename("mars", "Oakchild", "Astra");
+
+        journal.Credit("mars", "  The Blind Cartographer  ");
+
+        Assert.Equal("The Blind Cartographer", journal.Find("mars")!.DiscoveredBy);
+        Assert.Equal("Oakchild", journal.DisplayName("mars"));
+    }
+
+    [Fact]
+    public void Crediting_Nobody_Clears_The_Finder()
+    {
+        var journal = new PlanetJournal();
+        journal.Rename("mars", "Oakchild", "Astra");
+
+        journal.Credit("mars", null);
+
+        Assert.Null(journal.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
     public void An_Empty_Planet_Id_Is_Rejected()
     {
         var journal = new PlanetJournal();
