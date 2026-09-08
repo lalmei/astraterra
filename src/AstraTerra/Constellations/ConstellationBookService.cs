@@ -287,7 +287,12 @@ public static class ConstellationBookService
             lines.Add("Wandering stars");
             foreach (var record in planetJournal.Planets.OrderBy(record => record.RecordedTick))
             {
-                lines.Add($"- {planetJournal.DisplayName(record.PlanetId)}");
+                // Prepared books, and books written before the journal kept finders, have nobody to
+                // credit, so the line stays exactly as it read before rather than saying "unknown".
+                var finder = string.IsNullOrWhiteSpace(record.DiscoveredBy)
+                    ? string.Empty
+                    : $" — found by {record.DiscoveredBy.Trim()}";
+                lines.Add($"- {planetJournal.DisplayName(record.PlanetId)}{finder}");
             }
         }
 

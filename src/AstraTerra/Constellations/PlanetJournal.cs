@@ -10,10 +10,16 @@ namespace AstraTerra.Constellations;
 /// What the observer decided to call it. Null until they name it, which is the same state a drawn
 /// constellation starts in.
 /// </param>
+/// <param name="DiscoveredBy">
+/// Who first picked it out of their own sightings, kept so a book that changes hands still says
+/// whose work it was. Null for a prepared book, whose wanderers nobody in the world found, and for
+/// every entry written before the book started recording it.
+/// </param>
 public sealed record PlanetRecord(
     string PlanetId,
     string? Name,
-    long RecordedTick
+    long RecordedTick,
+    string? DiscoveredBy = null
 );
 
 /// <summary>
@@ -55,7 +61,11 @@ public sealed class PlanetJournal
     /// Writes a planet down, or returns the existing entry when it is already known. Identifying is
     /// separate from naming so an observer can record a sighting now and decide what to call it later.
     /// </summary>
-    public PlanetRecord Identify(string planetId)
+    /// <param name="discoveredBy">
+    /// Who found it, recorded only on the entry that first identifies it. Later writers rename it;
+    /// they do not take the finding.
+    /// </param>
+    public PlanetRecord Identify(string planetId, string? discoveredBy = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(planetId);
 
@@ -65,20 +75,32 @@ public sealed class PlanetJournal
             return existing;
         }
 
-        var record = new PlanetRecord(planetId, null, nextTick++);
+        var record = new PlanetRecord(planetId, null, nextTick++, Trim(discoveredBy));
         planets.Add(record);
         return record;
     }
 
     /// <summary>Names a planet, identifying it first if this is the observer's first sight of it.</summary>
-    public PlanetRecord Rename(string planetId, string? name)
+    /// <remarks>
+    /// An entry that reaches here without a finder gets one, so a book written before the journal
+    /// recorded finders picks the credit up the next time its owner classifies. An entry that
+    /// already has one keeps it: renaming somebody else's wanderer is not discovering it.
+    /// </remarks>
+    public PlanetRecord Rename(string planetId, string? name, string? discoveredBy = null)
     {
-        var record = Identify(planetId);
+        var record = Identify(planetId, discoveredBy);
         var trimmed = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
-        var renamed = record with { Name = trimmed };
+        var renamed = record with
+        {
+            Name = trimmed,
+            DiscoveredBy = record.DiscoveredBy ?? Trim(discoveredBy)
+        };
         planets[planets.IndexOf(record)] = renamed;
         return renamed;
     }
+
+    private static string? Trim(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     public bool Remove(string planetId)
     {

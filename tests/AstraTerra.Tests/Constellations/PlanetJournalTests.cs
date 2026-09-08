@@ -130,6 +130,78 @@ public sealed class PlanetJournalTests
     }
 
     [Fact]
+    public void The_Observer_Who_First_Identifies_A_Wanderer_Is_Written_Down_With_It()
+    {
+        var journal = new PlanetJournal();
+
+        journal.Rename("mars", "Oakchild", "Astra");
+
+        Assert.Equal("Astra", journal.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
+    public void Renaming_Somebody_Elses_Wanderer_Does_Not_Take_The_Finding()
+    {
+        var journal = new PlanetJournal();
+        journal.Rename("mars", "Oakchild", "Astra");
+
+        journal.Rename("mars", "Ember", "Borrower");
+
+        Assert.Equal("Ember", journal.DisplayName("mars"));
+        Assert.Equal("Astra", journal.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
+    public void An_Entry_With_No_Finder_Picks_One_Up_The_Next_Time_It_Is_Written()
+    {
+        var journal = new PlanetJournal();
+        journal.Rename("mars", "Oakchild");
+
+        journal.Rename("mars", "Oakchild", "Astra");
+
+        Assert.Equal("Astra", journal.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
+    public void A_Blank_Finder_Is_Kept_As_Nobody_Rather_Than_Whitespace()
+    {
+        var journal = new PlanetJournal();
+
+        journal.Rename("mars", "Oakchild", "   ");
+
+        Assert.Null(journal.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
+    public void The_Finder_Survives_A_Round_Trip()
+    {
+        var journal = new PlanetJournal();
+        journal.Rename("mars", "Oakchild", "  Astra  ");
+
+        var restored = PlanetJournalPersistence.Deserialize(PlanetJournalPersistence.Serialize(journal));
+
+        Assert.Equal("Astra", restored.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
+    public void A_Journal_Written_Before_Finders_Were_Recorded_Still_Reads()
+    {
+        var restored = PlanetJournalPersistence.Deserialize(
+            """
+            {
+              "schemaVersion": 1,
+              "nextTick": 2,
+              "planets": [
+                { "planetId": "mars", "name": "Red", "recordedTick": 1 }
+              ]
+            }
+            """);
+
+        Assert.Equal("Red", restored.DisplayName("mars"));
+        Assert.Null(restored.Find("mars")!.DiscoveredBy);
+    }
+
+    [Fact]
     public void An_Empty_Planet_Id_Is_Rejected()
     {
         var journal = new PlanetJournal();
