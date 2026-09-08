@@ -59,7 +59,7 @@ public sealed class ConstellationBookServer
 
         if (ConstellationBookMutationActions.IsObservationAction(packet.Action))
         {
-            return HandleObservationMutation(slot, packet);
+            return HandleObservationMutation(slot, packet, player);
         }
 
         var wasConstellationBook = ConstellationBookService.IsConstellationBook(slot.Itemstack);
@@ -171,7 +171,8 @@ public sealed class ConstellationBookServer
     /// </remarks>
     private static ConstellationBookResponsePacket HandleObservationMutation(
         ItemSlot slot,
-        ConstellationBookMutationPacket packet)
+        ConstellationBookMutationPacket packet,
+        IServerPlayer player)
     {
         if (slot.Itemstack is not { } stack)
         {
@@ -180,7 +181,7 @@ public sealed class ConstellationBookServer
 
         if (packet.Action == ConstellationBookMutationActions.ClassifySighting)
         {
-            return HandleClassifySighting(slot, stack, packet);
+            return HandleClassifySighting(slot, stack, packet, player);
         }
 
         if (!double.IsFinite(packet.AltitudeDeg) || !double.IsFinite(packet.AzimuthDeg))
@@ -228,7 +229,8 @@ public sealed class ConstellationBookServer
     private static ConstellationBookResponsePacket HandleClassifySighting(
         ItemSlot slot,
         ItemStack stack,
-        ConstellationBookMutationPacket packet)
+        ConstellationBookMutationPacket packet,
+        IServerPlayer player)
     {
         if (packet.RecordIds.Length == 0)
         {
@@ -251,11 +253,13 @@ public sealed class ConstellationBookServer
             // A conclusion the observer's own entries pinned to one wandering body earns its place
             // in the half of the book the instruments read, so their name for it is the name the
             // sky answers to. Unbound conclusions still stand; they just have nothing to aim with.
+            // Whoever got there first is written down with it, taken from the player who sent the
+            // conclusion rather than from anything the client claimed about itself.
             var bound = !string.IsNullOrWhiteSpace(claim.BoundId);
             if (bound)
             {
                 var planets = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
-                planets.Rename(claim.BoundId!, claim.Name);
+                planets.Rename(claim.BoundId!, claim.Name, player.PlayerName);
                 ConstellationBookService.WritePlanetJournal(stack, planets);
             }
 

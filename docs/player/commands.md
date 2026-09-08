@@ -55,6 +55,11 @@ binds to it: your name for it is what the Sextant and the Astrolabe call it from
 bodies fit, or none do, the conclusion still stands but nothing is bound — sight it again and the
 record will settle.
 
+A bound wanderer is written down with the name of whoever found it, and the book's page says so:
+`- Oakchild — found by Astra`. The credit stays with the first observer to pin that body, so a book
+that is handed on, and renamed by its new owner, still says whose work it was. Books written before
+this, and prepared books nobody in the world discovered, simply have no line to show.
+
 Nothing checks your answer against the sky, and that is deliberate: a classification the game has
 already graded is a quiz, not a discovery. Being wrong is allowed, and you find out the way an
 observer does — by sighting it again and watching your own numbers stop making sense. Changing your

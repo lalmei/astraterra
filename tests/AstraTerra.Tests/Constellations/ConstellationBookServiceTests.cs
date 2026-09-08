@@ -216,6 +216,24 @@ public sealed class ConstellationBookServiceTests
     }
 
     [Fact]
+    public void The_Page_Credits_Whoever_Found_A_Wanderer()
+    {
+        var attributes = new TreeAttribute();
+        var planets = new PlanetJournal();
+        planets.Rename("mars", "Oakchild", "Astra");
+        planets.Rename("venus", "Evening Lamp");
+
+        ConstellationBookService.WritePlanetJournal(attributes, planets);
+
+        var text = attributes.GetString(ConstellationBookService.VanillaTextAttribute);
+        Assert.Contains("Oakchild — found by Astra", text);
+
+        // A wanderer nobody is recorded as finding reads exactly as it did before.
+        Assert.Contains("- Evening Lamp" + Environment.NewLine, text + Environment.NewLine);
+        Assert.DoesNotContain("Evening Lamp — found by", text);
+    }
+
+    [Fact]
     public void A_Book_Written_Before_Planets_Existed_Still_Reads()
     {
         var attributes = new TreeAttribute();
