@@ -140,4 +140,121 @@ public sealed class LongitudeAwareSunControllerTests
         Assert.Equal(0.75f, clientDayRel, 5);
         Assert.Equal(0.25f, serverDayRel, 5);
     }
+
+    /// <summary>
+    /// A world's tilt is reason enough to take the delegate over, even where the server has the
+    /// longitude term switched off. The two are independent settings on one wrapper.
+    /// </summary>
+    [Fact]
+    public void A_World_Tilt_Installs_The_Wrapper_With_Longitude_Off()
+    {
+        SolarSphericalCoordsDelegate baseDelegate = (_, _, _, _) => new SolarSphericalCoords(1f, 2f);
+        var controller = new LongitudeAwareSunController(_ => 90.0, _ => 0.0);
+
+        try
+        {
+            controller.MarkLifecycleReady(baseDelegate);
+            var withoutTilt = controller.Configure(longitudeAwareSunEnabled: false, baseDelegate);
+            var withTilt = controller.SetWorldTilt(12.0, withoutTilt.Delegate);
+
+            Assert.Equal(SunDelegateUpdateKind.None, withoutTilt.Kind);
+            Assert.Equal(SunDelegateUpdateKind.Installed, withTilt.Kind);
+            Assert.False(controller.LongitudeEnabled);
+            Assert.Equal(12.0, WorldTilt.CurrentDeg, 9);
+        }
+        finally
+        {
+            controller.Reset(null);
+        }
+    }
+
+    /// <summary>
+    /// With a tilt installed, the wrapper answers with its own sun rather than passing the question
+    /// down: vanilla's delegate cannot swing further than vanilla's own tilt, so a substitution has
+    /// to rebuild the answer.
+    /// </summary>
+    [Fact]
+    public void A_Tilted_World_Stops_Asking_The_Survival_Delegate()
+    {
+        var asked = 0;
+        SolarSphericalCoordsDelegate baseDelegate = (_, _, _, _) =>
+        {
+            asked++;
+            return new SolarSphericalCoords(1f, 2f);
+        };
+        var controller = new LongitudeAwareSunController(_ => 0.0, _ => 0.0);
+
+        try
+        {
+            controller.MarkLifecycleReady(baseDelegate);
+            controller.Configure(longitudeAwareSunEnabled: false, baseDelegate);
+            var installed = controller.SetWorldTilt(40.0, baseDelegate);
+
+            // Installing probes the candidate delegate to tell a real one from the calendar's own
+            // placeholder, so the count starts here rather than at zero.
+            asked = 0;
+            var tipped = installed.Delegate!(0, 0, 0.5f, 0.5f);
+
+            Assert.Equal(0, asked);
+            Assert.NotEqual(1f, tipped.ZenithAngle);
+        }
+        finally
+        {
+            controller.Reset(null);
+        }
+    }
+
+    /// <summary>
+    /// A server that refuses generated tilts is obeyed, and the world stays on Earth's axis even
+    /// though a generator handed one over. The refusal reaches clients on the same packet the
+    /// longitude policy travels on.
+    /// </summary>
+    [Fact]
+    public void A_Server_That_Refuses_Generated_Tilts_Is_Obeyed()
+    {
+        SolarSphericalCoordsDelegate baseDelegate = (_, _, _, _) => new SolarSphericalCoords(1f, 2f);
+        var controller = new LongitudeAwareSunController(_ => 0.0, _ => 0.0);
+
+        try
+        {
+            controller.MarkLifecycleReady(baseDelegate);
+            controller.Configure(longitudeAwareSunEnabled: false, baseDelegate, worldTiltEnabled: false);
+            var refused = controller.SetWorldTilt(40.0, baseDelegate);
+
+            Assert.Equal(SunDelegateUpdateKind.None, refused.Kind);
+            Assert.Null(controller.WorldTiltDeg);
+            Assert.Equal(CelestialMath.MeanObliquityDeg, WorldTilt.CurrentDeg, 9);
+        }
+        finally
+        {
+            controller.Reset(null);
+        }
+    }
+
+    /// <summary>
+    /// Clearing the tilt puts the survival delegate back in charge, and puts the world back on
+    /// Earth's axis for everything that reads it.
+    /// </summary>
+    [Fact]
+    public void Clearing_The_Tilt_Returns_The_World_To_Earths_Axis()
+    {
+        SolarSphericalCoordsDelegate baseDelegate = (_, _, _, _) => new SolarSphericalCoords(1f, 2f);
+        var controller = new LongitudeAwareSunController(_ => 0.0, _ => 0.0);
+
+        try
+        {
+            controller.MarkLifecycleReady(baseDelegate);
+            controller.Configure(longitudeAwareSunEnabled: false, baseDelegate);
+            var installed = controller.SetWorldTilt(40.0, baseDelegate);
+            var cleared = controller.SetWorldTilt(null, installed.Delegate);
+
+            Assert.Equal(SunDelegateUpdateKind.Restored, cleared.Kind);
+            Assert.Same(baseDelegate, cleared.Delegate);
+            Assert.Equal(CelestialMath.MeanObliquityDeg, WorldTilt.CurrentDeg, 9);
+        }
+        finally
+        {
+            controller.Reset(null);
+        }
+    }
 }

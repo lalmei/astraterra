@@ -10,6 +10,19 @@ public sealed class LongitudeAwareSunConfigPacket
 {
     [ProtoMember(1)]
     public bool Enabled;
+
+    /// <summary>
+    /// Whether this server lets a generated world run on its own axial tilt rather than Earth's.
+    /// </summary>
+    /// <remarks>
+    /// Carried on the same packet as the longitude term because it is the same kind of setting and
+    /// reaches the same wrapper: both change where the sun is, so both are the server's to decide
+    /// and neither may differ between a server and its clients. A client that tipped its own world
+    /// while the server did not would have summer in a different month from the crops it is
+    /// growing.
+    /// </remarks>
+    [ProtoMember(2)]
+    public bool WorldTiltEnabled = true;
 }
 
 public enum SunDelegateUpdateKind
@@ -29,21 +42,54 @@ public readonly record struct SunDelegateUpdate(
 }
 
 /// <summary>
-/// Pure state machine for adding and removing the longitude term around an existing solar delegate.
-/// Keeping this separate from the game lifecycle makes startup ordering and restoration testable.
+/// Pure state machine for the two things AstraTerra does to the sun: shifting it by the observer's
+/// longitude, and running it on a world's own axial tilt instead of Earth's. Keeping this separate
+/// from the game lifecycle makes startup ordering and restoration testable.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Both live here rather than in two installers because there is one delegate property on the
+/// calendar and two wrappers would race for it: whichever installed second would capture the first
+/// and, on a tilt substitution -- which replaces the survival delegate's answer rather than
+/// adjusting its inputs -- silently drop it. One owner, one wrapper, both terms applied in the
+/// order the sky applies them: longitude moves the observer's clock, and the tilt decides where the
+/// sun is on that clock.
+/// </para>
+/// <para>
+/// The two are still independently switchable, and either alone is enough to install the wrapper.
+/// With neither set the calendar keeps the survival delegate untouched.
+/// </para>
+/// </remarks>
 public sealed class LongitudeAwareSunController
 {
     private readonly System.Func<double, double> longitudeProvider;
+    private readonly System.Func<double, double>? latitudeProvider;
     private bool lifecycleReady;
     private bool? enabled;
+    private bool worldTiltAllowed = true;
+    private double? worldTiltDeg;
     private SolarSphericalCoordsDelegate? chainedDelegate;
     private SolarSphericalCoordsDelegate? installedDelegate;
 
-    public LongitudeAwareSunController(System.Func<double, double> longitudeProvider)
+    /// <param name="longitudeProvider">The observer's longitude in degrees for a world X.</param>
+    /// <param name="latitudeProvider">
+    /// The game's own latitude for a world Z, in its <c>-1..1</c> form. Required only for the tilt
+    /// substitution, which has to rebuild the sun's triangle rather than nudge the survival
+    /// delegate's inputs; without it the tilt term stays off and the longitude term still works.
+    /// </param>
+    public LongitudeAwareSunController(
+        System.Func<double, double> longitudeProvider,
+        System.Func<double, double>? latitudeProvider = null)
     {
         this.longitudeProvider = longitudeProvider ?? throw new ArgumentNullException(nameof(longitudeProvider));
+        this.latitudeProvider = latitudeProvider;
     }
+
+    /// <summary>Whether the longitude term is switched on, separately from the tilt.</summary>
+    public bool LongitudeEnabled => enabled == true;
+
+    /// <summary>The tilt currently being substituted, or null when the world keeps Earth's.</summary>
+    public double? WorldTiltDeg => worldTiltAllowed && latitudeProvider is not null ? worldTiltDeg : null;
 
     /// <summary>
     /// Whether the delegate the calendar is holding right now is this controller's own wrapper. A
@@ -52,9 +98,26 @@ public sealed class LongitudeAwareSunController
     public bool IsInstalledOn(SolarSphericalCoordsDelegate? current)
         => installedDelegate is not null && ReferenceEquals(current, installedDelegate);
 
-    public SunDelegateUpdate Configure(bool longitudeAwareSunEnabled, SolarSphericalCoordsDelegate? current)
+    public SunDelegateUpdate Configure(
+        bool longitudeAwareSunEnabled,
+        SolarSphericalCoordsDelegate? current,
+        bool worldTiltEnabled = true)
     {
         enabled = longitudeAwareSunEnabled;
+        worldTiltAllowed = worldTiltEnabled;
+        return Reconcile(current);
+    }
+
+    /// <summary>
+    /// Sets the world's axial tilt in degrees, or clears it with null to return the sun to Earth's.
+    /// </summary>
+    /// <remarks>
+    /// Reconciling lands the value on <see cref="WorldTilt"/> as well, so the sun a player watches
+    /// and the sun an instrument computes cannot come apart: one setter, one number, both readers.
+    /// </remarks>
+    public SunDelegateUpdate SetWorldTilt(double? obliquityDeg, SolarSphericalCoordsDelegate? current)
+    {
+        worldTiltDeg = obliquityDeg;
         return Reconcile(current);
     }
 
@@ -72,19 +135,29 @@ public sealed class LongitudeAwareSunController
 
         lifecycleReady = false;
         enabled = null;
+        worldTiltDeg = null;
+        worldTiltAllowed = true;
+        WorldTilt.Reset();
         chainedDelegate = null;
         installedDelegate = null;
         return update;
     }
 
+    /// <summary>Whether either term wants the wrapper on the calendar right now.</summary>
+    private bool IsWanted => enabled == true || WorldTiltDeg is not null;
+
     private SunDelegateUpdate Reconcile(SolarSphericalCoordsDelegate? current)
     {
+        // The ambient tilt tracks the wrapper rather than the request: until the wrapper is on the
+        // calendar the sun in the sky is still vanilla's, and an instrument reading a tilt the sun
+        // does not have is an instrument that lies.
+        WorldTilt.Set(lifecycleReady && enabled is not null ? WorldTiltDeg : null);
         if (!lifecycleReady || enabled is null)
         {
             return new SunDelegateUpdate(SunDelegateUpdateKind.None, current);
         }
 
-        if (!enabled.Value)
+        if (!IsWanted)
         {
             if (ReferenceEquals(current, installedDelegate) && chainedDelegate is not null)
             {
@@ -114,14 +187,39 @@ public sealed class LongitudeAwareSunController
         return new SunDelegateUpdate(SunDelegateUpdateKind.Installed, installedDelegate);
     }
 
+    /// <summary>
+    /// The wrapper the calendar ends up holding: the observer's own clock, then the sun this
+    /// world's axis puts on it.
+    /// </summary>
+    /// <remarks>
+    /// The longitude term is an input shift, so it composes with anything the survival mod does and
+    /// is applied first. The tilt term cannot be a shift -- vanilla's sun cannot swing wider than
+    /// vanilla's own tilt, whatever you feed it -- so it rebuilds the answer from
+    /// <see cref="WorldTilt.SolarSphericalCoords"/> instead, which is the survival mod's own
+    /// arithmetic with the tilt left open. With no tilt set the chained delegate answers, and this
+    /// is exactly the longitude wrapper it always was.
+    /// </remarks>
     private SolarSphericalCoords GetSolarSphericalCoords(
         double posX,
         double posZ,
         float yearRel,
         float dayRel)
     {
-        var localDayRel = CelestialMath.ApplyLongitudeToDayRel(dayRel, longitudeProvider(posX));
-        return chainedDelegate?.Invoke(posX, posZ, yearRel, localDayRel) ?? default;
+        var localDayRel = enabled == true
+            ? CelestialMath.ApplyLongitudeToDayRel(dayRel, longitudeProvider(posX))
+            : dayRel;
+
+        if (WorldTiltDeg is not { } tiltDeg || latitudeProvider is null)
+        {
+            return chainedDelegate?.Invoke(posX, posZ, yearRel, localDayRel) ?? default;
+        }
+
+        var (zenith, azimuth) = WorldTilt.SolarSphericalCoords(
+            latitudeProvider(posZ) * Math.PI / 2.0,
+            yearRel,
+            localDayRel,
+            WorldTilt.ToRadians(tiltDeg));
+        return new SolarSphericalCoords((float)zenith, (float)azimuth);
     }
 
     /// <summary>
@@ -163,13 +261,18 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     private ICoreServerAPI? serverApi;
     private IServerNetworkChannel? serverChannel;
     private bool serverEnabled;
+    private bool serverWorldTiltEnabled = true;
     private bool disposed;
     private bool waitingWarningLogged;
 
     private LongitudeAwareSunInstaller(ICoreAPI api)
     {
         this.api = api;
-        controller = new LongitudeAwareSunController(x => LatitudeMapper.MapWorldLongitude(x, api.World));
+        controller = new LongitudeAwareSunController(
+            x => LatitudeMapper.MapWorldLongitude(x, api.World),
+            // The game's own latitude, in the -1..1 form the survival delegate uses, so the
+            // rebuilt sun stands where a custom world-height or latitude mod says it should.
+            z => api.World?.Calendar?.OnGetLatitude?.Invoke(z) ?? 0.0);
     }
 
     public static LongitudeAwareSunInstaller StartClient(ICoreClientAPI api)
@@ -190,24 +293,30 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         return installer;
     }
 
-    public static LongitudeAwareSunInstaller StartServer(ICoreServerAPI api, bool enabled)
+    public static LongitudeAwareSunInstaller StartServer(
+        ICoreServerAPI api,
+        bool enabled,
+        bool worldTiltEnabled = true)
     {
         ArgumentNullException.ThrowIfNull(api);
 
         var installer = new LongitudeAwareSunInstaller(api)
         {
             serverApi = api,
-            serverEnabled = enabled
+            serverEnabled = enabled,
+            serverWorldTiltEnabled = worldTiltEnabled
         };
 
         installer.serverChannel = api.Network.RegisterChannel(ChannelName)
             .RegisterMessageType<LongitudeAwareSunConfigPacket>();
         api.Event.PlayerNowPlaying += installer.OnPlayerNowPlaying;
         api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, installer.OnServerGameReady);
-        installer.Apply(installer.controller.Configure(enabled, installer.CurrentDelegate()));
+        installer.Apply(
+            installer.controller.Configure(enabled, installer.CurrentDelegate(), worldTiltEnabled));
         api.Logger.Event(
-            "AstraTerra startup step: longitude-aware sun server policy: enabled={0}",
-            enabled);
+            "AstraTerra startup step: longitude-aware sun server policy: enabled={0}; generatedWorldTilt={1}",
+            enabled,
+            worldTiltEnabled);
         return installer;
     }
 
@@ -215,7 +324,20 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     /// Whether this side's sun is currently drawn with the longitude term. False before the server
     /// has sent its policy, when that policy is off, and after another mod has taken the delegate.
     /// </summary>
-    public bool SunFollowsLongitude => !disposed && controller.IsInstalledOn(CurrentDelegate());
+    public bool SunFollowsLongitude
+        => !disposed && controller.LongitudeEnabled && controller.IsInstalledOn(CurrentDelegate());
+
+    /// <summary>
+    /// Hands this side the world's axial tilt in degrees, or null to keep Earth's. A generated moon
+    /// world's tilt is its parent giant's; every other world passes null.
+    /// </summary>
+    public void SetWorldTilt(double? obliquityDeg)
+    {
+        if (!disposed)
+        {
+            Apply(controller.SetWorldTilt(obliquityDeg, CurrentDelegate()));
+        }
+    }
 
     public void Dispose()
     {
@@ -246,16 +368,21 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
             return;
         }
 
-        Apply(controller.Configure(packet.Enabled, CurrentDelegate()));
+        Apply(controller.Configure(packet.Enabled, CurrentDelegate(), packet.WorldTiltEnabled));
         api.Logger.Event(
-            "AstraTerra startup step: longitude-aware sun server policy received: enabled={0}",
-            packet.Enabled);
+            "AstraTerra startup step: longitude-aware sun server policy received: enabled={0}; generatedWorldTilt={1}",
+            packet.Enabled,
+            packet.WorldTiltEnabled);
     }
 
     private void OnPlayerNowPlaying(IServerPlayer player)
     {
         serverChannel?.SendPacket(
-            new LongitudeAwareSunConfigPacket { Enabled = serverEnabled },
+            new LongitudeAwareSunConfigPacket
+            {
+                Enabled = serverEnabled,
+                WorldTiltEnabled = serverWorldTiltEnabled
+            },
             player);
     }
 

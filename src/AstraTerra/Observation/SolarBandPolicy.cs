@@ -66,7 +66,14 @@ public static class SolarBandPolicy
     /// Tilt of the sun's yearly swing, which is what makes the band have edges at all. Shared with
     /// the rest of the sky model so the disc and the astrolabe are describing one world.
     /// </summary>
-    public const double ObliquityDeg = CelestialMath.MeanObliquityDeg;
+    /// <remarks>
+    /// This is the world's tilt rather than Earth's, and on a generated moon world it is the parent
+    /// giant's. The disc measures where the sun sets and infers a latitude from how far that point
+    /// travels over a year; the swing it sees is set by the tilt of the world it is standing on, so
+    /// a disc holding Earth's number on a world of a different one would return a latitude that is
+    /// simply wrong -- and it would be wrong quietly, which is worse for an instrument.
+    /// </remarks>
+    public static double ObliquityDeg => WorldTilt.CurrentDeg;
 
     /// <summary>Puts a sighting on the nearest notch below it, because a scratch has no decimals.</summary>
     public static double Notch(double azimuthDeg, double notchDeg = ArcNotchDeg)

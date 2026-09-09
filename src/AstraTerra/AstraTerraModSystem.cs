@@ -43,6 +43,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private NearBodyLightInstaller? clientNearBodyLightInstaller;
     private NearBodyLightInstaller? serverNearBodyLightInstaller;
     private NearBodyLightSource? nearBodyLightSource;
+    private double? worldObliquityDeg;
 
     public override void Start(ICoreAPI api)
     {
@@ -172,6 +173,7 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void StartClientSide(ICoreClientAPI api)
     {
         clientLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartClient(api);
+        clientLongitudeAwareSunInstaller.SetWorldTilt(worldObliquityDeg);
         clientNearBodyLightInstaller = NearBodyLightInstaller.StartClient(api);
         clientNearBodyLightInstaller.SetSource(nearBodyLightSource);
         SkyStarSunMoonRenderer.Reset();
@@ -415,10 +417,41 @@ public sealed class AstraTerraModSystem : ModSystem
         serverNearBodyLightInstaller?.SetSource(source);
     }
 
+    /// <summary>
+    /// Sets this world's axial tilt in degrees, or clears it with null to keep Earth's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A tidally locked moon's tilt is its parent giant's, because the moon is locked to the giant
+    /// and orbits in its equatorial plane. That one number decides how strong the world's seasons
+    /// are, how far the sun swings along the horizon over a year -- which is what the bronze disc
+    /// measures -- and, with the giant sitting on the moon's own equator, how often the giant walks
+    /// across the sun. A moon of an upright giant is eclipsed nearly every day, the way Io is by
+    /// Jupiter; a moon of a tipped one gets two eclipse seasons a year, the way Titan does.
+    /// </para>
+    /// <para>
+    /// It reaches the world through the solar delegate, so the sun a player watches, the sun the
+    /// ground is lit by and the sun an instrument computes are all the same sun. Held here as well
+    /// as passed on, the same way the near-body light source is, so a generator that publishes
+    /// before a side has started up is not lost. The server's <c>GeneratedWorldTilt</c> setting can
+    /// refuse it, and that refusal is sent to clients.
+    /// </para>
+    /// </remarks>
+    public void SetWorldObliquity(double? obliquityDeg)
+    {
+        worldObliquityDeg = obliquityDeg;
+        clientLongitudeAwareSunInstaller?.SetWorldTilt(obliquityDeg);
+        serverLongitudeAwareSunInstaller?.SetWorldTilt(obliquityDeg);
+    }
+
     public override void StartServerSide(ICoreServerAPI api)
     {
         config ??= AstraTerraConfigLoader.Load(api);
-        serverLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartServer(api, config.LongitudeAwareSun);
+        serverLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartServer(
+            api,
+            config.LongitudeAwareSun,
+            config.GeneratedWorldTilt);
+        serverLongitudeAwareSunInstaller.SetWorldTilt(worldObliquityDeg);
         serverNearBodyLightInstaller = NearBodyLightInstaller.StartServer(
             api,
             config.NearBodyLighting,
