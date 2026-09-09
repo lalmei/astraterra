@@ -43,6 +43,30 @@ public sealed class SkyLongitudeWiringTests
         Assert.DoesNotContain("GetMoonPosition(entity.Pos.XYZ, calendar.TotalDays)", source);
     }
 
+    /// <summary>
+    /// Near bodies are the only things in this sky placed by hour angle rather than right ascension,
+    /// and that makes them the only ones that need the observer's longitude handed over separately.
+    /// The sidereal angle alone cancels it against itself and pins the parent giant to the player's
+    /// own sky, so the extra argument is the whole fix and nothing checks it but this.
+    /// </summary>
+    [Fact]
+    public void Near_Bodies_Are_Placed_With_The_Observers_Longitude_As_Well_As_Its_Sidereal_Angle()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepositoryRoot(),
+            "src",
+            "AstraTerra",
+            "Client",
+            "Rendering",
+            "NearBodyRenderer.cs"));
+
+        Assert.Contains("ObserverLongitude.ForObserver", source);
+
+        var call = source[source.IndexOf("NearBodyRenderModel.Place(", StringComparison.Ordinal)..];
+        call = call[..call.IndexOf(");", StringComparison.Ordinal)];
+        Assert.Contains("longitude", call);
+    }
+
     private static IEnumerable<string> EnumerateSources()
         => Directory.EnumerateFiles(
             Path.Combine(RepositoryRoot(), "src", "AstraTerra"),
