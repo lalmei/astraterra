@@ -38,6 +38,18 @@ public sealed class NearBodyRenderer : IRenderer
     private const double SunTolerance = 0.0017;
 
     /// <summary>
+    /// How far a body behind may move before the silhouette held over it is redone: three
+    /// arcminutes.
+    /// </summary>
+    /// <remarks>
+    /// Held far looser than the body's own position, and for the same reason the sun is: a backdrop
+    /// only decides where a face stops fading, not where anything is drawn. The body a player
+    /// actually watches move is rebuilt on its own tolerance regardless, and the one carrying tens
+    /// of thousands of vertices is usually the parent planet, which does not move at all.
+    /// </remarks>
+    private const double BackdropTolerance = 0.0009;
+
+    /// <summary>
     /// How much a body may swell or shrink before its mesh is rebuilt. A sibling's distance changes
     /// over a synodic period, so its disc breathes; held to the same fraction of a degree its
     /// position is.
@@ -187,9 +199,14 @@ public sealed class NearBodyRenderer : IRenderer
             ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrix);
 
             var daylight = Math.Clamp(calendar.DayLightStrength, 0.0, 1.0);
+
+            // Farthest first, and every body is told what is already behind it, so its night side
+            // can hold as a silhouette where the backdrop is another body rather than sky.
+            var behind = new List<PlacedNearBody>(placed.Count);
             foreach (var body in placed)
             {
-                PassFor(body.Body).Draw(shader, body, SkyDistance, daylight);
+                PassFor(body.Body).Draw(shader, body, SkyDistance, daylight, behind);
+                behind.Add(body);
             }
         }
         finally
@@ -246,6 +263,7 @@ public sealed class NearBodyRenderer : IRenderer
         private SkyDirection lastSun;
         private double lastDaylight = -1.0;
         private double lastAngularDiameter = -1.0;
+        private (SkyDirection Direction, double AngularDiameterDeg)[] lastBackdrops = [];
 
         public BodyPass(ICoreClientAPI api, NearBodyEntry body)
         {
@@ -256,7 +274,12 @@ public sealed class NearBodyRenderer : IRenderer
 
         public bool Matches(NearBodyEntry body) => ReferenceEquals(body.Face, face);
 
-        public void Draw(IStandardShaderProgram shader, PlacedNearBody placed, float radius, double daylight)
+        public void Draw(
+            IStandardShaderProgram shader,
+            PlacedNearBody placed,
+            float radius,
+            double daylight,
+            IReadOnlyList<PlacedNearBody> backdrops)
         {
             EnsureTexture();
             if (texture.TextureId == 0)
@@ -267,9 +290,9 @@ public sealed class NearBodyRenderer : IRenderer
             // A face is tens of thousands of vertices, and nothing about it changes quickly: the sky
             // turns, the sun moves, and both do it slowly enough that rebuilding on every frame is
             // work nobody sees. Rebuild when the geometry has actually moved.
-            if (mesh is null || HasMoved(placed, daylight))
+            if (mesh is null || HasMoved(placed, daylight, backdrops))
             {
-                var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight);
+                var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight, backdrops);
                 if (mesh is null)
                 {
                     mesh = api.Render.UploadMesh(meshData);
@@ -283,6 +306,9 @@ public sealed class NearBodyRenderer : IRenderer
                 lastSun = placed.SunDirection;
                 lastDaylight = daylight;
                 lastAngularDiameter = placed.AngularDiameterDeg;
+                lastBackdrops = backdrops
+                    .Select(static body => (body.Direction, body.AngularDiameterDeg))
+                    .ToArray();
             }
 
             shader.Tex2D = texture.TextureId;
@@ -311,11 +337,33 @@ public sealed class NearBodyRenderer : IRenderer
         /// The saving is kept where it was worth having: a tidally locked world's parent planet
         /// does not move at all, and it is the body with the vertices.
         /// </remarks>
-        private bool HasMoved(PlacedNearBody placed, double daylight)
+        private bool HasMoved(PlacedNearBody placed, double daylight, IReadOnlyList<PlacedNearBody> backdrops)
             => Math.Abs(daylight - lastDaylight) > 0.01
                || Math.Abs(placed.AngularDiameterDeg - lastAngularDiameter) > SizeTolerance
                || Separation(placed.Direction, lastDirection) > PositionTolerance
-               || Separation(placed.SunDirection, lastSun) > SunTolerance;
+               || Separation(placed.SunDirection, lastSun) > SunTolerance
+               || BackdropsMoved(backdrops);
+
+        /// <summary>Whether the bodies behind this one have changed enough to redraw its silhouette.</summary>
+        private bool BackdropsMoved(IReadOnlyList<PlacedNearBody> backdrops)
+        {
+            if (backdrops.Count != lastBackdrops.Length)
+            {
+                return true;
+            }
+
+            for (var index = 0; index < backdrops.Count; index++)
+            {
+                var (direction, angularDiameter) = lastBackdrops[index];
+                if (Separation(backdrops[index].Direction, direction) > BackdropTolerance
+                    || Math.Abs(backdrops[index].AngularDiameterDeg - angularDiameter) > SizeTolerance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         private static double Separation(SkyDirection left, SkyDirection right)
         {
