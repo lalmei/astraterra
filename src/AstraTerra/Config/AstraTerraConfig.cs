@@ -54,6 +54,27 @@ public sealed class AstraTerraConfig
     public bool NearBodyLighting { get; set; } = true;
 
     /// <summary>
+    /// Whether a generated world may run on its own axial tilt rather than Earth's 23.4 degrees.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A tidally locked moon does not pick its own tilt: it is locked to its giant and orbits in
+    /// that giant's equatorial plane, so its axis is the giant's axis. A moon of a Jupiter-analog
+    /// therefore has almost no seasons and is eclipsed nearly every day; a moon of a Saturn-analog
+    /// has proper seasons and two eclipse seasons a year. With this off, every world keeps Earth's
+    /// tilt and every generated moon reads the same.
+    /// </para>
+    /// <para>
+    /// This changes the world rather than the view of it -- day length by latitude and season, and
+    /// through them what grows -- so like the near-body light it is the server's to decide and its
+    /// value is sent to every client. Vintage Story's own seasonal temperature curve does not
+    /// follow the tilt, which is why the generator handing the tilt over is expected to keep it
+    /// inside a habitable band rather than passing on a world lying on its side.
+    /// </para>
+    /// </remarks>
+    public bool GeneratedWorldTilt { get; set; } = true;
+
+    /// <summary>
     /// Which hour the player sees on the character panel and instruments. The world's stored clock
     /// remains universal regardless.
     /// </summary>

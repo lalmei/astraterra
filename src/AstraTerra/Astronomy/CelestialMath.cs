@@ -99,15 +99,23 @@ public static class CelestialMath
     /// declination. Right ascension is not ecliptic longitude: the shared obliquity rotation supplies
     /// it, while the declination expression deliberately mirrors the survival sun that instruments
     /// and the player actually see.
+    /// <para>
+    /// The tilt is <see cref="WorldTilt.CurrentDeg"/> rather than Earth's, so that on a generated
+    /// world this still mirrors the sun in the sky: the solar delegate is running the same
+    /// substitution, and an instrument that kept Earth's tilt here would read a sun that is not
+    /// there.
+    /// </para>
     /// </remarks>
     public static EquatorialCoordinates GetVanillaAlignedSolarEquatorialCoordinates(
         double totalDays,
         int daysPerYear,
-        double? equinoxDayOfYear = null)
+        double? equinoxDayOfYear = null,
+        double? obliquityDeg = null)
     {
+        var obliquity = obliquityDeg ?? WorldTilt.CurrentDeg;
         var solarLongitudeDeg = GetSolarLongitudeDegrees(totalDays, daysPerYear, equinoxDayOfYear);
-        var rotated = EclipticToEquatorial(solarLongitudeDeg, eclipticLatitudeDeg: 0.0);
-        var declinationDeg = MeanObliquityDeg * Math.Sin(ToRadians(solarLongitudeDeg));
+        var rotated = EclipticToEquatorial(solarLongitudeDeg, eclipticLatitudeDeg: 0.0, obliquity);
+        var declinationDeg = obliquity * Math.Sin(ToRadians(solarLongitudeDeg));
 
         return new EquatorialCoordinates(rotated.RightAscensionDeg, declinationDeg);
     }
@@ -261,8 +269,9 @@ public static class CelestialMath
     /// equatorial frame the sky is drawn in.
     /// </summary>
     /// <param name="obliquityDeg">
-    /// Defaults to <see cref="MeanObliquityDeg"/>. Exposed so a world with a different tilt — or a
-    /// test pinning the rotation itself — can supply its own.
+    /// Defaults to <see cref="WorldTilt.CurrentDeg"/>, which is <see cref="MeanObliquityDeg"/> on
+    /// an ordinary world and the parent giant's tilt on a generated moon. Exposed so a caller that
+    /// means one specific tilt — or a test pinning the rotation itself — can supply its own.
     /// </param>
     /// <remarks>
     /// Done through a unit vector rather than the textbook <c>atan2(sin l cos e - tan b sin e,
@@ -272,11 +281,11 @@ public static class CelestialMath
     public static EquatorialCoordinates EclipticToEquatorial(
         double eclipticLongitudeDeg,
         double eclipticLatitudeDeg,
-        double obliquityDeg = MeanObliquityDeg)
+        double? obliquityDeg = null)
     {
         var longitude = ToRadians(eclipticLongitudeDeg);
         var latitude = ToRadians(eclipticLatitudeDeg);
-        var obliquity = ToRadians(obliquityDeg);
+        var obliquity = ToRadians(obliquityDeg ?? WorldTilt.CurrentDeg);
         var cosLatitude = Math.Cos(latitude);
 
         var x = cosLatitude * Math.Cos(longitude);
