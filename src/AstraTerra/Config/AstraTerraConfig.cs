@@ -34,6 +34,26 @@ public sealed class AstraTerraConfig
     public bool LongitudeAwareSun { get; set; } = true;
 
     /// <summary>
+    /// Whether a generated parent giant lights the world it hangs over, and eclipses its sun.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the one AstraTerra setting that changes the world rather than the view of it. A
+    /// tidally locked moon's giant is tens of degrees wide and full at local midnight, so its
+    /// nights are genuinely lit -- and because a regular satellite orbits in its giant's equatorial
+    /// plane, the sun passes behind that giant twice a year, which is an eclipse season. With this
+    /// on, both reach the light the world runs on: what spawns at night, how crops grow, how cold
+    /// it gets.
+    /// </para>
+    /// <para>
+    /// Only a moon world has a parent giant, so on every other world this setting does nothing at
+    /// all. The server's value applies to everyone, the same way the longitude-aware sun's does,
+    /// because the light a dedicated server spawns mobs by has to be the light its clients see.
+    /// </para>
+    /// </remarks>
+    public bool NearBodyLighting { get; set; } = true;
+
+    /// <summary>
     /// Which hour the player sees on the character panel and instruments. The world's stored clock
     /// remains universal regardless.
     /// </summary>

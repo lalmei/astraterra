@@ -40,6 +40,9 @@ public sealed class AstraTerraModSystem : ModSystem
     private NearBodyCatalog nearBodies = NearBodyCatalog.Empty;
     private LongitudeAwareSunInstaller? clientLongitudeAwareSunInstaller;
     private LongitudeAwareSunInstaller? serverLongitudeAwareSunInstaller;
+    private NearBodyLightInstaller? clientNearBodyLightInstaller;
+    private NearBodyLightInstaller? serverNearBodyLightInstaller;
+    private NearBodyLightSource? nearBodyLightSource;
 
     public override void Start(ICoreAPI api)
     {
@@ -169,6 +172,8 @@ public sealed class AstraTerraModSystem : ModSystem
     public override void StartClientSide(ICoreClientAPI api)
     {
         clientLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartClient(api);
+        clientNearBodyLightInstaller = NearBodyLightInstaller.StartClient(api);
+        clientNearBodyLightInstaller.SetSource(nearBodyLightSource);
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
         AstrolabeCalibrationState.Reset();
@@ -376,8 +381,10 @@ public sealed class AstraTerraModSystem : ModSystem
     /// <remarks>
     /// Vintage Story draws one moon of its own. A world that is itself a moon has none, so the
     /// catalog can ask for that moon to stand down rather than hang beside a parent planet it has
-    /// nothing to do with. Only the drawing stops: moonlight, the phase the calendar reports, and
-    /// the length of the day are all untouched.
+    /// nothing to do with. Only the drawing stops here: the phase the calendar reports and the
+    /// length of the day are untouched. The light is a separate question, answered separately by
+    /// <see cref="SetNearBodyLightSource"/>, because on a locked moon the giant is bright enough
+    /// that leaving it out of the ground's light would be its own kind of wrong.
     /// </remarks>
     public void ReplaceNearBodies(NearBodyCatalog? replacement)
     {
@@ -386,10 +393,37 @@ public sealed class AstraTerraModSystem : ModSystem
         sextantReadingRenderer?.ReplaceNearBodies(nearBodies);
     }
 
+    /// <summary>
+    /// Sets the parent giant that lights this world, or clears it for a world without one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Separate from <see cref="ReplaceNearBodies"/>, and separate on purpose. That catalog carries
+    /// a painted face per body, which is a client's business; this is four numbers, and the server
+    /// needs them, because what lights the ground is what decides whether things spawn on it. A
+    /// generator therefore hands the catalog to the client and this to both sides.
+    /// </para>
+    /// <para>
+    /// Held here as well as passed on, so a generator that publishes before a side has started up
+    /// is not lost: whichever installer starts later picks the stored source up.
+    /// </para>
+    /// </remarks>
+    public void SetNearBodyLightSource(NearBodyLightSource? source)
+    {
+        nearBodyLightSource = source;
+        clientNearBodyLightInstaller?.SetSource(source);
+        serverNearBodyLightInstaller?.SetSource(source);
+    }
+
     public override void StartServerSide(ICoreServerAPI api)
     {
         config ??= AstraTerraConfigLoader.Load(api);
         serverLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartServer(api, config.LongitudeAwareSun);
+        serverNearBodyLightInstaller = NearBodyLightInstaller.StartServer(
+            api,
+            config.NearBodyLighting,
+            () => serverLongitudeAwareSunInstaller?.SunFollowsLongitude ?? false);
+        serverNearBodyLightInstaller.SetSource(nearBodyLightSource);
         new ConstellationBookServer(() => catalog).Register(api);
         new SkyDiscEngraveServer().Register(api);
         new StarsServerCommands(() => catalog, () => planets).Register(api);
@@ -403,6 +437,8 @@ public sealed class AstraTerraModSystem : ModSystem
         FoundSkyDisc.Reset();
         clientLongitudeAwareSunInstaller?.Dispose();
         serverLongitudeAwareSunInstaller?.Dispose();
+        clientNearBodyLightInstaller?.Dispose();
+        serverNearBodyLightInstaller?.Dispose();
         VanillaCalendarHooks.Reset();
         telescopeScopeController?.Stop();
         skyLyingController?.Stop();
