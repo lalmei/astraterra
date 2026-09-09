@@ -527,6 +527,107 @@ public sealed class NearBodyRenderModelTests
             MaxAlpha(NearBodyMeshBuilder.Build([full with { HorizonFade = 0.0 }], 40f, 1, daylight: 0.0)));
     }
 
+    /// <summary>
+    /// The reported bug: standing on a moon with the parent giant overhead, a sibling crossing that
+    /// giant had its night side fade out in daylight and the planet showed through it. The fade is a
+    /// fade into the sky, and over another body there is no sky to fade into.
+    /// </summary>
+    [Fact]
+    public void A_Moon_Crossing_The_Parent_Keeps_Its_Night_Side_Against_It()
+    {
+        // Sun square to the right, so both bodies are half lit and the sibling has a night side.
+        var sun = new SkyDirection(1.0, 0.0, 0.0);
+        var giant = new PlacedNearBody(
+            Parent(0.0, 0.0),
+            new SkyDirection(0.0, 0.0, 1.0),
+            sun,
+            AltitudeDeg: 60.0,
+            AngularDiameterDeg: 22.0,
+            IlluminatedFraction: 0.5);
+
+        // Five degrees off the giant's centre, well inside an eleven-degree disc, on its lit side.
+        var offset = 5.0 * Math.PI / 180.0;
+        var sibling = new PlacedNearBody(
+            Parent(0.0, 0.0) with { Id = "sibling", Kind = NearBodyKind.Moon },
+            new SkyDirection(Math.Sin(offset), 0.0, Math.Cos(offset)),
+            sun,
+            AltitudeDeg: 60.0,
+            AngularDiameterDeg: 0.6,
+            IlluminatedFraction: 0.5);
+
+        var alone = NearBodyMeshBuilder.Build([sibling], 40f, 1, daylight: 1.0);
+        var crossing = NearBodyMeshBuilder.Build([sibling], 40f, 1, daylight: 1.0, [giant]);
+
+        // On its own against a bright sky the night side goes, as it always did.
+        Assert.True(MinAlpha(alone) < 40, $"the unlit side stayed at alpha {MinAlpha(alone)}");
+
+        // Over the giant every vertex draws solid: the sibling is a bite out of the planet.
+        Assert.Equal(255, MinAlpha(crossing));
+
+        // Clear of the giant it is sky again, and the night side goes with it.
+        var elsewhere = sibling with { Direction = new SkyDirection(Math.Sin(1.0), 0.0, Math.Cos(1.0)) };
+        Assert.True(
+            MinAlpha(NearBodyMeshBuilder.Build([elsewhere], 40f, 1, daylight: 1.0, [giant])) < 40,
+            "a sibling nowhere near the giant should still fade");
+
+        // And after dark nothing changes: both were solid to begin with.
+        Assert.Equal(255, MinAlpha(NearBodyMeshBuilder.Build([sibling], 40f, 1, daylight: 0.0, [giant])));
+    }
+
+    /// <summary>
+    /// The same hold, the other way round: a sibling round the far side is drawn first and the
+    /// parent goes over it, so the parent's own night side must not be a window onto it.
+    /// </summary>
+    [Fact]
+    public void The_Parents_Night_Side_Does_Not_Show_A_Moon_Behind_It()
+    {
+        var sun = new SkyDirection(1.0, 0.0, 0.0);
+        var behind = new PlacedNearBody(
+            Parent(0.0, 0.0) with { Id = "sibling", Kind = NearBodyKind.Moon },
+            new SkyDirection(-Math.Sin(5.0 * Math.PI / 180.0), 0.0, Math.Cos(5.0 * Math.PI / 180.0)),
+            sun,
+            AltitudeDeg: 60.0,
+            AngularDiameterDeg: 0.6,
+            IlluminatedFraction: 0.5,
+            SeparationRatio: 1.4);
+        var giant = new PlacedNearBody(
+            Parent(0.0, 0.0),
+            new SkyDirection(0.0, 0.0, 1.0),
+            sun,
+            AltitudeDeg: 60.0,
+            AngularDiameterDeg: 22.0,
+            IlluminatedFraction: 0.5);
+
+        // The sibling sits on the giant's unlit side, which by day is exactly where the hole was.
+        var faded = NearBodyMeshBuilder.Build([giant], 40f, 1, daylight: 1.0);
+        var held = NearBodyMeshBuilder.Build([giant], 40f, 1, daylight: 1.0, [behind]);
+
+        Assert.True(MinAlpha(faded) < 40, $"the giant's night side stayed at alpha {MinAlpha(faded)}");
+        Assert.True(
+            MaxAlphaWhereItWasClear(faded, held) > 200,
+            "the giant should have drawn solid over the moon behind it");
+    }
+
+    /// <summary>
+    /// The most any vertex gained from a backdrop: what was faded out before and is held now.
+    /// </summary>
+    private static int MaxAlphaWhereItWasClear(
+        Vintagestory.API.Client.MeshData before,
+        Vintagestory.API.Client.MeshData after)
+    {
+        var most = 0;
+        for (var vertex = 0; vertex < before.VerticesCount; vertex++)
+        {
+            var was = before.Rgba[(vertex * 4) + 3];
+            if (was < 40)
+            {
+                most = Math.Max(most, (int)after.Rgba[(vertex * 4) + 3]);
+            }
+        }
+
+        return most;
+    }
+
     /// <summary>The hour angle the sky actually put the body at, read back out of its placement.</summary>
     private static double HourAngleFromSky(
         NearBodyEntry body,
