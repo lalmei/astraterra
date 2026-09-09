@@ -463,6 +463,17 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Logger.Event("AstraTerra startup step: server commands registered: /stars debug/goto-lat/give-catalog/give-zodiac");
     }
 
+    /// <remarks>
+    /// A mod system is disposed once per side, and in singleplayer both sides live in the one
+    /// process, so anything held in a static is shared between them. The server's mod loader is
+    /// disposed first, on the server thread, which has no GL context: a static holding uploaded
+    /// meshes or textures must therefore never be released from the unguarded half of this method.
+    /// Doing so reaches glDeleteBuffers through a null dispatch and takes the process down with a
+    /// segfault rather than a managed exception -- no crash log, and the world save that was still
+    /// to come never happens. Everything needing a GL context goes below the client guard, where
+    /// the client's own disposal runs it on the render thread; everything above it is state the
+    /// server holds too and has to let go of.
+    /// </remarks>
     public override void Dispose()
     {
         telescopeZoomPatcher?.Stop();
@@ -475,34 +486,35 @@ public sealed class AstraTerraModSystem : ModSystem
         VanillaCalendarHooks.Reset();
         telescopeScopeController?.Stop();
         skyLyingController?.Stop();
-        SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
-        skyDiscFaceHud?.TryClose();
         SkyLyingState.Reset();
+        if (clientApi is null)
+        {
+            return;
+        }
+
+        SkyStarSunMoonRenderer.Reset();
+        skyDiscFaceHud?.TryClose();
         skyCoordinateGridRenderer?.Dispose();
         nearBodyRenderer?.Dispose();
         moonDiscRenderer?.Dispose();
-        if (clientApi is not null && constellationOverlayRenderer is not null)
+        if (constellationOverlayRenderer is not null)
         {
             clientApi.Event.MouseDown -= constellationOverlayRenderer.OnMouseDown;
             clientApi.Event.MouseMove -= constellationOverlayRenderer.OnMouseMove;
             clientApi.Event.MouseUp -= constellationOverlayRenderer.OnMouseUp;
         }
 
-        if (clientApi is not null)
-        {
-            clientApi.Event.MouseWheelMove -= OnMouseWheelMove;
-        }
-
-        if (clientApi is not null && astrolabePlannerRenderer is not null)
+        clientApi.Event.MouseWheelMove -= OnMouseWheelMove;
+        if (astrolabePlannerRenderer is not null)
         {
             clientApi.Event.MouseDown -= astrolabePlannerRenderer.OnMouseDown;
         }
 
-        if (clientApi is not null && sextantReadingRenderer is not null)
+        if (sextantReadingRenderer is not null)
         {
             clientApi.Event.MouseDown -= sextantReadingRenderer.OnMouseDown;
         }
