@@ -20,7 +20,19 @@ public sealed class SkyLongitudeWiringTests
             .Order()
             .ToArray();
 
-        Assert.Equal(["LongitudeAwareSunInstaller.cs", "ObserverLongitude.cs"], offenders);
+        // Three, and each has a reason. LongitudeAwareSunInstaller is the sun's own wrapper.
+        // ObserverLongitude is the client-scope answer everything drawn reads from. The third is
+        // the server's copy of that answer: near-body lighting runs on a dedicated server, where
+        // ObserverLongitude is empty because no client ever filled it in, so the server has to map
+        // longitude itself -- and it gates that on whether its own sun is following longitude,
+        // which is the invariant this test is really about.
+        Assert.Equal(
+            ["LongitudeAwareSunInstaller.cs", "NearBodyLightInstaller.cs", "ObserverLongitude.cs"],
+            offenders);
+
+        var serverCopy = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "AstraTerra", "Astronomy", "NearBodyLightInstaller.cs"));
+        Assert.Contains("sunFollowsLongitude()", serverCopy);
     }
 
     /// <summary>
