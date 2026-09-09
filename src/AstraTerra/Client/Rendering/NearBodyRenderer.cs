@@ -138,12 +138,16 @@ public sealed class NearBodyRenderer : IRenderer
             longitude);
 
         var sunPosition = calendar.GetSunPosition(position.XYZ, calendar.TotalDays).Clone().Normalize();
+        // The longitude goes in twice on purpose: once inside the sidereal angle, which turns the
+        // star field for this observer, and once on its own, which carries the bodies fixed to the
+        // ground round with it. Handing over only the first cancels it and pins them to the screen.
         var placed = NearBodyRenderModel.Place(
             catalog,
             calendar.TotalDays,
             latitude,
             localSiderealAngle,
-            new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z));
+            new SkyDirection(sunPosition.X, sunPosition.Y, sunPosition.Z),
+            longitude);
         if (placed.Count == 0)
         {
             return;

@@ -365,6 +365,178 @@ public sealed class NearBodyRenderModelTests
             NearBodyRenderModel.Place(catalog, 0.5, LatitudeDeg, 0.0, sun).Select(static body => body.Body.Id));
     }
 
+    /// <summary>
+    /// The consequence a player can walk to. These bodies are fixed to the ground, not to the star
+    /// field, so an observer who travels east carries their meridian past them and the body falls
+    /// behind into the west -- and far enough round the world it is simply not up.
+    /// </summary>
+    [Fact]
+    public void A_Ground_Fixed_Body_Falls_Behind_An_Observer_Who_Travels_East()
+    {
+        var parent = Parent(hourAngleDeg: 30.0, rate: 0.0);
+        var sun = new SkyDirection(0.0, -1.0, 0.0);
+
+        // One instant, three observers. Each observer's sidereal angle already carries their own
+        // longitude, which is what makes this the same moment rather than three different ones.
+        var atPrimeMeridian = NearBodyRenderModel.Place(parent, 4.0, LatitudeDeg, 0.0, sun, 0.0);
+        var twentyEast = NearBodyRenderModel.Place(parent, 4.0, LatitudeDeg, 20.0, sun, 20.0);
+        var farSide = NearBodyRenderModel.Place(parent, 4.0, LatitudeDeg, 170.0, sun, 170.0);
+
+        Assert.NotNull(atPrimeMeridian);
+        Assert.NotNull(twentyEast);
+
+        // The hour angle is the authored one plus the observer's longitude, so the body has gone
+        // twenty degrees further west and dropped accordingly.
+        Assert.Equal(30.0, HourAngleFromSky(parent, 4.0, 0.0, 0.0), 9);
+        Assert.Equal(50.0, HourAngleFromSky(parent, 4.0, 20.0, 20.0), 9);
+        Assert.True(
+            twentyEast.AltitudeDeg < atPrimeMeridian.AltitudeDeg - 10.0,
+            $"the body only fell from {atPrimeMeridian.AltitudeDeg:0.0} to {twentyEast.AltitudeDeg:0.0} deg");
+
+        // Round the far side of the world it has set: the far side of a locked moon never sees the
+        // planet it is locked to.
+        Assert.Null(farSide);
+    }
+
+    /// <summary>
+    /// The bug this longitude term exists to kill. Without it the longitude inside the sidereal
+    /// angle cancels against itself, and every observer on the world sees the giant pinned to the
+    /// same patch of their own sky while the sun and stars swing past it.
+    /// </summary>
+    [Fact]
+    public void Longitude_Does_Not_Cancel_Itself_Out_Of_The_Placement()
+    {
+        var parent = Parent(hourAngleDeg: 30.0, rate: 0.0);
+        var sun = new SkyDirection(0.0, -1.0, 0.0);
+
+        var here = NearBodyRenderModel.Place(parent, 0.0, LatitudeDeg, 0.0, sun, 0.0);
+        var thirtyEast = NearBodyRenderModel.Place(parent, 0.0, LatitudeDeg, 30.0, sun, 30.0);
+
+        Assert.NotNull(here);
+        Assert.NotNull(thirtyEast);
+        Assert.NotEqual(here.AltitudeDeg, thirtyEast.AltitudeDeg, 3);
+
+        // And it is only the observer's longitude that moves it: the same longitude at a later hour
+        // is a different sky, but the same hour at the same longitude is not.
+        var hereAgain = NearBodyRenderModel.Place(parent, 0.0, LatitudeDeg, 0.0, sun, 0.0);
+        Assert.NotNull(hereAgain);
+        Assert.Equal(here.AltitudeDeg, hereAgain.AltitudeDeg, 9);
+    }
+
+    /// <summary>
+    /// A sibling is placed against the parent, so both go round together: how far the sibling sits
+    /// from the giant is the one thing about this sky that longitude cannot touch.
+    /// </summary>
+    [Fact]
+    public void A_Sibling_Keeps_Its_Distance_From_The_Parent_At_Any_Longitude()
+    {
+        var parent = Parent(hourAngleDeg: 30.0, rate: 0.0);
+        var sibling = Sibling(new NearBodyOrbit(
+            AnchorHourAngleDeg: 30.0,
+            DistanceRatio: 0.4,
+            PhaseDeg: 70.0,
+            PhaseRateDegPerDay: 0.0));
+
+        foreach (var longitude in new[] { 0.0, 45.0, 200.0 })
+        {
+            var gap = CelestialMath.NormalizeDegrees(
+                HourAngleFromSky(sibling, 1.0, longitude, longitude)
+                - HourAngleFromSky(parent, 1.0, longitude, longitude));
+            Assert.Equal(
+                NearBodyRenderModel.ElongationDeg(0.4, 70.0),
+                gap > 180.0 ? gap - 360.0 : gap,
+                9);
+        }
+    }
+
+    /// <summary>
+    /// A body tens of degrees wide cannot blink out the moment its centre crosses the cutoff, and
+    /// the air a setting disc is seen through is the honest reason it should not.
+    /// </summary>
+    [Fact]
+    public void A_Setting_Body_Fades_Instead_Of_Blinking_Out()
+    {
+        var parent = Parent(hourAngleDeg: 0.0, rate: 0.0);
+        var sun = new SkyDirection(0.0, -1.0, 0.0);
+
+        var lastFade = 1.0;
+        var everFaded = false;
+        for (var hourAngle = 0.0; hourAngle < 180.0; hourAngle += 0.5)
+        {
+            var placed = NearBodyRenderModel.Place(
+                parent with { HourAngleDeg = hourAngle },
+                0.0,
+                LatitudeDeg,
+                0.0,
+                sun);
+            if (placed is null)
+            {
+                break;
+            }
+
+            Assert.InRange(placed.HorizonFade, 0.0, lastFade + 1e-9);
+            everFaded |= placed.HorizonFade < 1.0;
+            lastFade = placed.HorizonFade;
+        }
+
+        Assert.True(everFaded, "the body was still at full strength on the frame before it vanished");
+        Assert.True(lastFade < 0.1, $"it was still drawing at {lastFade:0.00} when it dropped out");
+
+        // Well up, the air takes nothing.
+        var overhead = NearBodyRenderModel.Place(parent, 0.0, 0.0, 0.0, sun);
+        Assert.NotNull(overhead);
+        Assert.Equal(1.0, overhead.HorizonFade, 9);
+    }
+
+    /// <summary>
+    /// What a body is made of decides whether it is there in the daytime. A bright icy moon shows
+    /// against a lit sky and a dark rocky one does not, which is the difference between a full moon
+    /// at noon and every asteroid nobody has ever seen without a telescope.
+    /// </summary>
+    [Fact]
+    public void By_Day_A_Bright_Body_Stands_Against_The_Sky_And_A_Dark_One_Does_Not()
+    {
+        var sunward = new SkyDirection(1.0, 0.0, 0.0);
+        var lit = new SkyDirection(-1.0, 0.0, 0.0);
+        var icy = Placed(lit, sunward, illuminated: 1.0) with { Body = Parent(0.0, 0.0) with { Brightness = 0.9 } };
+        var rocky = Placed(lit, sunward, illuminated: 1.0) with { Body = Parent(0.0, 0.0) with { Brightness = 0.4 } };
+
+        Assert.Equal(255, MaxAlpha(NearBodyMeshBuilder.Build([icy], 40f, 1, daylight: 1.0)));
+
+        var darkByDay = MaxAlpha(NearBodyMeshBuilder.Build([rocky], 40f, 1, daylight: 1.0));
+        Assert.InRange(darkByDay, 1, 90);
+
+        // After dark both are solid: the sky has nothing left to hide them behind.
+        Assert.Equal(255, MinAlpha(NearBodyMeshBuilder.Build([icy], 40f, 1, daylight: 0.0)));
+        Assert.Equal(255, MinAlpha(NearBodyMeshBuilder.Build([rocky], 40f, 1, daylight: 0.0)));
+    }
+
+    /// <summary>A body low enough to be fading draws fainter for it, on top of everything else.</summary>
+    [Fact]
+    public void The_Horizon_Fade_Reaches_What_Is_Actually_Drawn()
+    {
+        var sunward = new SkyDirection(1.0, 0.0, 0.0);
+        var full = Placed(new SkyDirection(-1.0, 0.0, 0.0), sunward, illuminated: 1.0);
+
+        Assert.Equal(255, MinAlpha(NearBodyMeshBuilder.Build([full], 40f, 1, daylight: 0.0)));
+        Assert.Equal(
+            127,
+            MaxAlpha(NearBodyMeshBuilder.Build([full with { HorizonFade = 0.5 }], 40f, 1, daylight: 0.0)));
+        Assert.Equal(
+            0,
+            MaxAlpha(NearBodyMeshBuilder.Build([full with { HorizonFade = 0.0 }], 40f, 1, daylight: 0.0)));
+    }
+
+    /// <summary>The hour angle the sky actually put the body at, read back out of its placement.</summary>
+    private static double HourAngleFromSky(
+        NearBodyEntry body,
+        double totalDays,
+        double localSiderealDeg,
+        double longitudeDeg)
+        => CelestialMath.NormalizeDegrees(
+            localSiderealDeg
+            - NearBodyRenderModel.RightAscensionDeg(body, totalDays, localSiderealDeg, longitudeDeg));
+
     private static double HourAngle(NearBodyEntry body, double totalDays)
         => CelestialMath.NormalizeDegrees(NearBodyRenderModel.HourAngleDeg(body, totalDays));
 

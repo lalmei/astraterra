@@ -98,6 +98,20 @@ public static class NearBodyMeshBuilder
     public const float DaylightGain = 1.45f;
 
     /// <summary>
+    /// How bright the sky itself is at full daylight, on the same scale a body's face is measured
+    /// on. What a body has to beat to be seen at all by day.
+    /// </summary>
+    /// <remarks>
+    /// A disc is visible against a lit sky when its own surface is brighter than that sky, not when
+    /// it happens to be up: this is why a full moon shows at noon and a crescent does not, and why
+    /// nobody has ever seen a dark asteroid by daylight. Fogging by light alone made every generated
+    /// moon a solid disc at midday regardless of what it was made of, so the sky is given a
+    /// brightness of its own and a body draws by how far it clears it. A fresh-ice moon still shows;
+    /// a dark rocky one waits for dusk; a gas giant tens of degrees wide is never in doubt.
+    /// </remarks>
+    public const float DaySkyBrightness = 0.45f;
+
+    /// <summary>
     /// How far past the globe's edge the ring plane takes over the globe's own shading, in globe
     /// radii.
     /// </summary>
@@ -216,6 +230,9 @@ public static class NearBodyMeshBuilder
 
         var discFraction = Math.Clamp(placed.Body.Face.DiscFraction, 0.05, 1.0);
         var brightness = Math.Clamp(placed.Body.Brightness, 0.0, 1.0);
+        var sky = daylight * DaySkyBrightness;
+        var headroom = Math.Max(1e-3, 1.0 - sky);
+        var horizonFade = Math.Clamp(placed.HorizonFade, 0.0, 1.0);
         var firstVertex = meshData.VerticesCount;
 
         for (var row = 0; row <= subdivisions; row++)
@@ -235,15 +252,19 @@ public static class NearBodyMeshBuilder
                     placed.IlluminatedFraction) * brightness;
                 var shade = (int)Math.Clamp(light * 255f, 0f, 255f);
 
-                // Opaque at night, so the disc occults the stars behind it. By day it is fogged out
-                // in proportion to how little light it sends: the lit face saturates and stays
-                // solid to its edge, the night side all but vanishes, and the terminator grades
-                // between them. Nothing here asks whether a point is lit -- that question has a
-                // cliff at the limb, and answering it drew the planet as a ring round the sky.
-                var opacity = (int)Math.Clamp(
-                    ((light * DaylightGain) + (1.0 - daylight)) * 255.0,
-                    0.0,
-                    255.0);
+                // Opaque at night, so the disc occults the stars behind it. By day it draws by how
+                // far its own light clears the sky's: the lit face of a bright body saturates and
+                // stays solid to its edge, a dark one goes altogether, the night side vanishes in
+                // every case, and the terminator grades between them. Nothing here asks whether a
+                // point is lit -- that question has a cliff at the limb, and answering it drew the
+                // planet as a ring round the sky. The whole thing is then taken down by the air the
+                // body is seen through, which is what keeps a setting disc from blinking out.
+                // Clamped before the fade, not after: at night the terms behind it run well past
+                // solid, and a fade multiplying that would have nothing to take away until the body
+                // was most of the way gone.
+                var contrast = (light * DaylightGain) - sky;
+                var solid = Math.Clamp((contrast / headroom) + (1.0 - daylight), 0.0, 1.0);
+                var opacity = (int)Math.Clamp(solid * horizonFade * 255.0, 0.0, 255.0);
 
                 meshData.AddVertexWithFlags(
                     centerX + (rightX * halfSize * offsetRight) + (upX * halfSize * offsetUp),

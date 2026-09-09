@@ -18,6 +18,11 @@ namespace AstraTerra.Astronomy;
 /// orbit to work it out from, which is also where the parent itself sits, so a sibling round the
 /// far side comes out above one and is drawn behind the parent.
 /// </param>
+/// <param name="HorizonFade">
+/// How much of its light survives the air it is seen through, 1 well up and 0 at the cutoff. A body
+/// this wide cannot be allowed to blink out the instant its centre passes the cutoff, and the haze
+/// that takes a setting moon is the honest reason it should not.
+/// </param>
 public sealed record PlacedNearBody(
     NearBodyEntry Body,
     SkyDirection Direction,
@@ -25,17 +30,30 @@ public sealed record PlacedNearBody(
     double AltitudeDeg,
     double AngularDiameterDeg,
     double IlluminatedFraction,
-    double SeparationRatio = 1.0
+    double SeparationRatio = 1.0,
+    double HorizonFade = 1.0
 );
 
 /// <summary>
-/// Places near bodies for an observer: hour angle forward to the moment, then into the sky the same
-/// way every other body goes.
+/// Places near bodies for an observer: hour angle forward to the moment, round to the observer's
+/// own longitude, then into the sky the same way every other body goes.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Nothing here draws or caches. A near body's position changes slowly -- the fixed ones do not
 /// change at all -- but there are only ever a handful of them, so they are placed per frame rather
 /// than remembered, which keeps the sun direction they are lit by exactly current.
+/// </para>
+/// <para>
+/// A near body's hour angle is authored at the world's prime meridian, and the observer's longitude
+/// is added to it. Every one of these bodies is fixed to the world it is seen from rather than to
+/// the star field -- a locked world's parent planet sits over one patch of ground, and a moon on a
+/// flat rate is anchored to how fast that ground turns under it -- so an observer who walks east
+/// takes their meridian with them and the body falls behind, exactly as the sun does. Leaving the
+/// longitude out is not neutral: it pins the body to the player's own sky, and a giant that ignores
+/// half a world of travel while the sun and the whole star field swing past it is the one body in
+/// this sky that is obviously wrong.
+/// </para>
 /// </remarks>
 public static class NearBodyRenderModel
 {
@@ -52,12 +70,20 @@ public static class NearBodyRenderModel
     /// </summary>
     public const double MinSeparationRatio = 1e-3;
 
+    /// <summary>
+    /// How far above its own cutoff a body has climbed before it is drawn at full strength. Below
+    /// that it fades rather than blinking out: these bodies are wide enough that the cutoff is not
+    /// a moment but a slow disappearance, and low air takes real light out of a setting disc.
+    /// </summary>
+    public const double HorizonFadeBandDeg = 8.0;
+
     public static IReadOnlyList<PlacedNearBody> Place(
         NearBodyCatalog catalog,
         double totalDays,
         double latitudeDeg,
         double localSiderealDeg,
-        SkyDirection sunDirection)
+        SkyDirection sunDirection,
+        double observerLongitudeDeg = 0.0)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         if (catalog.Bodies.Count == 0)
@@ -68,7 +94,8 @@ public static class NearBodyRenderModel
         var placed = new List<PlacedNearBody>(catalog.Bodies.Count);
         foreach (var body in catalog.Bodies)
         {
-            if (Place(body, totalDays, latitudeDeg, localSiderealDeg, sunDirection) is { } visible)
+            if (Place(body, totalDays, latitudeDeg, localSiderealDeg, sunDirection, observerLongitudeDeg)
+                is { } visible)
             {
                 placed.Add(visible);
             }
@@ -91,19 +118,21 @@ public static class NearBodyRenderModel
         double totalDays,
         double latitudeDeg,
         double localSiderealDeg,
-        SkyDirection sunDirection)
+        SkyDirection sunDirection,
+        double observerLongitudeDeg = 0.0)
     {
         ArgumentNullException.ThrowIfNull(body);
 
         var separation = SeparationRatio(body, totalDays);
         var angularDiameter = body.AngularDiameterDeg / separation;
-        var rightAscension = RightAscensionDeg(body, totalDays, localSiderealDeg);
+        var rightAscension = RightAscensionDeg(body, totalDays, localSiderealDeg, observerLongitudeDeg);
         var horizontal = CelestialMath.GetHorizontalCoordinates(
             rightAscension,
             body.DeclinationDeg,
             latitudeDeg,
             localSiderealDeg);
-        if (horizontal.AltitudeDeg < HorizonCutoffDeg - (angularDiameter * 0.5))
+        var cutoff = HorizonCutoffDeg - (angularDiameter * 0.5);
+        if (horizontal.AltitudeDeg < cutoff)
         {
             return null;
         }
@@ -117,17 +146,34 @@ public static class NearBodyRenderModel
             horizontal.AltitudeDeg,
             angularDiameter,
             IlluminatedFraction(direction, sunDirection),
-            separation);
+            separation,
+            SkyProjection.GetHorizonFadeFactor(
+                horizontal.AltitudeDeg,
+                cutoff + HorizonFadeBandDeg,
+                cutoff));
     }
 
     /// <summary>
     /// Where the body sits among the stars right now. A body with no hour-angle rate stands still
     /// over the ground, so its right ascension has to run with the sidereal clock to stay there.
     /// </summary>
-    public static double RightAscensionDeg(NearBodyEntry body, double totalDays, double localSiderealDeg)
+    /// <remarks>
+    /// The observer's longitude is taken back out of the sidereal angle before the hour angle is
+    /// applied, and put back by the placement that follows. That is what makes the authored hour
+    /// angle mean the same thing everywhere: it is measured from the prime meridian, and an
+    /// observer's own meridian is that far round from it. Without the subtraction the longitude
+    /// inside the sidereal angle cancels against itself and every observer sees the body in the
+    /// same patch of their own sky.
+    /// </remarks>
+    public static double RightAscensionDeg(
+        NearBodyEntry body,
+        double totalDays,
+        double localSiderealDeg,
+        double observerLongitudeDeg = 0.0)
     {
         ArgumentNullException.ThrowIfNull(body);
-        return CelestialMath.NormalizeDegrees(localSiderealDeg - HourAngleDeg(body, totalDays));
+        return CelestialMath.NormalizeDegrees(
+            localSiderealDeg - observerLongitudeDeg - HourAngleDeg(body, totalDays));
     }
 
     /// <summary>Where the body hangs at this moment, measured west from the meridian.</summary>
