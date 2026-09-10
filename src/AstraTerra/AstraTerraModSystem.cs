@@ -237,20 +237,24 @@ public sealed class AstraTerraModSystem : ModSystem
             planets).Register(api);
         api.Logger.Event("AstraTerra startup step: client commands registered: .stars list/info/build/connect/name/select/delete/comets/debug/daylight-stars/starfield/sky-grid/calendar/render");
 
+        // First of AstraTerra's renderers, and the only one that measures rather than draws: it
+        // opens the frame every other pass reports its cost into.
+        api.Event.RegisterRenderer(new FrameCostRenderer(api), EnumRenderStage.Before, "AstraTerraFrameCost");
+
         skyCoordinateGridRenderer = new SkyCoordinateGridRenderer(api, config);
-        api.Event.RegisterRenderer(skyCoordinateGridRenderer, EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
+        api.Event.RegisterRenderer(new MeasuredRenderer(skyCoordinateGridRenderer, "AstraTerraSkyCoordinateGrid"), EnumRenderStage.Opaque, "AstraTerraSkyCoordinateGrid");
 
         // Near bodies need no star catalog: a world whose sky is dominated by the planet it orbits
         // should show that planet whether or not the starfield loaded.
         nearBodyRenderer = new NearBodyRenderer(api);
         nearBodyRenderer.Apply(nearBodies);
-        api.Event.RegisterRenderer(nearBodyRenderer, EnumRenderStage.Opaque, "AstraTerraNearBodies");
+        api.Event.RegisterRenderer(new MeasuredRenderer(nearBodyRenderer, "AstraTerraNearBodies"), EnumRenderStage.Opaque, "AstraTerraNearBodies");
 
         // The moon needs no star catalog either: it lights AstraTerra's surface portrait from what
         // Vintage Story's own calendar already says. Registered after the near bodies so
         // that a moon world, which has no moon, wins the argument over the vanilla disc.
         moonDiscRenderer = new MoonDiscRenderer(api, config);
-        api.Event.RegisterRenderer(moonDiscRenderer, EnumRenderStage.Opaque, "AstraTerraMoonDisc");
+        api.Event.RegisterRenderer(new MeasuredRenderer(moonDiscRenderer, "AstraTerraMoonDisc"), EnumRenderStage.Opaque, "AstraTerraMoonDisc");
 
         // Sun and moon sighting reads Vintage Story directly and needs nothing from the star
         // catalog, so the sextant is registered before the catalog gate and keeps working without it.
@@ -258,7 +262,7 @@ public sealed class AstraTerraModSystem : ModSystem
         // projected onto the face when a catalog is available, and the rest of the instrument keeps
         // working if astronomy failed to load.
         SkyDiscMeshes.Install(api, catalog);
-        api.Event.RegisterRenderer(new SkyDiscRenderer(api), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
+        api.Event.RegisterRenderer(new MeasuredRenderer(new SkyDiscRenderer(api), "AstraTerraSkyDisc"), EnumRenderStage.Ortho, "AstraTerraSkyDisc");
 
         // Held open for the session: it draws nothing until a disc is raised, and it has to be an
         // open dialog to be drawn at all.
@@ -269,8 +273,8 @@ public sealed class AstraTerraModSystem : ModSystem
         skyDiscEngraveClient.Register();
 
         sextantReadingRenderer = new SextantReadingRenderer(api, config, catalog, planets, comets, constellationBookClient, nearBodies);
-        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
-        api.Event.RegisterRenderer(sextantReadingRenderer, EnumRenderStage.Ortho, "AstraTerraSextantReading");
+        api.Event.RegisterRenderer(new MeasuredRenderer(sextantReadingRenderer, "AstraTerraSextantMatrixCapture"), EnumRenderStage.Opaque, "AstraTerraSextantMatrixCapture");
+        api.Event.RegisterRenderer(new MeasuredRenderer(sextantReadingRenderer, "AstraTerraSextantReading"), EnumRenderStage.Ortho, "AstraTerraSextantReading");
         api.Event.MouseDown += sextantReadingRenderer.OnMouseDown;
 
         if (catalog is null)
@@ -281,14 +285,14 @@ public sealed class AstraTerraModSystem : ModSystem
 
         SkyStarSunMoonRenderer.Initialize(api, config, catalog, meteorShowers, planets, comets);
         constellationOverlayRenderer = new ConstellationOverlayRenderer(api, config, catalog, constellationBookClient, skyDiscEngraveClient);
-        api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
-        api.Event.RegisterRenderer(constellationOverlayRenderer, EnumRenderStage.Ortho, "AstraTerraOverlay");
+        api.Event.RegisterRenderer(new MeasuredRenderer(constellationOverlayRenderer, "AstraTerraOverlayMatrixCapture"), EnumRenderStage.Opaque, "AstraTerraOverlayMatrixCapture");
+        api.Event.RegisterRenderer(new MeasuredRenderer(constellationOverlayRenderer, "AstraTerraOverlay"), EnumRenderStage.Ortho, "AstraTerraOverlay");
         api.Event.MouseDown += constellationOverlayRenderer.OnMouseDown;
         api.Event.MouseMove += constellationOverlayRenderer.OnMouseMove;
         api.Event.MouseUp += constellationOverlayRenderer.OnMouseUp;
-        api.Event.RegisterRenderer(new TelescopeScopeRenderer(api), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
+        api.Event.RegisterRenderer(new MeasuredRenderer(new TelescopeScopeRenderer(api), "AstraTerraTelescopeScope"), EnumRenderStage.Ortho, "AstraTerraTelescopeScope");
         astrolabePlannerRenderer = new AstrolabePlannerRenderer(api, catalog, constellationBookClient, planets, comets);
-        api.Event.RegisterRenderer(astrolabePlannerRenderer, EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
+        api.Event.RegisterRenderer(new MeasuredRenderer(astrolabePlannerRenderer, "AstraTerraAstrolabePlanner"), EnumRenderStage.Ortho, "AstraTerraAstrolabePlanner");
         api.Event.MouseDown += astrolabePlannerRenderer.OnMouseDown;
         api.Logger.Event(
             "AstraTerra startup step: client renderers registered: skyPatch=SystemRenderSunMoon.OnRenderFrame3D; skyGrid=AstraTerraSkyCoordinateGrid; overlay=AstraTerraOverlayMatrixCapture+AstraTerraOverlay; telescopeScope=AstraTerraTelescopeScope; sextant=AstraTerraSextantMatrixCapture+AstraTerraSextantReading; astrolabe=AstraTerraAstrolabePlanner; stars={0}; guideGroups={1}; skyCultures={2}; deepSkyObjects={3}; meteorShowers={4}; planets={5}; comets={6}",

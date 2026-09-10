@@ -129,6 +129,10 @@ public sealed class StarsClientCommands
                     api.ChatCommands.Parsers.OptionalWord("stars|constellations|deepsky|meteors|comets|milkyway|all"),
                     api.ChatCommands.Parsers.OptionalWord("on|off"))
                 .HandleWith(args => TextCommandResult.Success(SetRenderPath(api, GetStringArg(args, 0), GetStringArg(args, 1))))
+            .EndSubCommand()
+            .BeginSubCommand("perf")
+                .WithDescription("Report what AstraTerra costs the last measured frame, against the whole frame.")
+                .HandleWith(_ => TextCommandResult.Success(FrameCost()))
             .EndSubCommand();
     }
 
@@ -519,6 +523,24 @@ public sealed class StarsClientCommands
             CalendarDisplay.None => "The character panel gives neither the date nor the hour. Reopen it to see the change.",
             _ => "The character panel reports the date and hour as Vintage Story writes them."
         };
+    }
+
+    /// <summary>
+    /// Reports the last finished frame-cost window in chat.
+    /// </summary>
+    /// <remarks>
+    /// The same line the debug log carries, put where a player can read it without leaving the game.
+    /// The point of it is the share: AstraTerra's milliseconds next to the frame's, which is what
+    /// says whether a frame-rate complaint belongs to this mod at all.
+    /// </remarks>
+    private static string FrameCost()
+    {
+        if (RenderCostLog.Latest is not { } report)
+        {
+            return $"No frame cost measured yet. The first window closes after {RenderCostLog.ReportIntervalSeconds:0} seconds of play.";
+        }
+
+        return $"AstraTerra frame cost: {RenderCostLog.Describe(report)}";
     }
 
     /// <summary>
