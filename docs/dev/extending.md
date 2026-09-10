@@ -134,7 +134,8 @@ public sealed record NearBodyEntry(
     double DeclinationDeg,
     double Brightness,
     NearBodyFace Face,
-    NearBodyOrbit? Orbit = null);
+    NearBodyOrbit? Orbit = null,
+    NearBodyTrack? Track = null);
 ```
 
 Near bodies are placed by **hour angle**, not right ascension, because they do not keep station with
@@ -147,6 +148,23 @@ An hour angle and a rate can only send a body right round the sky, which is what
 sibling orbiting inside the observer swings back and forth about the parent instead, out to
 `asin(DistanceRatio)` and no further, the way Venus is bound to the sun. That is not a rate, so supply
 a `NearBodyOrbit` and it is solved per frame; it supersedes the flat hour angle and rate.
+
+A moon of the observer's **own** world can also be given the circle it is really on, with a
+`NearBodyTrack`: an inclination to the observer's equator, the right ascension of the ascending node,
+where round the orbit the moon starts, and how fast it goes (`360 / month`). Declination then follows
+the climb — `asin(sin i · sin u)` — and right ascension is the track reduced to the equator, so the
+moon walks up and down its band over a month and rises from a different part of the horizon as it goes.
+A track supersedes `DeclinationDeg` as well as the flat hour angle and rate, and is held in the
+equatorial frame rather than over the ground: the moon keeps station with the stars, so do not apply
+the prime-meridian convention to it, and every observer gets the hour angle their own meridian gives.
+`NodeRegressionDegPerDay` walks the node around the sky over years without changing how far the track
+reaches. Give a body a `Track` or an `Orbit`, never both — one goes round the observer, the other goes
+round the parent they both orbit.
+
+Leaving `Track` null keeps the flat-rate behaviour exactly: the drift a standing observer sees from a
+coplanar track, `360 · (1 − 1 / month)`, is the same number the old model asked for directly. The
+difference is only where the world's own rotation is accounted for — in the sidereal angle rather than
+in the body's authored rate.
 
 `NearBodyFace` is a square RGBA image with the disc centred and everything outside it transparent, plus
 `DiscFraction` — how much of the image's half-width is globe rather than ring, which is what the shading
