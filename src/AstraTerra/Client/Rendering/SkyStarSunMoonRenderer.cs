@@ -591,10 +591,16 @@ public static class SkyStarSunMoonRenderer
             var start = Stopwatch.GetTimestamp();
             Metrics.BeginFrame();
             var drew = PostfixCore(__instance, dt);
+            var elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
             if (drew)
             {
-                Metrics.EndFrame(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                Metrics.EndFrame(elapsed);
             }
+
+            // Reported whether it drew or not, unlike the pass's own metrics: the frame budget wants
+            // what this pass costs a frame, and a daylight frame it returned straight out of is a
+            // frame it cost nearly nothing. Averaging only over the nights would hide that.
+            RenderCostLog.Record("AstraTerraSkyPass", elapsed);
         }
         catch (Exception exception)
         {
