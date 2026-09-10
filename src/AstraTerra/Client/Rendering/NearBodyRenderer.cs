@@ -38,16 +38,17 @@ public sealed class NearBodyRenderer : IRenderer
     private const double SunTolerance = 0.0017;
 
     /// <summary>
-    /// How far a body behind may move before the silhouette held over it is redone: three
+    /// How far a body in front may move before the hole it cuts in this one is redone: three
     /// arcminutes.
     /// </summary>
     /// <remarks>
-    /// Held far looser than the body's own position, and for the same reason the sun is: a backdrop
-    /// only decides where a face stops fading, not where anything is drawn. The body a player
-    /// actually watches move is rebuilt on its own tolerance regardless, and the one carrying tens
-    /// of thousands of vertices is usually the parent planet, which does not move at all.
+    /// Held far looser than the body's own position, and for the same reason the sun is: an
+    /// occluder only decides where a face stops being drawn, not where anything is placed. The body
+    /// a player actually watches move is rebuilt on its own tolerance regardless, and the one
+    /// carrying tens of thousands of vertices is usually the parent planet, which does not move at
+    /// all -- so a sibling slipping behind it is the small mesh moving, not the large one.
     /// </remarks>
-    private const double BackdropTolerance = 0.0009;
+    private const double OccluderTolerance = 0.0009;
 
     /// <summary>
     /// How much a body may swell or shrink before its mesh is rebuilt. A sibling's distance changes
@@ -59,6 +60,7 @@ public sealed class NearBodyRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private readonly Dictionary<string, BodyPass> passes = new(StringComparer.Ordinal);
     private readonly float[] modelMatrix = IdentityModelMatrix();
+    private readonly List<PlacedNearBody> inFront = [];
     private static readonly Vec4f NoFog = new(0f, 0f, 0f, 1f);
     private NearBodyCatalog catalog = NearBodyCatalog.Empty;
     private NearBodyCatalog? pending;
@@ -200,13 +202,21 @@ public sealed class NearBodyRenderer : IRenderer
 
             var daylight = Math.Clamp(calendar.DayLightStrength, 0.0, 1.0);
 
-            // Farthest first, and every body is told what is already behind it, so its night side
-            // can hold as a silhouette where the backdrop is another body rather than sky.
-            var behind = new List<PlacedNearBody>(placed.Count);
-            foreach (var body in placed)
+            // Farthest first, and every body is told what is still to come in front of it, so it
+            // can be cut away where a nearer globe blocks it rather than drawn under one and left
+            // to show through. The order is the occultation either way -- depth is off in this
+            // pass -- but only the cut actually removes what is hidden.
+            for (var index = 0; index < placed.Count; index++)
             {
-                PassFor(body.Body).Draw(shader, body, SkyDistance, daylight, behind);
-                behind.Add(body);
+                // Refilled rather than sliced: this runs every frame, and neither the mesh builder
+                // nor the pass keeps hold of it past the call.
+                inFront.Clear();
+                for (var nearer = index + 1; nearer < placed.Count; nearer++)
+                {
+                    inFront.Add(placed[nearer]);
+                }
+
+                PassFor(placed[index].Body).Draw(shader, placed[index], SkyDistance, daylight, inFront);
             }
         }
         finally
@@ -263,7 +273,7 @@ public sealed class NearBodyRenderer : IRenderer
         private SkyDirection lastSun;
         private double lastDaylight = -1.0;
         private double lastAngularDiameter = -1.0;
-        private (SkyDirection Direction, double AngularDiameterDeg)[] lastBackdrops = [];
+        private (SkyDirection Direction, double AngularDiameterDeg, double HorizonFade)[] lastOccluders = [];
 
         public BodyPass(ICoreClientAPI api, NearBodyEntry body)
         {
@@ -279,7 +289,7 @@ public sealed class NearBodyRenderer : IRenderer
             PlacedNearBody placed,
             float radius,
             double daylight,
-            IReadOnlyList<PlacedNearBody> backdrops)
+            IReadOnlyList<PlacedNearBody> occluders)
         {
             EnsureTexture();
             if (texture.TextureId == 0)
@@ -290,9 +300,9 @@ public sealed class NearBodyRenderer : IRenderer
             // A face is tens of thousands of vertices, and nothing about it changes quickly: the sky
             // turns, the sun moves, and both do it slowly enough that rebuilding on every frame is
             // work nobody sees. Rebuild when the geometry has actually moved.
-            if (mesh is null || HasMoved(placed, daylight, backdrops))
+            if (mesh is null || HasMoved(placed, daylight, occluders))
             {
-                var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight, backdrops);
+                var meshData = NearBodyMeshBuilder.Build([placed], radius, capacity: 1, daylight, occluders);
                 if (mesh is null)
                 {
                     mesh = api.Render.UploadMesh(meshData);
@@ -306,8 +316,8 @@ public sealed class NearBodyRenderer : IRenderer
                 lastSun = placed.SunDirection;
                 lastDaylight = daylight;
                 lastAngularDiameter = placed.AngularDiameterDeg;
-                lastBackdrops = backdrops
-                    .Select(static body => (body.Direction, body.AngularDiameterDeg))
+                lastOccluders = occluders
+                    .Select(static body => (body.Direction, body.AngularDiameterDeg, body.HorizonFade))
                     .ToArray();
             }
 
@@ -337,26 +347,27 @@ public sealed class NearBodyRenderer : IRenderer
         /// The saving is kept where it was worth having: a tidally locked world's parent planet
         /// does not move at all, and it is the body with the vertices.
         /// </remarks>
-        private bool HasMoved(PlacedNearBody placed, double daylight, IReadOnlyList<PlacedNearBody> backdrops)
+        private bool HasMoved(PlacedNearBody placed, double daylight, IReadOnlyList<PlacedNearBody> occluders)
             => Math.Abs(daylight - lastDaylight) > 0.01
                || Math.Abs(placed.AngularDiameterDeg - lastAngularDiameter) > SizeTolerance
                || Separation(placed.Direction, lastDirection) > PositionTolerance
                || Separation(placed.SunDirection, lastSun) > SunTolerance
-               || BackdropsMoved(backdrops);
+               || OccludersMoved(occluders);
 
-        /// <summary>Whether the bodies behind this one have changed enough to redraw its silhouette.</summary>
-        private bool BackdropsMoved(IReadOnlyList<PlacedNearBody> backdrops)
+        /// <summary>Whether the bodies in front of this one have changed enough to recut it.</summary>
+        private bool OccludersMoved(IReadOnlyList<PlacedNearBody> occluders)
         {
-            if (backdrops.Count != lastBackdrops.Length)
+            if (occluders.Count != lastOccluders.Length)
             {
                 return true;
             }
 
-            for (var index = 0; index < backdrops.Count; index++)
+            for (var index = 0; index < occluders.Count; index++)
             {
-                var (direction, angularDiameter) = lastBackdrops[index];
-                if (Separation(backdrops[index].Direction, direction) > BackdropTolerance
-                    || Math.Abs(backdrops[index].AngularDiameterDeg - angularDiameter) > SizeTolerance)
+                var (direction, angularDiameter, fade) = lastOccluders[index];
+                if (Separation(occluders[index].Direction, direction) > OccluderTolerance
+                    || Math.Abs(occluders[index].AngularDiameterDeg - angularDiameter) > SizeTolerance
+                    || Math.Abs(occluders[index].HorizonFade - fade) > 0.01)
                 {
                     return true;
                 }

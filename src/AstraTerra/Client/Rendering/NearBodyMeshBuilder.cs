@@ -29,11 +29,13 @@ namespace AstraTerra.Client.Rendering;
 /// a daytime moon has ever been.
 /// </para>
 /// <para>
-/// That fade is a fade into the sky, and only into the sky. Where another body is drawn behind this
-/// one -- a sibling crossing the parent planet, or a moon round the far side going behind it -- the
-/// backdrop is not sky, and a night side faded away there is a window onto the body behind rather
-/// than a silhouette in front of it. So a point standing over another body's globe keeps at least
-/// the solidity that body drew with, which is what turns a transit back into the dark bite it is.
+/// That fade is a fade into the sky, and it stays one. What must never come with it is the body
+/// behind showing through: alpha erases nothing, so painting the near body over the far one at the
+/// same solidity only mixes the two, and a quarter of a sibling still reads through the parent's
+/// night side. The body behind is therefore not drawn there at all. A globe blocks the light of
+/// whatever stands behind it whatever the air in front of it is doing, so every body is cut away
+/// where a nearer one covers it: a sibling crossing the parent is a bite out of it, and one round
+/// the far side is gone until it clears the limb.
 /// </para>
 /// <para>
 /// The grid is gnomonic: corners are offsets along the two axes across the line of sight, scaled by
@@ -136,28 +138,29 @@ public static class NearBodyMeshBuilder
     public const double RingPlaneBlend = 0.30;
 
     /// <summary>
-    /// How far inside a backdrop body's limb its silhouette hold reaches full strength, in that
-    /// body's globe radii.
+    /// How far inside an occluding body's limb the body behind is fully cut away, in that body's
+    /// globe radii.
     /// </summary>
     /// <remarks>
-    /// The hold ends where the body behind ends, and past that edge there is sky again and the day
-    /// fade takes over. A hard change of rule along that line would draw the backdrop's limb across
-    /// the face in front of it; feathered over a sliver of the disc, the two rules meet without a
-    /// seam.
+    /// The cut ends where the occluder ends, and past that edge the body behind is in the open
+    /// again. A hard change of rule along that line would stamp the occluder's limb across the
+    /// face behind it as a cut edge one cell wide; feathered over a sliver of the disc, the two
+    /// rules meet without a seam -- and a sliver is all that is wanted, because this is a globe's
+    /// hard edge, not a soft terminator.
     /// </remarks>
-    public const double BackdropEdgeFeather = 0.05;
+    public const double OccluderEdgeFeather = 0.05;
 
-    /// <param name="backdrops">
-    /// The bodies already drawn behind these ones this frame, nearest last. Every body in
-    /// <paramref name="bodies"/> is taken to stand in front of all of them, which is what the
-    /// renderer's farthest-first order means; it hands over one body at a time.
+    /// <param name="occluders">
+    /// The bodies still to be drawn in front of these ones this frame. Every body in
+    /// <paramref name="bodies"/> is taken to stand behind all of them, which is what the renderer's
+    /// farthest-first order means; it hands over one body at a time with the tail of that order.
     /// </param>
     public static MeshData Build(
         IReadOnlyList<PlacedNearBody> bodies,
         float radius,
         int capacity,
         double daylight = 0.0,
-        IReadOnlyList<PlacedNearBody>? backdrops = null)
+        IReadOnlyList<PlacedNearBody>? occluders = null)
     {
         ArgumentNullException.ThrowIfNull(bodies);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(radius);
@@ -177,11 +180,11 @@ public static class NearBodyMeshBuilder
             mode = EnumDrawMode.Triangles
         };
 
-        var behind = BackdropFace.For(backdrops);
+        var inFront = OccluderFace.For(occluders);
         var drawn = Math.Min(bodies.Count, capacity);
         for (var index = 0; index < drawn; index++)
         {
-            Add(meshData, bodies[index], radius, Math.Clamp(daylight, 0.0, 1.0), subdivisions, behind);
+            Add(meshData, bodies[index], radius, Math.Clamp(daylight, 0.0, 1.0), subdivisions, inFront);
         }
 
         for (var slot = drawn; slot < capacity; slot++)
@@ -258,7 +261,7 @@ public static class NearBodyMeshBuilder
         float radius,
         double daylight,
         int subdivisions,
-        IReadOnlyList<BackdropFace> backdrops)
+        IReadOnlyList<OccluderFace> occluders)
     {
         var direction = placed.Direction;
         var (rightX, rightY, rightZ, upX, upY, upZ) = BuildFaceAxes(direction.X, direction.Y, direction.Z);
@@ -311,17 +314,15 @@ public static class NearBodyMeshBuilder
                 var vertexY = centerY + (rightY * halfSize * offsetRight) + (upY * halfSize * offsetUp);
                 var vertexZ = centerZ + (rightZ * halfSize * offsetRight) + (upZ * halfSize * offsetUp);
 
-                // Where this point stands over a body drawn behind it, the sky is not what is back
-                // there and the day fade has nothing to fade into. It holds at least what that body
-                // drew with instead, so a sibling crossing the parent reads as a bite out of it
-                // rather than a hole through this one -- and a body faint enough to be lost in the
-                // daylight itself is not turned into a silhouette nobody should be able to see.
-                if (backdrops.Count > 0)
-                {
-                    solid = Math.Max(solid, BehindAt(backdrops, vertexX, vertexY, vertexZ, daylight));
-                }
+                // Where a nearer body's globe stands in the way, none of this is seen: that globe
+                // is opaque rock or cloud, and how solidly it happens to draw against the sky says
+                // nothing about what it lets past. Cutting here rather than painting over it later
+                // is the whole of the occultation, because alpha only ever mixes.
+                var hidden = occluders.Count > 0
+                    ? CoveredAt(occluders, vertexX, vertexY, vertexZ)
+                    : 0.0;
 
-                var opacity = (int)Math.Clamp(solid * horizonFade * 255.0, 0.0, 255.0);
+                var opacity = (int)Math.Clamp(solid * horizonFade * (1.0 - hidden) * 255.0, 0.0, 255.0);
 
                 meshData.AddVertexWithFlags(
                     vertexX,
@@ -367,15 +368,10 @@ public static class NearBodyMeshBuilder
     }
 
     /// <summary>
-    /// The most solidly any body behind draws along this line of sight. Zero where nothing is back
-    /// there but sky.
+    /// How much of this line of sight the nearest body in front of it takes: 1 well inside a globe
+    /// standing in the way, 0 where nothing does.
     /// </summary>
-    private static double BehindAt(
-        IReadOnlyList<BackdropFace> backdrops,
-        float x,
-        float y,
-        float z,
-        double daylight)
+    private static double CoveredAt(IReadOnlyList<OccluderFace> occluders, float x, float y, float z)
     {
         var length = Math.Sqrt(((double)x * x) + ((double)y * y) + ((double)z * z));
         if (length < 1e-9)
@@ -384,25 +380,38 @@ public static class NearBodyMeshBuilder
         }
 
         var most = 0.0;
-        for (var index = 0; index < backdrops.Count; index++)
+        for (var index = 0; index < occluders.Count; index++)
         {
-            most = Math.Max(most, backdrops[index].SolidAlong(x / length, y / length, z / length, daylight));
+            most = Math.Max(most, occluders[index].CoversAlong(x / length, y / length, z / length));
+            if (most >= 1.0)
+            {
+                return 1.0;
+            }
+
         }
 
         return most;
     }
 
     /// <summary>
-    /// A body already drawn, reduced to what asking "what did you draw along this line?" needs, with
-    /// the per-body terms worked out once rather than per vertex of whatever stands in front of it.
+    /// A body drawn in front, reduced to what asking "do you block this line?" needs, with the
+    /// per-body terms worked out once rather than per vertex of whatever stands behind it.
     /// </summary>
     /// <remarks>
-    /// Only the globe answers. A ring plane is mostly empty sky with a sheet of debris across part
-    /// of it, and which part is a question only the ring's own texture can answer; holding a
-    /// silhouette over the whole plane would darken a face wherever it crossed the gap between a
-    /// planet and its rings.
+    /// <para>
+    /// Only the globe blocks. A ring plane is mostly empty sky with a sheet of debris across part
+    /// of it, and which part is a question only the ring's own texture can answer; cutting away the
+    /// whole plane would punch a hole in a face wherever it crossed the gap between a planet and
+    /// its rings.
+    /// </para>
+    /// <para>
+    /// Nothing here asks how brightly the occluder draws. A globe in daylight is veiled by the air
+    /// in front of it and may be barely there against the sky, but it still blocks every photon
+    /// from behind: the two are separate questions and were only ever confused because the answer
+    /// was being spent on alpha.
+    /// </para>
     /// </remarks>
-    private readonly struct BackdropFace
+    private readonly struct OccluderFace
     {
         private readonly double directionX;
         private readonly double directionY;
@@ -415,13 +424,9 @@ public static class NearBodyMeshBuilder
         private readonly double upZ;
         private readonly double tanHalfAngle;
         private readonly double discFraction;
-        private readonly double brightness;
-        private readonly double illuminatedFraction;
-        private readonly double sunRight;
-        private readonly double sunUp;
-        private readonly double sunToward;
+        private readonly double horizonFade;
 
-        private BackdropFace(PlacedNearBody placed)
+        private OccluderFace(PlacedNearBody placed)
         {
             var direction = placed.Direction;
             directionX = direction.X;
@@ -437,37 +442,36 @@ public static class NearBodyMeshBuilder
             upZ = uz;
             tanHalfAngle = Math.Tan(placed.AngularDiameterDeg * Math.PI / 360.0);
             discFraction = Math.Clamp(placed.Body.Face.DiscFraction, 0.05, 1.0);
-            brightness = Math.Clamp(placed.Body.Brightness, 0.0, 1.0);
-            illuminatedFraction = placed.IlluminatedFraction;
 
-            var sun = placed.SunDirection;
-            sunRight = (sun.X * rightX) + (sun.Y * rightY) + (sun.Z * rightZ);
-            sunUp = (sun.X * upX) + (sun.Y * upY) + (sun.Z * upZ);
-            sunToward = -((sun.X * directionX) + (sun.Y * directionY) + (sun.Z * directionZ));
+            // A body going into the haze stops blocking as it goes. It is the one term here that
+            // is about drawing rather than geometry, and it has to be: a moon taken by the horizon
+            // is not drawn at all, and a globe nobody can see must not still be cutting a hole in
+            // the planet behind it.
+            horizonFade = Math.Clamp(placed.HorizonFade, 0.0, 1.0);
         }
 
-        public static IReadOnlyList<BackdropFace> For(IReadOnlyList<PlacedNearBody>? bodies)
+        public static IReadOnlyList<OccluderFace> For(IReadOnlyList<PlacedNearBody>? bodies)
         {
             if (bodies is null || bodies.Count == 0)
             {
                 return [];
             }
 
-            var faces = new List<BackdropFace>(bodies.Count);
+            var faces = new List<OccluderFace>(bodies.Count);
             foreach (var body in bodies)
             {
-                faces.Add(new BackdropFace(body));
+                faces.Add(new OccluderFace(body));
             }
 
             return faces;
         }
 
         /// <summary>
-        /// How solidly this body drew along a line of sight, or zero if the line misses its globe.
-        /// The line is put through the same gnomonic projection the face was built with, so the
-        /// answer lands on the same point of the same disc.
+        /// How much of a line of sight this body's globe covers, or zero if the line misses it. The
+        /// line is put through the same gnomonic projection the face was built with, so the answer
+        /// lands on the same point of the same disc.
         /// </summary>
-        public double SolidAlong(double x, double y, double z, double daylight)
+        public double CoversAlong(double x, double y, double z)
         {
             var toward = (x * directionX) + (y * directionY) + (z * directionZ);
             if (toward <= 1e-6 || tanHalfAngle <= 1e-9)
@@ -484,10 +488,8 @@ public static class NearBodyMeshBuilder
                 return 0.0;
             }
 
-            var inside = Math.Clamp((1.0 - Math.Sqrt(distanceSquared)) / BackdropEdgeFeather, 0.0, 1.0);
-            var edge = inside * inside * (3.0 - (2.0 * inside));
-            var light = LightAt(globeX, globeY, sunRight, sunUp, sunToward, illuminatedFraction) * brightness;
-            return SolidAt(light, daylight) * edge;
+            var inside = Math.Clamp((1.0 - Math.Sqrt(distanceSquared)) / OccluderEdgeFeather, 0.0, 1.0);
+            return inside * inside * (3.0 - (2.0 * inside)) * horizonFade;
         }
     }
 
