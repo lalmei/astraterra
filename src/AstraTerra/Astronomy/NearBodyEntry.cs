@@ -73,6 +73,58 @@ public sealed record NearBodyOrbit(
 );
 
 /// <summary>
+/// The circle a moon of the observer's own world is actually on, for a sky where the track it keeps
+/// matters more than the rate it drifts at.
+/// </summary>
+/// <remarks>
+/// <para>
+/// A flat hour-angle rate runs a moon round the same line every night. A real moon does not: its
+/// orbit is tilted to the equator the observer measures from, so it climbs to one side of that line
+/// and back over a month, and where it rises walks along the horizon as it goes -- Earth's moon takes
+/// a month to cross that band. That is a circle on the sky, not a rate, so it is described here as
+/// the orbit it comes from and worked out per frame -- the same reason <see cref="NearBodyOrbit"/>
+/// exists for a sibling penned beside its parent.
+/// </para>
+/// <para>
+/// The orbit is taken as circular, which regular moons are to well inside anything the eye catches,
+/// and it is held in the observer's own equatorial frame rather than fixed to the ground. A body on
+/// this track therefore keeps station with the star field the way a moon does, and two observers a
+/// world apart see it at the hour angles their own meridians give it, with no prime-meridian
+/// convention needed.
+/// </para>
+/// </remarks>
+/// <param name="InclinationDeg">
+/// How far the orbit tilts out of the observer's celestial equator, which is how far the body gets
+/// from that equator at the top and bottom of its track. Zero is a coplanar moon that runs along the
+/// equator itself.
+/// </param>
+/// <param name="NodeRightAscensionDeg">
+/// Right ascension of the ascending node at day zero: where the body crosses the equator going north,
+/// and so which part of the sky its track leans into.
+/// </param>
+/// <param name="ArgumentOfLatitudeDeg">
+/// How far round its orbit past that node the body sits at day zero. Zero puts it on the equator and
+/// climbing; 90 puts it at the top of its track.
+/// </param>
+/// <param name="ArgumentRateDegPerDay">
+/// How fast it goes round, in world days: <c>360 / month</c>. The hour-angle drift a ground observer
+/// sees falls out of this against the turning sky and is not authored separately.
+/// </param>
+/// <param name="NodeRegressionDegPerDay">
+/// How fast the node itself walks around the equator, sliding the whole track around the sky: which
+/// stars the body moves against, and which part of the horizon it rises from at the top of its climb.
+/// Negative for a regressing node, as Earth's moon has. It does not change how far the track reaches
+/// -- that is the inclination's business, and it is held fixed here. Zero holds the track put.
+/// </param>
+public sealed record NearBodyTrack(
+    double InclinationDeg,
+    double NodeRightAscensionDeg,
+    double ArgumentOfLatitudeDeg,
+    double ArgumentRateDegPerDay,
+    double NodeRegressionDegPerDay = 0.0
+);
+
+/// <summary>
 /// A body near enough to show a disc rather than a point: the planet a moon world hangs beneath, or
 /// a sibling moon crossing that world's sky.
 /// </summary>
@@ -86,7 +138,8 @@ public sealed record NearBodyOrbit(
 /// <para>
 /// Declination is the body's angle out of the observer's celestial equator, which for a locked world
 /// is also its orbital plane: zero puts a body on the same circle the sun travels, which is where
-/// coplanar moons belong.
+/// coplanar moons belong. It is one fixed angle unless the body carries a <see cref="NearBodyTrack"/>,
+/// which is what a moon tilted out of that plane needs instead.
 /// </para>
 /// </remarks>
 /// <param name="AngularDiameterDeg">
@@ -112,6 +165,14 @@ public sealed record NearBodyOrbit(
 /// <param name="Brightness">
 /// How bright the lit face draws, 0 to 1. A dark rocky moon sits well below a fresh-ice one.
 /// </param>
+/// <param name="Track">
+/// Set when the body runs a tilted circle about the observer's own world rather than drifting along
+/// one line of declination. It supersedes <paramref name="DeclinationDeg"/> entirely, and supersedes
+/// <paramref name="HourAngleDeg"/> and <paramref name="HourAngleRateDegPerDay"/>, which then only
+/// record where the body started and how fast it comes round on average. A body carries a
+/// <paramref name="Track"/> or an <paramref name="Orbit"/>, never both: one goes round the observer,
+/// the other goes round the parent they both orbit.
+/// </param>
 public sealed record NearBodyEntry(
     string Id,
     string DisplayName,
@@ -122,7 +183,8 @@ public sealed record NearBodyEntry(
     double DeclinationDeg,
     double Brightness,
     NearBodyFace Face,
-    NearBodyOrbit? Orbit = null
+    NearBodyOrbit? Orbit = null,
+    NearBodyTrack? Track = null
 );
 
 /// <summary>

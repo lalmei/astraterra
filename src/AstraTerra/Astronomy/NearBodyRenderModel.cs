@@ -128,7 +128,7 @@ public static class NearBodyRenderModel
         var rightAscension = RightAscensionDeg(body, totalDays, localSiderealDeg, observerLongitudeDeg);
         var horizontal = CelestialMath.GetHorizontalCoordinates(
             rightAscension,
-            body.DeclinationDeg,
+            DeclinationDeg(body, totalDays),
             latitudeDeg,
             localSiderealDeg);
         var cutoff = HorizonCutoffDeg - (angularDiameter * 0.5);
@@ -172,11 +172,86 @@ public static class NearBodyRenderModel
         double observerLongitudeDeg = 0.0)
     {
         ArgumentNullException.ThrowIfNull(body);
+
+        // A tracked body is on a circle held in this frame rather than over a patch of ground, so its
+        // right ascension is simply where that circle has carried it. Nothing about the observer comes
+        // into it: the sidereal angle and the longitude are what turn this into an hour angle
+        // afterwards, which is how a moon behaves and why it needs no prime-meridian convention.
+        if (body.Track is { } track)
+        {
+            return CelestialMath.NormalizeDegrees(
+                NodeRightAscensionDeg(track, totalDays) + EquatorialOffsetDeg(track, totalDays));
+        }
+
         return CelestialMath.NormalizeDegrees(
             localSiderealDeg - observerLongitudeDeg - HourAngleDeg(body, totalDays));
     }
 
+    /// <summary>Where the body sits out of the observer's celestial equator at this moment.</summary>
+    /// <remarks>
+    /// One fixed angle for a body without a track: a moon on a flat rate runs the same line across the
+    /// sky every night. A tracked body climbs to its inclination and back over its month --
+    /// <c>asin(sin i * sin u)</c>, the declination of a point that far round a circle tilted by that
+    /// much -- so where it rises walks along the horizon as the month turns.
+    /// </remarks>
+    public static double DeclinationDeg(NearBodyEntry body, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        if (body.Track is not { } track)
+        {
+            return body.DeclinationDeg;
+        }
+
+        var inclination = ToRadians(track.InclinationDeg);
+        var argument = ToRadians(ArgumentOfLatitudeDeg(track, totalDays));
+        return ToDegrees(
+            Math.Asin(Math.Clamp(Math.Sin(inclination) * Math.Sin(argument), -1.0, 1.0)));
+    }
+
+    /// <summary>How far round its own orbit past the ascending node the body has come.</summary>
+    public static double ArgumentOfLatitudeDeg(NearBodyTrack track, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+        return track.ArgumentOfLatitudeDeg + (track.ArgumentRateDegPerDay * totalDays);
+    }
+
+    /// <summary>
+    /// Where the ascending node sits now. It walks around the equator for a moon whose orbit is being
+    /// worked on by something else -- the sun, in Earth's case -- which slides the whole track around
+    /// the sky over years without changing how far it reaches.
+    /// </summary>
+    public static double NodeRightAscensionDeg(NearBodyTrack track, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+        return track.NodeRightAscensionDeg + (track.NodeRegressionDegPerDay * totalDays);
+    }
+
+    /// <summary>
+    /// How far along the equator the body has got from its node, which is not how far it has gone
+    /// round its orbit.
+    /// </summary>
+    /// <remarks>
+    /// Projecting a tilted circle onto the equator does not preserve angles: the body covers equatorial
+    /// ground fastest where its track crosses, slowest where the track is at its highest, and the gap
+    /// closes twice a month. Reducing the orbit to the equator this way is what stops a tilted moon
+    /// from drifting out of step with itself over a month.
+    /// </remarks>
+    public static double EquatorialOffsetDeg(NearBodyTrack track, double totalDays)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+        var inclination = ToRadians(track.InclinationDeg);
+        var argument = ToRadians(ArgumentOfLatitudeDeg(track, totalDays));
+        return ToDegrees(
+            Math.Atan2(Math.Cos(inclination) * Math.Sin(argument), Math.Cos(argument)));
+    }
+
     /// <summary>Where the body hangs at this moment, measured west from the meridian.</summary>
+    /// <remarks>
+    /// A tracked body has no such answer from the time alone: it keeps station with the stars, so what
+    /// hour angle it stands at depends on where the observer's meridian has turned to. The authored
+    /// rate is returned for it, which is that drift averaged over a month -- what it comes round at,
+    /// not where it is. Place it, or ask <see cref="RightAscensionDeg"/>, to get its position.
+    /// </remarks>
     public static double HourAngleDeg(NearBodyEntry body, double totalDays)
     {
         ArgumentNullException.ThrowIfNull(body);
@@ -253,4 +328,8 @@ public static class NearBodyRenderModel
         var cosPhase = (body.X * sun.X) + (body.Y * sun.Y) + (body.Z * sun.Z);
         return Math.Clamp((1.0 - cosPhase) * 0.5, 0.0, 1.0);
     }
+
+    private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
+
+    private static double ToDegrees(double radians) => radians * 180.0 / Math.PI;
 }
