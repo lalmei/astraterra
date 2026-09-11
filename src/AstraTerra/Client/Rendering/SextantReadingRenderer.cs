@@ -152,7 +152,11 @@ public sealed class SextantReadingRenderer : IRenderer
             return null;
         }
 
-        status = $"{target.DisplayName} — angle above horizon: {target.AltitudeDeg:+0.0;-0.0;0.0} deg";
+        // Read to the instrument's own scale, not to a tenth of a degree it may not have. A stick
+        // saying 34° is telling the truth about what a stick can see; a stick saying 34.2° is the
+        // readout inventing a digit the observer has no way to check.
+        status = $"{target.DisplayName} — angle above horizon: "
+            + $"{InstrumentResolution.Format(target.AltitudeDeg, HeldInstrumentResolutionDeg(), signed: true)}";
         return target;
     }
 
@@ -208,7 +212,7 @@ public sealed class SextantReadingRenderer : IRenderer
             (int)Math.Floor(calendar.TotalDays),
             calendar.HourOfDay,
             latitude,
-            InstrumentResolution.BrassSextantDeg,
+            HeldInstrumentResolutionDeg(),
             siderealAngle,
             longitude);
     }
@@ -438,6 +442,14 @@ public sealed class SextantReadingRenderer : IRenderer
 
         return SextantReadingState.IsReading || api.World.Player.Entity.Controls.RightMouseDown;
     }
+
+    /// <summary>
+    /// How finely the instrument being sighted through reads. Every consumer downstream — record
+    /// truncation, detection thresholds, match tolerance, provenance — already takes this from the
+    /// record, so this is the one place the ladder has to be read from the item.
+    /// </summary>
+    private double HeldInstrumentResolutionDeg()
+        => InstrumentResolution.OfInstrument(api.World.Player.InventoryManager.ActiveHotbarSlot?.Itemstack);
 
     private bool IsActiveHeldSextant()
     {
