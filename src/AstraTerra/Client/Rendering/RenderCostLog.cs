@@ -9,11 +9,17 @@ namespace AstraTerra.Client.Rendering;
 /// tenth of the time is a tenth as expensive to the frame rate.
 /// </param>
 /// <param name="PeakMilliseconds">The worst single visit, which is what a player feels as a hitch.</param>
+/// <param name="CallsPerFrame">
+/// How many times the work ran per client frame. One for a render pass, which is called once a
+/// frame by definition; for the sun delegate, which the engine calls from wherever it wants the
+/// sun, this is the number that decides whether cheap arithmetic adds up to an expensive frame.
+/// </param>
 public readonly record struct RenderPassCost(
     string Name,
     int DrawnFrames,
     double MillisecondsPerClientFrame,
-    double PeakMilliseconds);
+    double PeakMilliseconds,
+    double CallsPerFrame = 1.0);
 
 /// <summary>What a whole client frame cost, and how much of it was AstraTerra's.</summary>
 /// <param name="Frames">Client frames in the window.</param>
@@ -84,7 +90,17 @@ public sealed class RenderCostTally
     public RenderCostReport? Latest { get; private set; }
 
     /// <summary>Records one visit to a pass. Called from the render thread only.</summary>
-    public void Record(string name, double milliseconds)
+    public void Record(string name, double milliseconds) => Record(name, milliseconds, calls: 1);
+
+    /// <summary>
+    /// Records one frame's worth of work that ran <paramref name="calls"/> times inside it.
+    /// </summary>
+    /// <remarks>
+    /// The overload exists for work the engine drives rather than the render loop: it is still one
+    /// frame's cost, but it was not one visit, and reporting it as one would hide the only thing
+    /// worth knowing about it.
+    /// </remarks>
+    public void Record(string name, double milliseconds, long calls)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
 
@@ -97,6 +113,7 @@ public sealed class RenderCostTally
 
         accumulator.DrawnFrames++;
         accumulator.TotalMilliseconds += milliseconds;
+        accumulator.TotalCalls += calls;
         accumulator.PeakMilliseconds = Math.Max(accumulator.PeakMilliseconds, milliseconds);
     }
 
@@ -129,7 +146,8 @@ public sealed class RenderCostTally
                 name,
                 accumulator.DrawnFrames,
                 frames == 0 ? 0.0 : accumulator.TotalMilliseconds / frames,
-                accumulator.PeakMilliseconds));
+                accumulator.PeakMilliseconds,
+                frames == 0 ? 0.0 : accumulator.TotalCalls / (double)frames));
         }
 
         report = new RenderCostReport(
@@ -161,6 +179,7 @@ public sealed class RenderCostTally
         {
             accumulator.DrawnFrames = 0;
             accumulator.TotalMilliseconds = 0;
+            accumulator.TotalCalls = 0;
             accumulator.PeakMilliseconds = 0;
         }
     }
@@ -169,6 +188,7 @@ public sealed class RenderCostTally
     {
         public int DrawnFrames;
         public double TotalMilliseconds;
+        public long TotalCalls;
         public double PeakMilliseconds;
     }
 }
@@ -193,6 +213,9 @@ public static class RenderCostLog
 
     public static void Record(string name, double milliseconds) => Tally.Record(name, milliseconds);
 
+    public static void Record(string name, double milliseconds, long calls)
+        => Tally.Record(name, milliseconds, calls);
+
     public static bool TryTakeReport(double frameMilliseconds, out RenderCostReport report)
         => Tally.TryTakeReport(frameMilliseconds, out report);
 
@@ -208,7 +231,13 @@ public static class RenderCostLog
                 report.Passes
                     .OrderByDescending(static pass => pass.MillisecondsPerClientFrame)
                     .Select(static pass =>
-                        $"{pass.Name}={pass.MillisecondsPerClientFrame:0.000}ms (peak {pass.PeakMilliseconds:0.00}, drew {pass.DrawnFrames})"));
+                    {
+                        // Call count is only worth the width when it is not simply once a frame.
+                        var calls = pass.CallsPerFrame > 1.5
+                            ? $", {pass.CallsPerFrame:0} calls/frame"
+                            : string.Empty;
+                        return $"{pass.Name}={pass.MillisecondsPerClientFrame:0.000}ms (peak {pass.PeakMilliseconds:0.00}, drew {pass.DrawnFrames}{calls})";
+                    }));
 
         return string.Format(
             System.Globalization.CultureInfo.InvariantCulture,

@@ -92,6 +92,40 @@ public sealed class RenderCostTallyTests
     }
 
     [Fact]
+    public void Engine_Driven_Work_Reports_How_Often_It_Was_Called()
+    {
+        var tally = new RenderCostTally(intervalSeconds: 1.0);
+
+        // The sun delegate is one frame's cost but many calls, and the call count is the point: the
+        // arithmetic is cheap and only the multiplier can make it expensive.
+        for (var frame = 0; frame < 100; frame++)
+        {
+            tally.Record("sun", 0.5, calls: 2000);
+            tally.TryTakeReport(10.0, out _);
+        }
+
+        var pass = Assert.Single(tally.Latest!.Value.Passes);
+        Assert.Equal(100, pass.DrawnFrames);
+        Assert.Equal(2000.0, pass.CallsPerFrame, 6);
+        Assert.Equal(0.5, pass.MillisecondsPerClientFrame, 6);
+        Assert.Contains("2000 calls/frame", RenderCostLog.Describe(tally.Latest!.Value));
+    }
+
+    [Fact]
+    public void A_Pass_Called_Once_A_Frame_Does_Not_Say_So()
+    {
+        var tally = new RenderCostTally(intervalSeconds: 1.0);
+
+        for (var frame = 0; frame < 100; frame++)
+        {
+            tally.Record("sky", 0.5);
+            tally.TryTakeReport(10.0, out _);
+        }
+
+        Assert.DoesNotContain("calls/frame", RenderCostLog.Describe(tally.Latest!.Value));
+    }
+
+    [Fact]
     public void A_Pass_That_Never_Ran_Is_Not_Invented()
     {
         var tally = new RenderCostTally(intervalSeconds: 1.0);
