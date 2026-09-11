@@ -1,4 +1,6 @@
 using AstraTerra.Observation;
+using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Xunit;
 
 namespace AstraTerra.Tests.Observation;
@@ -48,4 +50,57 @@ public sealed class InstrumentResolutionTests
         Assert.Equal("-3°", InstrumentResolution.Format(-3.4, InstrumentResolution.CrossStaffDeg, signed: true));
         Assert.Equal("118°", InstrumentResolution.Format(118.6, InstrumentResolution.CrossStaffDeg));
     }
+
+    [Fact]
+    public void An_Instrument_Reads_To_The_Scale_Its_Item_Declares()
+    {
+        Assert.Equal(
+            InstrumentResolution.CrossStaffDeg,
+            InstrumentResolution.OfInstrument(Instrument("{\"sightingResolutionDeg\":1.0}")),
+            9);
+        Assert.Equal(
+            InstrumentResolution.QuadrantDeg,
+            InstrumentResolution.OfInstrument(Instrument("{\"sightingResolutionDeg\":0.25}")),
+            9);
+    }
+
+    [Fact]
+    public void An_Instrument_That_Says_Nothing_Still_Reads_Like_The_Brass_Sextant()
+    {
+        // Every sextant in every existing world is this case: the scale was a constant before the
+        // ladder existed, so silence has to keep meaning exactly what it used to mean.
+        Assert.Equal(InstrumentResolution.BrassSextantDeg, InstrumentResolution.OfInstrument(Instrument("{}")), 9);
+        Assert.Equal(InstrumentResolution.BrassSextantDeg, InstrumentResolution.OfInstrument(null), 9);
+    }
+
+    [Fact]
+    public void A_Scale_That_Is_Not_A_Scale_Is_The_Same_As_Saying_Nothing()
+    {
+        Assert.Equal(
+            InstrumentResolution.BrassSextantDeg,
+            InstrumentResolution.OfInstrument(Instrument("{\"sightingResolutionDeg\":0}")),
+            9);
+        Assert.Equal(
+            InstrumentResolution.BrassSextantDeg,
+            InstrumentResolution.OfInstrument(Instrument("{\"sightingResolutionDeg\":-1}")),
+            9);
+    }
+
+    [Fact]
+    public void No_Item_May_Claim_A_Finer_Scale_Than_The_Wall_Instrument()
+    {
+        // The mural quadrant earns its half-arcminute by being too large to carry. A handheld asset
+        // claiming better than that is a typo, not a better instrument.
+        Assert.Equal(
+            InstrumentResolution.MuralQuadrantDeg,
+            InstrumentResolution.OfInstrument(Instrument("{\"sightingResolutionDeg\":0.000001}")),
+            9);
+    }
+
+    private static ItemStack Instrument(string attributes)
+        => new(new Item
+        {
+            Code = new AssetLocation("astraterra", "sextant"),
+            Attributes = JsonObject.FromJson(attributes)
+        });
 }

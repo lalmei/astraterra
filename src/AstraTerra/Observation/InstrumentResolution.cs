@@ -1,3 +1,5 @@
+using Vintagestory.API.Common;
+
 namespace AstraTerra.Observation;
 
 /// <summary>
@@ -25,6 +27,37 @@ public static class InstrumentResolution
     public const double MuralQuadrantDeg = 0.5 / 60.0;
 
     private const double ArcminuteDeg = 1.0 / 60.0;
+
+    /// <summary>
+    /// The attribute an instrument declares its scale in, in degrees. Absent on the brass sextant,
+    /// which was the only instrument that measured an angle when the ladder did not exist yet.
+    /// </summary>
+    private const string ResolutionAttribute = "sightingResolutionDeg";
+
+    /// <summary>
+    /// The coarsest scale worth honouring. Past a quadrant of arc an instrument is not reading
+    /// coarsely, it is reading nothing, and a typo in an asset should not silently do that.
+    /// </summary>
+    private const double CoarsestDeg = 90.0;
+
+    /// <summary>
+    /// What the instrument in hand reads to, taken from the item rather than assumed.
+    /// </summary>
+    /// <remarks>
+    /// Falls back to the brass sextant's arcminute when the item says nothing, which is what every
+    /// sextant in every existing world does: the scale was a constant before there was a ladder to
+    /// climb, and an old save has no attribute to read. A value that is not a usable scale — absent,
+    /// zero, negative, infinite — is the same case as saying nothing at all, because an instrument
+    /// that cannot state its own limit is not evidence that the limit is different.
+    /// </remarks>
+    public static double OfInstrument(ItemStack? stack)
+    {
+        var declared = stack?.Collectible?.Attributes?[ResolutionAttribute].AsDouble(0.0) ?? 0.0;
+
+        return double.IsFinite(declared) && declared > 0.0
+            ? Math.Clamp(declared, MuralQuadrantDeg, CoarsestDeg)
+            : BrassSextantDeg;
+    }
 
     /// <summary>
     /// Cuts an angle down to what the scale can show. Truncation is toward zero, so a reading is
