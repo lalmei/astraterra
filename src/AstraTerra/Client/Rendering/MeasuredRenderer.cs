@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AstraTerra.Astronomy;
 using Vintagestory.API.Client;
 
 namespace AstraTerra.Client.Rendering;
@@ -101,6 +102,14 @@ public sealed class FrameCostRenderer : IRenderer
         if (frameMilliseconds > ImplausibleFrameMilliseconds)
         {
             return;
+        }
+
+        // The sun wrapper is counted on whatever thread the engine asks from, and folded into the
+        // frame here, on the render thread, so the log's own bookkeeping stays single-threaded.
+        var (sunCalls, sunMilliseconds) = SunDelegateCost.Drain();
+        if (sunCalls > 0)
+        {
+            RenderCostLog.Record("AstraTerraSunDelegate", sunMilliseconds, sunCalls);
         }
 
         if (RenderCostLog.TryTakeReport(frameMilliseconds, out var report))

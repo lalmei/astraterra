@@ -205,6 +205,28 @@ public sealed class LongitudeAwareSunController
         float yearRel,
         float dayRel)
     {
+        // Counted rather than assumed: this runs inside the engine's frame, not AstraTerra's, so
+        // nothing else in the mod can see what it costs. See SunDelegateCost.
+        var costTimestamp = SunDelegateCost.IsEnabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0L;
+        try
+        {
+            return SolarSphericalCoordsCore(posX, posZ, yearRel, dayRel);
+        }
+        finally
+        {
+            if (costTimestamp != 0L)
+            {
+                SunDelegateCost.Record(costTimestamp);
+            }
+        }
+    }
+
+    private SolarSphericalCoords SolarSphericalCoordsCore(
+        double posX,
+        double posZ,
+        float yearRel,
+        float dayRel)
+    {
         var localDayRel = enabled == true
             ? CelestialMath.ApplyLongitudeToDayRel(dayRel, longitudeProvider(posX))
             : dayRel;
@@ -289,6 +311,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
             .SetMessageHandler<LongitudeAwareSunConfigPacket>(installer.OnServerConfig);
         api.Event.LevelFinalize += installer.OnClientLevelFinalize;
         ObserverLongitude.FollowSun(() => installer.SunFollowsLongitude);
+        SunDelegateCost.Enable();
         api.Logger.Event("AstraTerra startup step: longitude-aware sun awaiting server configuration");
         return installer;
     }
