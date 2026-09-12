@@ -67,7 +67,8 @@ public sealed class SkyDiscMeshes : IDisposable
     /// <summary>
     /// The shadow and exposed material in a fresh cut, not an ornament. This is a separate texture
     /// from the rim: on clay, <c>bronze-dark</c> is still the clay of the rim itself and disappears
-    /// against the face, while <c>engraving</c> stays dark both before and after firing.
+    /// against the face, while <c>engraving</c> is chosen to read dark. Raw and fired clay pick
+    /// different earths for it, because firing darkens the face they are cut into.
     /// </summary>
     private const string MarkTexture = "engraving";
     private const string FigureTexture = "engraving";

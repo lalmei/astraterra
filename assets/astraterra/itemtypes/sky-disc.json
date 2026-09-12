@@ -23,7 +23,7 @@
         "base": "game:block/clay/redclay"
       },
       "engraving": {
-        "base": "game:block/soil/fertverylow"
+        "base": "game:block/soil/ferthigh"
       }
     },
     "*": {
