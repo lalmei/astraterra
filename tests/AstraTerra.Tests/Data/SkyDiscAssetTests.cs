@@ -289,10 +289,14 @@ public sealed class SkyDiscAssetTests
         Assert.True(engravable.GetProperty("*").GetBoolean());
 
         // A cut must contrast with the face it is cut into. Metal uses its own tarnish; clay uses a
-        // dark earth texture, including while raw, which is the state shown while it is being drawn.
+        // dark earth texture. Which earth is not the same question before and after the kiln: raw
+        // clay is a pale face and a poor earth reads dark against it, but firing takes the face to
+        // ceramic, which is darker than the earth the raw disc uses. So the fired disc is cut with
+        // the dark end of the same soil ramp, or its marks come out as pale streaks laid on the
+        // face rather than as lines cut into it.
         var firedTextures = fired.RootElement.GetProperty("texturesByType");
         Assert.Equal(
-            "game:block/soil/fertverylow",
+            "game:block/soil/ferthigh",
             firedTextures.GetProperty("*-clay").GetProperty("engraving").GetProperty("base").GetString());
         Assert.Equal(
             "game:block/metal/tarnished/{material}",
