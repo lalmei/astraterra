@@ -58,6 +58,22 @@ public sealed class SkyDiscMeshes : IDisposable
     /// </summary>
     private const double MarkProud = 0.01;
 
+    /// <summary>
+    /// Where the sunset cue is punched: inside the rim, clear of everything.
+    /// </summary>
+    /// <remarks>
+    /// The face has exactly one patch of open material — the ring between the figure, which is fitted
+    /// inside <see cref="SkyDiscFigureSketch.Radius"/>, and the rim at 4.5. The cue goes near its
+    /// outer edge so it reads as sitting beside the horizon circle rather than floating among the
+    /// stars. Outside the rim there is no room: the scratches start at the rim and the two the band
+    /// stops at reach 6.4, while the stepped outline of the disc comes in to about 6.6 on the
+    /// diagonals.
+    /// </remarks>
+    private const double CueRadius = 4.2;
+
+    /// <summary>Smaller than a figure's star, so the cue is never mistaken for one.</summary>
+    private const double CueSize = 0.2;
+
     /// <summary>The narrow cut that joins two punched stars in the figure.</summary>
     private const double FigureLineWidth = 0.14;
 
@@ -260,6 +276,7 @@ public sealed class SkyDiscMeshes : IDisposable
             .. face.Select((mark, index) => Scratch(template, mark, index)),
             .. sketch.Lines.Select((line, index) => FigureLine(template, line, index)),
             .. sketch.Stars.Select((star, index) => FigureStar(template, star, index)),
+            .. Cue(template, SkyDiscFace.SunsetCueDeg(face)),
         ];
         return shape;
     }
@@ -380,6 +397,38 @@ public sealed class SkyDiscMeshes : IDisposable
         element.Children = null;
         element.FacesResolved = Faces(template, FigureTexture);
         return element;
+    }
+
+    /// <summary>
+    /// The single punch that says which rim is the sunset one, or nothing on a disc with no sunset
+    /// rim — where there is nothing to tell apart and so nothing to say.
+    /// </summary>
+    /// <remarks>
+    /// Square to the radius rather than turned like the figure's stars: a punch beside the rim, not
+    /// another star on the face.
+    /// </remarks>
+    private static IEnumerable<ShapeElement> Cue(ShapeElement template, double? bearingDeg)
+    {
+        if (bearingDeg is not { } bearing)
+        {
+            yield break;
+        }
+
+        var radians = bearing * Math.PI / 180.0;
+        var centreX = 8.0 + (CueRadius * Math.Sin(radians));
+        var centreZ = 8.0 + (CueRadius * Math.Cos(radians));
+        var half = CueSize / 2.0;
+        var floor = BodyTop - MarkDepth;
+
+        var element = template.Clone();
+        element.Name = "sunset-cue";
+        element.From = [centreX - half, floor, centreZ - half];
+        element.To = [centreX + half, BodyTop + MarkProud, centreZ + half];
+        element.RotationOrigin = [centreX, floor, centreZ];
+        element.RotationY = bearing;
+        element.Children = null;
+        element.FacesResolved = Faces(template, MarkTexture);
+        yield return element;
     }
 
     /// <summary>The template's six faces, copied so this new element can carry its own cut texture.</summary>

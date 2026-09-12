@@ -55,6 +55,37 @@ public sealed class SkyDiscFaceTests
     }
 
     [Fact]
+    public void Only_The_Sunset_Rim_Is_Given_A_Cue()
+    {
+        var sunriseOnly = new SolarBand();
+        sunriseOnly.Scratch(400, 100.0, SolarEvent.Sunrise, 51.0, 0, 0);
+
+        Assert.Null(SkyDiscFace.SunsetCueDeg(SkyDiscFace.Read(sunriseOnly)));
+        Assert.Null(SkyDiscFace.SunsetCueDeg(SkyDiscFace.Read(null)));
+    }
+
+    [Fact]
+    public void The_Cue_Sits_At_The_Middle_Of_The_Sunset_Rim()
+    {
+        var band = new SolarBand();
+        band.Scratch(400, 240.0, SolarEvent.Sunset, 51.0, 0, 0);
+        band.Scratch(410, 260.0, SolarEvent.Sunset, 51.0, 0, 0);
+        band.Scratch(420, 300.0, SolarEvent.Sunset, 51.0, 0, 0);
+        band.Scratch(400, 100.0, SolarEvent.Sunrise, 51.0, 0, 0);
+
+        Assert.Equal(270.0, SkyDiscFace.SunsetCueDeg(SkyDiscFace.Read(band))!.Value, 3);
+    }
+
+    [Fact]
+    public void One_Evening_Is_Its_Own_Middle()
+    {
+        var band = new SolarBand();
+        band.Scratch(400, 245.0, SolarEvent.Sunset, 51.0, 0, 0);
+
+        Assert.Equal(245.0, SkyDiscFace.SunsetCueDeg(SkyDiscFace.Read(band))!.Value, 3);
+    }
+
+    [Fact]
     public void Two_Discs_Scratched_Alike_Share_One_Name()
     {
         var first = new SolarBand();
