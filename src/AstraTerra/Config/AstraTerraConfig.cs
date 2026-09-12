@@ -18,9 +18,10 @@ public sealed class AstraTerraConfig
 
     /// <summary>
     /// Which picture the moon overhead is drawn from: the pixel art, the photographs, or Vintage
-    /// Story's own disc. Independent of <see cref="SolarSystemArt"/>, which is the planets.
+    /// Story's own disc. Independent of <see cref="SolarSystemArt"/>, which is the planets. Defaults
+    /// to Vintage Story's disc for now.
     /// </summary>
-    public string MoonArt { get; set; } = MoonArtStyleParser.PixelValue;
+    public string MoonArt { get; set; } = MoonArtStyleParser.DefaultValue;
 
     /// <summary>
     /// How much of Vintage Story's own date and hour the character panel keeps showing. Defaults to

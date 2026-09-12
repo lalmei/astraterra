@@ -58,7 +58,7 @@ public static class AstraTerraConfigLoader
             api.Logger.Warning(
                 "AstraTerra config has unknown moon art '{0}'; using '{1}'.",
                 config.MoonArt,
-                MoonArtStyleParser.PixelValue);
+                MoonArtStyleParser.DefaultValue);
         }
 
         config.MoonArt = MoonArtStyleParser.ToConfigValue(moonArt);

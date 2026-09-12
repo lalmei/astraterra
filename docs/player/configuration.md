@@ -19,7 +19,7 @@ change those with the game closed.
 | `StarfieldMode` | `astraterra`, `both`, `vanilla` | `astraterra` | Which star field draws. `both` overlays AstraTerra's catalog on Vintage Story's cubemap, which is how you check that the two agree about where a star is. |
 | `SkyGridMode` | `none`, `horizontal`, `equatorial`, `both` | `none` | Draws coordinate lines over the sky: the cyan altitude-azimuth grid, the rose right-ascension/declination grid, or both. |
 | `SolarSystemArt` | `pixel`, `photo` | `pixel` | Which pictures the planets and their moons are drawn from. Positions, sizes and which moons are out are the same either way; only the photographs draw a planet's phase as its own picture. |
-| `MoonArt` | `pixel`, `photo`, `vanilla` | `pixel` | Which picture the moon overhead is drawn from. `vanilla` hands the disc back to Vintage Story. Position, phase, moonlight and the length of the night are the calendar's in every case. |
+| `MoonArt` | `pixel`, `photo`, `vanilla` | `vanilla` | Which picture the moon overhead is drawn from. `vanilla` hands the disc back to Vintage Story. Position, phase, moonlight and the length of the night are the calendar's in every case. |
 | `MilkyWayBrightness` | `0.0` to `2.0` | `1.0` | Scales the band's glow on top of the darkness and moonlight it already answers to. `0` switches the band off for a plain star field. |
 | `StarBrightnessBias` | a multiplier, `1.0` is unchanged | `1.0` | Scales how brightly the whole star pass draws, before darkness is applied. Raising it brightens faint stars faster than bright ones, because the magnitude curve is already compressed at the bright end. |
 | `GuideStarHighlightStrength` | a multiplier | `1.15` | How much brighter a guide star draws in the constellation overlay. Used as the larger of it and `StarBrightnessBias`, so lowering it below the bias does nothing. |
@@ -79,7 +79,7 @@ This is what a default file looks like after the mod has written it once.
   "StarfieldMode": "astraterra",
   "SkyGridMode": "none",
   "SolarSystemArt": "pixel",
-  "MoonArt": "pixel",
+  "MoonArt": "vanilla",
   "CalendarDisplay": "full",
   "LongitudeAwareSun": true,
   "DisplayedClockTime": "local",

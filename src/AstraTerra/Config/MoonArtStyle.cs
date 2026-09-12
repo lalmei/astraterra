@@ -6,10 +6,10 @@ namespace AstraTerra.Config;
 /// </summary>
 /// <remarks>
 /// The planets keep their own setting. This is only the moon in this world's sky, not the moons of
-/// Jupiter. Pixel art is the default because it sits with the game's own; photo uses the real lunar
-/// surface; and vanilla is the original disc for anyone who would rather have that back. Position,
-/// phase, moonlight and the length of the night are untouched in every case — only the picture
-/// changes, or is left alone.
+/// Jupiter. Vanilla — Vintage Story's own disc, left alone — is the default for now; pixel art sits
+/// with the game's own look, and photo uses the real lunar surface. Position, phase, moonlight and
+/// the length of the night are untouched in every case — only the picture changes, or is left
+/// alone.
 /// </remarks>
 public enum MoonArtStyle
 {
@@ -23,6 +23,14 @@ public static class MoonArtStyleParser
     public const string PixelValue = SolarSystemArtStyleParser.PixelValue;
     public const string PhotoValue = SolarSystemArtStyleParser.PhotoValue;
     public const string VanillaValue = StarfieldModeParser.VanillaValue;
+
+    /// <summary>
+    /// What an absent or unreadable setting falls back to. Vanilla for now, so a fresh world keeps
+    /// Vintage Story's own moon until the replacement art is ready to lead.
+    /// </summary>
+    public const MoonArtStyle DefaultStyle = MoonArtStyle.Vanilla;
+
+    public const string DefaultValue = VanillaValue;
 
     public static bool TryParse(string? value, out MoonArtStyle style)
     {
@@ -45,20 +53,20 @@ public static class MoonArtStyleParser
                 style = MoonArtStyle.Vanilla;
                 return true;
             default:
-                style = MoonArtStyle.Pixel;
+                style = DefaultStyle;
                 return false;
         }
     }
 
     public static MoonArtStyle ParseOrDefault(string? value)
-        => TryParse(value, out var style) ? style : MoonArtStyle.Pixel;
+        => TryParse(value, out var style) ? style : DefaultStyle;
 
     public static string ToConfigValue(MoonArtStyle style)
         => style switch
         {
+            MoonArtStyle.Pixel => PixelValue,
             MoonArtStyle.Photo => PhotoValue,
-            MoonArtStyle.Vanilla => VanillaValue,
-            _ => PixelValue
+            _ => VanillaValue
         };
 
     /// <summary>
