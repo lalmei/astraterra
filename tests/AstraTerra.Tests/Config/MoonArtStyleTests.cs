@@ -22,10 +22,10 @@ public sealed class MoonArtStyleTests
     }
 
     [Fact]
-    public void ParseOrDefault_Uses_The_Pixel_Art_For_Unknown_Values()
+    public void ParseOrDefault_Uses_The_Vanilla_Moon_For_Unknown_Values()
     {
         Assert.False(MoonArtStyleParser.TryParse("unknown", out _));
-        Assert.Equal(MoonArtStyle.Pixel, MoonArtStyleParser.ParseOrDefault("unknown"));
+        Assert.Equal(MoonArtStyle.Vanilla, MoonArtStyleParser.ParseOrDefault("unknown"));
     }
 
     [Theory]
@@ -38,11 +38,15 @@ public sealed class MoonArtStyleTests
         Assert.Equal(style, MoonArtStyleParser.ParseOrDefault(expected));
     }
 
-    /// <summary>A fresh config draws the pixel moon, which is what a new world shows.</summary>
+    /// <summary>
+    /// A fresh config leaves Vintage Story's own moon alone, which is what a new world shows for
+    /// now.
+    /// </summary>
     [Fact]
-    public void A_New_Config_Draws_The_Pixel_Moon()
+    public void A_New_Config_Keeps_The_Vanilla_Moon()
     {
-        Assert.Equal(MoonArtStyle.Pixel, new AstraTerraConfig().GetMoonArtStyle());
+        Assert.Equal(MoonArtStyle.Vanilla, new AstraTerraConfig().GetMoonArtStyle());
+        Assert.False(MoonArtStyleParser.ReplacesVanillaMoon(new AstraTerraConfig().GetMoonArtStyle()));
     }
 
     /// <summary>
@@ -54,11 +58,11 @@ public sealed class MoonArtStyleTests
         var config = new AstraTerraConfig
         {
             SolarSystemArt = SolarSystemArtStyleParser.PhotoValue,
-            MoonArt = MoonArtStyleParser.VanillaValue
+            MoonArt = MoonArtStyleParser.PixelValue
         };
 
         Assert.Equal(SolarSystemArtStyle.Photo, config.GetSolarSystemArtStyle());
-        Assert.Equal(MoonArtStyle.Vanilla, config.GetMoonArtStyle());
+        Assert.Equal(MoonArtStyle.Pixel, config.GetMoonArtStyle());
     }
 
     [Theory]
