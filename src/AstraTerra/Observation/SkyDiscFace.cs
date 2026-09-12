@@ -64,6 +64,40 @@ public static class SkyDiscFace
     }
 
     /// <summary>
+    /// Where the one cue that tells the two rims apart belongs, or nothing when this disc carries no
+    /// sunset rim to put it on.
+    /// </summary>
+    /// <remarks>
+    /// Every scratch on the face is a record and none of them change shape to say which rim it is —
+    /// so the disc is told apart by one mark that is not a record: a single punch beside the sunset
+    /// rim, and nothing beside the sunrise one. Absence against presence asks the holder to learn
+    /// nothing; the punch sits where the sun goes down.
+    /// <para>
+    /// It is put at the middle of the rim's own spread, which on a finished band is due west exactly
+    /// (see <see cref="SolarBandReading.CardinalNotchDeg"/>) and on an unfinished one is wherever the
+    /// watching has reached so far. A single scratch is its own middle. Sunset bearings sit around
+    /// west and cannot straddle zero, so the middle is the plain mean of the two ends.
+    /// </para>
+    /// </remarks>
+    public static double? SunsetCueDeg(IReadOnlyList<SkyDiscFaceMark> face)
+    {
+        var low = double.MaxValue;
+        var high = double.MinValue;
+        foreach (var mark in face)
+        {
+            if (mark.Event != SolarEvent.Sunset)
+            {
+                continue;
+            }
+
+            low = Math.Min(low, mark.NotchDeg);
+            high = Math.Max(high, mark.NotchDeg);
+        }
+
+        return low > high ? null : (low + high) / 2.0;
+    }
+
+    /// <summary>
     /// A name for exactly what the face looks like, so two discs that would be scratched alike share
     /// one built model and a disc that has not changed is never rebuilt.
     /// </summary>
