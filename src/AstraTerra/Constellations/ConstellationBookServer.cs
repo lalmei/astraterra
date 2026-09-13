@@ -41,10 +41,10 @@ public sealed class ConstellationBookServer
 
     private ConstellationBookResponsePacket HandleMutation(IServerPlayer player, ConstellationBookMutationPacket packet)
     {
-        var slot = ConstellationBookService.GetLeftHandBookSlot(player);
+        var slot = ConstellationBookService.FindHeldBookSlot(player);
         if (slot?.Itemstack is null)
         {
-            return Error("Hold a writable or written constellation book in your left hand.");
+            return Error(ConstellationBookService.HoldWritableBookMessage);
         }
 
         if (!ConstellationBookService.PlayerHasInkAndQuill(player))
@@ -136,7 +136,7 @@ public sealed class ConstellationBookServer
 
         if (slot.Itemstack is not { } stack)
         {
-            return Error("Hold a writable or written constellation book in your left hand.");
+            return Error(ConstellationBookService.HoldWritableBookMessage);
         }
 
         try
@@ -190,7 +190,7 @@ public sealed class ConstellationBookServer
     {
         if (slot.Itemstack is not { } stack)
         {
-            return Error("Hold a writable or written constellation book in your left hand.");
+            return Error(ConstellationBookService.HoldWritableBookMessage);
         }
 
         if (packet.Action == ConstellationBookMutationActions.ClassifySighting)

@@ -31,26 +31,22 @@ public sealed class ConstellationBookClient
     }
 
     public ConstellationJournal? ReadCurrentJournal()
-    {
-        var stack = api.World.Player.Entity.LeftHandItemSlot?.Itemstack;
-        return ConstellationBookService.ReadJournal(stack);
-    }
+        => ConstellationBookService.ReadJournal(HeldBookStack);
+
+    /// <summary>The journal book this player is holding in either hand, or nothing.</summary>
+    private ItemStack? HeldBookStack => ConstellationBookService.FindHeldBook(api.World.Player);
 
     public ConstellationJournal ReadCurrentJournalOrEmpty()
         => ReadCurrentJournal() ?? new ConstellationJournal();
 
-    public bool HasLeftHandJournalBook()
-    {
-        var stack = api.World.Player.Entity.LeftHandItemSlot?.Itemstack;
-        return ConstellationBookService.IsValidJournalBook(stack);
-    }
+    public bool HasHeldJournalBook() => ConstellationBookService.IsHoldingJournalBook(api.World.Player);
 
     public bool CanMutate(out string message)
     {
         var player = api.World.Player;
-        if (!ConstellationBookService.IsValidJournalBook(player.Entity.LeftHandItemSlot?.Itemstack))
+        if (!ConstellationBookService.IsHoldingJournalBook(player))
         {
-            message = "Hold a writable or written constellation book in your left hand.";
+            message = ConstellationBookService.HoldWritableBookMessage;
             return false;
         }
 
@@ -167,11 +163,10 @@ public sealed class ConstellationBookClient
     }
 
     public PlanetJournal ReadCurrentPlanetJournalOrEmpty()
-        => ConstellationBookService.ReadPlanetJournalOrEmpty(
-            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        => ConstellationBookService.ReadPlanetJournalOrEmpty(HeldBookStack);
 
     public ObservationLog ReadCurrentObservationLogOrEmpty()
-        => ConstellationBookService.ReadObservationLogOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        => ConstellationBookService.ReadObservationLogOrEmpty(HeldBookStack);
 
     /// <summary>Sends what the observer says a set of their own sightings was.</summary>
     /// <param name="planetId">
@@ -257,7 +252,7 @@ public sealed class ConstellationBookClient
         if (!string.IsNullOrWhiteSpace(packet.PromptNamePlanetId))
         {
             var existing = ConstellationBookService
-                .ReadPlanetJournalOrEmpty(api.World.Player.Entity.LeftHandItemSlot?.Itemstack)
+                .ReadPlanetJournalOrEmpty(HeldBookStack)
                 .Find(packet.PromptNamePlanetId);
             new PlanetNameDialog(api, packet.PromptNamePlanetId, existing?.Name, SendRenamePlanet).TryOpen();
         }

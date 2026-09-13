@@ -167,11 +167,11 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
         // Any book of ours will do, not only one with figures drawn in it: a book holding nothing
         // but sightings of a wanderer is a model of the sky, and this instrument runs on that model.
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
             RenderLines(
                 InstrumentTitle,
-                "Hold a written constellation book in your left hand.",
+                ConstellationBookService.HoldWrittenBookMessage,
                 ReadSkyClockLine(api.World.Calendar.TotalDays),
                 string.Empty);
             return;
@@ -358,7 +358,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
         }
 
         var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(
-            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+            ConstellationBookService.FindHeldBook(api.World.Player));
         return $"{journal.DisplayName(target.SourceId)} · planet";
     }
 
@@ -377,9 +377,9 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// </remarks>
     private IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal)
     {
-        // Resolved from the held book every time rather than cached with the targets, so putting a
-        // different book in your off-hand changes what the instrument can aim at, immediately.
-        var stack = api.World.Player.Entity.LeftHandItemSlot?.Itemstack;
+        // Resolved from the held book every time rather than cached with the targets, so swapping
+        // the book in either hand changes what the instrument can aim at, immediately.
+        var stack = ConstellationBookService.FindHeldBook(api.World.Player);
         var observations = ConstellationBookService.ReadObservationLogOrEmpty(stack);
         var planetJournal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
 

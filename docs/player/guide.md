@@ -24,13 +24,13 @@ Creative inventory also has a **Star Catalog** (all 88 IAU figures), **The Zodia
 
 1. In creative, open the **AstraTerra** tab and drag out a Brass Telescope, Sextant, Calibrated Astrolabe, Sky Disc, **Star Catalog**, or **The Zodiac**. Survival players can form a clay disc immediately, and craft the metal instruments later.
 2. Wait for a dark, clear night with open sky overhead. Or, on the first evening, just mark sunset with the Sky Disc.
-3. Put a blank normal book in your left hand and keep ink and quill in your inventory.
+3. Hold a blank normal book in either hand — off-hand or main hand — and keep ink and quill in your inventory.
 4. Hold right click with the telescope to scope in.
 5. Middle click until the scope says **Create Constellation**.
 6. Drag between any two visible stars.
 7. Run `.stars list` and `.stars info selected` to inspect what you drew.
 8. Hold right click with the Sextant on a visible star to read its altitude.
-9. Hold the Calibrated Astrolabe with the written book in your left hand and forecast that constellation's next transit.
+9. Hold the Calibrated Astrolabe with the written book in your off-hand and forecast that constellation's next transit.
 
 ## The Night Sky
 
@@ -118,7 +118,7 @@ Hold right click to enter the scoped view. While scoped:
 - **Inspect Constellation** names or renames the saved constellation you click.
 - **Remove Segment** deletes the segment you click.
 
-Drawing, naming, and removing need a book in your left hand and ink and quill in your inventory.
+Drawing, naming, and removing need a book in either hand and ink and quill in your inventory. The off-hand is checked first, so a book there wins over one in your main hand.
 
 The telescope still works as a zoom tool when astronomy conditions are not available. Drawing and the deep-sky plates need a dark enough, clear enough sky and open sky overhead.
 
@@ -201,7 +201,7 @@ Hold right click and put the centre of your view on the body. The readout at the
 
 While holding right click, middle click cycles through angle only, the rose equatorial grid, the cyan azimuthal grid, and both grids. Releasing right click restores the grid mode selected with `.stars sky-grid`. The Sextant remembers its own choice for the rest of the session.
 
-**Sneak while sighting to write the reading down.** Hold a writable book in your left hand and keep ink and quill in your inventory. The book gains a dated entry: the angle, the bearing, how bright it looked, the day and hour, and the latitude you stood at.
+**Sneak while sighting to write the reading down.** Hold a writable book in either hand and keep ink and quill in your inventory. The book gains a dated entry: the angle, the bearing, how bright it looked, the day and hour, and the latitude you stood at.
 
 The entry does not say what you sighted. It records that *something* stood at that angle at that hour. Angles are written to one arcminute.
 
@@ -211,7 +211,7 @@ Once there are two entries, `.stars sightings` lays them out, gathers them into 
 
 The sun and a visibly lit moon can be shot whenever they are above the horizon, so the Sextant works in daylight. A daytime crescent is a perfectly good sight. An invisible new moon is not offered as a target. Stars and planets need a dark enough sky.
 
-A planet reads as **Wandering star** unless a book in your left hand names it. Swap books and the sky is renamed at once.
+A planet reads as **Wandering star** unless a book you are holding names it. Swap books and the sky is renamed at once.
 
 If nothing readable is near the centre, the readout tells you what is available to aim at. If the sky is blocked overhead it reports that instead.
 
@@ -227,7 +227,7 @@ Recover a vanilla astrolabe from ruins, then combine it with a brass plate.
 
 ### How to use it
 
-Hold it in your main hand and a written constellation book in your left hand, then hold right click to open the planning readout. The clock still shows if you hold no book.
+Hold it in your main hand and a written constellation book in your off-hand, then hold right click to open the planning readout. The clock still shows if you hold no book.
 
 - Middle click selects the next target: each constellation in the book, then the wanderers that book has picked out, then the comets.
 - Scroll forecasts an hour at a time.
@@ -256,7 +256,7 @@ The clock reads the hour off the sun: the hour of the world day, whether it is d
 
 A constellation is a set of lines between stars, stored in a vanilla book or cut into a Sky Disc.
 
-Put a blank book in your left hand and keep ink and quill in your inventory. Scope in with a telescope, switch to **Create Constellation**, and drag from one visible star to another.
+Put a blank book in your off-hand and keep ink and quill in your inventory. Scope in with a telescope, switch to **Create Constellation**, and drag from one visible star to another.
 
 Constellations in a book are visible only while you hold that book. Hand it to another player and they see your figures, under your names.
 

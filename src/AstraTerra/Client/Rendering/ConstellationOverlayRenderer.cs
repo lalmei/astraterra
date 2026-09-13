@@ -258,7 +258,7 @@ public sealed class ConstellationOverlayRenderer : IRenderer
 
         // The telescope draws into the book, so without one it has nothing to draw on and nothing
         // to show. The disc is its own page and asks for no book at all.
-        if (surface == DrawingSurface.Telescope && !bookClient.HasLeftHandJournalBook())
+        if (surface == DrawingSurface.Telescope && !bookClient.HasHeldJournalBook())
         {
             ClearInteractionTargets();
             return;

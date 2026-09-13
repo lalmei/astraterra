@@ -35,7 +35,7 @@ public sealed class SkyDiscEngraveResponsePacket
 /// on, so it needs a message of its own.
 /// <para>
 /// Small and separate from the constellation book's channel on purpose: that channel refuses
-/// everything unless a writable book is in the left hand, and a disc is engraved with neither book
+/// everything unless a writable book is in hand, and a disc is engraved with neither book
 /// nor ink.
 /// </para>
 /// </remarks>

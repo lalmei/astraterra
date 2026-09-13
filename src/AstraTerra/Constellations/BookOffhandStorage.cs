@@ -3,11 +3,12 @@ using Vintagestory.API.Common;
 namespace AstraTerra.Constellations;
 
 /// <summary>
-/// Lets a journal book be carried in the off-hand, which is where the mod reads it from.
+/// Lets a journal book be carried in the off-hand, the first place the mod looks for one.
 /// </summary>
 /// <remarks>
 /// Vanilla books carry only <see cref="EnumItemStorageFlags.General"/>, so without this they cannot
-/// enter the off-hand slot at all and every feature that reads a held journal goes quiet.
+/// enter the off-hand slot at all, which leaves only the main hand — and the main hand is usually
+/// busy holding the instrument you are reading the book alongside.
 /// <para>
 /// The mod also ships a JSON patch that sets the same flag. This code path exists because that patch
 /// is silent when it does not take effect — the mod failing to load, or another mod rewriting

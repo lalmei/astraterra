@@ -68,7 +68,7 @@ public sealed class StarsClientCommands
                 .HandleWith(args => TextCommandResult.Success(Build(GetStringArg(args, 0))))
             .EndSubCommand()
             .BeginSubCommand("sightings")
-                .WithDescription("List the sightings in the book in your left hand, and what comparing them shows.")
+                .WithDescription("List the sightings in the book you are holding, and what comparing them shows.")
                 .HandleWith(_ => TextCommandResult.Success(Sightings()))
             .EndSubCommand()
             .BeginSubCommand("classify")
@@ -138,9 +138,9 @@ public sealed class StarsClientCommands
 
     private string Sightings()
     {
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
-            return "Hold a writable or written constellation book in your left hand.";
+            return ConstellationBookService.HoldWritableBookMessage;
         }
 
         return SightingReport.Describe(bookClient.ReadCurrentObservationLogOrEmpty());
@@ -152,9 +152,9 @@ public sealed class StarsClientCommands
     /// </summary>
     private string Classify(ICoreClientAPI api, string target, string skyClass, string? name)
     {
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
-            return "Hold a writable or written constellation book in your left hand.";
+            return ConstellationBookService.HoldWritableBookMessage;
         }
 
         if (!SightingReport.TryParseClass(skyClass, out var parsedClass))
@@ -215,9 +215,9 @@ public sealed class StarsClientCommands
 
     private string List()
     {
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
-            return "Hold a writable or written constellation book in your left hand.";
+            return ConstellationBookService.HoldWritableBookMessage;
         }
 
         return BuildService().List();
@@ -225,9 +225,9 @@ public sealed class StarsClientCommands
 
     private string Info(string target)
     {
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
-            return "Hold a written constellation book in your left hand.";
+            return ConstellationBookService.HoldWrittenBookMessage;
         }
 
         return BuildService().Info(ResolveSelectedTarget(target));
@@ -338,9 +338,9 @@ public sealed class StarsClientCommands
 
     private string Select(string target)
     {
-        if (!bookClient.HasLeftHandJournalBook())
+        if (!bookClient.HasHeldJournalBook())
         {
-            return "Hold a written constellation book in your left hand.";
+            return ConstellationBookService.HoldWrittenBookMessage;
         }
 
         var id = BuildService().ResolveId(target);

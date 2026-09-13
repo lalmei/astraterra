@@ -737,7 +737,7 @@ public static class SkyStarSunMoonRenderer
 
         // Reading the book means deserializing its journal, which is far too much work to repeat
         // sixty times a second for a page that has not changed. The written JSON is the key.
-        var journal = ReadJournalCached(api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+        var journal = ReadJournalCached(ConstellationBookService.FindHeldBook(api.World.Player));
 
         // The disc carries its own figure and shows it from either hand, so it is a second source of
         // lines and cached the same way — by the text on the object, which is what actually changes.
