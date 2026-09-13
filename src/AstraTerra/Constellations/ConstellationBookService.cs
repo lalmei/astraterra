@@ -38,6 +38,17 @@ public static class ConstellationBookService
     /// </summary>
     public const string ObservationLogJsonAttribute = "astraterraObservationJson";
 
+    /// <summary>
+    /// Prose the book opens with, kept apart from every written half.
+    /// </summary>
+    /// <remarks>
+    /// A preface is not a record: it is not read back into anything, it is never merged, and nothing
+    /// computes with it. Holding it in its own attribute means the readable page can be rebuilt after
+    /// any edit — which it is, on every write — without a hand-written opening being lost, and means
+    /// a book that was given one keeps it after its new owner draws in it.
+    /// </remarks>
+    public const string PrefaceAttribute = "astraterraBookPreface";
+
     public const string PlanetCatalogTitle = "The Wanderers";
     public const string SkyCultureJsonAttribute = "astraterraSkyCultureJson";
     public const string BookIdAttribute = "astraterraBookId";
@@ -265,6 +276,42 @@ public static class ConstellationBookService
         attributes.SetString(VanillaTextAttribute, BuildReadableText(attributes));
     }
 
+    /// <summary>Sets the prose a book opens with, and rebuilds its readable page around it.</summary>
+    public static void WritePreface(ItemStack stack, string preface)
+        => WritePreface(stack.Attributes, preface);
+
+    public static void WritePreface(ITreeAttribute attributes, string preface)
+    {
+        ArgumentNullException.ThrowIfNull(attributes);
+
+        if (string.IsNullOrWhiteSpace(preface))
+        {
+            attributes.RemoveAttribute(PrefaceAttribute);
+        }
+        else
+        {
+            attributes.SetString(PrefaceAttribute, preface.Trim());
+        }
+
+        // Only rebuild a page this mod has already written. Stamping text onto an untouched vanilla
+        // book would be writing in somebody else's book.
+        if (attributes.HasAttribute(JournalJsonAttribute)
+            || attributes.HasAttribute(PlanetJournalJsonAttribute)
+            || attributes.HasAttribute(ObservationLogJsonAttribute))
+        {
+            attributes.SetString(VanillaTextAttribute, BuildReadableText(attributes));
+        }
+    }
+
+    public static string? ReadPreface(ItemStack? stack)
+        => stack?.Attributes is null ? null : ReadPreface(stack.Attributes);
+
+    public static string? ReadPreface(ITreeAttribute attributes)
+    {
+        var preface = attributes.GetString(PrefaceAttribute, null);
+        return string.IsNullOrWhiteSpace(preface) ? null : preface;
+    }
+
     public static bool IsPlanetBook(ItemStack? stack)
         => stack?.Attributes?.HasAttribute(PlanetJournalJsonAttribute) == true;
 
@@ -279,24 +326,46 @@ public static class ConstellationBookService
         => BuildReadableText(
             ReadJournal(attributes) ?? new ConstellationJournal(),
             ReadPlanetJournal(attributes) ?? new PlanetJournal(),
-            ReadObservationLog(attributes) ?? new ObservationLog());
+            ReadObservationLog(attributes) ?? new ObservationLog(),
+            ReadPreface(attributes));
 
     public static string BuildReadableText(
         ConstellationJournal journal,
         PlanetJournal planetJournal,
         ObservationLog observationLog)
+        => BuildReadableText(journal, planetJournal, observationLog, null);
+
+    /// <param name="preface">
+    /// Prose the book opens with, before anything it records. A book written by somebody who had
+    /// something to say says it first; a blank one somebody is filling in has nothing to say yet.
+    /// </param>
+    public static string BuildReadableText(
+        ConstellationJournal journal,
+        PlanetJournal planetJournal,
+        ObservationLog observationLog,
+        string? preface)
     {
         ArgumentNullException.ThrowIfNull(planetJournal);
         ArgumentNullException.ThrowIfNull(observationLog);
+
+        var opening = string.IsNullOrWhiteSpace(preface) ? null : preface.Trim();
 
         if (journal.Constellations.Count == 0
             && planetJournal.Planets.Count == 0
             && observationLog.Observations.Count == 0)
         {
-            return "No constellations recorded.";
+            return opening is null
+                ? "No constellations recorded."
+                : opening + Environment.NewLine + Environment.NewLine + "No constellations recorded.";
         }
 
         var lines = new List<string>();
+
+        if (opening is not null)
+        {
+            lines.Add(opening);
+            lines.Add(string.Empty);
+        }
 
         if (journal.Constellations.Count > 0)
         {
