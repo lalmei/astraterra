@@ -1,0 +1,70 @@
+{
+  "code": "sky-disc-wall",
+  "class": "AstraTerra.Blocks.BlockSkyDiscWall",
+  "entityClass": "AstraTerra.Blocks.BlockEntitySkyDiscWall",
+  "behaviors": [
+    {
+      "name": "HorizontalAttachable",
+      "properties": {
+        "handleDrops": false
+      }
+    }
+  ],
+  "variantgroups": [
+    {
+      "code": "side",
+      "states": [
+        "north",
+        "east",
+        "south",
+        "west"
+      ]
+    }
+  ],
+  "attributes": {
+    "handbook": {
+      "exclude": true
+    }
+  },
+  "creativeinventory": {},
+  "shape": {
+    "base": "game:block/basic/nothing"
+  },
+  "drops": [],
+  "blockmaterial": "Metal",
+  "lightAbsorption": 0,
+  "faceCullMode": "NeverCull",
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "sideao": {
+    "all": false
+  },
+  "replaceable": 5001,
+  "resistance": 0.5,
+  "collisionbox": null,
+  "selectionbox": {
+    "x1": 0.0625,
+    "y1": 0.0625,
+    "z1": 0,
+    "x2": 0.9375,
+    "y2": 0.9375,
+    "z2": 0.0875,
+    "rotateYByType": {
+      "*-east": 270,
+      "*-south": 180,
+      "*-west": 90,
+      "*-north": 0
+    }
+  },
+  "sounds": {
+    "place": "game:block/ingot",
+    "break": "game:block/ingot",
+    "hit": "game:block/ingot"
+  },
+  "rainPermeable": true,
+  "materialDensity": 900
+}

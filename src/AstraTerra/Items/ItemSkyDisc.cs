@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Blocks;
 using AstraTerra.Client.Rendering;
 using AstraTerra.Constellations;
 using AstraTerra.Observation;
@@ -54,6 +55,21 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
             {
                 return;
             }
+        }
+
+        // Sneaking at a wall hangs the disc on it. The same sneak that sets a disc down on the floor,
+        // aimed a quarter turn higher: a finished disc is worth looking at, and a chest is not where
+        // you look at it. Claimed on both sides so the click is not also read as a mark, but only the
+        // server puts the block up — see BlockSkyDiscWall.TryHang.
+        if (byEntity?.Controls?.Sneak == true && BlockSkyDiscWall.CanHang(blockSel, slot))
+        {
+            handling = EnumHandHandling.PreventDefault;
+            if (byEntity.World?.Side == EnumAppSide.Server)
+            {
+                BlockSkyDiscWall.TryHang(byEntity.World, PlayerOf(byEntity), blockSel, slot);
+            }
+
+            return;
         }
 
         handling = EnumHandHandling.PreventDefault;
@@ -444,6 +460,12 @@ public sealed class ItemSkyDisc : Item, IContainedMeshSource
             z,
             calendar?.OnGetLatitude is null ? null : mapZ => calendar.OnGetLatitude(mapZ));
     }
+
+    /// <summary>The player behind an entity, for the calls that need one rather than an entity.</summary>
+    private static IPlayer? PlayerOf(EntityAgent byEntity)
+        => byEntity is EntityPlayer playerEntity
+            ? byEntity.World?.PlayerByUid(playerEntity.PlayerUID)
+            : null;
 
     private static bool HasScribingTool(EntityAgent byEntity)
         => byEntity is EntityPlayer playerEntity

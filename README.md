@@ -35,7 +35,7 @@ Mercury, Venus, Mars, Jupiter, and Saturn move on Keplerian orbits. Nine meteor 
 
 Form a clay disc and fire it, or craft one from copper or bronze. Under open sky at sunrise or sunset, sneak and hold right click to scratch the sun's place on the horizon. Keep marking until the band reaches an edge and turns back. The finished band gives the year length, latitude, east or west, and the next solstice.
 
-Right click reads the disc. Scroll turns it. Sneak-right-click the ground to set it down, or stand five in a mold rack. Clay uses five-degree notches. Metal uses two-and-a-half-degree notches. The first mark binds the disc to that latitude.
+Right click reads the disc. Scroll turns it. Sneak-right-click the ground to set it down, a wall to hang it there like a painting, or stand five in a mold rack. Clay uses five-degree notches. Metal uses two-and-a-half-degree notches. The first mark binds the disc to that latitude.
 
 Hold the disc up at night and left-drag between stars to cut one connected constellation. Raw clay takes the figure before firing. A fired clay disc will not.
 

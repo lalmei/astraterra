@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Blocks;
 using AstraTerra.Client.Calendar;
 using AstraTerra.Client.Observation;
 using AstraTerra.Client.Rendering;
@@ -53,6 +54,10 @@ public sealed class AstraTerraModSystem : ModSystem
         api.RegisterItemClass("AstraTerra.Items.ItemSextant", typeof(ItemSextant));
         api.RegisterItemClass("AstraTerra.Items.ItemAstrolabe", typeof(ItemAstrolabe));
         api.RegisterItemClass("AstraTerra.Items.ItemSkyDisc", typeof(ItemSkyDisc));
+        api.RegisterBlockClass("AstraTerra.Blocks.BlockSkyDiscWall", typeof(BlockSkyDiscWall));
+        api.RegisterBlockEntityClass(
+            "AstraTerra.Blocks.BlockEntitySkyDiscWall",
+            typeof(BlockEntitySkyDiscWall));
 
         // Both sides: firing runs on the server, and in single player that server is this process.
         api.Logger.Event(
@@ -63,6 +68,7 @@ public sealed class AstraTerraModSystem : ModSystem
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSextant");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemAstrolabe");
         api.Logger.Event("AstraTerra startup step: item class registered: AstraTerra.Items.ItemSkyDisc");
+        api.Logger.Event("AstraTerra startup step: block class registered: AstraTerra.Blocks.BlockSkyDiscWall");
     }
 
     public override void AssetsLoaded(ICoreAPI api)
