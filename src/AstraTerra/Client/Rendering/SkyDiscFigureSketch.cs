@@ -29,10 +29,25 @@ public sealed record SkyDiscFigureSketch(
     public static SkyDiscFigureSketch Empty { get; } = new([], []);
 
     public static SkyDiscFigureSketch Project(SkyDiscFigure? figure, StarCatalog? catalog)
+        => Project(figure?.Edges, catalog);
+
+    /// <summary>
+    /// Projects the lines of any drawn figure, whoever holds it.
+    /// </summary>
+    /// <remarks>
+    /// A disc carries one figure and a book carries many, but a figure is a figure: the same list of
+    /// star pairs, wanting the same small chart to be looked at. The book's page asks for a fit of
+    /// its own because a page is not round.
+    /// </remarks>
+    public static SkyDiscFigureSketch Project(
+        IReadOnlyList<ConstellationEdge>? figureEdges,
+        StarCatalog? catalog,
+        double fitRadius = Radius)
         => Project(
-            figure,
+            figureEdges,
             catalog?.Stars.ToDictionary(star => star.Hip)
-                ?? (IReadOnlyDictionary<int, StarCatalogEntry>)new Dictionary<int, StarCatalogEntry>());
+                ?? (IReadOnlyDictionary<int, StarCatalogEntry>)new Dictionary<int, StarCatalogEntry>(),
+            fitRadius);
 
     /// <summary>
     /// Projects against a catalog already indexed by id. The live item renderer keeps this index
@@ -41,15 +56,21 @@ public sealed record SkyDiscFigureSketch(
     public static SkyDiscFigureSketch Project(
         SkyDiscFigure? figure,
         IReadOnlyDictionary<int, StarCatalogEntry> catalogByHip)
+        => Project(figure?.Edges, catalogByHip);
+
+    public static SkyDiscFigureSketch Project(
+        IReadOnlyList<ConstellationEdge>? figureEdges,
+        IReadOnlyDictionary<int, StarCatalogEntry> catalogByHip,
+        double fitRadius = Radius)
     {
         ArgumentNullException.ThrowIfNull(catalogByHip);
 
-        if (figure is null || figure.IsBlank || catalogByHip.Count == 0)
+        if (figureEdges is null || figureEdges.Count == 0 || catalogByHip.Count == 0 || fitRadius <= 0.0)
         {
             return Empty;
         }
 
-        var edges = figure.Edges
+        var edges = figureEdges
             .Where(edge => catalogByHip.ContainsKey(edge.A) && catalogByHip.ContainsKey(edge.B))
             .ToList();
         if (edges.Count == 0)
@@ -103,7 +124,7 @@ public sealed record SkyDiscFigureSketch(
             return Empty;
         }
 
-        var scale = Radius / extent;
+        var scale = fitRadius / extent;
         var fitted = projected.ToDictionary(
             pair => pair.Key,
             pair => (X: (pair.Value.X - middleX) * scale, Y: (pair.Value.Y - middleY) * scale));

@@ -258,7 +258,15 @@ A constellation is a set of lines between stars, stored in a vanilla book or cut
 
 Put a blank book in your off-hand and keep ink and quill in your inventory. Scope in with a telescope, switch to **Create Constellation**, and drag from one visible star to another.
 
-Constellations in a book are visible only while you hold that book. Hand it to another player and they see your figures, under your names.
+Constellations in a book are visible only while you hold that book, in either hand. Hand it to another player and they see your figures, under your names.
+
+### Looking at the plates
+
+Press **B** while holding the book to open it at its plates. Each figure gets a page of its own, drawn the way you drew it — the lines you dragged, a star at every joint — with the star and line counts underneath and, if the book recorded one, whoever drew it. Scroll to turn the page, press **B** again to shut the book, and putting the book away shuts it for you.
+
+The written page vanilla shows you is still there and still says what it always said. The plate is the drawing that a list of counts could never be. The binding is remappable under Controls as **Open journal plates**.
+
+A figure whose stars this install cannot place keeps its page and says so rather than drawing a guess.
 
 Once AstraTerra writes the first constellation into a book, vanilla book editing is locked. The journal keeps working. Ink and quill are needed to create, add, remove, rename, or build.
 
