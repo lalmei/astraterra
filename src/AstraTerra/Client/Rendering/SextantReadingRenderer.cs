@@ -348,7 +348,7 @@ public sealed class SextantReadingRenderer : IRenderer
         // it looks like from the ground: a star that wanders. The catalog's name is never shown —
         // it arrives only through a book somebody already wrote.
         var journal = ConstellationBookService.ReadPlanetJournalOrEmpty(
-            api.World.Player.Entity.LeftHandItemSlot?.Itemstack);
+            ConstellationBookService.FindHeldBook(api.World.Player));
         foreach (var planet in visiblePlanets)
         {
             yield return SkyBodyModel.FromBody(journal.DisplayName(planet.Id), planet.Body);

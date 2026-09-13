@@ -26,7 +26,7 @@ three book commands.
 .stars credit <constellation|wanderer> <id|selected|name> [discoverer]
 ```
 
-All of these read and write the constellation book in your **left hand**; without one they say so.
+All of these read and write the constellation book you are holding in **either hand** — off-hand first, then main hand; without one they say so.
 Mutating commands also need ink and quill in your inventory.
 
 ```text
@@ -39,7 +39,7 @@ count, best visibility window, season summary, and current state.
 
 ## Sightings
 
-`.stars sightings` lists every sighting written down in the book in your left hand, then gathers them
+`.stars sightings` lists every sighting written down in the book you are holding, then gathers them
 into the sets it thinks are the same body and says what comparing each set shows — whether it held
 its place, or how far and how fast it moved.
 
@@ -116,7 +116,7 @@ Administrators with the Vintage Story `give` privilege can create a ready-made t
 
 The same **Star Catalog** and **The Zodiac** books also appear on the **AstraTerra** creative inventory tab, so creative-mode players can drag them without using a command.
 
-The command adds a written book titled **Star Catalog** to the caller's inventory. Put it in the left hand to show every authored constellation or use it with the Calibrated Astrolabe. This admin setup command does not require ink and quill.
+The command adds a written book titled **Star Catalog** to the caller's inventory. Hold it in either hand to show every authored constellation or use it with the Calibrated Astrolabe. This admin setup command does not require ink and quill.
 
 To create a smaller book titled **The Zodiac** containing the traditional twelve zodiac constellations in sign order, run:
 
@@ -132,7 +132,7 @@ To create a book titled **The Wanderers**, which already names all five planets 
 /stars give-wanderers
 ```
 
-Planets are otherwise anonymous: without a book that names them, every instrument calls a planet a *wandering star*, because that is all it looks like from the ground. This book is somebody else's finished work — handy for testing and for creative play, and a shortcut past identifying each planet yourself. Put it in your left hand and the Sextant and Astrolabe will use its names.
+Planets are otherwise anonymous: without a book that names them, every instrument calls a planet a *wandering star*, because that is all it looks like from the ground. This book is somebody else's finished work — handy for testing and for creative play, and a shortcut past identifying each planet yourself. Hold it in either hand and the Sextant and Astrolabe will use its names.
 
 ## The Vanilla Calendar
 

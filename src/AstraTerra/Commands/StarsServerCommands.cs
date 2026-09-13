@@ -149,7 +149,7 @@ public sealed class StarsServerCommands
             return $"Could not give {ConstellationBookService.PlanetCatalogTitle}: clear one inventory slot and try again.";
         }
 
-        return $"Gave {ConstellationBookService.PlanetCatalogTitle} naming {named} planets. Put it in your left hand and the sextant and astrolabe will use those names.";
+        return $"Gave {ConstellationBookService.PlanetCatalogTitle} naming {named} planets. Hold it in either hand and the sextant and astrolabe will use those names.";
     }
 
     private string GivePreparedBook(
@@ -184,6 +184,6 @@ public sealed class StarsServerCommands
             return $"Could not give {bookTitle}: clear one inventory slot and try again.";
         }
 
-        return $"Gave {bookTitle} with {constellationCount} constellations. Put it in your left hand to test the sky overlay and astrolabe.";
+        return $"Gave {bookTitle} with {constellationCount} constellations. Hold it in either hand to test the sky overlay and astrolabe.";
     }
 }

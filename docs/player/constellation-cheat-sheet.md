@@ -1,6 +1,6 @@
 # Constellation Build Cheat Sheet
 
-Use `.stars build` to add any of the 88 Modern IAU constellation patterns to the constellation book in your left hand.
+Use `.stars build` to add any of the 88 Modern IAU constellation patterns to the constellation book you are holding in either hand.
 
 If you only want to observe the constellations the IAU already defined, rather than drawing your own,
 take a blank book and ink and quill and use the commands below.
@@ -9,7 +9,7 @@ take a blank book and ink and quill and use the commands below.
 
 You need:
 
-- A blank normal book or an existing AstraTerra constellation book in your left hand.
+- A blank normal book or an existing AstraTerra constellation book in either hand.
 - Ink and quill in your inventory.
 
 Use the three-letter IAU code for the most reliable command:
@@ -35,7 +35,7 @@ An administrator with the Vintage Story `give` privilege can create one written 
 ```
 
 Creative-mode players can also drag **Star Catalog** and **The Zodiac** from the **AstraTerra** creative inventory tab.
-The command adds **Star Catalog** to the caller's inventory without requiring ink and quill. Put the book in your left hand to render all authored lines or test constellation selection with the Calibrated Astrolabe.
+The command adds **Star Catalog** to the caller's inventory without requiring ink and quill. Hold the book in either hand to render all authored lines or test constellation selection with the Calibrated Astrolabe.
 
 For a smaller test book containing only the traditional twelve zodiac constellations, run:
 
@@ -166,4 +166,4 @@ The new pattern is saved in the held book and becomes the selected constellation
 .stars delete selected
 ```
 
-Hold the written book in your left hand to display its constellation lines or use it with the Calibrated Astrolabe.
+Hold the written book in either hand to display its constellation lines or use it with the Calibrated Astrolabe.

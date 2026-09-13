@@ -99,11 +99,41 @@ public static class ConstellationBookService
     public static bool PlayerHasInkAndQuill(IPlayer player)
         => player.InventoryManager.Find(slot => IsInkAndQuill(slot.Itemstack));
 
-    public static ItemSlot? GetLeftHandBookSlot(IPlayer player)
+    /// <summary>The journal book being held, off-hand before main hand, or nothing.</summary>
+    /// <remarks>
+    /// The off-hand is checked first so that a player who keeps their journal there sees no change:
+    /// an instrument in the main hand cannot be a book, and a book in the main hand is only consulted
+    /// when the off-hand has none. The main hand counts because reading a book you are holding up is
+    /// the obvious thing to expect — the same bargain <see cref="Observation.SkyDiscHeld"/> makes.
+    /// </remarks>
+    public static ItemSlot? FindHeldBookSlot(IPlayer? player)
     {
-        var slot = player.Entity.LeftHandItemSlot;
-        return IsValidJournalBook(slot?.Itemstack) ? slot : null;
+        var entity = player?.Entity;
+        if (entity is null)
+        {
+            return null;
+        }
+
+        if (IsValidJournalBook(entity.LeftHandItemSlot?.Itemstack))
+        {
+            return entity.LeftHandItemSlot;
+        }
+
+        return IsValidJournalBook(entity.RightHandItemSlot?.Itemstack) ? entity.RightHandItemSlot : null;
     }
+
+    /// <summary>The stack of the journal book being held in either hand, or nothing.</summary>
+    public static ItemStack? FindHeldBook(IPlayer? player) => FindHeldBookSlot(player)?.Itemstack;
+
+    /// <summary>Whether either hand holds a book this mod can read or write.</summary>
+    public static bool IsHoldingJournalBook(IPlayer? player) => FindHeldBookSlot(player) is not null;
+
+    /// <summary>The wording every "you are not holding one" message uses, so they stay identical.</summary>
+    public const string HoldWritableBookMessage =
+        "Hold a writable or written constellation book in either hand.";
+
+    public const string HoldWrittenBookMessage =
+        "Hold a written constellation book in either hand.";
 
     public static ConstellationJournal? ReadJournal(ItemStack? stack)
         => ReadJournalResult(stack).Journal;
