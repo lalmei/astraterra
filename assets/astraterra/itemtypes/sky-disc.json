@@ -82,6 +82,7 @@
     },
     "displaycaseable": true,
     "shelvable": true,
+    "wallmountable": true,
     "groundStorageTransform": {
       "translation": {
         "x": 0,

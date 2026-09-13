@@ -173,9 +173,11 @@ Pan bony soil long enough and one may come up already finished: a tin bronze dis
 
 The figure on it is one its maker could actually see from there, and it returns to the sky in your hands like any other. You can add lines to it, as long as they join what is already cut.
 
-### Set it down
+### Set it down, or hang it up
 
 Sneak and right click the ground and the disc lies there, face up, scratches and all. An empty hand and a right click pick it back up. Aim at a block when you mean to place it; aiming at the horizon is how you mark.
+
+The same sneak and click aimed at a **wall** hangs the disc on it, face out into the room, the way a painting hangs. It keeps its band and its figure up there, and reads its own name when you look at it. An empty hand and a right click take it down. Break the wall behind it and the disc falls rather than vanishing. Only a fired disc hangs; wet clay belongs in a kiln.
 
 A disc also stands in a **mold rack**, five to a rack, and sits in a display case or on a shelf — each one showing its own marks and its own figure.
 
