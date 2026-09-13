@@ -13,6 +13,7 @@ using AstraTerra.Items.Patches;
 using AstraTerra.Observation;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 
 namespace AstraTerra;
@@ -33,6 +34,7 @@ public sealed class AstraTerraModSystem : ModSystem
     private SkyDiscEngraveClient? skyDiscEngraveClient;
     private readonly PitKilnFiringKeepsTheDiscPatch skyDiscFiringPatch = new();
     private SkyDiscFaceHud? skyDiscFaceHud;
+    private StarPlateRenderer? starPlateRenderer;
     private AstrolabePlannerRenderer? astrolabePlannerRenderer;
     private SextantReadingRenderer? sextantReadingRenderer;
     private SkyCoordinateGridRenderer? skyCoordinateGridRenderer;
@@ -187,6 +189,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
+        StarPlateState.Reset();
         SkyDiscMeshes.Reset();
         SkyLyingState.Reset();
         clientApi = api;
@@ -274,6 +277,23 @@ public sealed class AstraTerraModSystem : ModSystem
         // open dialog to be drawn at all.
         skyDiscFaceHud = new SkyDiscFaceHud(api);
         skyDiscFaceHud.TryOpen();
+
+        // Registered before the catalog gate below: a journal's plates are its owner's own drawing,
+        // and a book whose stars this install cannot place still deserves to say what it holds.
+        starPlateRenderer = new StarPlateRenderer(api, constellationBookClient, catalog);
+        api.Event.RegisterRenderer(
+            new MeasuredRenderer(starPlateRenderer, "AstraTerraStarPlate"),
+            EnumRenderStage.Ortho,
+            "AstraTerraStarPlate");
+        api.Input.RegisterHotKey(
+            StarPlateState.HotkeyCode,
+            Lang.Get("astraterra:hotkey-starplate"),
+            StarPlateState.DefaultKey,
+            HotkeyType.CharacterControls);
+        api.Input.SetHotKeyHandler(StarPlateState.HotkeyCode, _ => ToggleStarPlate());
+        api.Logger.Event(
+            "AstraTerra startup step: star plates registered: hotkey={0}",
+            StarPlateState.HotkeyCode);
 
         skyDiscEngraveClient = new SkyDiscEngraveClient(api);
         skyDiscEngraveClient.Register();
@@ -500,6 +520,7 @@ public sealed class AstraTerraModSystem : ModSystem
         AstrolabeCalibrationState.Reset();
         SextantReadingState.Reset();
         SkyDiscReadingState.Reset();
+        StarPlateState.Reset();
         SkyLyingState.Reset();
         if (clientApi is null)
         {
@@ -530,11 +551,44 @@ public sealed class AstraTerraModSystem : ModSystem
         }
     }
 
+    /// <summary>
+    /// Opens the held journal at its plates, or shuts it again.
+    /// </summary>
+    /// <remarks>
+    /// A book you are not holding cannot be opened, and saying so is better than a key that appears
+    /// to do nothing. Shutting works whatever is in hand, so a plate can never be left hanging.
+    /// </remarks>
+    private bool ToggleStarPlate()
+    {
+        if (StarPlateState.IsOpen)
+        {
+            StarPlateState.Close();
+            return true;
+        }
+
+        if (constellationBookClient?.HasHeldJournalBook() != true)
+        {
+            clientApi?.ShowChatMessage(ConstellationBookService.HoldWrittenBookMessage);
+            return false;
+        }
+
+        StarPlateState.Open();
+        return true;
+    }
+
     private void OnMouseWheelMove(MouseWheelEventArgs args)
     {
         if (TelescopeScopeState.IsScoped)
         {
             TelescopeScopeState.ScrollZoom(args.delta > 0 ? 1 : -1);
+            args.SetHandled(true);
+            return;
+        }
+
+        // An open book is paged through, not zoomed: the wheel turns one plate at a time.
+        if (StarPlateState.IsOpen && starPlateRenderer is not null)
+        {
+            StarPlateState.TurnPage(args.delta > 0 ? -1 : 1, starPlateRenderer.CurrentPageCount());
             args.SetHandled(true);
             return;
         }
