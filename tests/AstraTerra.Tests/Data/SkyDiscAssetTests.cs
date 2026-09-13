@@ -124,6 +124,30 @@ public sealed class SkyDiscAssetTests
             Assert.Equal(Math.Sqrt((7.0 * 7.0) - (depth * depth)), half, 3);
         }
 
+        // One face of the disc, not fourteen. Every row is a separate box, so each one carries its
+        // own uv — and if they all carried the same square, each row would stretch that square
+        // across its own width. The rows are not the same width, so the texture would land at a
+        // different scale on every one of them, and the seams between rows would show as bands
+        // across the face. Placing each row's uv where the row actually sits makes the fourteen
+        // read as one surface: one uv unit is one voxel, on every row and in both directions.
+        foreach (var row in body)
+        {
+            var from = row.GetProperty("from").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+            var to = row.GetProperty("to").EnumerateArray().Select(value => value.GetDouble()).ToArray();
+            var faces = row.GetProperty("faces");
+
+            foreach (var name in new[] { "up", "down" })
+            {
+                var uv = faces.GetProperty(name).GetProperty("uv")
+                    .EnumerateArray().Select(value => value.GetDouble()).ToArray();
+
+                Assert.Equal(from[0], uv[0], 3);
+                Assert.Equal(from[2], uv[1], 3);
+                Assert.Equal(to[0], uv[2], 3);
+                Assert.Equal(to[2], uv[3], 3);
+            }
+        }
+
         var textures = root.GetProperty("textures");
         Assert.Equal("game:block/metal/tarnished/tinbronze", textures.GetProperty("engraving").GetString());
         Assert.Equal([16, 16], root.GetProperty("textureSizes").GetProperty("engraving").EnumerateArray().Select(value => value.GetInt32()));
