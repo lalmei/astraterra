@@ -33,7 +33,8 @@ public static class ConstellationPreparedBooks
             ConstellationBookService.ZodiacTitle,
             ZodiacBookItemPath,
             ZodiacBookId,
-            c => StarCatalogJournalBuilder.BuildZodiac(c));
+            c => StarCatalogJournalBuilder.BuildZodiac(c),
+            PreparedBookPrefaces.Zodiac);
 
     /// <summary>
     /// A book that already knows every planet by the name our own sky culture gave it.
@@ -61,19 +62,25 @@ public static class ConstellationPreparedBooks
         return stack;
     }
 
+    /// <param name="preface">
+    /// What the book's author had to say before the records start, or null for a book that is only a
+    /// list. Set before the journal is written, so the readable page is built with it already there.
+    /// </param>
     public static ItemStack CreatePreparedBook(
         ICoreAPI api,
         StarCatalog catalog,
         string bookTitle,
         string bookItemPath,
         string bookId,
-        System.Func<StarCatalog, ConstellationJournal> buildJournal)
+        System.Func<StarCatalog, ConstellationJournal> buildJournal,
+        string? preface = null)
     {
         var bookItem = ResolveWritableBookItem(api, bookItemPath, bookTitle);
 
         var journal = buildJournal(catalog);
         var stack = new ItemStack(bookItem);
         stack.Attributes.SetString(ConstellationBookService.BookIdAttribute, bookId);
+        ConstellationBookService.WritePreface(stack, preface ?? string.Empty);
         ConstellationBookService.WriteJournal(stack, journal, bookTitle);
         return stack;
     }
