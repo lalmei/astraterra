@@ -154,6 +154,12 @@
 - Scroll the forecast forward and confirm the clock line advances with it, and that the phase changes from day to dusk to night at the appropriate hours.
 - Hold the astrolabe with no book and confirm the clock line still shows.
 - Middle click and confirm the astrolabe cycles through only the constellations in the held book.
+- Compare frame times while holding the planner open with the full 88-constellation `Star Catalog`
+  and an empty book in the same scene. Repeat after a full game restart for each build being
+  compared; record frame-time distributions before claiming a performance improvement.
+- Swap between `Star Catalog`, `The Zodiac`, a writable constellation book, and no book while using
+  the planner. Confirm the target list updates immediately; rename, add, and delete a figure in the
+  writable book and confirm both the readout and middle-click cycling reflect the edit.
 - Scroll and confirm the forecast moves by one hour; sneak-scroll and confirm it moves by seven days, never earlier than now or later than one world year.
 - Repeat the astrolabe check indoors or during daylight and confirm planning remains available.
 - At a high latitude, confirm the astrolabe distinguishes a circumpolar constellation from one that never rises.
