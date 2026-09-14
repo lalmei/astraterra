@@ -35,6 +35,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     private readonly ICoreClientAPI api;
     private StarCatalog catalog;
     private readonly ConstellationBookClient bookClient;
+    private readonly AstrolabeConstellationTargetCache constellationTargetCache = new();
     private PlanetCatalog? planetCatalog;
     private CometCatalog? cometCatalog;
     private Dictionary<string, CometEntry> cometsById;
@@ -177,7 +178,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
             return;
         }
 
-        var targets = BuildTargets(bookClient.ReadCurrentJournalOrEmpty());
+        var targets = BuildTargets();
         if (targets.Count == 0)
         {
             RenderLines(
@@ -364,8 +365,7 @@ public sealed class AstrolabePlannerRenderer : IRenderer
 
     private IReadOnlyList<AstrolabeTarget> GetCurrentTargets()
     {
-        var journal = bookClient.ReadCurrentJournal();
-        return journal is null ? [] : BuildTargets(journal);
+        return bookClient.HasHeldJournalBook() ? BuildTargets() : [];
     }
 
     /// <summary>
@@ -375,17 +375,23 @@ public sealed class AstrolabePlannerRenderer : IRenderer
     /// Constellations keep their existing order and position in the list, so middle click still lands
     /// where a player expects before it reaches the planets.
     /// </remarks>
-    private IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal)
+    private IReadOnlyList<AstrolabeTarget> BuildTargets()
     {
-        // Resolved from the held book every time rather than cached with the targets, so swapping
-        // the book in either hand changes what the instrument can aim at, immediately.
         var stack = ConstellationBookService.FindHeldBook(api.World.Player);
+        object? bookIdentity = stack?.Attributes?.GetString(ConstellationBookService.BookIdAttribute, null);
+        bookIdentity ??= stack;
+        var journalJson = stack?.Attributes?.GetString(ConstellationBookService.JournalJsonAttribute, null);
+        var drawnTargets = constellationTargetCache.GetOrBuild(
+            catalog,
+            bookIdentity,
+            journalJson,
+            () => bookClient.ReadCurrentJournalOrEmpty());
         var observations = ConstellationBookService.ReadObservationLogOrEmpty(stack);
         var planetJournal = ConstellationBookService.ReadPlanetJournalOrEmpty(stack);
 
         return
         [
-            .. AstrolabeJournalTargets.Drawn(AstrolabeService.BuildTargets(journal, catalog)),
+            .. drawnTargets,
             .. AstrolabeJournalTargets.KnownWanderers(ResolvePlanetTargets(), observations, planetJournal),
             .. AstrolabeJournalTargets.FromAlmanac(ResolveCometTargets())
         ];

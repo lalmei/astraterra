@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Collections.ObjectModel;
 using AstraTerra.Infrastructure;
 using Vintagestory.API.Common;
 
@@ -26,12 +27,21 @@ public sealed record StarCatalog
         IReadOnlyList<DeepSkyObjectEntry> deepSkyObjects)
     {
         Stars = stars;
+        StarsByHip = new ReadOnlyDictionary<int, StarCatalogEntry>(
+            stars.ToDictionary(star => star.Hip));
         GuideGroups = guideGroups;
         SkyCultures = skyCultures;
         DeepSkyObjects = deepSkyObjects;
     }
 
     public IReadOnlyList<StarCatalogEntry> Stars { get; }
+
+    /// <summary>
+    /// The catalog index used by constellation and instrument readers. A catalog is replaced as a
+    /// whole, so building this once here avoids rebuilding the same 5,000-entry dictionary in a
+    /// render loop while keeping replacement invalidation explicit at the catalog boundary.
+    /// </summary>
+    public IReadOnlyDictionary<int, StarCatalogEntry> StarsByHip { get; }
 
     public IReadOnlyList<GuideStarGroup> GuideGroups { get; }
 
