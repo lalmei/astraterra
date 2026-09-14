@@ -86,7 +86,6 @@ public static class AstrolabeService
 
     public static IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal, StarCatalog catalog)
     {
-        var starsByHip = catalog.Stars.ToDictionary(star => star.Hip);
         var targets = new List<AstrolabeTarget>();
 
         foreach (var record in journal.Constellations.OrderBy(record => record.Id))
@@ -94,8 +93,8 @@ public static class AstrolabeService
             var stars = record.Edges
                 .SelectMany(edge => new[] { edge.A, edge.B })
                 .Distinct()
-                .Where(starsByHip.ContainsKey)
-                .Select(hip => starsByHip[hip])
+                .Where(catalog.StarsByHip.ContainsKey)
+                .Select(hip => catalog.StarsByHip[hip])
                 .ToList();
             if (stars.Count == 0)
             {
