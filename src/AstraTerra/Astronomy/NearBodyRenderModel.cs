@@ -32,7 +32,28 @@ public sealed record PlacedNearBody(
     double IlluminatedFraction,
     double SeparationRatio = 1.0,
     double HorizonFade = 1.0
-);
+)
+{
+    /// <summary>
+    /// How wide the globe itself is, as against the face it is drawn on.
+    /// </summary>
+    /// <remarks>
+    /// A ringed giant's face is mostly the room its rings need, and the globe is the fraction of it
+    /// the face declares. This is the part that blocks: the rings are a sheet of debris with sky
+    /// between, and only the body's own texture knows where. Worked out through the tangent rather
+    /// than by scaling the angle, because the face is a gnomonic projection and a body tens of
+    /// degrees wide would not survive the shortcut.
+    /// </remarks>
+    public double GlobeAngularDiameterDeg
+    {
+        get
+        {
+            var discFraction = Math.Clamp(Body.Face.DiscFraction, 0.05, 1.0);
+            var halfFace = Math.Tan(AngularDiameterDeg * Math.PI / 360.0);
+            return Math.Atan(halfFace * discFraction) * 360.0 / Math.PI;
+        }
+    }
+}
 
 /// <summary>
 /// Places near bodies for an observer: hour angle forward to the moment, round to the observer's

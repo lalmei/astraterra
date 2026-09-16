@@ -61,6 +61,10 @@ public sealed class NearBodyRenderer : IRenderer
     private readonly Dictionary<string, BodyPass> passes = new(StringComparer.Ordinal);
     private readonly float[] modelMatrix = IdentityModelMatrix();
     private readonly List<PlacedNearBody> inFront = [];
+
+    // Refilled each frame and handed straight over: the star pass reads it where it lies rather
+    // than taking a copy, and both passes run on the render thread.
+    private readonly List<SkyOccultingDisc> occulters = [];
     private static readonly Vec4f NoFog = new(0f, 0f, 0f, 1f);
     private NearBodyCatalog catalog = NearBodyCatalog.Empty;
     private NearBodyCatalog? pending;
@@ -105,6 +109,7 @@ public sealed class NearBodyRenderer : IRenderer
 
         if (catalog.Bodies.Count == 0)
         {
+            SkyDiscsInFront.Clear();
             return;
         }
 
@@ -116,6 +121,7 @@ public sealed class NearBodyRenderer : IRenderer
         {
             renderingDisabledAfterFailure = true;
             HidesVanillaMoon = false;
+            SkyDiscsInFront.Clear();
             api.Logger.Error("AstraTerra stopped drawing near bodies after a render failure: {0}", exception);
         }
     }
@@ -129,6 +135,7 @@ public sealed class NearBodyRenderer : IRenderer
 
         passes.Clear();
         HidesVanillaMoon = false;
+        SkyDiscsInFront.Clear();
     }
 
     private void Draw()
@@ -137,6 +144,7 @@ public sealed class NearBodyRenderer : IRenderer
         var entity = api.World.Player?.Entity;
         if (entity is null)
         {
+            SkyDiscsInFront.Clear();
             return;
         }
 
@@ -164,8 +172,14 @@ public sealed class NearBodyRenderer : IRenderer
             longitude);
         if (placed.Count == 0)
         {
+            SkyDiscsInFront.Clear();
             return;
         }
+
+        // What these globes hide is the star pass's business, and that pass has already run this
+        // frame: it reads what was placed here last frame. Published before anything is drawn, so a
+        // body that fails to draw is not left standing in the star field's way.
+        PublishOcculters(placed);
 
         // The sky sphere is centred on the player's eye, the same origin the star pass draws in.
         modelMatrix[13] = (float)entity.LocalEyePos.Y
@@ -227,6 +241,30 @@ public sealed class NearBodyRenderer : IRenderer
             render.GlEnableCullFace();
             render.GLEnableDepthTest();
         }
+    }
+
+    /// <summary>
+    /// Leaves the star pass the globes it must not draw stars through.
+    /// </summary>
+    /// <remarks>
+    /// The globe only, and taken down with the haze the same way the cut between two near bodies is:
+    /// a body the horizon has is not drawn, and one that is not drawn cannot be hiding anything.
+    /// How solidly the body draws against a daylit sky is not asked, because that is the question
+    /// that caused this: a disc at a quarter opacity still blocks every star behind it.
+    /// </remarks>
+    private void PublishOcculters(IReadOnlyList<PlacedNearBody> placed)
+    {
+        occulters.Clear();
+        for (var index = 0; index < placed.Count; index++)
+        {
+            var body = placed[index];
+            occulters.Add(new SkyOccultingDisc(
+                body.Direction,
+                body.GlobeAngularDiameterDeg,
+                body.HorizonFade));
+        }
+
+        SkyDiscsInFront.PublishNearBodies(occulters);
     }
 
     private BodyPass PassFor(NearBodyEntry body)

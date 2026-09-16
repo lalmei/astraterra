@@ -182,6 +182,12 @@ public static class SkyStarSunMoonRenderer
     private static int cachedStarMeshPlateSignature;
     private static readonly List<DeepSkyPlateField> PlateFields = new(64);
 
+    // The globes drawn over this star field, and the same reduced to what the star loop asks of
+    // them. Refilled per frame, and the fields rebuilt only when the batch is.
+    private static readonly List<SkyOccultingDisc> OccultingDiscs = new(8);
+    private static readonly List<SkyOccultingField> OccultingFields = new(8);
+    private static int cachedStarMeshOcculterSignature;
+
     // The plates are projected on the same threshold as the stars rather than every frame: a
     // photograph spanning degrees of sky does not move meaningfully in a twentieth of one, and
     // reprojecting fifty of them per frame was allocating a list of records and their corners each
@@ -501,7 +507,10 @@ public static class SkyStarSunMoonRenderer
         cometMeshCapacity = 0;
         cachedStarMeshAngularScale = float.NaN;
         cachedStarMeshPlateSignature = 0;
+        cachedStarMeshOcculterSignature = 0;
         PlateFields.Clear();
+        OccultingDiscs.Clear();
+        OccultingFields.Clear();
         starMeshesDirty = true;
         BrightStarBillboards.Clear();
         FaintStarBillboards.Clear();
@@ -837,6 +846,11 @@ public static class SkyStarSunMoonRenderer
 
         var milkyWay = PrepareMilkyWay(api, milkyWayAlpha, latitude, localSiderealAngle);
 
+        // Everything drawn as a globe in front of this star field, so the batch can leave out the
+        // stars behind it. Gathered here rather than left to the passes that draw those globes,
+        // because every one of them draws after this one.
+        GatherOccultingDiscs(calendar, playerPos.XYZ, longitude);
+
         RenderSky(
             api,
             drawableStars,
@@ -1139,6 +1153,59 @@ public static class SkyStarSunMoonRenderer
     /// Star colours therefore read slightly more saturated than before — a look change to be judged
     /// by eye, not a correctness one.
     /// </remarks>
+    /// <summary>
+    /// Collects the globes standing between the observer and the star field this frame.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The moon and the near bodies are all of them. The moon is worked out here rather than read
+    /// from the pass that draws it, because that pass runs after this one and because the disc is
+    /// the same disc whoever draws it: Vintage Story's own picture and this mod's portrait sit in
+    /// the same place and are the same width. Which of the two it is only decides whose clock the
+    /// moon is read on, and <see cref="MoonDiscRenderer.HidesVanillaMoon"/> answers that.
+    /// </para>
+    /// <para>
+    /// The sun is left out. Stars are only drawn once the sky is properly dark, by which time the
+    /// sun is well under, and a disc that bright would want its glow accounted for rather than a
+    /// hard edge.
+    /// </para>
+    /// </remarks>
+    private static void GatherOccultingDiscs(IGameCalendar calendar, Vec3d observerPos, double longitude)
+    {
+        OccultingDiscs.Clear();
+
+        // Placed by the near-body pass on its last frame, which is the only frame it has had.
+        var nearBodies = SkyDiscsInFront.NearBodies;
+        for (var index = 0; index < nearBodies.Count; index++)
+        {
+            OccultingDiscs.Add(nearBodies[index]);
+        }
+
+        // A world that is itself a moon has none of its own: the near bodies are that sky.
+        if (NearBodyRenderer.HidesVanillaMoon)
+        {
+            return;
+        }
+
+        var moonTotalDays = LocalMoonTime.MoonTotalDays(
+            calendar.TotalDays,
+            longitude,
+            astraTerraDrawsTheMoon: MoonDiscRenderer.HidesVanillaMoon);
+        var moonPosition = calendar.GetMoonPosition(observerPos, moonTotalDays).Clone().Normalize();
+
+        // Below the cutoff nothing is drawn, and nothing drawn hides nothing. Its own radius counts
+        // towards clearing the horizon, exactly as it does in the pass that draws it.
+        var altitudeSine = moonPosition.Y + Math.Sin(MoonDiscModel.AngularDiameterDeg * 0.5 * Math.PI / 180.0);
+        if (altitudeSine < Math.Sin(MoonDiscModel.HorizonCutoffDeg * Math.PI / 180.0))
+        {
+            return;
+        }
+
+        OccultingDiscs.Add(new SkyOccultingDisc(
+            new SkyDirection(moonPosition.X, moonPosition.Y, moonPosition.Z),
+            MoonDiscModel.AngularDiameterDeg));
+    }
+
     private static void EnsureStarMeshes(
         ICoreClientAPI clientApi,
         IReadOnlyList<RenderedStar> visibleStars,
@@ -1151,11 +1218,13 @@ public static class SkyStarSunMoonRenderer
     {
         var plateSignature = DeepSkyPlateVisibility.GetSignature(visibleDeepSkyObjects);
         var discSignature = DiscWidthByPlanetId.Count;
+        var occulterSignature = SkyDiscOcclusion.GetSignature(OccultingDiscs);
         if (!starMeshesDirty &&
             discSignature == cachedStarMeshDiscSignature &&
             Math.Abs(brightStarAngularScale - cachedStarMeshAngularScale) < 1e-6f &&
             useTelescopeSprites == cachedStarMeshScoped &&
-            plateSignature == cachedStarMeshPlateSignature)
+            plateSignature == cachedStarMeshPlateSignature &&
+            occulterSignature == cachedStarMeshOcculterSignature)
         {
             return;
         }
@@ -1169,6 +1238,12 @@ public static class SkyStarSunMoonRenderer
         // scale. Reduced once here, not once per star.
         DeepSkyPlateVisibility.BuildFields(visibleDeepSkyObjects, PlateFields);
 
+        // Same reduction, for the globes in front rather than the photographs over: a star behind
+        // the moon or behind a near body is not drawn at all, because nothing in this pass writes
+        // depth and a disc drawn afterwards at anything short of full opacity would let it back
+        // through.
+        SkyDiscOcclusion.BuildFields(OccultingDiscs, OccultingFields);
+
         for (var index = 0; index < visibleStars.Count; index++)
         {
             var star = visibleStars[index];
@@ -1179,7 +1254,17 @@ public static class SkyStarSunMoonRenderer
                 star.DirectionX,
                 star.DirectionY,
                 star.DirectionZ);
-            var alpha = (float)Math.Clamp(star.Brightness * plateFactor, 0.0, 1.0);
+            var behindGlobe = SkyDiscOcclusion.GetStarVisibilityFactor(
+                OccultingFields,
+                star.DirectionX,
+                star.DirectionY,
+                star.DirectionZ);
+            if (behindGlobe <= 0.0)
+            {
+                continue;
+            }
+
+            var alpha = (float)Math.Clamp(star.Brightness * plateFactor * behindGlobe, 0.0, 1.0);
             var (red, green, blue) = ColorFromTemperature(star.ColorTemperatureK);
             var target = isFaint ? FaintStarBillboards : BrightStarBillboards;
             var starAngularScale = isFaint ? faintStarAngularScale : brightStarAngularScale;
@@ -1200,7 +1285,17 @@ public static class SkyStarSunMoonRenderer
         for (var index = 0; index < visiblePlanets.Count; index++)
         {
             var planet = visiblePlanets[index];
-            var alpha = (float)Math.Clamp(planet.Brightness, 0.0, 1.0);
+            var behindGlobe = SkyDiscOcclusion.GetStarVisibilityFactor(
+                OccultingFields,
+                planet.Body.DirectionX,
+                planet.Body.DirectionY,
+                planet.Body.DirectionZ);
+            if (behindGlobe <= 0.0)
+            {
+                continue;
+            }
+
+            var alpha = (float)Math.Clamp(planet.Brightness * behindGlobe, 0.0, 1.0);
             var brilliance = (float)Math.Clamp(planet.Brilliance, 0.0, 1.0);
             var sizePixels = StarBillboardSizing.CalculateCoreDiameterPixels(planet.Size);
 
@@ -1232,6 +1327,7 @@ public static class SkyStarSunMoonRenderer
         cachedStarMeshScoped = useTelescopeSprites;
         cachedStarMeshPlateSignature = plateSignature;
         cachedStarMeshDiscSignature = discSignature;
+        cachedStarMeshOcculterSignature = occulterSignature;
     }
 
     private static SkyBillboard Billboard(

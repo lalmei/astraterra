@@ -726,6 +726,48 @@ public sealed class NearBodyRenderModelTests
         }
     }
 
+    /// <summary>
+    /// What the star field is told to keep clear is the globe, not the face it is drawn on: a
+    /// ringed giant's face is mostly the room its rings need, and a ring is a sheet of debris with
+    /// sky between, not something that blocks a star.
+    /// </summary>
+    [Fact]
+    public void A_Ringed_Giants_Globe_Is_Narrower_Than_The_Face_It_Is_Drawn_On()
+    {
+        var ringed = Placed(angularDiameterDeg: 60.0, discFraction: 1.0 / 3.0);
+        var bare = Placed(angularDiameterDeg: 60.0, discFraction: 1.0);
+
+        Assert.Equal(60.0, bare.GlobeAngularDiameterDeg, 6);
+        Assert.InRange(ringed.GlobeAngularDiameterDeg, 20.0, 22.0);
+    }
+
+    /// <summary>A narrow face projects near enough flat that the globe is its share of the width.</summary>
+    [Fact]
+    public void A_Small_Bodys_Globe_Is_Its_Share_Of_The_Face()
+    {
+        var moon = Placed(angularDiameterDeg: 4.0, discFraction: 0.5);
+
+        Assert.Equal(2.0, moon.GlobeAngularDiameterDeg, 2);
+    }
+
+    private static PlacedNearBody Placed(double angularDiameterDeg, double discFraction)
+        => new(
+            new NearBodyEntry(
+                "body",
+                "Body",
+                NearBodyKind.ParentPlanet,
+                angularDiameterDeg,
+                HourAngleDeg: 0.0,
+                HourAngleRateDegPerDay: 0.0,
+                DeclinationDeg: 0.0,
+                Brightness: 1.0,
+                new NearBodyFace(2, new int[4], discFraction)),
+            new SkyDirection(0.0, 1.0, 0.0),
+            new SkyDirection(0.0, -1.0, 0.0),
+            AltitudeDeg: 90.0,
+            angularDiameterDeg,
+            IlluminatedFraction: 1.0);
+
     private static NearBodyEntry Parent(double hourAngleDeg, double rate)
         => new(
             "parent",
