@@ -234,6 +234,26 @@ the host's own client process — a dedicated server hides the bug, since nothin
   result: the server still answers with the real date. Only the client's own display is redacted.
 - Run `.stars calendar full`; expected result: the vanilla date comes straight back.
 
+## Stars Behind A Disc
+
+- On a clear night, find the moon among a rich part of the star field and look straight at it;
+  expected result: no star is drawn on the moon's face. The disc reads as a rock in front of the
+  sky, not as a window onto it. This holds for all three moons the mod can be showing — Vintage
+  Story's own disc (`MoonArt` default), the pixel-art face, and the photograph — and under a
+  telescope, where the disc is magnified but still carries no stars.
+- Watch the same patch for a few minutes as the sky turns; expected result: stars go behind the
+  advancing limb and come out the other side, fading over a fraction of a degree rather than
+  blinking.
+- Turn the daylight star override on (`.stars daylight-stars on`) and move the time towards dawn
+  with the moon still up; expected result: the moon washes out into the brightening sky, and no
+  star appears through it as it does. Turn the override back off afterwards.
+- With a mod supplying near bodies (AstraExtera), stand under the parent planet at night; expected
+  result: the globe is a bite taken out of the star field, with no star on it. Rings are not the
+  globe: stars still show between a ring and the planet, which is what a ring actually looks like.
+- Watch that same planet through dusk and through a moonset; expected result: as it fades into the
+  daylight or into the horizon haze it grows fainter, but stars never appear through the middle of
+  the globe while it is still drawn. A body fully taken by the haze gives the stars back.
+
 ## Identifying A Wanderer
 
 - Scope in with a telescope in Observe mode, centre a planet, and press sneak; expected result:
