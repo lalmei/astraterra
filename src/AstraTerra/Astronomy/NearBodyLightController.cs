@@ -58,11 +58,23 @@ public sealed class NearBodyLightController
     public const double CacheQuantumBlocks = 128.0;
 
     private readonly object gate = new();
+    private readonly NearBodyIlluminationCache illuminationCache;
     private IWorldAccessor? world;
     private System.Func<double, double>? longitudeOf;
+    private System.Func<long>? solarRevisionOf;
+    private System.Func<object?>? solarDelegateOf;
+    private long observedSolarRevision;
+    private object? observedSolarDelegate;
     private NearBodyLightSource? source;
     private bool enabled = true;
-    private CachedIllumination cached;
+
+    public NearBodyLightController(int cacheCapacity = NearBodyIlluminationCache.DefaultCapacity)
+    {
+        illuminationCache = new NearBodyIlluminationCache(cacheCapacity);
+    }
+
+    /// <summary>The bounded region cache used by this side's controller.</summary>
+    public NearBodyIlluminationCache Cache => illuminationCache;
 
     /// <summary>Whether anything here will change a light value.</summary>
     public bool IsActive => enabled && source is not null && world is not null;
@@ -91,7 +103,29 @@ public sealed class NearBodyLightController
         {
             world = boundWorld;
             longitudeOf = observerLongitude;
-            cached = default;
+            illuminationCache.Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// Binds this side's solar lifecycle signals to cache invalidation.
+    /// </summary>
+    /// <remarks>
+    /// The revision handles policy or tilt changes that keep the same installed delegate. The
+    /// delegate identity handles another mod replacing the calendar callback. Both providers are
+    /// instance-scoped so client and server worlds cannot invalidate one another.
+    /// </remarks>
+    public void BindSolarState(
+        System.Func<long>? solarRevision = null,
+        System.Func<object?>? solarDelegate = null)
+    {
+        lock (gate)
+        {
+            solarRevisionOf = solarRevision;
+            solarDelegateOf = solarDelegate;
+            observedSolarRevision = solarRevision?.Invoke() ?? 0L;
+            observedSolarDelegate = solarDelegate?.Invoke();
+            illuminationCache.Invalidate();
         }
     }
 
@@ -103,7 +137,7 @@ public sealed class NearBodyLightController
         lock (gate)
         {
             source = replacement;
-            cached = default;
+            illuminationCache.Invalidate();
         }
     }
 
@@ -113,7 +147,7 @@ public sealed class NearBodyLightController
         lock (gate)
         {
             enabled = value;
-            cached = default;
+            illuminationCache.Invalidate();
         }
     }
 
@@ -124,7 +158,27 @@ public sealed class NearBodyLightController
             world = null;
             longitudeOf = null;
             source = null;
-            cached = default;
+            solarRevisionOf = null;
+            solarDelegateOf = null;
+            observedSolarRevision = 0;
+            observedSolarDelegate = null;
+            illuminationCache.Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// Invalidates cached illumination after a solar policy, delegate, or world-tilt change.
+    /// </summary>
+    /// <remarks>
+    /// This is intentionally instance-scoped. Integrated single-player has independent client
+    /// and server controllers in one process, so a static invalidation signal could clear one side
+    /// while leaving the other side stale or clear an unrelated world.
+    /// </remarks>
+    public void Invalidate()
+    {
+        lock (gate)
+        {
+            illuminationCache.Invalidate();
         }
     }
 
@@ -220,6 +274,12 @@ public sealed class NearBodyLightController
         NearBodyLightSource? giant;
         IWorldAccessor? boundWorld;
         System.Func<double, double>? longitude;
+        double totalDays;
+        int daysPerYear;
+        double hoursPerDay;
+        System.Func<double, double>? latitude;
+        NearBodyIlluminationCacheKey key;
+        long generation;
         lock (gate)
         {
             if (!enabled)
@@ -227,14 +287,26 @@ public sealed class NearBodyLightController
                 return NearBodyIllumination.None;
             }
 
+            RefreshSolarState();
+
             giant = source;
             boundWorld = world;
             longitude = longitudeOf;
-            var key = CacheKey(calendar.TotalDays, x, z);
-            if (cached.Key == key && cached.Valid)
+            totalDays = calendar.TotalDays;
+            key = NearBodyIlluminationCacheKey.From(totalDays, x, z);
+            if (illuminationCache.TryGet(key, out var cached))
             {
-                return cached.Value;
+                return cached;
             }
+
+            // These values are captured only on a miss. In particular, do not allocate a
+            // latitude adapter on every warm hit in the game's hot lighting path.
+            daysPerYear = Math.Max(1, calendar.DaysPerYear);
+            hoursPerDay = Math.Max(1.0, calendar.HoursPerDay);
+            latitude = calendar.OnGetLatitude is null
+                ? null
+                : new System.Func<double, double>(calendar.OnGetLatitude);
+            generation = illuminationCache.CaptureGeneration();
         }
 
         if (giant is null || boundWorld is null)
@@ -242,13 +314,53 @@ public sealed class NearBodyLightController
             return NearBodyIllumination.None;
         }
 
-        var value = Compute(giant, boundWorld, longitude, calendar, x, z);
-        lock (gate)
+        var measurementStarted = illuminationCache.MetricsEnabled
+            ? System.Diagnostics.Stopwatch.GetTimestamp()
+            : 0L;
+        var value = Compute(
+            giant,
+            boundWorld,
+            longitude,
+            calendar,
+            x,
+            z,
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
+            latitude);
+        if (measurementStarted != 0L)
         {
-            cached = new CachedIllumination(CacheKey(calendar.TotalDays, x, z), value, Valid: true);
+            illuminationCache.RecordCompute(
+                System.Diagnostics.Stopwatch.GetTimestamp() - measurementStarted);
         }
 
-        return value;
+        lock (gate)
+        {
+            RefreshSolarState();
+            if (illuminationCache.TryPublish(key, value, generation))
+            {
+                return value;
+            }
+        }
+
+        // A setter invalidated this generation while the expensive calculation was in flight.
+        // Do not retry against the caller's potentially old calendar after a world bind; the
+        // next game query will snapshot the new world's state and compute it safely.
+        return NearBodyIllumination.None;
+    }
+
+    // Called under gate before lookup and publication: a solar update during Compute must also
+    // invalidate the captured generation, even when no other lighting query has observed it yet.
+    private void RefreshSolarState()
+    {
+        var revision = solarRevisionOf?.Invoke() ?? 0L;
+        var solarDelegate = solarDelegateOf?.Invoke();
+        if (revision != observedSolarRevision || !ReferenceEquals(solarDelegate, observedSolarDelegate))
+        {
+            observedSolarRevision = revision;
+            observedSolarDelegate = solarDelegate;
+            illuminationCache.Invalidate();
+        }
     }
 
     /// <summary>
@@ -261,9 +373,13 @@ public sealed class NearBodyLightController
         System.Func<double, double>? longitudeOf,
         IGameCalendar calendar,
         double x,
-        double z)
+        double z,
+        double totalDays,
+        int daysPerYear,
+        double hoursPerDay,
+        System.Func<double, double>? latitudeOf)
     {
-        var sun = calendar.GetSunPosition(new Vec3d(x, boundWorld.SeaLevel, z), calendar.TotalDays)
+        var sun = calendar.GetSunPosition(new Vec3d(x, boundWorld.SeaLevel, z), totalDays)
             .Clone()
             .Normalize();
 
@@ -271,11 +387,11 @@ public sealed class NearBodyLightController
             giant,
             LatitudeMapper.MapGameLatitude(
                 z,
-                calendar.OnGetLatitude is null ? null : posZ => calendar.OnGetLatitude(posZ)),
+                latitudeOf),
             longitudeOf?.Invoke(x) ?? ObserverLongitude.ForObserver(x, boundWorld),
-            calendar.TotalDays,
-            Math.Max(1, calendar.DaysPerYear),
-            Math.Max(1.0, calendar.HoursPerDay),
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
             new SkyDirection(sun.X, sun.Y, sun.Z));
     }
 
@@ -331,18 +447,4 @@ public sealed class NearBodyLightController
             sunDirection);
     }
 
-    private static long CacheKey(double totalDays, double x, double z)
-    {
-        var time = (long)Math.Floor(totalDays / CacheQuantumDays);
-        var gx = (long)Math.Floor(x / CacheQuantumBlocks);
-        var gz = (long)Math.Floor(z / CacheQuantumBlocks);
-        unchecked
-        {
-            var key = time * 1000003L;
-            key = (key * 31L) + gx;
-            return (key * 31L) + gz;
-        }
-    }
-
-    private readonly record struct CachedIllumination(long Key, NearBodyIllumination Value, bool Valid);
 }

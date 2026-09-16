@@ -43,22 +43,34 @@ public sealed class NearBodyLightInstaller : IDisposable
     private bool serverEnabled;
     private bool disposed;
 
-    private NearBodyLightInstaller(ICoreAPI api, System.Func<double, double>? observerLongitude)
+    private NearBodyLightInstaller(
+        ICoreAPI api,
+        System.Func<double, double>? observerLongitude,
+        System.Func<long>? solarRevision,
+        System.Func<object?>? solarDelegate)
     {
         this.api = api;
         controller.Bind(api.World, observerLongitude);
+        controller.BindSolarState(solarRevision, solarDelegate);
     }
 
     /// <summary>The controller this side's light is read from.</summary>
     public NearBodyLightController Controller => controller;
 
-    public static NearBodyLightInstaller StartClient(ICoreClientAPI api)
+    public static NearBodyLightInstaller StartClient(
+        ICoreClientAPI api,
+        System.Func<long>? solarRevision = null,
+        System.Func<object?>? solarDelegate = null)
     {
         ArgumentNullException.ThrowIfNull(api);
 
         // The client already has an answer for longitude, kept by the longitude-aware sun's own
         // installer, so it uses that rather than a second copy that could disagree with it.
-        var installer = new NearBodyLightInstaller(api, observerLongitude: null);
+        var installer = new NearBodyLightInstaller(
+            api,
+            observerLongitude: null,
+            solarRevision,
+            solarDelegate);
 
         // Off until the server says otherwise: an unconfigured client should look like vanilla,
         // not like a guess about somebody else's world.
@@ -79,14 +91,18 @@ public sealed class NearBodyLightInstaller : IDisposable
     public static NearBodyLightInstaller StartServer(
         ICoreServerAPI api,
         bool enabled,
-        System.Func<bool> sunFollowsLongitude)
+        System.Func<bool> sunFollowsLongitude,
+        System.Func<long>? solarRevision = null,
+        System.Func<object?>? solarDelegate = null)
     {
         ArgumentNullException.ThrowIfNull(api);
         ArgumentNullException.ThrowIfNull(sunFollowsLongitude);
 
         var installer = new NearBodyLightInstaller(
             api,
-            x => sunFollowsLongitude() ? LatitudeMapper.MapWorldLongitude(x, api.World) : 0.0)
+            x => sunFollowsLongitude() ? LatitudeMapper.MapWorldLongitude(x, api.World) : 0.0,
+            solarRevision,
+            solarDelegate)
         {
             serverApi = api,
             serverEnabled = enabled
