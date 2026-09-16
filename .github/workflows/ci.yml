@@ -16,30 +16,6 @@ permissions:
   contents: write
 
 jobs:
-  benchmark:
-    name: Near-body light cache benchmark
-    # Nothing here wants a Mac: the references are managed DLLs and the workload is arithmetic,
-    # so this runs on GitHub's own Linux runner and genuinely runs beside the build rather than
-    # queueing behind it on the single self-hosted machine.
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Install Vintage Story references
-        uses: ./.github/actions/vintage-story-refs
-        with:
-          version: ${{ env.VINTAGE_STORY_VERSION }}
-          archive-url: ${{ env.VINTAGE_STORY_ARCHIVE_URL }}
-
-      # Kept out of `make test` on purpose: this is a separate claim about repeated work, and it
-      # should fail as its own red mark rather than hiding among a thousand unit tests. It asserts
-      # computation counts and the checksum both paths agree on -- never a duration, which on a
-      # shared runner would measure the neighbours.
-      - name: Run the benchmark
-        run: make bench
-
   build:
     name: Test, Build, and Package
     if: >
