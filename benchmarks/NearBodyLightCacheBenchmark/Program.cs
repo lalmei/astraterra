@@ -24,15 +24,45 @@ GC.WaitForPendingFinalizers();
 GC.Collect();
 var multiRegion = Measure(() => RunNew(keys, giant, sun, repetitions));
 
+// Everything asserted here is a count or an exact value, never a duration: this runs on CI, and a
+// shared runner's timings say more about what else is on the machine than about this cache. The
+// numbers that carry the claim -- one computation per retained region instead of one per query --
+// are the same on every machine, so they are the ones allowed to fail the build.
+var failures = new List<string>();
 if (old.Checksum != multiRegion.Checksum)
 {
-    throw new InvalidOperationException("Cache workloads produced different illumination checksums.");
+    failures.Add(
+        $"the two paths disagree about the light: one-entry={old.Checksum:R}, multi-region={multiRegion.Checksum:R}.");
+}
+
+if (old.ComputeCalls != repetitions)
+{
+    failures.Add(
+        $"the one-entry path should miss on every query: expected {repetitions}, computed {old.ComputeCalls}.");
+}
+
+if (multiRegion.ComputeCalls != regionCount)
+{
+    failures.Add(
+        $"the bounded cache should compute once per retained region: expected {regionCount}, computed {multiRegion.ComputeCalls}.");
+}
+
+if (failures.Count > 0)
+{
+    Console.Error.WriteLine("Near-body light cache benchmark failed:");
+    foreach (var failure in failures)
+    {
+        Console.Error.WriteLine($"  - {failure}");
+    }
+
+    return 1;
 }
 
 Console.WriteLine($"workload=alternating-{regionCount}-regions repetitions={repetitions:N0}");
 Console.WriteLine("implementation,compute_calls,allocated_bytes,elapsed_ms,checksum");
 Console.WriteLine($"one-entry,{old.ComputeCalls},{old.AllocatedBytes},{old.Elapsed.TotalMilliseconds:F3},{old.Checksum:R}");
 Console.WriteLine($"multi-region-64,{multiRegion.ComputeCalls},{multiRegion.AllocatedBytes},{multiRegion.Elapsed.TotalMilliseconds:F3},{multiRegion.Checksum:R}");
+return 0;
 
 static (int Computes, double Checksum) RunOld(
     NearBodyIlluminationCacheKey[] keys,
