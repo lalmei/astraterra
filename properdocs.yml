@@ -68,5 +68,6 @@ nav:
       - Extending AstraTerra: dev/extending.md
       - Data Pipeline: dev/data-pipeline.md
       - Manual Verification: dev/manual-verification.md
+      - Near-body Light Cache: dev/near-body-light-cache.md
       - Product Scope: dev/product-scope.md
       - Reference Sky Notes: dev/reference-sky-rendering-notes.md
