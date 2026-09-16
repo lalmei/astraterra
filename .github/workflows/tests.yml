@@ -1,4 +1,4 @@
-name: Tests
+name: Build, Test, and Package
 
 on:
   pull_request:
@@ -16,7 +16,9 @@ permissions:
 
 concurrency:
   group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  # A superseded pull request run is worth cancelling; a run on main may be part way through
+  # attaching a package to the release draft, and is not.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
@@ -59,6 +61,13 @@ jobs:
           path: TestResults/*.trx
           if-no-files-found: warn
 
+      - name: Upload mod package
+        uses: actions/upload-artifact@v7
+        with:
+          name: astraterra-mod-package
+          path: dist/*.zip
+          if-no-files-found: error
+
   benchmark:
     name: Near-body light cache benchmark
     # Beside the tests rather than inside them, and on its own runner: this is a separate claim
@@ -81,3 +90,79 @@ jobs:
       # which on a shared runner would measure the neighbours.
       - name: Run the benchmark
         run: make bench
+
+  release-package:
+    name: Attach package to release draft
+    # The tests have to have passed: this is what the zip on the release draft is made from.
+    needs: [test, benchmark]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    # The only job in this workflow that may write to the repository, and it says so here rather
+    # than at the top so the tests and the benchmark keep read-only tokens.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Vintage Story references
+        uses: ./.github/actions/vintage-story-refs
+        with:
+          version: ${{ env.VINTAGE_STORY_VERSION }}
+          archive-url: ${{ env.VINTAGE_STORY_ARCHIVE_URL }}
+
+      - name: Package mod
+        run: make package
+
+      - name: Attach mod package to release draft
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Mirrors MOD_VERSION and PACKAGE_FILE in the Makefile. Uses perl rather than
+          # jq so this needs no tooling beyond what the runner already has.
+          version="$(perl -0ne 'print $1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)"
+          if [[ -z "$version" ]]; then
+            echo "Could not read a semantic version from modinfo.json." >&2
+            exit 1
+          fi
+
+          tag="v$version"
+          package="dist/AstraTerra-$version.zip"
+          if [[ ! -f "$package" ]]; then
+            echo "Expected package $package was not produced by 'make package'." >&2
+            exit 1
+          fi
+
+          # Release Drafter runs from the same push on a separate runner, so the draft
+          # may not exist yet. In practice it finishes long before this job does; the
+          # wait is insurance rather than the expected path.
+          draft_state=""
+          for attempt in $(seq 1 10); do
+            if draft_state="$(gh release view "$tag" --json isDraft --jq '.isDraft' 2>/dev/null)"; then
+              break
+            fi
+            draft_state=""
+            echo "Waiting for release draft $tag (attempt $attempt/10)..."
+            sleep 15
+          done
+
+          # A published release must never be modified by automation. This happens when
+          # main moves after $tag has already shipped, i.e. the version was not bumped.
+          if [[ "$draft_state" == "false" ]]; then
+            echo "::warning::Release $tag is already published; leaving its assets untouched. Bump the version before merging further changes to main."
+            exit 0
+          fi
+
+          if [[ -z "$draft_state" ]]; then
+            echo "No draft $tag appeared; creating one so the package is not lost."
+            gh release create "$tag" --draft --title "$tag" --notes ""
+          fi
+
+          # Only touches assets, so Release Drafter's generated notes survive.
+          gh release upload "$tag" "$package" --clobber
+          echo "Attached $package to draft $tag"

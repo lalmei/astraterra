@@ -44,24 +44,29 @@ Two workflows run from the same push, independently:
 | Workflow | Runner | Does |
 | --- | --- | --- |
 | `release-drafter.yml` | `ubuntu-latest` | Reads the version from `modinfo.json` and creates or renames the **draft** release to `vX.Y.Z`, with notes generated from merged pull requests |
-| `ci.yml` | self-hosted macOS | Tests, builds, packages, then uploads `dist/AstraTerra-X.Y.Z.zip` both as a workflow artifact and as an asset on that draft |
+| `tests.yml` | `ubuntu-latest` | Tests, builds and packages, and — once the tests and the benchmark have passed — attaches `dist/AstraTerra-X.Y.Z.zip` to that draft. The zip is a workflow artifact on every run, merge or not |
 
-Release Drafter owns the notes; CI only ever touches assets (`gh release upload --clobber`), so the
-two do not fight. CI waits for the draft to appear, and creates one itself if Release Drafter never
-got there, so a build is never stranded without somewhere to land.
+Release Drafter owns the notes; the packaging job only ever touches assets
+(`gh release upload --clobber`), so the two do not fight. It waits for the draft to appear, and
+creates one itself if Release Drafter never got there, so a build is never stranded without
+somewhere to land.
 
 **Publishing stays manual.** Review the draft, confirm the attached zip, then publish — which is
 what creates the `vX.Y.Z` git tag.
 
 !!! warning "A published release is never modified"
     If `main` moves after `vX.Y.Z` has already been published — that is, someone merged without
-    bumping the version — CI logs a warning and leaves the release alone rather than overwriting a
-    shipped asset. The package still exists as a workflow artifact. Bump the version and merge again.
+    bumping the version — the job logs a warning and leaves the release alone rather than
+    overwriting a shipped asset. The package still exists as a workflow artifact. Bump the version
+    and merge again.
 
-!!! note "CI needs the self-hosted runner"
-    `ci.yml` runs on `[self-hosted, macOS, astraterra-local]`. Release Drafter does not. If that
-    machine is offline when you merge, you will get a correctly versioned draft with no package
-    attached, and no build anywhere.
+!!! note "Everything runs on GitHub's runners"
+    The mod compiles against the shipped game assemblies, and CI fetches the `linux-x64` client
+    archive for them: they are managed DLLs, so no job needs a particular operating system. Nothing
+    here depends on a machine of yours being switched on.
+
+    Only the `release-package` job may write to the repository, and it says so in the job rather
+    than at the top of the workflow, so the tests and the benchmark run with read-only tokens.
 
 ## Documentation Site
 
