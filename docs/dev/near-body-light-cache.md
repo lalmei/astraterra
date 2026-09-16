@@ -32,10 +32,10 @@ benchmark only. The output is evidence
 for repeated illumination work, not an FPS claim; render-thread validation still requires a fresh
 game restart and a controlled in-game route.
 
-CI runs the same target in a `benchmark` job of its own, on a GitHub-hosted Linux runner beside
-the build rather than inside `make test`. The references are managed DLLs and the workload is
-arithmetic, so nothing here needs the self-hosted Mac, and a regression shows as its own failure
-instead of one more red unit test.
+CI runs the same target in a `benchmark` job of its own, in the Linux tests workflow and beside
+`Test on Linux` rather than inside `make test`. The references are managed DLLs and the workload
+is arithmetic, so nothing here needs the self-hosted Mac, and a regression shows as its own
+failure instead of one more red unit test.
 
 That job fails on counts, never on the clock: the one-entry path must miss on every query, the
 bounded cache must compute once per retained region, and the two must agree on the checksum.

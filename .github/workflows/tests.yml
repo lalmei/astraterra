@@ -27,11 +27,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          global-json-file: global.json
-
       - name: Cache NuGet packages
         uses: actions/cache@v6
         with:
@@ -39,32 +34,13 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json', 'Directory.Build.props') }}
           restore-keys: nuget-${{ runner.os }}-
 
-      - name: Cache Vintage Story client
-        uses: actions/cache@v6
-        with:
-          path: .vintagestory
-          key: vintagestory-${{ runner.os }}-${{ env.VINTAGE_STORY_VERSION }}
-
       # The mod and its tests compile against the shipped game assemblies, so CI needs
       # the Linux client next to the checkout. Only the DLLs are used; nothing is run.
       - name: Install Vintage Story references
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f 2>/dev/null | grep -q .; then
-            mkdir -p "$GITHUB_WORKSPACE/.vintagestory" "$RUNNER_TEMP/vintagestory"
-            curl -fL "$VINTAGE_STORY_ARCHIVE_URL" -o "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz"
-            tar -xzf "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz" -C "$GITHUB_WORKSPACE/.vintagestory"
-          fi
-
-          vintagestory_api="$(find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | head -n 1)"
-          if [[ -z "$vintagestory_api" ]]; then
-            echo "Could not find VintagestoryAPI.dll after extracting Vintage Story." >&2
-            exit 1
-          fi
-
-          echo "VINTAGE_STORY=$(dirname "$vintagestory_api")" >> "$GITHUB_ENV"
+        uses: ./.github/actions/vintage-story-refs
+        with:
+          version: ${{ env.VINTAGE_STORY_VERSION }}
+          archive-url: ${{ env.VINTAGE_STORY_ARCHIVE_URL }}
 
       - name: Run tests
         run: make test TEST_ARGS="--logger trx --results-directory TestResults"
@@ -82,3 +58,26 @@ jobs:
           name: test-results-linux
           path: TestResults/*.trx
           if-no-files-found: warn
+
+  benchmark:
+    name: Near-body light cache benchmark
+    # Beside the tests rather than inside them, and on its own runner: this is a separate claim
+    # about repeated work, and it should fail as its own red mark instead of hiding among a
+    # thousand unit tests. Nothing here wants the self-hosted Mac -- the references are managed
+    # DLLs and the workload is arithmetic.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Vintage Story references
+        uses: ./.github/actions/vintage-story-refs
+        with:
+          version: ${{ env.VINTAGE_STORY_VERSION }}
+          archive-url: ${{ env.VINTAGE_STORY_ARCHIVE_URL }}
+
+      # Asserts computation counts and the checksum both paths agree on -- never a duration,
+      # which on a shared runner would measure the neighbours.
+      - name: Run the benchmark
+        run: make bench

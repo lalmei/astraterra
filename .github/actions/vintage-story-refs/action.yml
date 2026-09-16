@@ -31,7 +31,9 @@ runs:
       env:
         ARCHIVE_URL: ${{ inputs.archive-url }}
       run: |
-        if [[ ! -d "$GITHUB_WORKSPACE/.vintagestory" ]] || ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | grep -q .; then
+        set -euo pipefail
+
+        if ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f 2>/dev/null | grep -q .; then
           mkdir -p "$GITHUB_WORKSPACE/.vintagestory" "$RUNNER_TEMP/vintagestory"
           curl -fL "$ARCHIVE_URL" -o "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz"
           tar -xzf "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz" -C "$GITHUB_WORKSPACE/.vintagestory"
