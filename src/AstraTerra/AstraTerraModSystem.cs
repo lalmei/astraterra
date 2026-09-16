@@ -182,7 +182,10 @@ public sealed class AstraTerraModSystem : ModSystem
     {
         clientLongitudeAwareSunInstaller = LongitudeAwareSunInstaller.StartClient(api);
         clientLongitudeAwareSunInstaller.SetWorldTilt(worldObliquityDeg);
-        clientNearBodyLightInstaller = NearBodyLightInstaller.StartClient(api);
+        clientNearBodyLightInstaller = NearBodyLightInstaller.StartClient(
+            api,
+            () => clientLongitudeAwareSunInstaller?.SolarRevision ?? 0L,
+            () => clientLongitudeAwareSunInstaller?.CurrentSolarDelegate);
         clientNearBodyLightInstaller.SetSource(nearBodyLightSource);
         SkyStarSunMoonRenderer.Reset();
         AstrolabeReadingState.Reset();
@@ -485,7 +488,9 @@ public sealed class AstraTerraModSystem : ModSystem
         serverNearBodyLightInstaller = NearBodyLightInstaller.StartServer(
             api,
             config.NearBodyLighting,
-            () => serverLongitudeAwareSunInstaller?.SunFollowsLongitude ?? false);
+            () => serverLongitudeAwareSunInstaller?.SunFollowsLongitude ?? false,
+            () => serverLongitudeAwareSunInstaller?.SolarRevision ?? 0L,
+            () => serverLongitudeAwareSunInstaller?.CurrentSolarDelegate);
         serverNearBodyLightInstaller.SetSource(nearBodyLightSource);
         new ConstellationBookServer(() => catalog).Register(api);
         new SkyDiscEngraveServer().Register(api);

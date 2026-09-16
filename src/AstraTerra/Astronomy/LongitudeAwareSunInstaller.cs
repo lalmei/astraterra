@@ -286,6 +286,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     private bool serverWorldTiltEnabled = true;
     private bool disposed;
     private bool waitingWarningLogged;
+    private long solarRevision;
 
     private LongitudeAwareSunInstaller(ICoreAPI api)
     {
@@ -336,6 +337,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, installer.OnServerGameReady);
         installer.Apply(
             installer.controller.Configure(enabled, installer.CurrentDelegate(), worldTiltEnabled));
+        System.Threading.Interlocked.Increment(ref installer.solarRevision);
         api.Logger.Event(
             "AstraTerra startup step: longitude-aware sun server policy: enabled={0}; generatedWorldTilt={1}",
             enabled,
@@ -350,6 +352,12 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     public bool SunFollowsLongitude
         => !disposed && controller.LongitudeEnabled && controller.IsInstalledOn(CurrentDelegate());
 
+    /// <summary>Changes whenever this side's solar policy or tilt lifecycle is updated.</summary>
+    public long SolarRevision => System.Threading.Volatile.Read(ref solarRevision);
+
+    /// <summary>The current calendar delegate, including a replacement by another mod.</summary>
+    public object? CurrentSolarDelegate => CurrentDelegate();
+
     /// <summary>
     /// Hands this side the world's axial tilt in degrees, or null to keep Earth's. A generated moon
     /// world's tilt is its parent giant's; every other world passes null.
@@ -358,6 +366,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
     {
         if (!disposed)
         {
+            System.Threading.Interlocked.Increment(ref solarRevision);
             Apply(controller.SetWorldTilt(obliquityDeg, CurrentDelegate()));
         }
     }
@@ -381,6 +390,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
         }
 
         Apply(controller.Reset(CurrentDelegate()));
+        System.Threading.Interlocked.Increment(ref solarRevision);
         disposed = true;
     }
 
@@ -391,6 +401,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
             return;
         }
 
+        System.Threading.Interlocked.Increment(ref solarRevision);
         Apply(controller.Configure(packet.Enabled, CurrentDelegate(), packet.WorldTiltEnabled));
         api.Logger.Event(
             "AstraTerra startup step: longitude-aware sun server policy received: enabled={0}; generatedWorldTilt={1}",
@@ -424,6 +435,7 @@ public sealed class LongitudeAwareSunInstaller : IDisposable
             {
                 if (!disposed)
                 {
+                    System.Threading.Interlocked.Increment(ref solarRevision);
                     Apply(controller.MarkLifecycleReady(CurrentDelegate()));
                 }
             },
