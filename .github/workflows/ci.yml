@@ -29,36 +29,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          global-json-file: global.json
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.3.2
 
-      - name: Cache Vintage Story client
-        uses: actions/cache@v6
-        with:
-          path: .vintagestory
-          key: vintagestory-${{ runner.os }}-${{ env.VINTAGE_STORY_VERSION }}
-
       - name: Install Vintage Story references
-        shell: bash
-        run: |
-          if [[ ! -d "$GITHUB_WORKSPACE/.vintagestory" ]] || ! find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | grep -q .; then
-            mkdir -p "$GITHUB_WORKSPACE/.vintagestory" "$RUNNER_TEMP/vintagestory"
-            curl -fL "$VINTAGE_STORY_ARCHIVE_URL" -o "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz"
-            tar -xzf "$RUNNER_TEMP/vintagestory/vintagestory.tar.gz" -C "$GITHUB_WORKSPACE/.vintagestory"
-          fi
-
-          vintagestory_api="$(find "$GITHUB_WORKSPACE/.vintagestory" -name VintagestoryAPI.dll -type f | head -n 1)"
-          if [[ -z "$vintagestory_api" ]]; then
-            echo "Could not find VintagestoryAPI.dll after extracting Vintage Story." >&2
-            exit 1
-          fi
-
-          echo "VINTAGE_STORY=$(dirname "$vintagestory_api")" >> "$GITHUB_ENV"
+        uses: ./.github/actions/vintage-story-refs
+        with:
+          version: ${{ env.VINTAGE_STORY_VERSION }}
+          archive-url: ${{ env.VINTAGE_STORY_ARCHIVE_URL }}
 
       - name: Run tests
         run: make test
