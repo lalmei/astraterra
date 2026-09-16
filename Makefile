@@ -16,13 +16,14 @@ DIST_DIR := dist
 MOD_VERSION = $(shell perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)
 PACKAGE_FILE = $(DIST_DIR)/AstraTerra-$(MOD_VERSION).zip
 
-.PHONY: help test build package deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy pose-build pose-preview bump-version bump-minor-version bump-patch-version bump-version-files
+.PHONY: help test build package bench deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy pose-build pose-preview bump-version bump-minor-version bump-patch-version bump-version-files
 
 help:
 	@printf "Targets:\n"
 	@printf "  make test        Run the test suite\n"
 	@printf "  make build       Build the mod in $(CONFIGURATION)\n"
 	@printf "  make package     Build and zip the mod into $(DIST_DIR)/\n"
+	@printf "  make bench       Run the near-body light cache workload and check its counts\n"
 	@printf "  make deploy      Package the mod and install the zip into Vintage Story Mods\n"
 	@printf "  make run         Launch Vintage Story.app\n"
 	@printf "  make deploy-run  Deploy the mod, then launch the game\n"
@@ -37,13 +38,17 @@ help:
 	@printf "  make bump-patch-version  Increment patch version, build, and deploy\n"
 
 # Portable shell: these run on Linux CI as well as locally, and use no zsh syntax.
-test build package: SHELL := /bin/sh
+test build package bench: SHELL := /bin/sh
 
 test:
 	@env $(DOTNET_ENV) dotnet test tests/AstraTerra.Tests/AstraTerra.Tests.csproj -c $(CONFIGURATION) -v minimal $(TEST_ARGS)
 
 build:
 	@env $(DOTNET_ENV) dotnet build src/AstraTerra/AstraTerra.csproj -c $(CONFIGURATION) -v minimal
+
+# Fails on the counts, never on the clock: see benchmarks/NearBodyLightCacheBenchmark.
+bench:
+	@env $(DOTNET_ENV) dotnet run --project benchmarks/NearBodyLightCacheBenchmark -c $(CONFIGURATION) -v minimal
 
 package: build
 	@mkdir -p "$(DIST_DIR)"

@@ -20,10 +20,7 @@ production hits.
 Run the release benchmark from the repository root:
 
 ```sh
-DOTNET_ROOT="$PWD/.dotnet" DOTNET_CLI_HOME="$PWD/.dotnet-home" \
-  PATH="$PWD/.dotnet:$PATH" \
-  dotnet run --project benchmarks/NearBodyLightCacheBenchmark \
-  -c Release
+make bench
 ```
 
 It alternates 32 retained regions for 100,000 queries and prints compute calls, bytes allocated,
@@ -34,6 +31,16 @@ calls, their vector allocations, and the controller lock. Its allocation numbers
 benchmark only. The output is evidence
 for repeated illumination work, not an FPS claim; render-thread validation still requires a fresh
 game restart and a controlled in-game route.
+
+CI runs the same target in a `benchmark` job of its own, on a GitHub-hosted Linux runner beside
+the build rather than inside `make test`. The references are managed DLLs and the workload is
+arithmetic, so nothing here needs the self-hosted Mac, and a regression shows as its own failure
+instead of one more red unit test.
+
+That job fails on counts, never on the clock: the one-entry path must miss on every query, the
+bounded cache must compute once per retained region, and the two must agree on the checksum.
+Elapsed time and allocations are printed to be read, not asserted -- on a shared runner they
+measure the neighbours as much as the cache.
 
 ## Local benchmark result
 
