@@ -28,9 +28,12 @@ make bump-patch-version          # 0.1.56 -> 0.1.57
 make bump-version VERSION=1.0.0  # explicit
 ```
 
-The version lives in **two** places — `modinfo.json` and `AstraTerraModMetadata.Version` — and
-`BootstrapSmokeTests.Runtime_Version_Stays_In_Sync_With_Modinfo` fails if they drift. Always bump
-through the Makefile rather than editing either by hand.
+The version lives in **two** places — `modinfo.json` and `AstraTerraModMetadata.Version` —
+plus GitHub issue-template placeholders. Always bump through the Makefile rather than
+editing any of those by hand. The Makefile calls [bump-my-version](https://callowayproject.github.io/bump-my-version/),
+installed once with `uv tool install bump-my-version`.
+`BootstrapSmokeTests.Runtime_Version_Stays_In_Sync_With_Modinfo` fails if the two source
+files drift.
 
 !!! note "The bump targets deploy"
     `bump-version`, and therefore `bump-minor-version` and `bump-patch-version`, chain into
