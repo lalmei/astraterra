@@ -57,6 +57,10 @@ somewhere to land.
 **Publishing stays manual.** Review the draft, confirm the attached zip, then publish — which is
 what creates the `vX.Y.Z` git tag.
 
+Once that release is published, `post-release-bump.yml` patch-bumps `main` as
+`github-actions[bot]` and opens the next draft at `vX.Y.Z+1`. The zip for that
+draft is attached by the usual CI on the next merge to `main`.
+
 !!! warning "A published release is never modified"
     If `main` moves after `vX.Y.Z` has already been published — that is, someone merged without
     bumping the version — the job logs a warning and leaves the release alone rather than
