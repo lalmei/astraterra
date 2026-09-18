@@ -15,6 +15,10 @@ BUILD_OUTPUT_DIR := src/AstraTerra/bin/$(CONFIGURATION)/$(TARGET_FRAMEWORK)
 DIST_DIR := dist
 MOD_VERSION = $(shell perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json)
 PACKAGE_FILE = $(DIST_DIR)/AstraTerra-$(MOD_VERSION).zip
+# Version files are listed in .bumpversion.toml. Install once:
+#   uv tool install bump-my-version
+BUMP ?= bump-my-version
+PART ?= patch
 
 .PHONY: help test build package bench deploy run deploy-run docs-build docs-serve moddb-preview moddb-copy pose-build pose-preview bump-version bump-minor-version bump-patch-version bump-version-files
 
@@ -99,29 +103,24 @@ moddb-copy:
 	@printf "Paste-ready ModDB description copied to the clipboard\n"
 
 # Re-invoke make after rewriting the version so PACKAGE_FILE picks up the new number.
-bump-version: bump-version-files
+bump-version-files:
+	@if [[ -n "$(VERSION)" ]]; then \
+		if ! [[ "$(VERSION)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then printf "VERSION must look like 0.1.2\n"; exit 2; fi; \
+		$(BUMP) bump --new-version "$(VERSION)"; \
+	else \
+		$(BUMP) bump $(PART); \
+	fi
+	@printf "Bumped AstraTerra source version to $$($(BUMP) show current_version)\n"
+
+bump-version:
+	@if [[ -z "$(VERSION)" ]]; then printf "Usage: make bump-version VERSION=0.1.2\n"; exit 2; fi
+	@$(MAKE) bump-version-files VERSION="$(VERSION)"
 	@$(MAKE) deploy
 
-bump-version-files:
-	@if [[ -z "$(VERSION)" ]]; then printf "Usage: make bump-version VERSION=0.1.2\n"; exit 2; fi
-	@if ! [[ "$(VERSION)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then printf "VERSION must look like 0.1.2\n"; exit 2; fi
-	@perl -0pi -e 's/"version":\s*"[^"]+"/"version": "$(VERSION)"/' modinfo.json
-	@perl -0pi -e 's/public const string Version = "[^"]+";/public const string Version = "$(VERSION)";/' src/AstraTerra/AstraTerraModMetadata.cs
-	@for f in .github/ISSUE_TEMPLATE/*.yml; do \
-		perl -0pi -e 's/(id: mod-version.*?placeholder:\s*)v?[0-9]+\.[0-9]+\.[0-9]+/$${1}v$(VERSION)/s' "$$f"; \
-	done
-	@printf "Bumped AstraTerra source version to $(VERSION)\n"
-
 bump-minor-version:
-	@current=$$(perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json); \
-	if [[ -z "$$current" ]]; then printf "Could not read version from modinfo.json\n"; exit 2; fi; \
-	parts=("$${(@s:.:)current}"); \
-	new_version="$$parts[1].$$(( $$parts[2] + 1 )).0"; \
-	$(MAKE) bump-version VERSION=$$new_version
+	@$(MAKE) bump-version-files PART=minor
+	@$(MAKE) deploy
 
 bump-patch-version:
-	@current=$$(perl -0ne 'print $$1 if /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/' modinfo.json); \
-	if [[ -z "$$current" ]]; then printf "Could not read version from modinfo.json\n"; exit 2; fi; \
-	parts=("$${(@s:.:)current}"); \
-	new_version="$$parts[1].$$parts[2].$$(( $$parts[3] + 1 ))"; \
-	$(MAKE) bump-version VERSION=$$new_version
+	@$(MAKE) bump-version-files PART=patch
+	@$(MAKE) deploy
