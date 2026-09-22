@@ -1,4 +1,5 @@
 using AstraTerra.Astronomy;
+using AstraTerra.Client.Observation;
 
 namespace AstraTerra.Client.Rendering;
 
@@ -27,11 +28,30 @@ public readonly record struct DeepSkyPlateField(
 /// </remarks>
 public static class DeepSkyPlateVisibility
 {
-    /// <summary>How much of a plate's authored brightness reaches the screen.</summary>
+    /// <summary>How much of a plate's authored brightness reaches the screen at full zoom reveal.</summary>
     public const float BrightnessScale = 0.42f;
 
     /// <summary>Ceiling on a plate's drawn alpha, so a photograph never becomes an opaque wall.</summary>
     public const float MaximumOpacity = 0.7f;
+
+    /// <summary>Telescope wide-field FOV multiplier where zoom reveal is at its minimum.</summary>
+    public const float WideTelescopeFovMultiplier = 0.45f;
+
+    /// <summary>Brass telescope maximum zoom FOV multiplier where reveal reaches full strength.</summary>
+    public const float BrassMaxZoomFovMultiplier = TelescopeObservationState.MaxZoomFovMultiplier;
+
+    /// <summary>Plate visibility at wide field — a faint findable smudge, not a hard rectangle.</summary>
+    public const float MinZoomReveal = 0.05f;
+
+    /// <summary>Plate visibility once brass (or tighter) magnification has resolved the photograph.</summary>
+    public const float MaxZoomReveal = 1.0f;
+
+    /// <summary>
+    /// Natural darkness below which plates are gone entirely, and above which they fade in. Higher
+    /// than <see cref="MilkyWayVisibility.TwilightFloor"/> because a telescopic photograph is surface
+    /// brightness, not a point source — it must not survive twilight the way catalog stars can.
+    /// </summary>
+    public const double TwilightFloor = 0.65;
 
     /// <summary>
     /// The share of a plate's radius covered completely, beyond which its hold ramps off to nothing
@@ -40,9 +60,61 @@ public static class DeepSkyPlateVisibility
     /// </summary>
     public const double FullCoverShare = 0.55;
 
-    /// <summary>Opacity a plate draws at, from the brightness it was projected with.</summary>
-    public static float CalculateOpacity(double brightness)
-        => (float)Math.Clamp(brightness * BrightnessScale, 0.0, MaximumOpacity);
+    /// <summary>
+    /// How much ambient night remains for extended deep-sky plates, from natural darkness alone.
+    /// Deliberately not the star pass's render darkness: forced daylight stars must not reveal
+    /// photographs the sky glow would wash out anyway.
+    /// </summary>
+    public static float CalculateAmbientVisibility(double naturalDarkness)
+    {
+        if (!double.IsFinite(naturalDarkness))
+        {
+            return 0f;
+        }
+
+        var night = Math.Clamp((naturalDarkness - TwilightFloor) / (1.0 - TwilightFloor), 0.0, 1.0);
+        return (float)night;
+    }
+
+    /// <summary>Zoom reveal and ambient night combined — shared by drawn alpha and star handover.</summary>
+    public static float CalculateVisibilityFactor(float fovMultiplier, double naturalDarkness)
+    {
+        return CalculateZoomReveal(fovMultiplier) * CalculateAmbientVisibility(naturalDarkness);
+    }
+
+    /// <summary>
+    /// How much of a plate's authored detail is visible at the current telescope field of view.
+    /// Ease-in quadratic from wide field to brass maximum zoom; at or below brass max, reveal is full.
+    /// </summary>
+    public static float CalculateZoomReveal(float fovMultiplier)
+    {
+        if (!float.IsFinite(fovMultiplier) || fovMultiplier <= 0f)
+        {
+            return MinZoomReveal;
+        }
+
+        if (fovMultiplier >= WideTelescopeFovMultiplier)
+        {
+            return MinZoomReveal;
+        }
+
+        if (fovMultiplier <= BrassMaxZoomFovMultiplier)
+        {
+            return MaxZoomReveal;
+        }
+
+        var span = WideTelescopeFovMultiplier - BrassMaxZoomFovMultiplier;
+        var progress = (WideTelescopeFovMultiplier - fovMultiplier) / span;
+        var eased = progress * progress;
+        return MinZoomReveal + ((MaxZoomReveal - MinZoomReveal) * eased);
+    }
+
+    /// <summary>Opacity a plate draws at, from brightness, telescope zoom reveal, and ambient night.</summary>
+    public static float CalculateOpacity(double brightness, float fovMultiplier, double naturalDarkness)
+    {
+        var visibility = CalculateVisibilityFactor(fovMultiplier, naturalDarkness);
+        return (float)Math.Clamp(brightness * BrightnessScale * visibility, 0.0, MaximumOpacity);
+    }
 
     /// <summary>
     /// Reduces the plates to what the star loop needs, once per rebuild rather than once per star:
@@ -50,11 +122,14 @@ public static class DeepSkyPlateVisibility
     /// </summary>
     public static void BuildFields(
         IReadOnlyList<RenderedDeepSkyObject> plates,
+        float fovMultiplier,
+        double naturalDarkness,
         List<DeepSkyPlateField> destination)
     {
         ArgumentNullException.ThrowIfNull(plates);
         ArgumentNullException.ThrowIfNull(destination);
 
+        var visibility = CalculateVisibilityFactor(fovMultiplier, naturalDarkness);
         destination.Clear();
         for (var index = 0; index < plates.Count; index++)
         {
@@ -64,11 +139,10 @@ public static class DeepSkyPlateVisibility
                 continue;
             }
 
-            // How strongly the plate is being drawn at all, which is its own brightness: a plate
-            // still climbing out of the horizon haze cannot take the stars with it. Deliberately not
-            // its drawn alpha, which tops out at well under one and would leave every star half-lit
-            // on top of the photograph.
-            var coverage = Math.Clamp(plate.Brightness, 0.0, 1.0);
+            // How strongly the plate is being drawn at all, scaled by zoom reveal and ambient night:
+            // at wide field or in daylight a plate must not punch a hole in the catalog before the
+            // photograph itself is visible.
+            var coverage = Math.Clamp(plate.Brightness * visibility, 0.0, 1.0);
             if (coverage <= 0.001)
             {
                 continue;
@@ -138,14 +212,19 @@ public static class DeepSkyPlateVisibility
     }
 
     /// <summary>
-    /// Identifies the set of plates in play, so a star batch built against them can tell when it has
-    /// gone stale. Brightness is bucketed because it drifts continuously as a plate climbs.
+    /// Identifies the set of plates in play and the telescope zoom reveal applied to them, so a star
+    /// batch built against them can tell when it has gone stale. Brightness is bucketed because it
+    /// drifts continuously as a plate climbs.
     /// </summary>
-    public static int GetSignature(IReadOnlyList<RenderedDeepSkyObject> plates)
+    public static int GetSignature(
+        IReadOnlyList<RenderedDeepSkyObject> plates,
+        float fovMultiplier,
+        double naturalDarkness)
     {
         ArgumentNullException.ThrowIfNull(plates);
 
         var signature = new HashCode();
+        signature.Add((int)Math.Round(CalculateVisibilityFactor(fovMultiplier, naturalDarkness) * 100.0));
         for (var index = 0; index < plates.Count; index++)
         {
             signature.Add(plates[index].Id, StringComparer.Ordinal);

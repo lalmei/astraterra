@@ -920,6 +920,7 @@ public static class SkyStarSunMoonRenderer
         // The star scale arrives from the caller, which also widens the constellation lines by it,
         // so a line keeps its thickness against the stars it joins at any magnification.
         var fovMultiplier = useTelescopeSprites ? TelescopeScopeState.GetFovMultiplier() : 1.0f;
+        var naturalDarkness = 1.0 - daylight;
         var brightStarAngularScale = StarBillboardSizing.CalculateBrightStarAngularScale(useTelescopeSprites, fovMultiplier);
         var faintStarAngularScale = StarBillboardSizing.CalculateFaintStarAngularScale(useTelescopeSprites, fovMultiplier);
         var planetAngularScale = StarBillboardSizing.CalculatePlanetAngularScale(useTelescopeSprites, fovMultiplier);
@@ -983,7 +984,9 @@ public static class SkyStarSunMoonRenderer
                     brightStarAngularScale,
                     faintStarAngularScale,
                     planetAngularScale,
-                    useTelescopeSprites);
+                    useTelescopeSprites,
+                    fovMultiplier,
+                    naturalDarkness);
 
                 // Additive blending makes draw order between these irrelevant, which is what lets a
                 // star's glow and its core sit in different meshes.
@@ -1001,21 +1004,26 @@ public static class SkyStarSunMoonRenderer
 
             if (visibleDeepSkyObjects.Count > 0 && SkyRenderPaths.IsEnabled(SkyRenderPath.DeepSky))
             {
-                // The telescope photographs are foreground plates. Standard alpha
-                // blending lets their dark sky attenuate the catalog sprites below;
-                // additive glow blending would make draw order visually irrelevant.
-                render.GlToggleBlend(true, EnumBlendMode.Standard);
+                // The telescope photographs are foreground plates on the same additive glow pass as
+                // the catalog stars. Glow ignores black RGB, so baked sky in the PNG does not darken
+                // the background; per-vertex edge alpha and zoom reveal handle the rectangular bounds.
                 EnsureDeepSkyPlateMeshes(clientApi, visibleDeepSkyObjects);
                 foreach (var deepSkyObject in visibleDeepSkyObjects)
                 {
                     var textureId = ResolveDeepSkyTexture(clientApi, deepSkyObject);
                     if (textureId != 0)
                     {
-                        RenderDeepSkyQuad(clientApi, shader, deepSkyObject, textureId, deepSkyResidualRotation, modelMatrixBuffer);
+                        RenderDeepSkyQuad(
+                            clientApi,
+                            shader,
+                            deepSkyObject,
+                            textureId,
+                            deepSkyResidualRotation,
+                            fovMultiplier,
+                            naturalDarkness,
+                            modelMatrixBuffer);
                     }
                 }
-
-                render.GlToggleBlend(true, EnumBlendMode.Glow);
             }
 
             EnsurePlanetDiscMeshes(clientApi, planetDiscs);
@@ -1214,9 +1222,11 @@ public static class SkyStarSunMoonRenderer
         float brightStarAngularScale,
         float faintStarAngularScale,
         float planetAngularScale,
-        bool useTelescopeSprites)
+        bool useTelescopeSprites,
+        float fovMultiplier,
+        double naturalDarkness)
     {
-        var plateSignature = DeepSkyPlateVisibility.GetSignature(visibleDeepSkyObjects);
+        var plateSignature = DeepSkyPlateVisibility.GetSignature(visibleDeepSkyObjects, fovMultiplier, naturalDarkness);
         var discSignature = DiscWidthByPlanetId.Count;
         var occulterSignature = SkyDiscOcclusion.GetSignature(OccultingDiscs);
         if (!starMeshesDirty &&
@@ -1236,7 +1246,7 @@ public static class SkyStarSunMoonRenderer
         // A plate is a photograph with its own stars already in it. Where one is drawn, the catalog
         // gives way to it rather than laying a second set of stars over the first at a different
         // scale. Reduced once here, not once per star.
-        DeepSkyPlateVisibility.BuildFields(visibleDeepSkyObjects, PlateFields);
+        DeepSkyPlateVisibility.BuildFields(visibleDeepSkyObjects, fovMultiplier, naturalDarkness, PlateFields);
 
         // Same reduction, for the globes in front rather than the photographs over: a star behind
         // the moon or behind a near body is not drawn at all, because nothing in this pass writes
@@ -1950,6 +1960,8 @@ public static class SkyStarSunMoonRenderer
         RenderedDeepSkyObject deepSkyObject,
         int textureId,
         Matrix4 residualRotation,
+        float fovMultiplier,
+        double naturalDarkness,
         float[] modelMatrixBuffer)
     {
         if (!DeepSkyPlateMeshes.TryGetValue(deepSkyObject.Id, out var plateMesh))
@@ -1957,8 +1969,13 @@ public static class SkyStarSunMoonRenderer
             return;
         }
 
+        var alpha = DeepSkyPlateVisibility.CalculateOpacity(deepSkyObject.Brightness, fovMultiplier, naturalDarkness);
+        if (alpha <= 0.001f)
+        {
+            return;
+        }
+
         var modelMatrix = BuildSkyModelMatrix(clientApi, residualRotation);
-        var alpha = DeepSkyPlateVisibility.CalculateOpacity(deepSkyObject.Brightness);
         var tint = Set(
             ScratchTint,
             Math.Clamp(deepSkyObject.TintR, 0.0f, 1.0f),
