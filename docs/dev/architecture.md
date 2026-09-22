@@ -118,6 +118,25 @@ The plates keep their own cached angle rather than borrowing the stars', because
 be switched off, or have nothing above the horizon, on a night when the scope still has photographs
 to draw.
 
+They draw on the same **additive glow** pass as the catalog stars. Glow ignores black RGB, so the
+baked sky in each PNG no longer darkens the background the way standard alpha blending did. A soft
+**UV-border vignette** on `DeepSkyQuadMeshBuilder` fades vertex alpha to zero at the plate edge and
+reaches full strength about 12% inward, so the rectangular photograph boundary does not read as a
+card on the sky.
+
+**Zoom reveal** ties both drawn opacity and catalog star suppression to the telescope field
+multiplier. At the wide field (×0.45) a plate is only a faint smudge; winding in along an ease-in
+quadratic curve brings it up until brass maximum zoom (×0.12 and tighter) reaches full strength.
+`DeepSkyPlateVisibility.CalculateZoomReveal` implements that curve; star batches key their plate
+signature on reveal so zooming in rebuilds suppression in step with the photograph.
+
+**Ambient daylight** uses natural darkness (`1 − DayLightStrength`), not the star pass's render
+darkness, so debug forced daylight stars never reveal photographs the sky would wash out. Plates fade
+in linearly above `TwilightFloor` (0.65, higher than the Milky Way band's 0.55 because a telescopic
+photograph is surface brightness). The same ambient factor scales drawn alpha and catalog star
+suppression; signatures bucket the combined zoom-and-ambient visibility so twilight does not leave
+invisible holes in the star field.
+
 ## Sky Sprites
 
 The naked eye and the scoped view use different sprite sets, because the difference between them is physical rather than decorative. Rays are scintillation — air, not optics — so they belong to the eye. A telescope steadies them out: a star collapses to an Airy disc, a bright core inside one faint ring, and a planet is the one thing near enough to open into a resolved disc.
