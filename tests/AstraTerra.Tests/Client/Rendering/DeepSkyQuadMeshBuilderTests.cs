@@ -55,6 +55,38 @@ public sealed class DeepSkyQuadMeshBuilderTests
         Assert.Equal([0f, 0f], mesh.Uv.Skip(12).Take(2));
     }
 
+    [Fact]
+    public void Build_Fades_UV_Borders_To_Transparent()
+    {
+        DeepSkyDirection[] corners =
+        [
+            Normalize(-0.1, -0.1, -1),
+            Normalize(0.1, -0.1, -1),
+            Normalize(0.1, 0.1, -1),
+            Normalize(-0.1, 0.1, -1)
+        ];
+
+        var mesh = DeepSkyQuadMeshBuilder.Build(corners, radius: 10f, subdivisions: DeepSkyQuadMeshBuilder.DefaultSubdivisions);
+        var rowSize = DeepSkyQuadMeshBuilder.DefaultSubdivisions + 1;
+
+        Assert.Equal(0, mesh.Rgba[3] & 0xFF);
+        Assert.Equal(0, mesh.Rgba[((rowSize - 1) * 4) + 3] & 0xFF);
+        Assert.Equal(255, mesh.Rgba[(((rowSize / 2) * rowSize) + (rowSize / 2)) * 4 + 3] & 0xFF);
+
+        var insetAlpha = mesh.Rgba[(rowSize + 1) * 4 + 3] & 0xFF;
+        Assert.Equal(255, insetAlpha);
+    }
+
+    [Fact]
+    public void Border_Vertex_Alpha_Reaches_Full_Strength_Inward_Of_Inset()
+    {
+        Assert.Equal(0, DeepSkyQuadMeshBuilder.BorderVertexAlpha(0f, 0f));
+        Assert.Equal(255, DeepSkyQuadMeshBuilder.BorderVertexAlpha(0.5f, 0.5f));
+        Assert.Equal(255, DeepSkyQuadMeshBuilder.BorderVertexAlpha(DeepSkyQuadMeshBuilder.BorderOpaqueInset, 0.5f));
+        var midBorder = DeepSkyQuadMeshBuilder.BorderVertexAlpha(DeepSkyQuadMeshBuilder.BorderOpaqueInset * 0.5f, 0.5f);
+        Assert.InRange(midBorder, 1, 254);
+    }
+
     private static DeepSkyDirection Normalize(double x, double y, double z)
     {
         var length = Math.Sqrt((x * x) + (y * y) + (z * z));

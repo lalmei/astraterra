@@ -9,6 +9,9 @@ public static class DeepSkyQuadMeshBuilder
 {
     public const int DefaultSubdivisions = 8;
 
+    /// <summary>UV distance from the plate edge at which vertex alpha reaches full strength.</summary>
+    public const float BorderOpaqueInset = 0.12f;
+
     public static MeshData Build(
         IReadOnlyList<DeepSkyDirection> corners,
         float radius,
@@ -55,13 +58,14 @@ public static class DeepSkyQuadMeshBuilder
             {
                 var u = column / (double)subdivisions;
                 var direction = Normalize(Lerp(left, right, u));
+                var alpha = BorderVertexAlpha((float)u, (float)catalogV);
                 meshData.AddVertexWithFlags(
                     (float)direction.X * radius,
                     (float)direction.Y * radius,
                     (float)direction.Z * radius,
                     (float)u,
                     (float)engineV,
-                    ColorUtil.WhiteArgb,
+                    ColorUtil.ColorFromRgba(255, 255, 255, alpha),
                     0);
             }
         }
@@ -84,6 +88,24 @@ public static class DeepSkyQuadMeshBuilder
         }
 
         return meshData;
+    }
+
+    public static int BorderVertexAlpha(float u, float v)
+    {
+        var edgeDistance = Math.Min(Math.Min(u, 1f - u), Math.Min(v, 1f - v));
+        if (edgeDistance >= BorderOpaqueInset)
+        {
+            return 255;
+        }
+
+        if (edgeDistance <= 0f)
+        {
+            return 0;
+        }
+
+        var t = edgeDistance / BorderOpaqueInset;
+        var smooth = t * t * (3f - (2f * t));
+        return (int)Math.Round(Math.Clamp(smooth, 0f, 1f) * 255f);
     }
 
     private static DeepSkyDirection Lerp(DeepSkyDirection start, DeepSkyDirection end, double amount)

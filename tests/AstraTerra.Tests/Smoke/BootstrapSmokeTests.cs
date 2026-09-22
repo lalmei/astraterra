@@ -219,16 +219,40 @@ public sealed class BootstrapSmokeTests
     {
         var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
 
-        var starsIndex = renderer.IndexOf("foreach (var star in ", StringComparison.Ordinal);
-        var foregroundBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Standard);", starsIndex, StringComparison.Ordinal);
-        var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", foregroundBlendIndex, StringComparison.Ordinal);
+        var glowBlendIndex = renderer.IndexOf("render.GlToggleBlend(true, EnumBlendMode.Glow);", StringComparison.Ordinal);
+        var starsIndex = renderer.IndexOf("DrawBillboardBatch(clientApi, shader, brightStarMesh", glowBlendIndex, StringComparison.Ordinal);
+        var deepSkyIndex = renderer.IndexOf("foreach (var deepSkyObject in visibleDeepSkyObjects)", starsIndex, StringComparison.Ordinal);
         // The constellation marks are one batched draw now, a ribbon per edge.
         var constellationIndex = renderer.IndexOf("RenderConstellationLines(clientApi, shader, starResidualRotation, modelMatrixBuffer);", deepSkyIndex, StringComparison.Ordinal);
 
-        Assert.True(starsIndex >= 0);
-        Assert.True(foregroundBlendIndex > starsIndex);
-        Assert.True(deepSkyIndex > foregroundBlendIndex);
+        Assert.True(glowBlendIndex >= 0);
+        Assert.True(starsIndex > glowBlendIndex);
+        Assert.True(deepSkyIndex > starsIndex);
         Assert.True(constellationIndex > deepSkyIndex);
+        Assert.DoesNotContain(
+            "EnumBlendMode.Standard",
+            renderer[glowBlendIndex..deepSkyIndex],
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Telescope_Deep_Sky_Plates_Use_Natural_Darkness_Not_Render_Darkness()
+    {
+        var renderer = File.ReadAllText(Path.Combine(RepositoryRoot, "src/AstraTerra/Client/Rendering/SkyStarSunMoonRenderer.cs"));
+
+        var renderSkyIndex = renderer.IndexOf("private static void RenderSky(", StringComparison.Ordinal);
+        var naturalDarknessIndex = renderer.IndexOf("var naturalDarkness = 1.0 - daylight;", renderSkyIndex, StringComparison.Ordinal);
+        var ensureStarsIndex = renderer.IndexOf("EnsureStarMeshes(", naturalDarknessIndex, StringComparison.Ordinal);
+        var renderQuadIndex = renderer.IndexOf(
+            "DeepSkyPlateVisibility.CalculateOpacity(deepSkyObject.Brightness, fovMultiplier, naturalDarkness)",
+            StringComparison.Ordinal);
+        var alphaSkipIndex = renderer.IndexOf("if (alpha <= 0.001f)", renderQuadIndex, StringComparison.Ordinal);
+
+        Assert.True(renderSkyIndex >= 0);
+        Assert.True(naturalDarknessIndex > renderSkyIndex);
+        Assert.True(ensureStarsIndex > naturalDarknessIndex);
+        Assert.True(renderQuadIndex > 0);
+        Assert.True(alphaSkipIndex > renderQuadIndex);
     }
 
     /// <summary>
