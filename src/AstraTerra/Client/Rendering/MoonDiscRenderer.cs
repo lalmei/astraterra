@@ -45,6 +45,8 @@ public sealed class MoonDiscRenderer : IRenderer
     private readonly Dictionary<string, int> textureIds = new(StringComparer.Ordinal);
     private readonly HashSet<string> failedTexturePaths = new(StringComparer.Ordinal);
     private MeshRef? mesh;
+    private MeshRef? sunOccluder;
+    private bool coversSun;
     private SkyDirection lastDirection;
     private SkyDirection lastSun;
     private double lastPhaseExact = double.NaN;
@@ -89,6 +91,8 @@ public sealed class MoonDiscRenderer : IRenderer
     {
         mesh?.Dispose();
         mesh = null;
+        sunOccluder?.Dispose();
+        sunOccluder = null;
         HidesVanillaMoon = false;
     }
 
@@ -202,6 +206,16 @@ public sealed class MoonDiscRenderer : IRenderer
                 render.RenderMesh(mesh);
             }
 
+            // Added light cannot hide anything, so by day the sun would shine straight through a new
+            // moon and there could be no eclipse. Where the moon stands in front of the sun, the
+            // sunlight behind it is taken back first; the lit surface is then added as usual.
+            if (daylight > 0f && coversSun && sunOccluder is not null)
+            {
+                render.GlToggleBlend(true, EnumBlendMode.Standard);
+                shader.RgbaTint = new Vec4f(1f, 1f, 1f, daylight);
+                render.RenderMesh(sunOccluder);
+            }
+
             if (daylight > 0f)
             {
                 render.GlToggleBlend(true, EnumBlendMode.Glow);
@@ -234,19 +248,28 @@ public sealed class MoonDiscRenderer : IRenderer
             return;
         }
 
-        var meshData = MoonDiscMeshBuilder.Build(direction, sun, phaseExact, SkyDistance);
-        if (mesh is null)
+        mesh = Upload(mesh, MoonDiscMeshBuilder.Build(direction, sun, phaseExact, SkyDistance));
+
+        coversSun = MoonDiscMeshBuilder.CanCoverSun(direction, sun);
+        if (coversSun)
         {
-            mesh = api.Render.UploadMesh(meshData);
-        }
-        else
-        {
-            api.Render.UpdateMesh(mesh, meshData);
+            sunOccluder = Upload(sunOccluder, MoonDiscMeshBuilder.BuildSunOccluder(direction, sun, SkyDistance));
         }
 
         lastDirection = direction;
         lastSun = sun;
         lastPhaseExact = phaseExact;
+    }
+
+    private MeshRef Upload(MeshRef? existing, MeshData meshData)
+    {
+        if (existing is null)
+        {
+            return api.Render.UploadMesh(meshData);
+        }
+
+        api.Render.UpdateMesh(existing, meshData);
+        return existing;
     }
 
     /// <param name="texturePath">
