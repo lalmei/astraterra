@@ -275,11 +275,13 @@ the instrument exists to answer questions about *other* times: it scrolls hours 
 planet is somewhere else by then. A recorded constellation supplies a `FixedEphemeris` and behaves
 exactly as it did before.
 
-One approximation is left in deliberately. `hoursUntilTransit` holds the target's right ascension
-where the reading found it, rather than solving the transit against the ephemeris. A planet drifts
-under half a degree a day, so a night's countdown is a couple of minutes out — below anything the
-instruments can show. A comet near perihelion would not be, and that is where the solve has to become
-iterative.
+`hoursUntilTransit` is solved against the ephemeris rather than holding the right ascension where the
+reading found it. The first estimate assumes the target stands still; the solve then advances the
+ephemeris to that time, measures the signed gap between the real sidereal angle and the target, and
+corrects. Each pass shrinks the error by the target's drift over the sky's rotation, so a comet near
+perihelion lands within a world second in a few passes, and a fixed figure agrees with itself on the
+first. The residual is measured against the sidereal angle itself, not extrapolated at a constant
+rate, because that angle follows the sun's right ascension and does not advance quite uniformly.
 
 ## Season-Anchored Events
 

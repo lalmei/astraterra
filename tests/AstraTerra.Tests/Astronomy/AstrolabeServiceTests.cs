@@ -119,8 +119,25 @@ public sealed class AstrolabeServiceTests
 
         var cycleHours = justBeforeTransit.SiderealCycleHours;
 
-        Assert.Equal(cycleHours * 45.0 / 360.0, justBeforeTransit.HoursUntilTransit, 6);
-        Assert.Equal(cycleHours * 315.0 / 360.0, justAfterTransit.HoursUntilTransit, 6);
+        // Close to the even fraction of a cycle, but not exactly: sidereal time follows the sun's
+        // right ascension, which does not advance quite uniformly, and the countdown is solved
+        // against the real angle -- so the meridian has to actually be on the target at the end.
+        Assert.Equal(cycleHours * 45.0 / 360.0, justBeforeTransit.HoursUntilTransit, 1);
+        Assert.Equal(cycleHours * 315.0 / 360.0, justAfterTransit.HoursUntilTransit, 1);
+        AssertMeridianReaches(localSidereal + 45, justBeforeTransit.HoursUntilTransit);
+        AssertMeridianReaches(localSidereal - 45, justAfterTransit.HoursUntilTransit);
+
+        static void AssertMeridianReaches(double rightAscensionDeg, double hoursUntilTransit)
+        {
+            var sidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+                totalDays + (hoursUntilTransit / hoursPerDay),
+                daysPerYear,
+                hoursPerDay);
+            Assert.Equal(
+                0,
+                CelestialMath.ShortestAngularDistanceDegrees(sidereal, rightAscensionDeg),
+                2);
+        }
     }
 
     [Fact]
@@ -227,6 +244,77 @@ public sealed class AstrolabeServiceTests
             () => AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 0, hoursPerDay: 24));
         Assert.Throws<ArgumentOutOfRangeException>(
             () => AstrolabeService.BuildPlanetTargets(LoadPlanets(), daysPerYear: 108, hoursPerDay: 0));
+    }
+
+    /// <summary>
+    /// A comet rounding perihelion can move degrees in a night. Holding its right ascension fixed
+    /// sends the observer to the wrong hour; the countdown has to land where the ephemeris puts the
+    /// target when the meridian actually reaches it.
+    /// </summary>
+    [Theory]
+    [InlineData(45.0, 8.0)]
+    [InlineData(45.0, -8.0)]
+    [InlineData(200.0, 8.0)]
+    public void Transit_Countdown_Follows_A_Fast_Moving_Target(double leadDeg, double driftDegPerDay)
+    {
+        const double totalDays = 3.25;
+        const int daysPerYear = 120;
+        const double hoursPerDay = 24;
+        const double longitudeDeg = 30;
+        var localSidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg);
+        var ephemeris = new DriftingEphemeris(localSidereal + leadDeg, driftDegPerDay, totalDays);
+        var target = new AstrolabeTarget(AstrolabeTargetKind.Comet, "fast", "Fast", ephemeris, StarCount: 0);
+
+        var reading = AstrolabeService.Read(target, 40, totalDays, daysPerYear, hoursPerDay, longitudeDeg);
+
+        var transitDays = totalDays + (reading.HoursUntilTransit / hoursPerDay);
+        var siderealAtTransit = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+            transitDays,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg);
+        var missDeg = CelestialMath.ShortestAngularDistanceDegrees(
+            siderealAtTransit,
+            ephemeris.PositionAt(transitDays).RightAscensionDeg);
+
+        // Within a world second of sky rotation. Holding the right ascension fixed misses by the
+        // drift over the countdown -- a degree or more at these rates.
+        Assert.InRange(missDeg, -15.0 / 3600.0, 15.0 / 3600.0);
+    }
+
+    /// <summary>
+    /// A target that has just crossed the meridian while drifting east keeps the meridian at bay a
+    /// little longer, so its next transit is a little more than a sidereal cycle away -- never
+    /// "now". A solve that folds its residual into 0-360 flips between the two.
+    /// </summary>
+    [Fact]
+    public void A_Target_That_Just_Transited_Waits_A_Full_Cycle_Even_While_Drifting_East()
+    {
+        const double totalDays = 3.25;
+        const int daysPerYear = 120;
+        const double hoursPerDay = 24;
+        var localSidereal = CelestialMath.GetVanillaAlignedLocalSiderealAngle(totalDays, daysPerYear, hoursPerDay);
+        var ephemeris = new DriftingEphemeris(localSidereal - 0.2, degreesPerDay: 8.0, totalDays);
+        var target = new AstrolabeTarget(AstrolabeTargetKind.Comet, "fast", "Fast", ephemeris, StarCount: 0);
+
+        var reading = AstrolabeService.Read(target, 40, totalDays, daysPerYear, hoursPerDay, 0);
+
+        Assert.InRange(reading.HoursUntilTransit, reading.SiderealCycleHours, reading.SiderealCycleHours + 1.0);
+    }
+
+    private sealed class DriftingEphemeris(double rightAscensionDeg, double degreesPerDay, double epochDays)
+        : ISkyEphemeris
+    {
+        public EquatorialCoordinates PositionAt(double totalDays)
+            => new(
+                CelestialMath.NormalizeDegrees(rightAscensionDeg + (degreesPerDay * (totalDays - epochDays))),
+                10);
+
+        public double MagnitudeAt(double totalDays) => 0;
     }
 
     private static PlanetCatalog LoadPlanets()

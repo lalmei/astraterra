@@ -84,6 +84,12 @@ public static class AstrolabeService
     private const double MotionSampleHours = 0.05;
     private const double CulminationWindowHours = 0.5;
 
+    /// <summary>Re-solves of the transit against the ephemeris. See <see cref="SolveHoursUntilTransit"/>.</summary>
+    private const int TransitSolvePasses = 4;
+
+    /// <summary>A correction smaller than this, in hours, ends the solve early. About a world second.</summary>
+    private const double TransitToleranceHours = 1.0 / 3600.0;
+
     public static IReadOnlyList<AstrolabeTarget> BuildTargets(ConstellationJournal journal, StarCatalog catalog)
     {
         var targets = new List<AstrolabeTarget>();
@@ -213,11 +219,15 @@ public static class AstrolabeService
         var rotationRateDegPerHour = SiderealRotationRateDegPerHour(daysPerYear, hoursPerDay);
         var siderealCycleHours = 360.0 / rotationRateDegPerHour;
 
-        // The countdown holds the target's right ascension where it is now. A planet drifts under
-        // half a degree a day, so over a single night's countdown that is worth a couple of minutes;
-        // a comet near perihelion would need the transit solved against its ephemeris instead.
-        var hoursUntilTransit = CelestialMath.NormalizeDegrees(equatorial.RightAscensionDeg - localSiderealDeg)
-            / rotationRateDegPerHour;
+        var hoursUntilTransit = SolveHoursUntilTransit(
+            target,
+            equatorial,
+            localSiderealDeg,
+            totalDays,
+            daysPerYear,
+            hoursPerDay,
+            longitudeDeg,
+            rotationRateDegPerHour);
 
         var motionState = ClassifyMotion(
             target,
@@ -294,6 +304,62 @@ public static class AstrolabeService
         return futureAltitudeDeg > altitudeDeg
             ? AstrolabeMotionState.Rising
             : AstrolabeMotionState.Setting;
+    }
+
+    /// <summary>
+    /// Hours until the target next crosses the meridian, solved against where it will be then
+    /// rather than where it is now.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The first estimate holds the right ascension fixed, which is exact for a recorded figure and
+    /// off by minutes for a planet -- but a comet rounding perihelion can move degrees in a night,
+    /// and a countdown that reads just as precise for it as for a constellation sends an observer
+    /// to the wrong hour with no way to know why. So the estimate is checked: advance the ephemeris
+    /// to the estimated transit, measure how far the meridian then is from the target, and correct.
+    /// </para>
+    /// <para>
+    /// The residual is signed and measured against the real sidereal angle at that moment, not
+    /// extrapolated at a constant rate. Signed, because a plain 0-360 fold flips a target that has
+    /// just transited between "now" and "a full turn from now" as it drifts; real, because sidereal
+    /// time here follows the sun's right ascension, which is not quite uniform either. Dividing by
+    /// the sidereal rate rather than the true closing rate shrinks the error by the target's drift
+    /// over the sky's -- a few hundredths for anything in the catalog -- so a handful of passes
+    /// lands within a second. A fixed target agrees with itself on the first pass and stops there.
+    /// </para>
+    /// </remarks>
+    private static double SolveHoursUntilTransit(
+        AstrolabeTarget target,
+        EquatorialCoordinates equatorial,
+        double localSiderealDeg,
+        double totalDays,
+        int daysPerYear,
+        double hoursPerDay,
+        double longitudeDeg,
+        double rotationRateDegPerHour)
+    {
+        var hours = CelestialMath.NormalizeDegrees(equatorial.RightAscensionDeg - localSiderealDeg)
+            / rotationRateDegPerHour;
+
+        for (var pass = 0; pass < TransitSolvePasses; pass++)
+        {
+            var transitDays = totalDays + (hours / hoursPerDay);
+            var siderealDeg = CelestialMath.GetVanillaAlignedLocalSiderealAngle(
+                transitDays,
+                daysPerYear,
+                hoursPerDay,
+                longitudeDeg);
+            var rightAscensionDeg = target.Ephemeris.PositionAt(transitDays).RightAscensionDeg;
+            var correction = CelestialMath.ShortestAngularDistanceDegrees(siderealDeg, rightAscensionDeg)
+                / rotationRateDegPerHour;
+            hours = Math.Max(0.0, hours + correction);
+            if (Math.Abs(correction) < TransitToleranceHours)
+            {
+                break;
+            }
+        }
+
+        return hours;
     }
 
     private static AstrolabeHorizonClass ClassifyHorizon(double latitudeDeg, double declinationDeg)
