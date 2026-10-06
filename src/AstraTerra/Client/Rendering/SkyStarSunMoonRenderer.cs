@@ -133,7 +133,8 @@ public static class SkyStarSunMoonRenderer
     private static int telescopeFaintStarTextureId;
     private static int telescopePlanetTextureId;
     private static int skyMarkTextureId;
-    private static int milkyWayTextureId;
+    // Loaded by SkyTextureLoader rather than the game's cache, so this pass owns it; see Reset.
+    private static LoadedTexture? milkyWayTexture;
     private static MeshRef? milkyWayMesh;
 
     // One buffer per plate, keyed by the catalog id that outlives any single projection. See
@@ -260,7 +261,7 @@ public static class SkyStarSunMoonRenderer
     private const double MilkyWayRefreshThresholdDeg = 0.25;
     private static double cachedMilkyWayLatitudeDeg = double.NaN;
     private static double cachedMilkyWaySiderealDeg = double.NaN;
-    private static readonly Dictionary<string, int> DeepSkyTextureIds = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, LoadedTexture> DeepSkyTextures = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> FailedDeepSkyTexturePaths = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> PlatesReportedWithoutTexture = new(StringComparer.Ordinal);
 
@@ -567,10 +568,16 @@ public static class SkyStarSunMoonRenderer
         telescopeFaintStarTextureId = 0;
         telescopePlanetTextureId = 0;
         skyMarkTextureId = 0;
-        milkyWayTextureId = 0;
+        milkyWayTexture?.Dispose();
+        milkyWayTexture = null;
         cachedMilkyWayLatitudeDeg = double.NaN;
         cachedMilkyWaySiderealDeg = double.NaN;
-        DeepSkyTextureIds.Clear();
+        foreach (var plateTexture in DeepSkyTextures.Values)
+        {
+            plateTexture.Dispose();
+        }
+
+        DeepSkyTextures.Clear();
         FailedDeepSkyTexturePaths.Clear();
     }
 
@@ -1644,8 +1651,8 @@ public static class SkyStarSunMoonRenderer
             return new MilkyWayDraw(0f, Matrix4.Identity);
         }
 
-        EnsureStarTexture(clientApi, MilkyWayTexturePath, ref milkyWayTextureId, ref milkyWayTextureLoadFailed);
-        if (milkyWayTextureId == 0)
+        EnsureMilkyWayTexture(clientApi);
+        if (milkyWayTexture is null)
         {
             return new MilkyWayDraw(0f, Matrix4.Identity);
         }
@@ -1684,7 +1691,7 @@ public static class SkyStarSunMoonRenderer
         MilkyWayDraw milkyWay,
         float[] modelMatrixBuffer)
     {
-        if (milkyWayMesh is null || milkyWayTextureId == 0 || milkyWay.Alpha <= 0f)
+        if (milkyWayMesh is null || milkyWayTexture is null || milkyWay.Alpha <= 0f)
         {
             return;
         }
@@ -1697,7 +1704,7 @@ public static class SkyStarSunMoonRenderer
         ((IShaderProgram)shader).Uniform("skyShaded", 0);
         shader.RgbaTint = Set(ScratchTint, 1f, 1f, 1f, milkyWay.Alpha);
         shader.RgbaLightIn = ColorUtil.WhiteArgbVec;
-        shader.Tex2D = milkyWayTextureId;
+        shader.Tex2D = milkyWayTexture.TextureId;
         CopyToFloatArray(modelMatrix, modelMatrixBuffer);
         ((IShaderProgram)shader).UniformMatrix("modelMatrix", modelMatrixBuffer);
         DrawMesh(clientApi, milkyWayMesh);
@@ -2021,9 +2028,10 @@ public static class SkyStarSunMoonRenderer
     private static bool TryGetDeepSkyTexture(ICoreClientAPI clientApi, string texturePath, out int textureId)
     {
         textureId = 0;
-        if (DeepSkyTextureIds.TryGetValue(texturePath, out textureId))
+        if (DeepSkyTextures.TryGetValue(texturePath, out var loaded))
         {
-            return textureId != 0;
+            textureId = loaded.TextureId;
+            return true;
         }
 
         if (FailedDeepSkyTexturePaths.Contains(texturePath))
@@ -2033,15 +2041,14 @@ public static class SkyStarSunMoonRenderer
 
         try
         {
-            foreach (var candidate in ExpandTextureCandidates(texturePath))
+            // Clamped, so smoothing at a plate's border does not pull in its opposite edge.
+            var texture = SkyTextureLoader.TryLoad(clientApi, texturePath, SkyTextureWrap.ClampToEdge);
+            if (texture is not null)
             {
-                textureId = clientApi.Render.GetOrLoadTexture(new AssetLocation(candidate));
-                if (textureId != 0)
-                {
-                    DeepSkyTextureIds[texturePath] = textureId;
-                    clientApi.Logger.Notification("AstraTerra deep-sky texture resolved: configured={0}; loaded={1}; textureId={2}", texturePath, candidate, textureId);
-                    return true;
-                }
+                DeepSkyTextures[texturePath] = texture;
+                textureId = texture.TextureId;
+                clientApi.Logger.Notification("AstraTerra deep-sky texture resolved: configured={0}; loaded={1}; textureId={2}", texturePath, SkyTextureLoader.ToAssetPath(texturePath), textureId);
+                return true;
             }
         }
         catch (Exception exception)
@@ -2255,6 +2262,40 @@ public static class SkyStarSunMoonRenderer
     private static void EnsureSkyMarkTexture(ICoreClientAPI clientApi)
     {
         EnsureStarTexture(clientApi, SkyMarkTexturePath, ref skyMarkTextureId, ref skyMarkTextureLoadFailed);
+    }
+
+    /// <summary>
+    /// Loads the glow map smoothed and mipmapped, which is what the scope needs from it.
+    /// </summary>
+    /// <remarks>
+    /// Repeating rather than clamped: the map wraps at galactic longitude 180, and repeat is what lets
+    /// the smoothing carry across that seam. It also wraps the two poles into each other, which is
+    /// harmless because both are near-black sky.
+    /// </remarks>
+    private static void EnsureMilkyWayTexture(ICoreClientAPI clientApi)
+    {
+        if (milkyWayTexture is not null || milkyWayTextureLoadFailed)
+        {
+            return;
+        }
+
+        try
+        {
+            milkyWayTexture = SkyTextureLoader.TryLoad(clientApi, MilkyWayTexturePath, SkyTextureWrap.Repeat);
+            if (milkyWayTexture is null)
+            {
+                milkyWayTextureLoadFailed = true;
+                clientApi.Logger.Warning("AstraTerra could not find the Milky Way texture {0}.", SkyTextureLoader.ToAssetPath(MilkyWayTexturePath));
+                return;
+            }
+
+            clientApi.Logger.Notification("AstraTerra Milky Way texture resolved: loaded={0}; textureId={1}", SkyTextureLoader.ToAssetPath(MilkyWayTexturePath), milkyWayTexture.TextureId);
+        }
+        catch (Exception exception)
+        {
+            milkyWayTextureLoadFailed = true;
+            clientApi.Logger.Error("AstraTerra could not load the Milky Way texture {0}: {1}", MilkyWayTexturePath, exception);
+        }
     }
 
     private static void EnsureStarTexture(ICoreClientAPI clientApi, string texturePath, ref int textureId, ref bool loadFailed)
