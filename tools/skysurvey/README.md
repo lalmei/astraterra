@@ -1,7 +1,7 @@
 # AstraTerra Sky Survey Converter
 
 Developer-only tooling that turns NASA's *Deep Star Maps 2020* into the Milky Way textures the mod
-draws: the naked-eye `milky-way.png` and, optionally, the high-resolution tiles the telescope loads
+draws: the naked-eye `milky-way.jpg` and, optionally, the high-resolution tiles the telescope loads
 (#219).
 
 ```bash
@@ -12,7 +12,7 @@ python -m unittest tests.test_survey tests.test_main
 ```
 
 Requires `numpy`, `pillow` and `OpenEXR`. A 16k run holds the whole source in memory (about 1.6 GB
-as float32) and takes a few minutes, most of it writing tiles.
+as float32) and takes about 40 seconds.
 
 ## Source
 
@@ -31,13 +31,34 @@ them in `sources/`, which is gitignored. Only the converted outputs are committe
    b = +90 deg, left edge l = +180 deg, centre l = 0 deg.
 2. **Downsamples in linear light** to the naked-eye width (4096 by default), before any stretch.
    Averaging after the stretch would make the base map darker than the tiles drawn over it.
-3. **Fits one asinh stretch** (Lupton et al. 2004, applied to intensity so each pixel keeps its
-   colour) so the result matches the statistics of the procedural map it replaces. Those are
-   recorded in `survey.REFERENCE_STATS`, and `MilkyWayVisibility` was tuned against them. The run
-   warns if the fit misses them by more than 10%.
+3. **Fits one stretch**: asinh on intensity (Lupton et al. 2004), then a gamma, so the result
+   matches the *brightness* of the procedural map it replaces. Those numbers are recorded in
+   `survey.REFERENCE_STATS`, and `MilkyWayVisibility` was tuned against them. The run warns if the
+   fit misses by more than 10%, measured on the full output map.
+   - The fit samples every n-th pixel rather than a box-filtered copy. The stretch is nonlinear,
+     and a fit to averaged grain missed the real map by a quarter at high latitude.
+   - Colour is Gaia's, not fitted. `--saturation` (default 0.5) pulls it towards grey without
+     changing brightness. Linear-light colour ratios shown as encoded values come out
+     oversaturated: a salmon bulge and magenta Magellanic Clouds.
 4. **Cuts tiles** (`--tiles-dir`) from the full-resolution source: 512 px squares with a one-texel
    gutter so filtering blends across tile seams, covering |b| <= 33.75 deg. That is 192 tiles at
    16k, each 11.25 deg across. Every tile uses the global stretch so the scope shows no grid. A
    `tiles.json` manifest records each tile's galactic bounds.
-5. **Reports sizes.** It prints the JPEG total (and what PNG would cost) against the 15 MiB budget
-   that decides whether the tiles ship in the main mod or as an optional asset mod.
+5. **Writes JPEG** at full chroma resolution (4:4:4), because a resolved star is one texel and
+   chroma subsampling would smear its colour. Optimised Huffman tables stay off: Pillow 12.3 with
+   libjpeg-turbo 3 fails on 4:4:4 + optimise when writing to memory.
+6. **Reports sizes** against the 15 MiB budget that decides whether tiles ship in the main mod or
+   as an optional asset mod.
+
+## Measured on `milkyway_2020_16k_gal.exr` (2026-10-05)
+
+| Output | Size |
+| --- | --- |
+| 4k global map, PNG | 16.2 MiB, which is why the shipped map is a JPEG |
+| 4k global map, JPEG q90 4:4:4 (shipped) | 3.3 MiB |
+| 192 tiles, JPEG q85 4:4:4 | 27.7 MiB, over budget: optional asset mod |
+| 192 tiles, PNG | 128 MiB |
+
+Fitted stretch: black 0, softening 0.352, gamma 0.70, saturation 0.5. Worst brightness miss 3.3%.
+Orientation margins: centre 6.6x the anticentre, and the LMC 7x its upside-down position and 6x its
+mirrored one.

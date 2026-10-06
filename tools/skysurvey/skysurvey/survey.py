@@ -13,20 +13,23 @@ from typing import Iterator
 
 import numpy as np
 
-#: What the committed procedural ``milky-way.png`` measures, as 0..1 stored values. Luminance is
-#: the plain mean of the three channels. ``MilkyWayVisibility``'s opacity, twilight floor and
-#: moon washout were tuned by eye against this map, so a survey map that matches these numbers
-#: drops into the same tuning with no code change. These are fixed here rather than re-measured
-#: from the PNG on each run because the survey map replaces that PNG.
+#: How bright the procedural ``milky-way.png`` this replaces measures, as 0..1 stored values.
+#: Luminance is the plain mean of the three channels. ``MilkyWayVisibility``'s opacity, twilight
+#: floor and moon washout were tuned by eye against that map, so a survey map that matches these
+#: numbers drops into the same tuning with no code change. They are fixed here rather than
+#: re-measured on each run because the survey map replaces that PNG.
+#:
+#: Brightness only, not colour. The procedural map was bluish where Gaia measures the real sky as
+#: redder, and the colour is the part of the survey worth keeping.
 REFERENCE_STATS = {
-    "mean_red": 0.1070,
-    "mean_green": 0.1213,
-    "mean_blue": 0.1290,
     "median_luminance": 0.0771,
     "p99_luminance": 0.6137,
     "band_luminance": 0.3604,
     "high_latitude_luminance": 0.0512,
 }
+
+#: The procedural map's mean colour, for the report only: it is never fitted.
+REFERENCE_MEAN_RGB = (0.1070, 0.1213, 0.1290)
 
 #: Where the white point sits, as a luminance percentile of the linear map. Above it the stretch
 #: clips, which only touches the cores of the brightest star clouds.
@@ -120,20 +123,35 @@ class Stretch:
     Stretching each channel separately would push every bright pixel towards white and every faint
     one towards grey. Stretching the intensity and scaling all three channels by the same factor
     keeps the colour Gaia measured, from the amber bulge to the bluer outer disc.
+
+    The gamma after the asinh is there because the real sky has more contrast than the model it
+    replaces. With asinh alone, a curve that matched the band's brightness left the sky between
+    the band and the poles about a quarter too dark, and one that matched the faint sky made the
+    band too bright. The gamma lifts the faint end without moving the bright one.
+
+    Saturation pulls each pixel's channel ratios towards grey without touching its intensity, so
+    it never moves the brightness calibration. It is needed because the ratios are linear-light
+    ratios shown as encoded values, which exaggerates them: at full saturation the bulge comes out
+    salmon and the Magellanic Clouds magenta. The eye at night sees the band nearly colourless anyway.
     """
 
     black: float
     white: float
     softening: float
+    gamma: float = 1.0
+    saturation: float = 1.0
 
     def apply(self, image: np.ndarray) -> np.ndarray:
         intensity = luminance(image)
         above_black = np.clip(intensity - self.black, 0.0, None)
         range_ = max(self.white - self.black, np.finfo(np.float32).tiny)
         stretched = np.arcsinh(above_black / (self.softening * range_)) / np.arcsinh(1.0 / self.softening)
+        stretched = np.clip(stretched, 0.0, None) ** self.gamma
         with np.errstate(divide="ignore", invalid="ignore"):
-            scale = np.where(intensity > 0.0, stretched / intensity, 0.0)
-        result = np.clip(image, 0.0, None) * scale[..., None]
+            ratios = np.where(intensity[..., None] > 0.0, np.clip(image, 0.0, None) / intensity[..., None], 1.0)
+        # Ratios average to one across the channels, so moving them towards one keeps intensity.
+        ratios = 1.0 + self.saturation * (ratios - 1.0)
+        result = stretched[..., None] * ratios
         # Over-range pixels are scaled back as a whole rather than clipped per channel, which
         # would bleach their colour.
         peak = result.max(axis=-1, keepdims=True)
@@ -146,16 +164,17 @@ def measure(encoded: np.ndarray) -> dict[str, float]:
     lum = luminance(encoded)
     _, latitude = galactic_axes(*encoded.shape[:2])
     latitude = np.broadcast_to(latitude, lum.shape)
-    mean_rgb = encoded.reshape(-1, 3).mean(axis=0)
     return {
-        "mean_red": float(mean_rgb[0]),
-        "mean_green": float(mean_rgb[1]),
-        "mean_blue": float(mean_rgb[2]),
         "median_luminance": float(np.median(lum)),
         "p99_luminance": float(np.percentile(lum, 99.0)),
         "band_luminance": float(lum[np.abs(latitude) <= 10.0].mean()),
         "high_latitude_luminance": float(lum[np.abs(latitude) > 45.0].mean()),
     }
+
+
+def mean_rgb(encoded: np.ndarray) -> tuple[float, float, float]:
+    red, green, blue = encoded.reshape(-1, 3).mean(axis=0)
+    return float(red), float(green), float(blue)
 
 
 def calibration_error(stats: dict[str, float], reference: dict[str, float] = REFERENCE_STATS) -> float:
@@ -168,17 +187,23 @@ def fit_stretch(
     reference: dict[str, float] = REFERENCE_STATS,
     black_percentiles: np.ndarray | None = None,
     softenings: np.ndarray | None = None,
+    gammas: np.ndarray | None = None,
+    saturation: float = 1.0,
 ) -> tuple[Stretch, dict[str, float], float]:
-    """Searches black point and softening for the stretch that best matches the reference.
+    """Searches black point, softening and gamma for the stretch that best matches the reference.
 
     The white point is not searched: it is pinned at a high percentile so only the brightest
     star-cloud cores clip. A small grid is enough because the error surface is smooth, and it
     keeps the result reproducible run to run, which an optimiser started from noise would not.
     """
     if black_percentiles is None:
-        black_percentiles = np.linspace(0.0, 60.0, 31)
+        # Low percentiles only: on the real sky the best black point sits at or near zero, because
+        # the reference keeps a glow over the whole sphere.
+        black_percentiles = np.linspace(0.0, 30.0, 7)
     if softenings is None:
-        softenings = np.geomspace(0.003, 3.0, 40)
+        softenings = np.geomspace(0.003, 3.0, 30)
+    if gammas is None:
+        gammas = np.linspace(0.3, 2.0, 35)
 
     lum = luminance(image)
     white = float(np.percentile(lum, WHITE_PERCENTILE))
@@ -191,11 +216,24 @@ def fit_stretch(
         if black >= white:
             continue
         for softening in softenings:
-            stretch = Stretch(black=float(black), white=white, softening=float(softening))
-            stats = measure(stretch.apply(image))
-            error = calibration_error(stats, reference)
-            if best is None or error < best[2]:
-                best = (stretch, stats, error)
+            # The gamma acts on intensity alone, so one asinh pass serves every gamma: raise the
+            # stretched intensity and rescale, rather than rerunning the stretch thirty times.
+            base = Stretch(black=float(black), white=white, softening=float(softening), saturation=saturation).apply(image)
+            base_intensity = luminance(base)
+            for gamma in gammas:
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    scale = np.where(base_intensity > 0.0, base_intensity ** (gamma - 1.0), 0.0)
+                stats = measure(base * scale[..., None])
+                error = calibration_error(stats, reference)
+                if best is None or error < best[2]:
+                    stretch = Stretch(
+                        black=float(black),
+                        white=white,
+                        softening=float(softening),
+                        gamma=float(gamma),
+                        saturation=saturation,
+                    )
+                    best = (stretch, stats, error)
 
     if best is None:
         raise ValueError("The map has no dynamic range to stretch.")

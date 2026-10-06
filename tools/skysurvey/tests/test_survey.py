@@ -100,12 +100,42 @@ class StretchTests(unittest.TestCase):
         ratios = encoded[bright, 0] / encoded[bright, 2]
         np.testing.assert_allclose(ratios, 1.1 / 0.9, rtol=1e-4)
 
+    def test_saturation_greys_colour_without_moving_intensity(self) -> None:
+        sky = synthetic_sky()
+        full = Stretch(black=0.0, white=1.0, softening=0.1).apply(sky)
+        muted = Stretch(black=0.0, white=1.0, softening=0.1, saturation=0.5).apply(sky)
+        grey = Stretch(black=0.0, white=1.0, softening=0.1, saturation=0.0).apply(sky)
+        # Pixels past white are scaled back as a whole, by an amount that depends on their colour.
+        unclipped = full.max(axis=-1) < 1.0
+        np.testing.assert_allclose(muted.mean(axis=-1)[unclipped], full.mean(axis=-1)[unclipped], atol=1e-6)
+        bright = full.mean(axis=-1) > 0.05
+        self.assertLess(float(np.abs(muted[bright, 0] - muted[bright, 2]).mean()), float(np.abs(full[bright, 0] - full[bright, 2]).mean()))
+        np.testing.assert_allclose(grey[..., 0], grey[..., 2], atol=1e-6)
+
     def test_is_monotonic_and_bounded(self) -> None:
         ramp = np.linspace(0.0, 5.0, 200, dtype=np.float32)[None, :, None].repeat(3, axis=-1)
         encoded = Stretch(black=0.1, white=2.0, softening=0.2).apply(ramp)[0, :, 0]
         self.assertTrue(np.all(np.diff(encoded) >= -1e-7))
         self.assertEqual(float(encoded[0]), 0.0)
         self.assertLessEqual(float(encoded.max()), 1.0)
+
+    def test_gamma_lifts_the_faint_end_and_keeps_the_ends_fixed(self) -> None:
+        ramp = np.linspace(0.0, 1.0, 101, dtype=np.float32)[None, :, None].repeat(3, axis=-1)
+        plain = Stretch(black=0.0, white=1.0, softening=0.3).apply(ramp)[0, :, 0]
+        lifted = Stretch(black=0.0, white=1.0, softening=0.3, gamma=0.7).apply(ramp)[0, :, 0]
+        self.assertGreater(float(lifted[10]), float(plain[10]))
+        self.assertAlmostEqual(float(lifted[0]), 0.0)
+        self.assertAlmostEqual(float(lifted[-1]), float(plain[-1]), places=5)
+
+    def test_a_strided_sample_measures_like_the_full_map_and_a_box_filtered_copy_does_not(self) -> None:
+        """Why the tool fits on every n-th pixel: averaging grain first changes what the stretch sees."""
+        rng = np.random.default_rng(7)
+        grainy = synthetic_sky(256) * rng.exponential(1.0, size=(256, 512, 1)).astype(np.float32)
+        stretch = Stretch(black=0.0, white=float(np.percentile(grainy.mean(axis=-1), 99.95)), softening=0.2, gamma=0.6)
+        full = measure(stretch.apply(grainy))["median_luminance"]
+        strided = measure(stretch.apply(grainy[::4, ::4]))["median_luminance"]
+        box = measure(stretch.apply(downsample(grainy, 4)))["median_luminance"]
+        self.assertLess(abs(strided - full), abs(box - full))
 
     def test_fit_lands_closer_to_the_reference_than_a_naive_stretch(self) -> None:
         sky = synthetic_sky()
