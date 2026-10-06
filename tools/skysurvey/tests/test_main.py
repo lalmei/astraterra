@@ -19,7 +19,7 @@ class EndToEndTests(unittest.TestCase):
                     [
                         "--source", "fake_gal.exr",
                         "--global-width", "256",
-                        "--output", str(root / "milky-way.png"),
+                        "--output", str(root / "milky-way.jpg"),
                         "--tiles-dir", str(root / "tiles"),
                         "--tile-size", "64",
                         "--max-abs-latitude", "45",
@@ -27,9 +27,10 @@ class EndToEndTests(unittest.TestCase):
                     ]
                 )
 
-            with Image.open(root / "milky-way.png") as image:
+            with Image.open(root / "milky-way.jpg") as image:
                 self.assertEqual(image.size, (256, 128))
                 self.assertEqual(image.mode, "RGB")
+                self.assertEqual(image.format, "JPEG")
 
             manifest = json.loads((root / "tiles" / "tiles.json").read_text())
             self.assertEqual(manifest["gutter"], 1)
@@ -44,7 +45,7 @@ class EndToEndTests(unittest.TestCase):
 
     def test_refuses_a_mirrored_source_before_writing_anything(self) -> None:
         with tempfile.TemporaryDirectory() as scratch:
-            output = Path(scratch) / "milky-way.png"
+            output = Path(scratch) / "milky-way.jpg"
             with mock.patch.object(cli, "read_exr", return_value=synthetic_sky(256)[:, ::-1]):
                 with self.assertRaises(ValueError):
                     cli.main(["--source", "fake_gal.exr", "--global-width", "256", "--output", str(output)])
@@ -53,3 +54,12 @@ class EndToEndTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EncodingTests(unittest.TestCase):
+    def test_full_chroma_jpeg_writes_to_memory(self) -> None:
+        """Regression: 4:4:4 with optimised tables fails under Pillow 12.3 + libjpeg-turbo 3."""
+        import numpy as np
+
+        noise = np.random.default_rng(3).random((514, 514, 3)).astype(np.float32)
+        self.assertGreater(len(cli.encode_jpeg(noise, 90)), 0)
