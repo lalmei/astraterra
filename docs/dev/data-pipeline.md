@@ -19,12 +19,20 @@ Pass the Modern IAU asset through `--required-sky-culture-json` when regeneratin
 
 ## Milky Way Texture Generator
 
-The band's glow map has its own generator in `tools/milkywaygen/`, and it needs no source dataset: it integrates a galaxy model along every line of sight rather than resampling a survey or repainting a photograph, so the committed texture carries no third-party licence.
+The band's glow map comes from `tools/skysurvey/`, which converts NASA SVS *Deep Star Maps 2020* (public domain, Gaia DR2). It refuses a mirrored source, downsamples in linear light, and fits its stretch to the procedural map's brightness so `MilkyWayVisibility`'s tuning carries over:
+
+```bash
+cd tools/skysurvey
+python -m skysurvey.main --source sources/milkyway_2020_16k_gal.exr   # rewrites assets/astraterra/textures/environment/milky-way.jpg
+python -m unittest tests.test_survey tests.test_main
+```
+
+The procedural fallback has its own generator in `tools/milkywaygen/`, and it needs no source dataset: it integrates a galaxy model along every line of sight rather than resampling a survey or repainting a photograph, so the committed texture carries no third-party licence.
 
 ```bash
 cd tools/milkywaygen
 python -m milkywaygen.main --help
-python -m milkywaygen.main            # rewrites assets/astraterra/textures/environment/milky-way.png
+python -m milkywaygen.main            # writes assets/astraterra/textures/environment/milky-way.png (not loaded unless MilkyWayTexturePath points at it)
 python -m unittest tests.test_galaxy
 ```
 
@@ -64,7 +72,7 @@ exists.
 - `deep-sky.v1.json`: telescope-only deep-sky object metadata, including each texture's four Stellarium `worldCoords` corners in texture-coordinate order.
 - `meteor-showers.v1.json`: annual meteor showers. Radiant, peak solar longitude, activity half-width, and peak ZHR, hand-authored from the IMO Meteor Shower Calendar working list.
 - `comets.v1.json`: authored comet apparitions. Real orbital period and first perihelion in world years, a window half-width, a brightness curve, and a track of right-ascension/declination keyframes indexed by signed phase against perihelion. The periods and the parent showers are real; the tracks and peak magnitudes are authored for the game. The loader rejects a comet that could never be seen rather than letting it fail silently, because on a body due once every thirteen years "never appears" and "not due yet" look identical.
-- `textures/environment/milky-way.png`: the galaxy's unresolved glow, equirectangular in galactic coordinates, +90 deg on the first row and longitude running +180 to -180 left to right.
+- `textures/environment/milky-way.jpg`: the galaxy's unresolved glow (Gaia DR2 via `tools/skysurvey`), equirectangular in galactic coordinates, +90 deg on the first row and longitude running +180 to -180 left to right.
 - `planets.v1.json`: the five naked-eye planets and the observer's own orbit. Six Keplerian elements and their per-century rates per body, hand-authored from JPL's *Approximate Positions of the Major Planets* Table 1 (valid 1800–2050), plus a magnitude zero point, a linear phase coefficient, and a tint.
 
 Like the shower catalog, the planet table is hand-authored rather than generated: it is six rows of published constants, and a generator would add a build step without removing a source of error. The error it would not catch is a mistyped digit, so `PlanetCatalogAssetTests.Every_Orbit_Obeys_Kepler_Third_Law` checks each body's semi-major axis against its mean-motion rate — two numbers that are independent in the file and physically locked together — and `PlanetEphemerisTests` checks the resulting positions against real oppositions.

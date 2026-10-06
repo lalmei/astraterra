@@ -1,5 +1,9 @@
 # AstraTerra Milky Way Generator
 
+> The shipped Milky Way is now Gaia's real sky, converted by `tools/skysurvey` into `milky-way.jpg`.
+> This generator remains as the licence-free fallback. Its output is what `tools/skysurvey`'s
+> brightness calibration (`REFERENCE_STATS`) was measured from.
+
 Developer-only tooling for producing `assets/astraterra/textures/environment/milky-way.png`: the
 unresolved glow the catalog stars are drawn against.
 
