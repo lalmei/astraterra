@@ -130,6 +130,6 @@ AstraTerra is licensed under the [GNU Affero General Public License, version 3 o
 
 Inspired by Minecraft's [Spyglass Astronomy](https://github.com/Nettakrim/Spyglass-Astronomy/tree/Main).
 
-The Brass Telescope model is adapted from Fuami's MIT-licensed [Spyglass](https://mods.vintagestory.at/spyglass) mod. Modern IAU constellation lines and selected deep-sky assets come from [Stellarium](https://github.com/stellarium/stellarium). The Sextant model transforms and recipe are adapted from the Realistic Surveying package. Full licenses and asset notes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The Brass Telescope model is adapted from Fuami's MIT-licensed [Spyglass](https://mods.vintagestory.at/spyglass) mod. Modern IAU constellation lines and selected deep-sky assets come from [Stellarium](https://github.com/stellarium/stellarium). The Milky Way is NASA Goddard Scientific Visualization Studio's public-domain [Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851), built from ESA/Gaia/DPAC Gaia DR2 data. The Sextant model transforms and recipe are adapted from the Realistic Surveying package. Full licenses and asset notes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Thanks to LadyLioness of [AdAstra](https://mods.vintagestory.at/show/mod/47577), and to Rythillian, Bin, Fey_Shadow, nuwabi, itsDuskie, Dannyftm, ffish, pollo_frito_22, and LaurieIAU for testing and arguing with the sky.

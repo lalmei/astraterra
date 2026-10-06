@@ -375,16 +375,22 @@ horizon, and nothing else in the sky disagrees with it.
 ### The glow is a texture, the mesh is only a sphere
 
 Every feature of the band — the bulge, the Great Rift, the clouds, the reddening — lives in
-`assets/astraterra/textures/environment/milky-way.png`, an equirectangular map in galactic
+`assets/astraterra/textures/environment/milky-way.jpg`, an equirectangular map in galactic
 coordinates. So the mesh carries none of it: 72 by 36 cells is enough that a great circle does not
 read as a polygon and that the horizon fade is smooth along it, and the texture is sampled per pixel
 regardless.
 
-The map is generated, not photographed. `tools/milkywaygen` integrates an exponential disc with four
-logarithmic arms and a flattened bulge along every line of sight from the Sun's place in it, dimmed
-by a thinner, flatter dust layer in front, and tone-maps the result. That keeps the asset ours, and
-it means the band's shape can be argued with in parameters — a scale height, a dust opacity — rather
-than repainted.
+The map is Gaia's sky. `tools/skysurvey` converts NASA SVS's *Deep Star Maps 2020* (public domain,
+Gaia DR2) from the version with the Hipparcos and Tycho stars removed, so the catalog's own stars
+are not drawn a second time. What remains is the light of the stars the catalog stops short of,
+which is what the band is. The conversion fits one asinh stretch (with a gamma) to the brightness of
+the procedural map it replaced, so the opacity model below kept its tuning, while the colour is
+Gaia's own and somewhat redder.
+
+The procedural map is still there as a fallback. `tools/milkywaygen` integrates an exponential disc
+with four logarithmic arms and a flattened bulge along every line of sight from the Sun's place in
+it, dimmed by a thinner, flatter dust layer in front. It carries no third-party licence, and its
+shape can be argued with in parameters, a scale height or a dust opacity, rather than repainted.
 
 ### It answers to the night, not to the star bias
 

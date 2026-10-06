@@ -46,7 +46,11 @@ public static class SkyStarSunMoonRenderer
     private const string SkyMarkTexturePath = "astraterra:environment/star-pixel";
 
     /// <summary>The galaxy's own glow, wrapped over the sky in galactic coordinates.</summary>
-    public const string MilkyWayTexturePath = "astraterra:environment/milky-way";
+    /// <remarks>
+    /// A JPEG because it is Gaia's sky (tools/skysurvey), and resolved stars barely compress
+    /// losslessly: the same 4k map is 16 MiB as a PNG and under 4 MiB as a JPEG.
+    /// </remarks>
+    public const string MilkyWayTexturePath = "astraterra:environment/milky-way.jpg";
     private static readonly FieldInfo? QuadModelRefField = FindField("quadModelRef", "quadModel");
     private static readonly FieldInfo? ImageSizeField = typeof(SystemRenderSunMoon).GetField("ImageSize", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
     private const double MinimumSkyRenderDarkness = 0.10;

@@ -31,6 +31,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
+## NASA SVS Deep Star Maps 2020
+
+AstraTerra's Milky Way glow (`assets/astraterra/textures/environment/milky-way.jpg`) is derived from NASA's *Deep Star Maps 2020*, converted by `tools/skysurvey`:
+
+- Source: https://svs.gsfc.nasa.gov/4851 (`milkyway_2020_16k_gal.exr`)
+- License: public domain (NASA Scientific Visualization Studio content)
+- Credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC.
+
 ## Stellarium Modern IAU Sky Culture
 
 AstraTerra's Modern IAU constellation line asset is adapted from Stellarium's `modern_iau` sky culture:
