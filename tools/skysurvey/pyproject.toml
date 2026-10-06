@@ -1,0 +1,9 @@
+[project]
+name = "skysurvey"
+version = "0.1.0"
+description = "Developer-only conversion of NASA SVS Milky Way survey maps into AstraTerra textures."
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.24", "pillow>=10.0", "OpenEXR>=3.3"]
+
+[project.scripts]
+skysurvey = "skysurvey.main:main"

@@ -16,3 +16,7 @@ tools/cataloggen/sources/*.csv
 tools/cataloggen/sources/*.csv.gz
 .claude
 notes/
+
+# Sky survey sources and scratch output (tools/skysurvey)
+tools/skysurvey/sources/
+tools/skysurvey/out/
